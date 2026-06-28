@@ -1,0 +1,44 @@
+model QiMajorRealm {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  realm Qi_MajorRealm
+
+  power              Int?
+  description        String?
+  requiredQi         Int?
+  lifespan           Int?
+  breakthroughChance Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BodyMajorRealm {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  realm Body_MajorRealm?
+
+  power              Int?
+  description        String?
+  requiredBloodQi    Int?
+  lifespan           Int?
+  breakthroughChance Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SoulMajorRealm {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  realm Soul_MajorRealm
+
+  power              Int?
+  description        String?
+  requiredSpiritQi   Int?
+  lifespan           Int?
+  breakthroughChance Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

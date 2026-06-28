@@ -1,0 +1,111 @@
+model Item {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name  String
+  grade Grade
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  characterInventories CharacterInventory[]
+
+  weapon       Weapon?
+  armor        Armor?
+  pill         Pill?
+  talisman     Talisman?
+  treasure     Treasure?
+  secretScroll SecretScroll?
+}
+
+model Weapon {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  weaponType WeaponType
+
+  attackPower   Int?
+  durability    Int?
+  element       Elements?
+  requiredRealm Qi_MajorRealm?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Armor {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  armorType ArmorType
+
+  defense    Int?
+  durability Int?
+  element    Elements?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pill {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  pillType PillType
+
+  powerGain          Int?
+  breakthroughChance Int?
+  toxicity           Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Talisman {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  uses    Int?
+  element Elements?
+  effect  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Treasure {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  passiveEffect String?
+  activeEffect  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SecretScroll {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  knowledgeType SecretKnowledgeType
+  knowledgeId   String              @db.ObjectId
+
+  oneTimeUse Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

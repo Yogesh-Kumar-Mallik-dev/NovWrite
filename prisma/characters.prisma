@@ -1,0 +1,49 @@
+model Characters {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  age         Int
+  dateOfBirth String?
+
+  spiritRootId String      @db.ObjectId
+  spiritRoot   SpiritRoots @relation(fields: [spiritRootId], references: [id])
+
+  inventory CharacterInventory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  relations CharacterRelations[] @relation("SourceCharacter")
+  relatedTo CharacterRelations[] @relation("TargetCharacter")
+
+  characterVersions CharacterVersion[]
+}
+
+model CharacterVersion {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  characterId String     @db.ObjectId
+  character   Characters @relation(fields: [characterId], references: [id])
+
+  updateType  Update
+  title       String
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CharacterInventory {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String     @db.ObjectId
+  character   Characters @relation(fields: [characterId], references: [id])
+
+  itemId String @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  quantity Int     @default(1)
+  equipped Boolean @default(false)
+
+  obtainedAt DateTime @default(now())
+
+  @@index([characterId])
+}

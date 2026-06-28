@@ -1,0 +1,223 @@
+enum Elements {
+  Fire
+  Water
+  Earth
+  Wind
+  Lightning
+  Ice
+}
+
+enum Update {
+  Edit
+  Update
+  Breakthrough
+  Death
+  Birth
+  Rebirth
+  Encounter
+  Join_Faction
+  Left_Faction
+  Promotion
+  Demotion
+}
+
+enum RelationshipType {
+  Parent
+  Child
+  Elder_Brother
+  Younger_Brother
+  Elder_Sister
+  Younger_Sister
+  Sworn_Brother
+  Sworn_Sister
+  Senior_Brother
+  Junior_Brother
+  Senior_Sister
+  Junior_Sister
+  Martial_Aunt
+  Martial_Uncle
+  Grand_Father
+  Grand_Mother
+  Grand_Master
+  Elder_Cousin_Brother
+  Younger_Cousin_Brother
+  Elder_Cousin_Sister
+  Younger_Cousin_Sister
+  Friend
+  BestFriend
+  Enemy
+  Rival
+  Lover
+  Husband
+  Wife
+  Fiance
+  Master
+  Disciple
+  Teacher
+  Student
+  Mentor
+  Ally
+  Servant
+  Owner
+  Pet
+  ClanMember
+  SectMember
+  Ancestor
+  Patriarch
+  Matriarch
+  Guardian
+  Bodyguard
+  Apprentice
+  Twin
+  Adoptive_Parent
+  Adoptive_Child
+  Marriage_Arranged
+  Former_Lover
+  Former_Master
+  Former_Disciple
+}
+
+enum Qi_MajorRealm {
+  Body_Tempering
+  Qi_Refining
+  Foundation_Establishment
+  Golden_Core
+  Nascent_Soul
+  Soul_Transformation
+  Body_Integration
+  Tribulation_Transcendence
+  Mahayana
+  Immortal_Ascension
+}
+
+enum Body_MajorRealm {
+  Skin_Tempering
+  Bone_Forging
+  Viscera_Refining
+  Blood_Condensation
+  Rebirth
+  Aura_Manifestation
+  Void_Fusion
+  Tribulation_Tempering
+  Saintly_Being
+  Void_Breaking
+}
+
+enum Soul_MajorRealm {
+  Spiritual_Awakening
+  Sense_Expansion
+  Spirit_Condensation
+  Soul_Manifestation
+  Yin_Soul
+  Yang_Soul
+  Domain_Manifestation
+  Tribunal_Soul
+  Spiritual_Being
+  Spirit_Ascension
+}
+
+enum Minor_Realm {
+  half_step
+  one_star
+  two_star
+  three_star
+  four_star
+  five_star
+  six_star
+  seven_star
+  eight_star
+  nine_star
+  peak
+}
+
+enum Grade {
+  Mortal
+  Common
+  Rare
+  Earth
+  Heaven
+  Spirit
+  King
+  Emperor
+  Saint
+  Divine
+  Immortal
+  Celestial
+  Eternal
+  Origin
+  Transcendent
+  Primordial
+  Chaos
+}
+
+enum WeaponType {
+  Sword
+  Saber
+  Spear
+  Bow
+  Dagger
+  Axe
+  Hammer
+  Staff
+  Whip
+  Fan
+  Needle
+  Halberd
+}
+
+enum ArmorType {
+  Helmet
+  Chest
+  Gloves
+  Boots
+  FullSet
+}
+
+enum PillType {
+  Healing
+  Cultivation
+  Breakthrough
+  Poison
+  Detoxification
+  BodyTempering
+  SoulNourishing
+}
+
+enum SecretKnowledgeType {
+  CultivationTechnique
+  FightingTechnique
+  AlchemyRecipe
+  Formation
+  TalismanArt
+  BeastTaming
+  PuppetArt
+  PoisonArt
+}
+
+enum CultivationPath {
+  Qi
+  Body
+  Soul
+}
+
+enum FightingTechniqueType {
+  Sword
+  Saber
+  Spear
+  Bow
+  Fist
+  Palm
+  Finger
+  Kick
+  Staff
+  Whip
+  Movement
+  Soul
+  Illusion
+  Fire
+  Water
+  Earth
+  Wind
+  Lightning
+  Ice
+}

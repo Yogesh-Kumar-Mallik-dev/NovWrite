@@ -1,0 +1,57 @@
+model SpiritRoots {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  elements Elements[]
+
+  breakthroughMultiplier Int?
+  basePowerMultiplier    Int?
+
+  description String?
+
+  characters Characters[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Physique {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name  String
+  grade Grade
+
+  powerMultiplier Int?
+  breakthrough    Int?
+
+  bodyRealmbreakthroughChance Int?
+  QiRealmbreakthroughChance   Int?
+  soulRealmbreakthroughChance Int?
+
+  specialProperty String?
+  description     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bloodline {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name  String
+  grade Grade
+
+  powerMultiplier Int?
+  breakthrough    Int?
+
+  progenyChance Int?
+
+  bodyRealmbreakthroughChance Int?
+  QiRealmbreakthroughChance   Int?
+  soulRealmbreakthroughChance Int?
+
+  specialProperty String?
+  description     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
