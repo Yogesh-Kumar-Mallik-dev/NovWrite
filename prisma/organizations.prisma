@@ -27,9 +27,10 @@ model Organization {
   historicalEvents OrganizationHistoricalEvent[]
   grantedTitles    CharacterTitle[]              @relation("TitleGrantedByOrganization")
 
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
   battleParticipants BattleParticipant[]
+  grantedOccupations CharacterOccupation[] @relation("OccupationGrantedByOrganization")
 
   @@index([type])
   @@index([leaderId])

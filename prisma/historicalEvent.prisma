@@ -29,6 +29,8 @@ model HistoricalEvent {
   updatedAt DateTime         @updatedAt
   battle    Battle?
 
+  occupations CharacterOccupation[]
+
   @@index([type])
   @@index([scale])
   @@index([locationId])

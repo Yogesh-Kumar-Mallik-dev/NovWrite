@@ -28,6 +28,9 @@ model Characters {
 
   historicalEvents CharacterHistoricalEvent[]
 
+  occupations        CharacterOccupation[]
+  grantedOccupations CharacterOccupation[] @relation("OccupationGrantedByCharacter")
+
   characterVersions  CharacterVersion[]
   battleParticipants BattleParticipant[]
 }

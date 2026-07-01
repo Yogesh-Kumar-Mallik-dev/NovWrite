@@ -1,0 +1,59 @@
+model Occupation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name    String   @unique
+  aliases String[]
+
+  description String?
+
+  parentOccupationId String?     @db.ObjectId
+  parentOccupation   Occupation? @relation("OccupationHierarchy", fields: [parentOccupationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  childOccupations Occupation[] @relation("OccupationHierarchy")
+
+  practitioners CharacterOccupation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentOccupationId])
+}
+
+model CharacterOccupation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId  String @db.ObjectId
+  occupationId String @db.ObjectId
+
+  character  Characters @relation(fields: [characterId], references: [id])
+  occupation Occupation @relation(fields: [occupationId], references: [id])
+
+  grade Grade?
+
+  grantedByCharacterId String?     @db.ObjectId
+  grantedByCharacter   Characters? @relation("OccupationGrantedByCharacter", fields: [grantedByCharacterId], references: [id])
+
+  grantedByOrganizationId String?       @db.ObjectId
+  grantedByOrganization   Organization? @relation("OccupationGrantedByOrganization", fields: [grantedByOrganizationId], references: [id])
+
+  historicalEventId String?          @db.ObjectId
+  historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
+
+  acquiredAt WorldDate?
+  lostAt     WorldDate?
+
+  reason String?
+
+  isCurrent Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, occupationId, isCurrent])
+  @@index([characterId])
+  @@index([occupationId])
+  @@index([historicalEventId])
+  @@index([grantedByCharacterId])
+  @@index([grantedByOrganizationId])
+  @@index([isCurrent])
+}
