@@ -1,8 +1,8 @@
 model Characters {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   age         Int
-  dateOfBirth String?
+  dateOfBirth WorldDate?
 
   spiritRootId String      @db.ObjectId
   spiritRoot   SpiritRoots @relation(fields: [spiritRootId], references: [id])
@@ -17,6 +17,8 @@ model Characters {
   foundedOrganizations Organization[] @relation("OrganizationFounder")
 
   leadingOrganizations Organization[] @relation("OrganizationLeader")
+
+  locations CharacterLocation[]
 
   relations CharacterRelations[] @relation("SourceCharacter")
   relatedTo CharacterRelations[] @relation("TargetCharacter")

@@ -277,3 +277,39 @@ enum OrganizationRole {
   Prisoner
   Slave
 }
+
+enum LocationType {
+  World
+  Continent
+  Region
+  Kingdom
+  Empire
+  Province
+  City
+  Town
+  Village
+  Sect
+  Clan
+  Academy
+  Mountain
+  Forest
+  Desert
+  Ocean
+  Island
+  River
+  Lake
+  Valley
+  Cave
+  Ruins
+  Dungeon
+  SecretRealm
+  ForbiddenLand
+  Battlefield
+  AuctionHouse
+  Market
+  Inn
+  Temple
+  Mine
+  Prison
+  Other
+}

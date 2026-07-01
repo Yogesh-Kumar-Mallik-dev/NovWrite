@@ -1,0 +1,45 @@
+model Location {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String @unique
+
+  type LocationType
+
+  description String?
+
+  parentLocationId String?   @db.ObjectId
+  parentLocation   Location? @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  childLocations Location[] @relation("LocationHierarchy")
+
+  residents CharacterLocation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([parentLocationId])
+}
+
+model CharacterLocation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String @db.ObjectId
+  locationId  String @db.ObjectId
+
+  character Characters @relation(fields: [characterId], references: [id])
+  location  Location   @relation(fields: [locationId], references: [id])
+
+  arrivedAt DateTime @default(now())
+
+  leftAt DateTime?
+
+  reason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([characterId])
+  @@index([locationId])
+  @@index([leftAt])
+}

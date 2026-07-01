@@ -1,0 +1,80 @@
+type CalendarMonth {
+  number      Int
+  name        String
+  description String?
+}
+
+type CalendarWeekday {
+  number      Int
+  name        String
+  description String?
+}
+
+type WorldDate {
+  year  Int
+  month Int
+  day   Int
+}
+
+model Calendar {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String @unique
+
+  monthsPerYear Int @default(12)
+  daysPerMonth  Int @default(35)
+  daysPerWeek   Int @default(7)
+
+  pivotYear Int @default(0)
+
+  description String?
+
+  months CalendarMonth[]
+
+  weekdays CalendarWeekday[]
+
+  eras CalendarEra[]
+
+  festivals Festival[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CalendarEra {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  calendarId String   @db.ObjectId
+  calendar   Calendar @relation(fields: [calendarId], references: [id])
+
+  name String
+
+  startYear Int
+  endYear   Int?
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([calendarId])
+  @@index([startYear])
+}
+
+model Festival {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  calendarId String   @db.ObjectId
+  calendar   Calendar @relation(fields: [calendarId], references: [id])
+
+  name String
+
+  date WorldDate
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([calendarId])
+}
