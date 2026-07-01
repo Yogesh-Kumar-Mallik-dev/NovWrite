@@ -1,0 +1,117 @@
+model HistoricalEvent {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  title String @unique
+
+  type  HistoricalEventType
+  scale HistoricalEventScale
+
+  description String?
+
+  date WorldDate
+
+  locationId String?   @db.ObjectId
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  parentEventId String?          @db.ObjectId
+  parentEvent   HistoricalEvent? @relation("HistoricalEventHierarchy", fields: [parentEventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  subEvents HistoricalEvent[] @relation("HistoricalEventHierarchy")
+
+  characterEvents    CharacterHistoricalEvent[]
+  organizationEvents OrganizationHistoricalEvent[]
+  locationEvents     LocationHistoricalEvent[]
+  itemEvents         ItemHistoricalEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([scale])
+  @@index([locationId])
+  @@index([parentEventId])
+}
+
+model CharacterHistoricalEvent {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String @db.ObjectId
+  eventId     String @db.ObjectId
+
+  character Characters      @relation(fields: [characterId], references: [id])
+  event     HistoricalEvent @relation(fields: [eventId], references: [id])
+
+  role String?
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, eventId])
+  @@index([characterId])
+  @@index([eventId])
+}
+
+model OrganizationHistoricalEvent {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  organizationId String @db.ObjectId
+  eventId        String @db.ObjectId
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  event        HistoricalEvent @relation(fields: [eventId], references: [id])
+
+  role String?
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, eventId])
+  @@index([organizationId])
+  @@index([eventId])
+}
+
+model LocationHistoricalEvent {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  locationId String @db.ObjectId
+  eventId    String @db.ObjectId
+
+  location Location        @relation(fields: [locationId], references: [id])
+  event    HistoricalEvent @relation(fields: [eventId], references: [id])
+
+  role String?
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locationId, eventId])
+  @@index([locationId])
+  @@index([eventId])
+}
+
+model ItemHistoricalEvent {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId  String @db.ObjectId
+  eventId String @db.ObjectId
+
+  item  Item            @relation(fields: [itemId], references: [id])
+  event HistoricalEvent @relation(fields: [eventId], references: [id])
+
+  role String?
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([itemId, eventId])
+  @@index([itemId])
+  @@index([eventId])
+}

@@ -1,7 +1,9 @@
 model Organization {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  name String           @unique
+  name    String   @unique
+  aliases String[]
+
   type OrganizationType
 
   description String?
@@ -17,7 +19,11 @@ model Organization {
 
   subOrganizations Organization[] @relation("OrganizationHierarchy")
 
-  members CharacterOrganization[]
+  foundedAt   WorldDate?
+  dissolvedAt WorldDate?
+
+  members          CharacterOrganization[]
+  historicalEvents OrganizationHistoricalEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -42,8 +48,10 @@ model CharacterOrganization {
   contributionPoints Int?
   reputation         Int?
 
-  joinedAt DateTime?
-  leftAt   DateTime?
+  joinedAt WorldDate?
+  leftAt   WorldDate?
+
+  reason String?
 
   isCurrent Boolean @default(true)
 

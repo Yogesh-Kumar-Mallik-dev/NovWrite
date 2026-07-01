@@ -1,7 +1,6 @@
 model Characters {
   id          String     @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  age         Int
   dateOfBirth WorldDate?
 
   spiritRootId String      @db.ObjectId
@@ -23,20 +22,24 @@ model Characters {
   relations CharacterRelations[] @relation("SourceCharacter")
   relatedTo CharacterRelations[] @relation("TargetCharacter")
 
+  historicalEvents CharacterHistoricalEvent[]
+
   characterVersions CharacterVersion[]
 }
 
 model CharacterVersion {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
   characterId String     @db.ObjectId
   character   Characters @relation(fields: [characterId], references: [id])
 
-  updateType  Update
-  title       String
+  version Int
+
+  title String?
+
   description String?
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model CharacterInventory {
@@ -51,7 +54,13 @@ model CharacterInventory {
   quantity Int     @default(1)
   equipped Boolean @default(false)
 
-  obtainedAt DateTime @default(now())
+  obtainedAt WorldDate?
+
+  lostAt WorldDate?
+  reason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([characterId])
 }

@@ -10,6 +10,7 @@ model Item {
   updatedAt DateTime @updatedAt
 
   characterInventories CharacterInventory[]
+  historicalEvents     ItemHistoricalEvent[]
 
   weapon       Weapon?
   armor        Armor?

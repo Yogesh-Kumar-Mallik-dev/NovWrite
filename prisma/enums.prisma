@@ -7,20 +7,6 @@ enum Elements {
   Ice
 }
 
-enum Update {
-  Edit
-  Update
-  Breakthrough
-  Death
-  Birth
-  Rebirth
-  Encounter
-  Join_Faction
-  Left_Faction
-  Promotion
-  Demotion
-}
-
 enum RelationshipType {
   Parent
   Child
@@ -312,4 +298,70 @@ enum LocationType {
   Mine
   Prison
   Other
+}
+
+enum HistoricalEventType {
+  Birth
+  Death
+  Rebirth
+
+  Awakening
+  Breakthrough
+  Ascension
+
+  Marriage
+  Divorce
+
+  Founded
+  Dissolved
+
+  Alliance
+  Merger
+  Split
+
+  LeadershipChange
+
+  Coronation
+  Succession
+
+  Treaty
+  Declaration
+
+  Rebellion
+  Revolution
+
+  Battle
+  Siege
+  WarStarted
+  WarEnded
+  Massacre
+
+  Catastrophe
+  NaturalDisaster
+  HeavenlyPhenomenon
+
+  SecretRealmOpened
+  ArtifactDiscovered
+
+  Auction
+  TradeAgreement
+  EconomicCollapse
+
+  Prophecy
+  DivineRevelation
+
+  EraBeginning
+  EraEnding
+
+  Other
+}
+
+enum HistoricalEventScale {
+  Personal
+  Local
+  Regional
+  National
+  Continental
+  World
+  Cosmic
 }

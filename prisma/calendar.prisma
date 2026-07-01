@@ -49,8 +49,8 @@ model CalendarEra {
 
   name String
 
-  startYear Int
-  endYear   Int?
+  startYear WorldDate
+  endYear   WorldDate?
 
   description String?
 
