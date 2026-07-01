@@ -24,6 +24,7 @@ model Organization {
 
   members          CharacterOrganization[]
   historicalEvents OrganizationHistoricalEvent[]
+  grantedTitles    CharacterTitle[]              @relation("TitleGrantedByOrganization")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

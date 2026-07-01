@@ -365,3 +365,19 @@ enum HistoricalEventScale {
   World
   Cosmic
 }
+
+enum TitleType {
+  Honorary
+  Military
+  Noble
+  Royal
+  Religious
+  Cultivation
+  Academic
+  Criminal
+  Legendary
+  Posthumous
+  Inherited
+  Temporary
+  Other
+}

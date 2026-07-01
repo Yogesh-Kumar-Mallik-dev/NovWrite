@@ -23,6 +23,8 @@ model HistoricalEvent {
   locationEvents     LocationHistoricalEvent[]
   itemEvents         ItemHistoricalEvent[]
 
+  titles CharacterTitle[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

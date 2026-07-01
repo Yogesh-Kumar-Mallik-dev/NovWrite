@@ -22,6 +22,9 @@ model Characters {
   relations CharacterRelations[] @relation("SourceCharacter")
   relatedTo CharacterRelations[] @relation("TargetCharacter")
 
+  titles        CharacterTitle[]
+  grantedTitles CharacterTitle[] @relation("TitleGrantedByCharacter")
+
   historicalEvents CharacterHistoricalEvent[]
 
   characterVersions CharacterVersion[]

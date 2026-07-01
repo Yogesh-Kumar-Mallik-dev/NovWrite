@@ -1,0 +1,57 @@
+model Title {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name    String   @unique
+  aliases String[]
+
+  type TitleType
+
+  description String?
+
+  prestige Int @default(0)
+
+  holders CharacterTitle[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([prestige])
+}
+
+model CharacterTitle {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String @db.ObjectId
+  titleId     String @db.ObjectId
+
+  character Characters @relation(fields: [characterId], references: [id])
+  title     Title      @relation(fields: [titleId], references: [id])
+
+  grantedByCharacterId String?     @db.ObjectId
+  grantedByCharacter   Characters? @relation("TitleGrantedByCharacter", fields: [grantedByCharacterId], references: [id])
+
+  grantedByOrganizationId String?       @db.ObjectId
+  grantedByOrganization   Organization? @relation("TitleGrantedByOrganization", fields: [grantedByOrganizationId], references: [id])
+
+  historicalEventId String?          @db.ObjectId
+  historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
+
+  grantedAt WorldDate?
+  revokedAt WorldDate?
+
+  reason String?
+
+  isCurrent Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, titleId, isCurrent])
+  @@index([characterId])
+  @@index([titleId])
+  @@index([historicalEventId])
+  @@index([grantedByCharacterId])
+  @@index([grantedByOrganizationId])
+  @@index([isCurrent])
+}
