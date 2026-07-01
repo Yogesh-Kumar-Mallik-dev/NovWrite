@@ -7,8 +7,8 @@ model HistoricalEvent {
   scale HistoricalEventScale
 
   description String?
-
-  date WorldDate
+  crafts      CharacterCraft[]
+  date        WorldDate
 
   locationId String?   @db.ObjectId
   location   Location? @relation(fields: [locationId], references: [id])

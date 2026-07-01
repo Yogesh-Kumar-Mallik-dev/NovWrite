@@ -11,13 +11,17 @@ model Item {
 
   characterInventories CharacterInventory[]
   historicalEvents     ItemHistoricalEvent[]
+  recipeResult         Recipe[]              @relation("RecipeResult")
 
-  weapon       Weapon?
-  armor        Armor?
-  pill         Pill?
-  talisman     Talisman?
-  treasure     Treasure?
-  secretScroll SecretScroll?
+  recipeIngredients RecipeIngredient[]
+  weapon            Weapon?
+  armor             Armor?
+  pill              Pill?
+  talisman          Talisman?
+  artifact          Artifact?
+  treasure          Treasure?
+  secretScroll      SecretScroll?
+  material          Material?
 }
 
 model Weapon {
@@ -83,17 +87,52 @@ model Talisman {
   updatedAt DateTime @updatedAt
 }
 
+model Artifact {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  category ArtifactCategory
+
+  passiveEffect String?
+  activeEffect  String?
+
+  durability Int?
+
+  bound          Boolean @default(false)
+  rechargeable   Boolean @default(false)
+  growthArtifact Boolean @default(false)
+
+  uses Int?
+
+  requiredRealm Qi_MajorRealm?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
 model Treasure {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
   itemId String @unique @db.ObjectId
   item   Item   @relation(fields: [itemId], references: [id])
 
+  category TreasureCategory
+
   passiveEffect String?
   activeEffect  String?
 
+  consumable Boolean @default(false)
+  sentient   Boolean @default(false)
+  unique     Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([category])
 }
 
 model SecretScroll {
@@ -109,4 +148,24 @@ model SecretScroll {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Material {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  itemId String @unique @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  type   MaterialType
+  source MaterialSource
+
+  purity Int?
+
+  renewable Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([source])
 }

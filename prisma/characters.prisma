@@ -31,6 +31,8 @@ model Characters {
   occupations        CharacterOccupation[]
   grantedOccupations CharacterOccupation[] @relation("OccupationGrantedByCharacter")
 
+  crafts CharacterCraft[]
+
   characterVersions  CharacterVersion[]
   battleParticipants BattleParticipant[]
 }

@@ -1,0 +1,103 @@
+model Recipe {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String @unique
+
+  category RecipeCategory
+
+  description String?
+
+  occupationId String     @db.ObjectId
+  occupation   Occupation @relation(fields: [occupationId], references: [id])
+
+  resultItemId String @db.ObjectId
+  resultItem   Item   @relation("RecipeResult", fields: [resultItemId], references: [id])
+
+  requiredRealm Qi_MajorRealm?
+
+  craftingTime Int?
+
+  ingredients RecipeIngredient[]
+
+  crafts CharacterCraft[]
+
+  formation Formation?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([occupationId])
+}
+
+model RecipeIngredient {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  recipeId String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+
+  itemId String @db.ObjectId
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  quantity Int @default(1)
+
+  optional Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([recipeId, itemId])
+  @@index([recipeId])
+  @@index([itemId])
+}
+
+model CharacterCraft {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String     @db.ObjectId
+  character   Characters @relation(fields: [characterId], references: [id])
+
+  recipeId String @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+
+  historicalEventId String?          @db.ObjectId
+  historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
+
+  quantity Int @default(1)
+
+  result CraftResult
+
+  craftedAt WorldDate?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([characterId])
+  @@index([recipeId])
+  @@index([historicalEventId])
+}
+
+model Formation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  recipeId String @unique @db.ObjectId
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+
+  category FormationCategory
+
+  radius Int?
+
+  minimumParticipants Int?
+
+  maximumParticipants Int?
+
+  duration Int?
+
+  effect String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}

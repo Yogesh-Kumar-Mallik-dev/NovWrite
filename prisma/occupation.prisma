@@ -12,6 +12,7 @@ model Occupation {
   childOccupations Occupation[] @relation("OccupationHierarchy")
 
   practitioners CharacterOccupation[]
+  recipes       Recipe[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

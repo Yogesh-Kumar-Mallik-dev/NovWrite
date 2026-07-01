@@ -457,3 +457,143 @@ enum WarRole {
   Invader
   Defender
 }
+
+enum MaterialType {
+  Herb
+  Wood
+  Ore
+  Metal
+  Crystal
+  Stone
+
+  Blood
+  Bone
+  Flesh
+  Hide
+  Scale
+  Feather
+  Claw
+  Fang
+  Horn
+  Core
+
+  Essence
+  Soul
+  Qi
+
+  Liquid
+  Gas
+
+  Other
+}
+
+enum MaterialSource {
+  Plant
+  Beast
+  SpiritBeast
+  Human
+  Demon
+  Devil
+  Dragon
+  Phoenix
+
+  Mineral
+
+  Artificial
+
+  Heavenly
+
+  Divine
+
+  Chaos
+
+  Other
+}
+
+enum ArtifactCategory {
+  Storage
+  Flying
+
+  Cauldron
+  Furnace
+
+  Compass
+  Map
+
+  Bell
+  Mirror
+  Lamp
+  Seal
+  Pagoda
+
+  Boat
+  Chariot
+
+  Puppet
+
+  FormationCore
+
+  Communication
+
+  Space
+  Time
+
+  Utility
+
+  Other
+}
+
+enum TreasureCategory {
+  HeavenlyFlame
+  HeavenlyWater
+  HeavenlyLightning
+  HeavenlyWind
+  HeavenlyEarth
+
+  WorldSeed
+
+  DaoFragment
+
+  OriginSource
+
+  ChaosTreasure
+
+  SpiritSpring
+
+  DivineCrystal
+
+  NaturalWonder
+
+  Other
+}
+
+enum RecipeCategory {
+  Weapon
+  Armor
+  Pill
+  Talisman
+  Artifact
+  Formation
+  Other
+}
+
+enum CraftResult {
+  Success
+  Failure
+  PartialSuccess
+}
+
+enum FormationCategory {
+  Offensive
+  Defensive
+  Support
+  Illusion
+  Barrier
+  Detection
+  Concealment
+  Gathering
+  Teleportation
+  Sealing
+  Trap
+  Other
+}
