@@ -12,6 +12,12 @@ model Characters {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  organizations CharacterOrganization[]
+
+  foundedOrganizations Organization[] @relation("OrganizationFounder")
+
+  leadingOrganizations Organization[] @relation("OrganizationLeader")
+
   relations CharacterRelations[] @relation("SourceCharacter")
   relatedTo CharacterRelations[] @relation("TargetCharacter")
 

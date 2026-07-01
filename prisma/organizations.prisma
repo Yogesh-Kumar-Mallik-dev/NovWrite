@@ -1,0 +1,58 @@
+model Organization {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String           @unique
+  type OrganizationType
+
+  description String?
+
+  founderId String?     @db.ObjectId
+  founder   Characters? @relation("OrganizationFounder", fields: [founderId], references: [id])
+
+  leaderId String?     @db.ObjectId
+  leader   Characters? @relation("OrganizationLeader", fields: [leaderId], references: [id])
+
+  parentOrganizationId String?       @db.ObjectId
+  parentOrganization   Organization? @relation("OrganizationHierarchy", fields: [parentOrganizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  subOrganizations Organization[] @relation("OrganizationHierarchy")
+
+  members CharacterOrganization[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([leaderId])
+  @@index([founderId])
+  @@index([parentOrganizationId])
+}
+
+model CharacterOrganization {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId    String @db.ObjectId
+  organizationId String @db.ObjectId
+
+  character    Characters   @relation(fields: [characterId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  role OrganizationRole
+
+  contributionPoints Int?
+  reputation         Int?
+
+  joinedAt DateTime?
+  leftAt   DateTime?
+
+  isCurrent Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, organizationId, role, isCurrent])
+  @@index([characterId])
+  @@index([organizationId])
+  @@index([role])
+  @@index([isCurrent])
+}

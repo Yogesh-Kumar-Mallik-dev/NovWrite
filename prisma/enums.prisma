@@ -214,10 +214,66 @@ enum FightingTechniqueType {
   Movement
   Soul
   Illusion
-  Fire
-  Water
-  Earth
-  Wind
-  Lightning
-  Ice
+  elemental
+}
+
+enum OrganizationType {
+  Sect
+  Clan
+  Family
+  Empire
+  Kingdom
+  Dynasty
+  Guild
+  MerchantAssociation
+  MercenaryCompany
+  AssassinOrganization
+  BeastFaction
+  DemonFaction
+  DevilFaction
+  ImmortalFaction
+  ReligiousOrder
+  Academy
+  NobleHouse
+  Alliance
+  HiddenOrganization
+  CriminalOrganization
+  Independent
+}
+
+enum OrganizationRole {
+  Founder
+  Ancestor
+  Patriarch
+  Matriarch
+  SectMaster
+  ViceSectMaster
+  Elder
+  CoreElder
+  GrandElder
+  PeakMaster
+  HallMaster
+  Instructor
+  Deacon
+  CoreDisciple
+  InnerDisciple
+  OuterDisciple
+  DirectDisciple
+  HonoraryElder
+  Guardian
+  Captain
+  Commander
+  General
+  King
+  Emperor
+  CrownPrince
+  Prince
+  Princess
+  Noble
+  Citizen
+  Merchant
+  Member
+  Guest
+  Prisoner
+  Slave
 }
