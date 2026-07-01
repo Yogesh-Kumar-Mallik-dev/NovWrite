@@ -1,7 +1,8 @@
 model Characters {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   dateOfBirth WorldDate?
+  species     CharacterSpecies[]
 
   spiritRootId String      @db.ObjectId
   spiritRoot   SpiritRoots @relation(fields: [spiritRootId], references: [id])
@@ -27,7 +28,8 @@ model Characters {
 
   historicalEvents CharacterHistoricalEvent[]
 
-  characterVersions CharacterVersion[]
+  characterVersions  CharacterVersion[]
+  battleParticipants BattleParticipant[]
 }
 
 model CharacterVersion {

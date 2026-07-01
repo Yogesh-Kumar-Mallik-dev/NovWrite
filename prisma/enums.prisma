@@ -381,3 +381,79 @@ enum TitleType {
   Temporary
   Other
 }
+
+enum ConflictType {
+  Duel
+  Competition
+  Tournament
+  Skirmish
+  Siege
+  Raid
+  Ambush
+  Expedition
+  War
+  Rebellion
+  Revolution
+  SelfDefense
+  MonsterAttack
+  Extermination
+  Other
+}
+
+enum BattleOutcome {
+  Victory
+  Defeat
+  Draw
+  Retreat
+  Stalemate
+  PyrrhicVictory
+  Inconclusive
+}
+
+enum BattleRole {
+  Commander
+  Combatant
+  Support
+  Healer
+  Scout
+  Strategist
+  Defender
+  Attacker
+  Observer
+  Spectator
+}
+
+enum WarType {
+  Civil
+  Independence
+  Conquest
+  Territorial
+  Religious
+  Succession
+  Revolution
+  Extermination
+  Defensive
+  Offensive
+  Other
+}
+
+enum WarOutcome {
+  Victory
+  Defeat
+  WhitePeace
+  Ceasefire
+  Armistice
+  Annexation
+  Occupation
+  Ongoing
+}
+
+enum WarRole {
+  Belligerent
+  Ally
+  Mercenary
+  Neutral
+  Occupied
+  Invader
+  Defender
+}

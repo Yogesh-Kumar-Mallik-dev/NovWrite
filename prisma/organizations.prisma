@@ -22,12 +22,14 @@ model Organization {
   foundedAt   WorldDate?
   dissolvedAt WorldDate?
 
+  wars             WarParticipant[]
   members          CharacterOrganization[]
   historicalEvents OrganizationHistoricalEvent[]
   grantedTitles    CharacterTitle[]              @relation("TitleGrantedByOrganization")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  battleParticipants BattleParticipant[]
 
   @@index([type])
   @@index([leaderId])

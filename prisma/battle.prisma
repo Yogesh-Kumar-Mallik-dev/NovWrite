@@ -1,0 +1,72 @@
+model Battle {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  historicalEventId String          @unique @db.ObjectId
+  historicalEvent   HistoricalEvent @relation(fields: [historicalEventId], references: [id])
+
+  conflictType ConflictType
+  outcome      BattleOutcome
+
+  description String?
+
+  duration Int?
+
+  warId String? @db.ObjectId
+  war   War?    @relation(fields: [warId], references: [id])
+
+  sides BattleSide[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conflictType])
+  @@index([outcome])
+  @@index([warId])
+}
+
+model BattleSide {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  battleId String @db.ObjectId
+  battle   Battle @relation(fields: [battleId], references: [id])
+
+  name String?
+
+  side Int
+
+  outcome BattleOutcome
+
+  participants BattleParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([battleId, side])
+  @@index([battleId])
+}
+
+model BattleParticipant {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  battleSideId String     @db.ObjectId
+  battleSide   BattleSide @relation(fields: [battleSideId], references: [id])
+
+  characterId String?     @db.ObjectId
+  character   Characters? @relation(fields: [characterId], references: [id])
+
+  organizationId String?       @db.ObjectId
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  role BattleRole
+
+  commander Boolean @default(false)
+
+  casualties Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([battleSideId])
+  @@index([characterId])
+  @@index([organizationId])
+}

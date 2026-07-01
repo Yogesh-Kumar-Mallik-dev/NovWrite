@@ -1,0 +1,55 @@
+model Species {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name    String   @unique
+  aliases String[]
+
+  description String?
+
+  parentSpeciesId String?  @db.ObjectId
+  parentSpecies   Species? @relation("SpeciesHierarchy", fields: [parentSpeciesId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  childSpecies Species[] @relation("SpeciesHierarchy")
+
+  grade Grade?
+
+  averageLifespan Int?
+  maximumLifespan Int?
+
+  extinct  Boolean @default(false)
+  playable Boolean @default(true)
+
+  members CharacterSpecies[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentSpeciesId])
+  @@index([grade])
+  @@index([extinct])
+}
+
+model CharacterSpecies {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String @db.ObjectId
+  speciesId   String @db.ObjectId
+
+  character Characters @relation(fields: [characterId], references: [id])
+  species   Species    @relation(fields: [speciesId], references: [id])
+
+  acquiredAt WorldDate?
+  lostAt     WorldDate?
+
+  reason String?
+
+  isCurrent Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, speciesId, isCurrent])
+  @@index([characterId])
+  @@index([speciesId])
+  @@index([isCurrent])
+}
