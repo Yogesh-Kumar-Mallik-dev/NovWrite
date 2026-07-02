@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { DEFAULT_BOX_WIDTH } from "./constants";
 
 /* -------------------------------------------------------------------------- */
@@ -7,7 +5,11 @@ import { DEFAULT_BOX_WIDTH } from "./constants";
 /* -------------------------------------------------------------------------- */
 
 export function createRequestId() {
-  return randomUUID()
+  const id =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now()}${Math.random()}`;
+
+  return id
     .replace(/-/g, "")
     .slice(0, 8)
     .toUpperCase();
@@ -158,6 +160,13 @@ export function formatBytes(
 /* -------------------------------------------------------------------------- */
 
 export function terminalWidth() {
+  if (
+    typeof process ===
+    "undefined"
+  ) {
+    return DEFAULT_BOX_WIDTH;
+  }
+
   return (
     process.stdout.columns ??
     DEFAULT_BOX_WIDTH

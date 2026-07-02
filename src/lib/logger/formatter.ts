@@ -30,6 +30,49 @@ const WIDTH = Math.max(
 
 const INNER_WIDTH = WIDTH - 2;
 
+const ANSI_PATTERN =
+  /\x1B\[[0-?]*[ -/]*[@-~]/g;
+
+function visibleLength(
+  value: string
+) {
+  return value.replace(
+    ANSI_PATTERN,
+    ""
+  ).length;
+}
+
+function fitVisible(
+  value: string,
+  width: number
+) {
+  const pad =
+    width - visibleLength(value);
+
+  if (pad <= 0) {
+    return value;
+  }
+
+  return value + " ".repeat(pad);
+}
+
+function heapMemoryMb() {
+  if (
+    typeof process ===
+    "undefined" ||
+    !process.memoryUsage
+  ) {
+    return "N/A";
+  }
+
+  return `${(
+    process.memoryUsage()
+      .heapUsed /
+    1024 /
+    1024
+  ).toFixed(2)} MB`;
+}
+
 function line(
   left: string,
   fill: string,
@@ -51,7 +94,10 @@ function row(
 
   return (
     BOX.VERTICAL +
-    text.padEnd(INNER_WIDTH) +
+    fitVisible(
+      text,
+      INNER_WIDTH
+    ) +
     BOX.VERTICAL
   );
 }
@@ -89,7 +135,10 @@ function header(
 
   return (
     BOX.VERTICAL +
-    text.padEnd(INNER_WIDTH) +
+    fitVisible(
+      text,
+      INNER_WIDTH
+    ) +
     BOX.VERTICAL
   );
 }
@@ -227,12 +276,7 @@ export function formatApiLog(
   rows.push(
     row(
       "Memory",
-      `${(
-        process.memoryUsage()
-          .heapUsed /
-        1024 /
-        1024
-      ).toFixed(2)} MB`
+      heapMemoryMb()
     )
   );
 

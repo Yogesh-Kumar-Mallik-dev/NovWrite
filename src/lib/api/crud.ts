@@ -15,6 +15,10 @@ import {
   notFound,
   validationError,
 } from "@/lib/api/response";
+import {
+  beginRequest,
+  LoggerApi,
+} from "@/lib/logger";
 
 
 import { handlePrismaError } from "./prismaError";
@@ -28,10 +32,17 @@ function getRegistryEntry(
   return registry[domain] ?? null;
 }
 
-
-
-function handleApiError(error: unknown) {
+function handleApiError(
+  error: unknown,
+  log: LoggerApi,
+  context: {
+    registry?: string;
+    handler: string;
+    operation: string;
+  }
+) {
   if (error instanceof ZodError) {
+    log.validation(error, context);
     return validationError(error);
   }
 
@@ -39,8 +50,28 @@ function handleApiError(error: unknown) {
     error instanceof
     Prisma.PrismaClientKnownRequestError
   ) {
-    return handlePrismaError(error);
+    const response =
+      handlePrismaError(error);
+
+    if (response.status >= 500) {
+      log.internal(error, context);
+      return response;
+    }
+
+    if (response.status === 404) {
+      log.notFound(
+        "Requested resource was not found.",
+        context
+      );
+      return response;
+    }
+
+    log.badRequest(error, context);
+
+    return response;
   }
+
+  log.internal(error, context);
 
   return internalServerError(error);
 }
@@ -59,14 +90,23 @@ export async function handleGetCollection(
     }>;
   }
 ) {
+  const log =
+    beginRequest(request);
+  let domain: string | undefined;
+
   try {
-    const { domain } = await params;
+    ({ domain } = await params);
 
 
     const entry =
       getRegistryEntry(domain);
 
     if (!entry) {
+      log.notFound("Unknown domain.", {
+        registry: domain,
+        handler: "Collection Handler",
+        operation: "findMany+count",
+      });
       return notFound(
         "Unknown domain."
       );
@@ -85,6 +125,13 @@ export async function handleGetCollection(
         }),
       ]);
 
+    log.ok({
+      registry: domain,
+      handler: "Collection Handler",
+      operation: "findMany+count",
+      rows: data.length,
+    });
+
     return ok({
       data,
       pagination: {
@@ -100,7 +147,17 @@ export async function handleGetCollection(
       },
     });
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(
+      error,
+      log,
+      {
+        registry: domain,
+        handler:
+          "Collection Handler",
+        operation:
+          "findMany+count",
+      }
+    );
   }
 }
 
@@ -118,13 +175,22 @@ export async function handleCreate(
     }>;
   }
 ) {
+  const log =
+    beginRequest(request);
+  let domain: string | undefined;
+
   try {
-    const { domain } = await params;
+    ({ domain } = await params);
 
     const entry =
       getRegistryEntry(domain);
 
     if (!entry) {
+      log.notFound("Unknown domain.", {
+        registry: domain,
+        handler: "Collection Handler",
+        operation: "create",
+      });
       return notFound(
         "Unknown domain."
       );
@@ -143,10 +209,26 @@ export async function handleCreate(
         data,
       });
 
+    log.created({
+      registry: domain,
+      handler: "Collection Handler",
+      operation: "create",
+      rows: 1,
+    });
+
     return created(
       createdRecord
     );
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(
+      error,
+      log,
+      {
+        registry: domain,
+        handler:
+          "Collection Handler",
+        operation: "create",
+      }
+    );
   }
 }

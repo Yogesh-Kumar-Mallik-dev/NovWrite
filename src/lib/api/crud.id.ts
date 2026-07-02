@@ -14,6 +14,10 @@ import {
   validationError,
   internalServerError,
 } from "@/lib/api/response";
+import {
+  beginRequest,
+  LoggerApi,
+} from "@/lib/logger";
 
 import { validateObjectId } from "./objectId"
 
@@ -28,8 +32,17 @@ function getRegistryEntry(
   return registry[domain] ?? null;
 }
 
-function handleApiError(error: unknown) {
+function handleApiError(
+  error: unknown,
+  log: LoggerApi,
+  context: {
+    registry?: string;
+    handler: string;
+    operation: string;
+  }
+) {
   if (error instanceof ZodError) {
+    log.validation(error, context);
     return validationError(error);
   }
 
@@ -37,8 +50,28 @@ function handleApiError(error: unknown) {
     error instanceof
     Prisma.PrismaClientKnownRequestError
   ) {
-    return handlePrismaError(error);
+    const response =
+      handlePrismaError(error);
+
+    if (response.status >= 500) {
+      log.internal(error, context);
+      return response;
+    }
+
+    if (response.status === 404) {
+      log.notFound(
+        "Requested resource was not found.",
+        context
+      );
+      return response;
+    }
+
+    log.badRequest(error, context);
+
+    return response;
   }
+
+  log.internal(error, context);
 
   return internalServerError(error);
 }
@@ -47,7 +80,7 @@ function handleApiError(error: unknown) {
 /* -------------------------------------------------------------------------- */
 
 export async function handleGetById(
-  _request: NextRequest,
+  request: NextRequest,
   {
     params,
   }: {
@@ -57,12 +90,27 @@ export async function handleGetById(
     }>;
   }
 ) {
+  const log =
+    beginRequest(request);
+  let domain: string | undefined;
+
   try {
-    const { domain, id } = await params;
+    const resolved =
+      await params;
+    domain = resolved.domain;
+    const { id } = resolved;
 
     const invalid = validateObjectId(id);
 
     if (invalid) {
+      log.badRequest(
+        new Error("Invalid ObjectId."),
+        {
+          registry: domain,
+          handler: "Resource Handler",
+          operation: "findUnique",
+        }
+      );
       return invalid;
     }
 
@@ -70,6 +118,11 @@ export async function handleGetById(
       getRegistryEntry(domain);
 
     if (!entry) {
+      log.notFound("Unknown domain.", {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "findUnique",
+      });
       return notFound(
         "Unknown domain."
       );
@@ -82,12 +135,35 @@ export async function handleGetById(
       });
 
     if (!record) {
+      log.notFound(
+        "Resource not found.",
+        {
+          registry: domain,
+          handler: "Resource Handler",
+          operation: "findUnique",
+        }
+      );
       return notFound();
     }
 
+    log.ok({
+      registry: domain,
+      handler: "Resource Handler",
+      operation: "findUnique",
+      rows: 1,
+    });
+
     return ok(record);
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(
+      error,
+      log,
+      {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "findUnique",
+      }
+    );
   }
 }
 
@@ -106,14 +182,28 @@ export async function handleUpdate(
     }>;
   }
 ) {
+  const log =
+    beginRequest(request);
+  let domain: string | undefined;
+
   try {
-    const { domain, id } =
+    const resolved =
       await params;
+    domain = resolved.domain;
+    const { id } = resolved;
 
     const invalid =
       validateObjectId(id);
 
     if (invalid) {
+      log.badRequest(
+        new Error("Invalid ObjectId."),
+        {
+          registry: domain,
+          handler: "Resource Handler",
+          operation: "update",
+        }
+      );
       return invalid;
     }
 
@@ -121,6 +211,11 @@ export async function handleUpdate(
       getRegistryEntry(domain);
 
     if (!entry) {
+      log.notFound("Unknown domain.", {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "update",
+      });
       return notFound(
         "Unknown domain."
       );
@@ -140,12 +235,27 @@ export async function handleUpdate(
         data,
       });
 
+    log.updated({
+      registry: domain,
+      handler: "Resource Handler",
+      operation: "update",
+      rows: 1,
+    });
+
     return ok(
       record,
       "Resource updated successfully."
     );
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(
+      error,
+      log,
+      {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "update",
+      }
+    );
   }
 }
 
@@ -154,7 +264,7 @@ export async function handleUpdate(
 /* -------------------------------------------------------------------------- */
 
 export async function handleDelete(
-  _request: NextRequest,
+  request: NextRequest,
   {
     params,
   }: {
@@ -164,14 +274,28 @@ export async function handleDelete(
     }>;
   }
 ) {
+  const log =
+    beginRequest(request);
+  let domain: string | undefined;
+
   try {
-    const { domain, id } =
+    const resolved =
       await params;
+    domain = resolved.domain;
+    const { id } = resolved;
 
     const invalid =
       validateObjectId(id);
 
     if (invalid) {
+      log.badRequest(
+        new Error("Invalid ObjectId."),
+        {
+          registry: domain,
+          handler: "Resource Handler",
+          operation: "delete",
+        }
+      );
       return invalid;
     }
 
@@ -179,6 +303,11 @@ export async function handleDelete(
       getRegistryEntry(domain);
 
     if (!entry) {
+      log.notFound("Unknown domain.", {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "delete",
+      });
       return notFound(
         "Unknown domain."
       );
@@ -188,8 +317,24 @@ export async function handleDelete(
       where: { id },
     });
 
+    log.deleted({
+      registry: domain,
+      handler: "Resource Handler",
+      operation: "delete",
+      message:
+        "Resource deleted successfully.",
+    });
+
     return noContent();
   } catch (error) {
-    return handleApiError(error);
+    return handleApiError(
+      error,
+      log,
+      {
+        registry: domain,
+        handler: "Resource Handler",
+        operation: "delete",
+      }
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { BOX, ICONS } from "./constants";
+import { BOX } from "./constants";
 
 import { TreeNode } from "./types";
 
