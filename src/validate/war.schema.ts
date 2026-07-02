@@ -25,72 +25,84 @@ function compareWorldDates(
   return a.day - b.day;
 }
 
+type TimelineValidationData = {
+  startedAt?: z.infer<typeof worldDateSchema>;
+  endedAt?: z.infer<typeof worldDateSchema>;
+  joinedAt?: z.infer<typeof worldDateSchema>;
+  leftAt?: z.infer<typeof worldDateSchema>;
+  allowTimelineAnomaly?: boolean;
+};
+
 /* -------------------------------------------------------------------------- */
 /*                                    War                                     */
 /* -------------------------------------------------------------------------- */
 
-const warSchema = z
-  .object({
-    historicalEventId: objectIdSchema,
+const warBaseSchema = z.object({
+  historicalEventId: objectIdSchema,
 
-    type: z.enum(WarType),
+  type: z.enum(WarType),
 
-    outcome: z.enum(WarOutcome),
+  outcome: z.enum(WarOutcome),
 
-    cause: descriptionSchema.optional(),
+  cause: descriptionSchema.optional(),
 
-    result: descriptionSchema.optional(),
+  result: descriptionSchema.optional(),
 
-    startedAt: worldDateSchema,
+  startedAt: worldDateSchema,
 
-    endedAt: worldDateSchema.optional(),
+  endedAt: worldDateSchema.optional(),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.endedAt
-    ) {
-      return;
-    }
+  allowTimelineAnomaly:
+    z.boolean().default(false),
+});
 
-    if (
-      compareWorldDates(
-        data.endedAt,
-        data.startedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["endedAt"],
-        message:
-          "A war cannot end before it starts unless timeline anomalies are allowed.",
-      });
-    }
-  });
+function validateWar(
+  data: TimelineValidationData,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.startedAt ||
+    !data.endedAt
+  ) {
+    return;
+  }
 
-export const createWarSchema = warSchema;
+  if (
+    compareWorldDates(
+      data.endedAt,
+      data.startedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endedAt"],
+      message:
+        "A war cannot end before it starts unless timeline anomalies are allowed.",
+    });
+  }
+}
 
-export type CreateWarInput = z.infer<
-  typeof createWarSchema
->;
+export const createWarSchema =
+  warBaseSchema.superRefine(validateWar);
+
+export type CreateWarInput =
+  z.infer<typeof createWarSchema>;
 
 export const updateWarSchema =
-  warSchema.partial();
+  warBaseSchema
+    .partial()
+    .superRefine(validateWar);
 
-export type UpdateWarInput = z.infer<
-  typeof updateWarSchema
->;
+export type UpdateWarInput =
+  z.infer<typeof updateWarSchema>;
 
 /* -------------------------------------------------------------------------- */
 /*                              War Participant                               */
 /* -------------------------------------------------------------------------- */
 
-const warParticipantSchema = z
-  .object({
+const warParticipantBaseSchema =
+  z.object({
     warId: objectIdSchema,
 
     organizationId: objectIdSchema,
@@ -99,40 +111,47 @@ const warParticipantSchema = z
 
     role: z.enum(WarRole),
 
-    joinedAt: worldDateSchema.optional(),
+    joinedAt:
+      worldDateSchema.optional(),
 
-    leftAt: worldDateSchema.optional(),
+    leftAt:
+      worldDateSchema.optional(),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.joinedAt ||
-      !data.leftAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.leftAt,
-        data.joinedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["leftAt"],
-        message:
-          "A participant cannot leave a war before joining unless timeline anomalies are allowed.",
-      });
-    }
+    allowTimelineAnomaly:
+      z.boolean().default(false),
   });
 
+function validateWarParticipant(
+  data: TimelineValidationData,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.joinedAt ||
+    !data.leftAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.leftAt,
+      data.joinedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["leftAt"],
+      message:
+        "A participant cannot leave a war before joining unless timeline anomalies are allowed.",
+    });
+  }
+}
+
 export const createWarParticipantSchema =
-  warParticipantSchema;
+  warParticipantBaseSchema.superRefine(
+    validateWarParticipant
+  );
 
 export type CreateWarParticipantInput =
   z.infer<
@@ -140,7 +159,11 @@ export type CreateWarParticipantInput =
   >;
 
 export const updateWarParticipantSchema =
-  warParticipantSchema.partial();
+  warParticipantBaseSchema
+    .partial()
+    .superRefine(
+      validateWarParticipant
+    );
 
 export type UpdateWarParticipantInput =
   z.infer<

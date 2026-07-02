@@ -116,45 +116,58 @@ export type UpdateCharacterCraftInput =
 /*                                 Formation                                  */
 /* -------------------------------------------------------------------------- */
 
-export const createFormationSchema =
-  z.object({
-    recipeId: objectIdSchema,
+const formationBaseSchema = z.object({
+  recipeId: objectIdSchema,
 
-    category:
-      z.enum(FormationCategory),
+  category:
+    z.enum(FormationCategory),
 
-    radius:
-      nonNegativeIntSchema.optional(),
+  radius:
+    nonNegativeIntSchema.optional(),
 
-    minimumParticipants:
-      nonNegativeIntSchema.optional(),
+  minimumParticipants:
+    nonNegativeIntSchema.optional(),
 
-    maximumParticipants:
-      nonNegativeIntSchema.optional(),
+  maximumParticipants:
+    nonNegativeIntSchema.optional(),
 
-    duration:
-      nonNegativeIntSchema.optional(),
+  duration:
+    nonNegativeIntSchema.optional(),
 
-    effect:
-      descriptionSchema.optional(),
-  })
-    .superRefine((data, ctx) => {
-      if (
-        data.minimumParticipants !==
-        undefined &&
-        data.maximumParticipants !==
-        undefined &&
-        data.minimumParticipants >
-        data.maximumParticipants
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["maximumParticipants"],
-          message:
-            "Maximum participants cannot be less than minimum participants.",
-        });
-      }
+  effect:
+    descriptionSchema.optional(),
+});
+
+type FormationValidation = {
+  minimumParticipants?: number;
+  maximumParticipants?: number;
+};
+
+function validateFormation(
+  data: FormationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.minimumParticipants !==
+    undefined &&
+    data.maximumParticipants !==
+    undefined &&
+    data.minimumParticipants >
+    data.maximumParticipants
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["maximumParticipants"],
+      message:
+        "Maximum participants cannot be less than minimum participants.",
     });
+  }
+}
+
+export const createFormationSchema =
+  formationBaseSchema.superRefine(
+    validateFormation
+  );
 
 export type CreateFormationInput =
   z.infer<
@@ -162,7 +175,11 @@ export type CreateFormationInput =
   >;
 
 export const updateFormationSchema =
-  createFormationSchema.partial();
+  formationBaseSchema
+    .partial()
+    .superRefine(
+      validateFormation
+    );
 
 export type UpdateFormationInput =
   z.infer<

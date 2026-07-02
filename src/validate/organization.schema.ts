@@ -26,63 +26,89 @@ function compareWorldDates(
 /*                               Organization                                 */
 /* -------------------------------------------------------------------------- */
 
-const organizationSchema = z
-  .object({
-    name: nameSchema,
+const organizationBaseSchema = z.object({
+  name: nameSchema,
 
-    aliases: aliasSchema.default([]),
+  aliases: aliasSchema.default([]),
 
-    type: z.enum(OrganizationType),
+  type: z.enum(OrganizationType),
 
-    description: descriptionSchema.optional(),
+  description: descriptionSchema.optional(),
 
-    founderId: objectIdSchema.optional(),
+  founderId: objectIdSchema.optional(),
 
-    leaderId: objectIdSchema.optional(),
+  leaderId: objectIdSchema.optional(),
 
-    parentOrganizationId:
-      objectIdSchema.optional(),
+  parentOrganizationId:
+    objectIdSchema.optional(),
 
-    foundedAt: worldDateSchema.optional(),
+  foundedAt:
+    worldDateSchema.optional(),
 
-    dissolvedAt: worldDateSchema.optional(),
+  dissolvedAt:
+    worldDateSchema.optional(),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.foundedAt ||
-      !data.dissolvedAt
-    ) {
-      return;
-    }
+  allowTimelineAnomaly:
+    z.boolean().default(false),
+});
 
-    if (
-      compareWorldDates(
-        data.dissolvedAt,
-        data.foundedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["dissolvedAt"],
-        message:
-          "An organization cannot dissolve before it is founded unless timeline anomalies are allowed.",
-      });
-    }
-  });
+type OrganizationValidation = {
+  foundedAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  dissolvedAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateOrganization(
+  data: OrganizationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.foundedAt ||
+    !data.dissolvedAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.dissolvedAt,
+      data.foundedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["dissolvedAt"],
+      message:
+        "An organization cannot dissolve before it is founded unless timeline anomalies are allowed.",
+    });
+  }
+}
 
 export const createOrganizationSchema =
-  organizationSchema;
+  organizationBaseSchema.superRefine(
+    validateOrganization
+  );
 
 export type CreateOrganizationInput =
-  z.infer<typeof createOrganizationSchema>;
+  z.infer<
+    typeof createOrganizationSchema
+  >;
 
 export const updateOrganizationSchema =
-  organizationSchema.partial();
+  organizationBaseSchema
+    .partial()
+    .superRefine(
+      validateOrganization
+    );
 
 export type UpdateOrganizationInput =
-  z.infer<typeof updateOrganizationSchema>;
+  z.infer<
+    typeof updateOrganizationSchema
+  >;

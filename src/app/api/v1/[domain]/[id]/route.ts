@@ -1,8 +1,11 @@
 import {
-  handleCreate,
-  handleGetCollection,
+  handleDelete,
+  handleGetById,
+  handleUpdate,
 } from "@/lib/api/crud";
 
-export const GET = handleGetCollection;
+export const GET = handleGetById;
 
-export const POST = handleCreate;
+export const PATCH = handleUpdate;
+
+export const DELETE = handleDelete;

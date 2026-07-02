@@ -70,38 +70,54 @@ export type UpdateBattleSideInput = z.infer<
 /*                             Battle Participant                             */
 /* -------------------------------------------------------------------------- */
 
-export const createBattleParticipantSchema = z
-  .object({
+const battleParticipantBaseSchema =
+  z.object({
     battleSideId: objectIdSchema,
 
-    characterId: objectIdSchema.optional(),
+    characterId:
+      objectIdSchema.optional(),
 
     organizationId:
       objectIdSchema.optional(),
 
     role: z.enum(BattleRole),
 
-    commander: z.boolean().default(false),
+    commander:
+      z.boolean().default(false),
 
     casualties:
       nonNegativeIntSchema.optional(),
-  })
-  .superRefine((data, ctx) => {
-    const hasCharacter =
-      data.characterId !== undefined;
-
-    const hasOrganization =
-      data.organizationId !== undefined;
-
-    if (hasCharacter === hasOrganization) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["characterId"],
-        message:
-          "Exactly one of characterId or organizationId must be provided.",
-      });
-    }
   });
+
+type BattleParticipantValidation = {
+  characterId?: string;
+  organizationId?: string;
+};
+
+function validateBattleParticipant(
+  data: BattleParticipantValidation,
+  ctx: z.RefinementCtx
+) {
+  const hasCharacter =
+    data.characterId !== undefined;
+
+  const hasOrganization =
+    data.organizationId !== undefined;
+
+  if (hasCharacter === hasOrganization) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["characterId"],
+      message:
+        "Exactly one of characterId or organizationId must be provided.",
+    });
+  }
+}
+
+export const createBattleParticipantSchema =
+  battleParticipantBaseSchema.superRefine(
+    validateBattleParticipant
+  );
 
 export type CreateBattleParticipantInput =
   z.infer<
@@ -109,7 +125,11 @@ export type CreateBattleParticipantInput =
   >;
 
 export const updateBattleParticipantSchema =
-  createBattleParticipantSchema.partial();
+  battleParticipantBaseSchema
+    .partial()
+    .superRefine(
+      validateBattleParticipant
+    );
 
 export type UpdateBattleParticipantInput =
   z.infer<

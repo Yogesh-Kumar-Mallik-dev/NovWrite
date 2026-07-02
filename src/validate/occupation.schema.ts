@@ -51,8 +51,8 @@ export type UpdateOccupationInput = z.infer<
 /*                           Character Occupation                             */
 /* -------------------------------------------------------------------------- */
 
-const characterOccupationSchema = z
-  .object({
+const characterOccupationBaseSchema =
+  z.object({
     characterId: objectIdSchema,
 
     occupationId: objectIdSchema,
@@ -68,44 +68,65 @@ const characterOccupationSchema = z
     historicalEventId:
       objectIdSchema.optional(),
 
-    acquiredAt: worldDateSchema.optional(),
+    acquiredAt:
+      worldDateSchema.optional(),
 
-    lostAt: worldDateSchema.optional(),
+    lostAt:
+      worldDateSchema.optional(),
 
-    reason: descriptionSchema.optional(),
+    reason:
+      descriptionSchema.optional(),
 
-    isCurrent: z.boolean().default(true),
+    isCurrent:
+      z.boolean().default(true),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.acquiredAt ||
-      !data.lostAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.lostAt,
-        data.acquiredAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["lostAt"],
-        message:
-          "Occupation cannot be lost before it is acquired unless timeline anomalies are allowed.",
-      });
-    }
+    allowTimelineAnomaly:
+      z.boolean().default(false),
   });
 
+type CharacterOccupationValidation = {
+  acquiredAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  lostAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterOccupation(
+  data: CharacterOccupationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.acquiredAt ||
+    !data.lostAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.lostAt,
+      data.acquiredAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["lostAt"],
+      message:
+        "Occupation cannot be lost before it is acquired unless timeline anomalies are allowed.",
+    });
+  }
+}
+
 export const createCharacterOccupationSchema =
-  characterOccupationSchema;
+  characterOccupationBaseSchema.superRefine(
+    validateCharacterOccupation
+  );
 
 export type CreateCharacterOccupationInput =
   z.infer<
@@ -113,7 +134,11 @@ export type CreateCharacterOccupationInput =
   >;
 
 export const updateCharacterOccupationSchema =
-  characterOccupationSchema.partial();
+  characterOccupationBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterOccupation
+    );
 
 export type UpdateCharacterOccupationInput =
   z.infer<

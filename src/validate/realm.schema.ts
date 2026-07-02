@@ -1,16 +1,16 @@
 import {
   Body_MajorRealm,
   Cultivation_Path,
+  Minor_Realm,
   Qi_MajorRealm,
   Soul_MajorRealm,
-  Minor_Realm
 } from "@prisma/client";
 import { z } from "zod";
 
 import {
-  percentageSchema,
   descriptionSchema,
   objectIdSchema,
+  percentageSchema,
   positiveIntSchema,
 } from "./common";
 
@@ -18,106 +18,132 @@ import {
 /*                               Major Realm                                  */
 /* -------------------------------------------------------------------------- */
 
-export const createMajorRealmSchema = z
-  .object({
-    path: z.enum(Cultivation_Path),
+const majorRealmBaseSchema = z.object({
+  path: z.enum(Cultivation_Path),
 
-    qiRealm:
-      z.enum(Qi_MajorRealm).optional(),
+  qiRealm:
+    z.enum(Qi_MajorRealm).optional(),
 
-    bodyRealm:
-      z.enum(Body_MajorRealm).optional(),
+  bodyRealm:
+    z.enum(Body_MajorRealm).optional(),
 
-    soulRealm:
-      z.enum(Soul_MajorRealm).optional(),
+  soulRealm:
+    z.enum(Soul_MajorRealm).optional(),
 
-    power:
-      positiveIntSchema.optional(),
+  power:
+    positiveIntSchema.optional(),
 
-    description:
-      descriptionSchema.optional(),
+  description:
+    descriptionSchema.optional(),
 
-    lifespan:
-      positiveIntSchema.optional(),
+  lifespan:
+    positiveIntSchema.optional(),
 
-    requiredEnergy:
-      positiveIntSchema.optional(),
+  requiredEnergy:
+    positiveIntSchema.optional(),
 
-    breakthroughChance:
-      percentageSchema.optional(),
-  })
-  .superRefine((data, ctx) => {
-    switch (data.path) {
-      case Cultivation_Path.qi:
-        if (!data.qiRealm) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["qiRealm"],
-            message:
-              "Qi realm is required.",
-          });
-        }
+  breakthroughChance:
+    percentageSchema.optional(),
+});
 
-        if (
-          data.bodyRealm ||
-          data.soulRealm
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message:
-              "Only qiRealm may be set for the Qi cultivation path.",
-          });
-        }
-        break;
+type MajorRealmValidation = {
+  path?: Cultivation_Path;
 
-      case Cultivation_Path.body:
-        if (!data.bodyRealm) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["bodyRealm"],
-            message:
-              "Body realm is required.",
-          });
-        }
+  qiRealm?: Qi_MajorRealm;
 
-        if (
-          data.qiRealm ||
-          data.soulRealm
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message:
-              "Only bodyRealm may be set for the Body cultivation path.",
-          });
-        }
-        break;
+  bodyRealm?: Body_MajorRealm;
 
-      case Cultivation_Path.soul:
-        if (!data.soulRealm) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["soulRealm"],
-            message:
-              "Soul realm is required.",
-          });
-        }
+  soulRealm?: Soul_MajorRealm;
+};
 
-        if (
-          data.qiRealm ||
-          data.bodyRealm
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message:
-              "Only soulRealm may be set for the Soul cultivation path.",
-          });
-        }
-        break;
-    }
-  });
+function validateMajorRealm(
+  data: MajorRealmValidation,
+  ctx: z.RefinementCtx
+) {
+  if (!data.path) {
+    return;
+  }
+
+  switch (data.path) {
+    case Cultivation_Path.qi:
+      if (!data.qiRealm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["qiRealm"],
+          message:
+            "Qi realm is required.",
+        });
+      }
+
+      if (
+        data.bodyRealm ||
+        data.soulRealm
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Only qiRealm may be set for the Qi cultivation path.",
+        });
+      }
+      break;
+
+    case Cultivation_Path.body:
+      if (!data.bodyRealm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["bodyRealm"],
+          message:
+            "Body realm is required.",
+        });
+      }
+
+      if (
+        data.qiRealm ||
+        data.soulRealm
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Only bodyRealm may be set for the Body cultivation path.",
+        });
+      }
+      break;
+
+    case Cultivation_Path.soul:
+      if (!data.soulRealm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["soulRealm"],
+          message:
+            "Soul realm is required.",
+        });
+      }
+
+      if (
+        data.qiRealm ||
+        data.bodyRealm
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Only soulRealm may be set for the Soul cultivation path.",
+        });
+      }
+      break;
+  }
+}
+
+export const createMajorRealmSchema =
+  majorRealmBaseSchema.superRefine(
+    validateMajorRealm
+  );
 
 export const updateMajorRealmSchema =
-  createMajorRealmSchema.partial();
+  majorRealmBaseSchema
+    .partial()
+    .superRefine(
+      validateMajorRealm
+    );
 
 export type CreateMajorRealmInput =
   z.infer<

@@ -85,8 +85,8 @@ export type UpdateCharacterVersionInput =
 /*                            Character Inventory                             */
 /* -------------------------------------------------------------------------- */
 
-const characterInventorySchema = z
-  .object({
+const characterInventoryBaseSchema =
+  z.object({
     characterId: objectIdSchema,
 
     itemId: objectIdSchema,
@@ -108,47 +108,58 @@ const characterInventorySchema = z
 
     allowTimelineAnomaly:
       z.boolean().default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.obtainedAt ||
-      !data.lostAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.lostAt,
-        data.obtainedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["lostAt"],
-        message:
-          "An item cannot be lost before it is obtained unless timeline anomalies are allowed.",
-      });
-    }
   });
 
-export const createCharacterInventorySchema =
-  characterInventorySchema;
-
-export type CreateCharacterInventoryInput =
-  z.infer<
-    typeof createCharacterInventorySchema
+type CharacterInventoryValidation = {
+  obtainedAt?: z.infer<
+    typeof worldDateSchema
   >;
+
+  lostAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterInventory(
+  data: CharacterInventoryValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.obtainedAt ||
+    !data.lostAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.lostAt,
+      data.obtainedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["lostAt"],
+      message:
+        "An item cannot be lost before it is obtained unless timeline anomalies are allowed.",
+    });
+  }
+}
+
+export const createCharacterInventorySchema =
+  characterInventoryBaseSchema.superRefine(
+    validateCharacterInventory
+  );
 
 export const updateCharacterInventorySchema =
-  characterInventorySchema.partial();
-
-export type UpdateCharacterInventoryInput =
-  z.infer<
-    typeof updateCharacterInventorySchema
-  >;
-
+  characterInventoryBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterInventory
+    );
 /* -------------------------------------------------------------------------- */
 /*                          Character Cultivation                             */
 /* -------------------------------------------------------------------------- */
@@ -187,7 +198,7 @@ export type UpdateCharacterCultivationInput =
 /*                          Character Relationship                            */
 /* -------------------------------------------------------------------------- */
 
-const characterRelationSchema = z
+const characterRelationBaseSchema = z
   .object({
     sourceCharacterId:
       objectIdSchema,
@@ -210,63 +221,79 @@ const characterRelationSchema = z
     allowTimelineAnomaly:
       z.boolean().default(false),
   })
-  .superRefine((data, ctx) => {
-    if (
-      data.sourceCharacterId ===
-      data.targetCharacterId
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["targetCharacterId"],
-        message:
-          "A character cannot have a relationship with themselves.",
-      });
-    }
+type CharacterRelationValidation = {
+  sourceCharacterId?: string;
 
-    if (
-      data.allowTimelineAnomaly ||
-      !data.startDate ||
-      !data.endDate
-    ) {
-      return;
-    }
+  targetCharacterId?: string;
 
-    if (
-      compareWorldDates(
-        data.endDate,
-        data.startDate
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["endDate"],
-        message:
-          "A relationship cannot end before it starts unless timeline anomalies are allowed.",
-      });
-    }
-  });
-
-export const createCharacterRelationSchema =
-  characterRelationSchema;
-
-export type CreateCharacterRelationInput =
-  z.infer<
-    typeof createCharacterRelationSchema
+  startDate?: z.infer<
+    typeof worldDateSchema
   >;
+
+  endDate?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterRelation(
+  data: CharacterRelationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.sourceCharacterId &&
+    data.targetCharacterId &&
+    data.sourceCharacterId ===
+    data.targetCharacterId
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["targetCharacterId"],
+      message:
+        "A character cannot have a relationship with themselves.",
+    });
+  }
+
+  if (
+    data.allowTimelineAnomaly ||
+    !data.startDate ||
+    !data.endDate
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.endDate,
+      data.startDate
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endDate"],
+      message:
+        "A relationship cannot end before it starts unless timeline anomalies are allowed.",
+    });
+  }
+}
+export const createCharacterRelationSchema =
+  characterRelationBaseSchema.superRefine(
+    validateCharacterRelation
+  );
 
 export const updateCharacterRelationSchema =
-  characterRelationSchema.partial();
-
-export type UpdateCharacterRelationInput =
-  z.infer<
-    typeof updateCharacterRelationSchema
-  >;
+  characterRelationBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterRelation
+    );
 
 /* -------------------------------------------------------------------------- */
 /*                         Character Organization                             */
 /* -------------------------------------------------------------------------- */
 
-const characterOrganizationSchema = z
+const characterOrganizationBaseSchema = z
   .object({
     characterId: objectIdSchema,
 
@@ -295,42 +322,52 @@ const characterOrganizationSchema = z
     allowTimelineAnomaly:
       z.boolean().default(false),
   })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.joinedAt ||
-      !data.leftAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.leftAt,
-        data.joinedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["leftAt"],
-        message:
-          "A character cannot leave an organization before joining unless timeline anomalies are allowed.",
-      });
-    }
-  });
-
-export const createCharacterOrganizationSchema =
-  characterOrganizationSchema;
-
-export type CreateCharacterOrganizationInput =
-  z.infer<
-    typeof createCharacterOrganizationSchema
+type CharacterOrganizationValidation = {
+  joinedAt?: z.infer<
+    typeof worldDateSchema
   >;
+
+  leftAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterOrganization(
+  data: CharacterOrganizationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.joinedAt ||
+    !data.leftAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.leftAt,
+      data.joinedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["leftAt"],
+      message:
+        "A character cannot leave an organization before joining unless timeline anomalies are allowed.",
+    });
+  }
+}
+export const createCharacterOrganizationSchema =
+  characterOrganizationBaseSchema.superRefine(
+    validateCharacterOrganization
+  );
 
 export const updateCharacterOrganizationSchema =
-  characterOrganizationSchema.partial();
-
-export type UpdateCharacterOrganizationInput =
-  z.infer<
-    typeof updateCharacterOrganizationSchema
-  >;
+  characterOrganizationBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterOrganization
+    );

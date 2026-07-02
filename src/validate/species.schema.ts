@@ -62,50 +62,71 @@ export type UpdateSpeciesInput = z.infer<
 /*                             Character Species                              */
 /* -------------------------------------------------------------------------- */
 
-const characterSpeciesSchema = z
-  .object({
+const characterSpeciesBaseSchema =
+  z.object({
     characterId: objectIdSchema,
 
     speciesId: objectIdSchema,
 
-    acquiredAt: worldDateSchema.optional(),
+    acquiredAt:
+      worldDateSchema.optional(),
 
-    lostAt: worldDateSchema.optional(),
+    lostAt:
+      worldDateSchema.optional(),
 
-    reason: descriptionSchema.optional(),
+    reason:
+      descriptionSchema.optional(),
 
-    isCurrent: z.boolean().default(true),
+    isCurrent:
+      z.boolean().default(true),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.acquiredAt ||
-      !data.lostAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.lostAt,
-        data.acquiredAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["lostAt"],
-        message:
-          "A species cannot be lost before it is acquired unless timeline anomalies are allowed.",
-      });
-    }
+    allowTimelineAnomaly:
+      z.boolean().default(false),
   });
 
+type CharacterSpeciesValidation = {
+  acquiredAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  lostAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterSpecies(
+  data: CharacterSpeciesValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.acquiredAt ||
+    !data.lostAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.lostAt,
+      data.acquiredAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["lostAt"],
+      message:
+        "A species cannot be lost before it is acquired unless timeline anomalies are allowed.",
+    });
+  }
+}
+
 export const createCharacterSpeciesSchema =
-  characterSpeciesSchema;
+  characterSpeciesBaseSchema.superRefine(
+    validateCharacterSpecies
+  );
 
 export type CreateCharacterSpeciesInput =
   z.infer<
@@ -113,7 +134,11 @@ export type CreateCharacterSpeciesInput =
   >;
 
 export const updateCharacterSpeciesSchema =
-  characterSpeciesSchema.partial();
+  characterSpeciesBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterSpecies
+    );
 
 export type UpdateCharacterSpeciesInput =
   z.infer<

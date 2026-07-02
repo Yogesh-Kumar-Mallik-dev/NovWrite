@@ -50,48 +50,68 @@ export type UpdateLocationInput = z.infer<
 /*                            Character Location                              */
 /* -------------------------------------------------------------------------- */
 
-const characterLocationSchema = z
-  .object({
+const characterLocationBaseSchema =
+  z.object({
     characterId: objectIdSchema,
 
     locationId: objectIdSchema,
 
-    arrivedAt: worldDateSchema.optional(),
+    arrivedAt:
+      worldDateSchema.optional(),
 
-    leftAt: worldDateSchema.optional(),
+    leftAt:
+      worldDateSchema.optional(),
 
-    reason: descriptionSchema.optional(),
+    reason:
+      descriptionSchema.optional(),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.arrivedAt ||
-      !data.leftAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.leftAt,
-        data.arrivedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["leftAt"],
-        message:
-          "Departure date cannot be before arrival date unless timeline anomalies are allowed.",
-      });
-    }
+    allowTimelineAnomaly:
+      z.boolean().default(false),
   });
 
+type CharacterLocationValidation = {
+  arrivedAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  leftAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterLocation(
+  data: CharacterLocationValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.arrivedAt ||
+    !data.leftAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.leftAt,
+      data.arrivedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["leftAt"],
+      message:
+        "Departure date cannot be before arrival date unless timeline anomalies are allowed.",
+    });
+  }
+}
+
 export const createCharacterLocationSchema =
-  characterLocationSchema;
+  characterLocationBaseSchema.superRefine(
+    validateCharacterLocation
+  );
 
 export type CreateCharacterLocationInput =
   z.infer<
@@ -99,7 +119,11 @@ export type CreateCharacterLocationInput =
   >;
 
 export const updateCharacterLocationSchema =
-  characterLocationSchema.partial();
+  characterLocationBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterLocation
+    );
 
 export type UpdateCharacterLocationInput =
   z.infer<

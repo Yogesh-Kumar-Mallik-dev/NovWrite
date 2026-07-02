@@ -1,5 +1,8 @@
-import { handleCollection } from "@/lib/api/crud";
+import {
+  handleCreate,
+  handleGetCollection,
+} from "@/lib/api/crud";
 
-export const GET = handleCollection;
+export const GET = handleGetCollection;
 
-export const POST = handleCollection;
+export const POST = handleCreate;

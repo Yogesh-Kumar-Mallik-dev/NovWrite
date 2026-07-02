@@ -54,8 +54,8 @@ export type UpdateTitleInput = z.infer<
 /*                              Character Title                               */
 /* -------------------------------------------------------------------------- */
 
-const characterTitleSchema = z
-  .object({
+const characterTitleBaseSchema =
+  z.object({
     characterId: objectIdSchema,
 
     titleId: objectIdSchema,
@@ -69,44 +69,65 @@ const characterTitleSchema = z
     historicalEventId:
       objectIdSchema.optional(),
 
-    grantedAt: worldDateSchema.optional(),
+    grantedAt:
+      worldDateSchema.optional(),
 
-    revokedAt: worldDateSchema.optional(),
+    revokedAt:
+      worldDateSchema.optional(),
 
-    reason: descriptionSchema.optional(),
+    reason:
+      descriptionSchema.optional(),
 
-    isCurrent: z.boolean().default(true),
+    isCurrent:
+      z.boolean().default(true),
 
-    allowTimelineAnomaly: z
-      .boolean()
-      .default(false),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.allowTimelineAnomaly ||
-      !data.grantedAt ||
-      !data.revokedAt
-    ) {
-      return;
-    }
-
-    if (
-      compareWorldDates(
-        data.revokedAt,
-        data.grantedAt
-      ) < 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["revokedAt"],
-        message:
-          "A title cannot be revoked before it is granted unless timeline anomalies are allowed.",
-      });
-    }
+    allowTimelineAnomaly:
+      z.boolean().default(false),
   });
 
+type CharacterTitleValidation = {
+  grantedAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  revokedAt?: z.infer<
+    typeof worldDateSchema
+  >;
+
+  allowTimelineAnomaly?: boolean;
+};
+
+function validateCharacterTitle(
+  data: CharacterTitleValidation,
+  ctx: z.RefinementCtx
+) {
+  if (
+    data.allowTimelineAnomaly ||
+    !data.grantedAt ||
+    !data.revokedAt
+  ) {
+    return;
+  }
+
+  if (
+    compareWorldDates(
+      data.revokedAt,
+      data.grantedAt
+    ) < 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["revokedAt"],
+      message:
+        "A title cannot be revoked before it is granted unless timeline anomalies are allowed.",
+    });
+  }
+}
+
 export const createCharacterTitleSchema =
-  characterTitleSchema;
+  characterTitleBaseSchema.superRefine(
+    validateCharacterTitle
+  );
 
 export type CreateCharacterTitleInput =
   z.infer<
@@ -114,7 +135,11 @@ export type CreateCharacterTitleInput =
   >;
 
 export const updateCharacterTitleSchema =
-  characterTitleSchema.partial();
+  characterTitleBaseSchema
+    .partial()
+    .superRefine(
+      validateCharacterTitle
+    );
 
 export type UpdateCharacterTitleInput =
   z.infer<
