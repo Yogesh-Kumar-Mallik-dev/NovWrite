@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
 import { buildQuery } from "./query";
 import {
@@ -7,17 +9,43 @@ import {
 } from "./registry";
 
 import {
+  ok,
   created,
   internalServerError,
   notFound,
-  ok,
+  validationError,
 } from "@/lib/api/response";
+
+/* -------------------------------------------------------------------------- */
+/*                                  Helpers                                   */
+/* -------------------------------------------------------------------------- */
 
 function getRegistryEntry(
   domain: string
 ): CrudRegistryEntry | null {
   return registry[domain] ?? null;
 }
+
+function handleApiError(
+  error: unknown
+) {
+  if (error instanceof ZodError) {
+    return validationError(error);
+  }
+
+  if (
+    error instanceof
+    Prisma.PrismaClientKnownRequestError
+  ) {
+    return internalServerError(error);
+  }
+
+  return internalServerError(error);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Collection GET                                */
+/* -------------------------------------------------------------------------- */
 
 export async function handleGetCollection(
   request: NextRequest,
@@ -32,10 +60,13 @@ export async function handleGetCollection(
   try {
     const { domain } = await params;
 
-    const entry = getRegistryEntry(domain);
+    const entry =
+      getRegistryEntry(domain);
 
     if (!entry) {
-      return notFound("Unknown domain.");
+      return notFound(
+        "Unknown domain."
+      );
     }
 
     const query = buildQuery(
@@ -43,27 +74,36 @@ export async function handleGetCollection(
       entry
     );
 
-    const [data, total] = await Promise.all([
-      entry.model.findMany(query),
-      entry.model.count({
-        where: query.where,
-      }),
-    ]);
+    const [data, total] =
+      await Promise.all([
+        entry.model.findMany(query),
+        entry.model.count({
+          where: query.where,
+        }),
+      ]);
 
     return ok({
       data,
       pagination: {
         total,
         page:
-          Math.floor(query.skip / query.take) + 1,
+          query.skip /
+          query.take +
+          1,
         limit: query.take,
-        pages: Math.ceil(total / query.take),
+        pages: Math.ceil(
+          total / query.take
+        ),
       },
     });
   } catch (error) {
-    return internalServerError(error);
+    return handleApiError(error);
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              Collection POST                               */
+/* -------------------------------------------------------------------------- */
 
 export async function handleCreate(
   request: NextRequest,
@@ -78,24 +118,32 @@ export async function handleCreate(
   try {
     const { domain } = await params;
 
-    const entry = getRegistryEntry(domain);
+    const entry =
+      getRegistryEntry(domain);
 
     if (!entry) {
-      return notFound("Unknown domain.");
+      return notFound(
+        "Unknown domain."
+      );
     }
 
-    const body = await request.json();
+    const body =
+      await request.json();
 
     const data =
-      entry.createSchema.parse(body);
+      entry.createSchema.parse(
+        body
+      );
 
     const createdRecord =
       await entry.model.create({
         data,
       });
 
-    return created(createdRecord);
+    return created(
+      createdRecord
+    );
   } catch (error) {
-    return internalServerError(error);
+    return handleApiError(error);
   }
 }

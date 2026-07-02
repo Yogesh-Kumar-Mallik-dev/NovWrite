@@ -1,9 +1,12 @@
+import { ZodError } from "zod";
+
 import { NextResponse } from "next/server";
 
 type ApiResponse<T = unknown> = {
   success: boolean;
   message: string;
   data?: T;
+  pagination?: unknown;
   errors?: unknown;
 };
 
@@ -12,6 +15,7 @@ function response<T>(
   success: boolean,
   message: string,
   data?: T,
+  pagination?: unknown,
   errors?: unknown
 ) {
   return NextResponse.json<ApiResponse<T>>(
@@ -19,6 +23,9 @@ function response<T>(
       success,
       message,
       ...(data !== undefined && { data }),
+      ...(pagination !== undefined && {
+        pagination,
+      }),
       ...(errors !== undefined && { errors }),
     },
     { status }
@@ -30,18 +37,55 @@ function response<T>(
 /* -------------------------------------------------------------------------- */
 
 export const ok = <T>(
-  data: T,
+  payload:
+    | T
+    | {
+      data: T;
+      pagination?: unknown;
+    },
   message = "Request successful."
-) => response(200, true, message, data);
+) => {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "data" in payload
+  ) {
+    return response(
+      200,
+      true,
+      message,
+      payload.data,
+      payload.pagination
+    );
+  }
+
+  return response(
+    200,
+    true,
+    message,
+    payload
+  );
+};
 
 export const created = <T>(
   data: T,
   message = "Resource created successfully."
-) => response(201, true, message, data);
+) =>
+  response(
+    201,
+    true,
+    message,
+    data
+  );
 
 export const accepted = (
   message = "Request accepted."
-) => response(202, true, message);
+) =>
+  response(
+    202,
+    true,
+    message
+  );
 
 export const noContent = () =>
   new NextResponse(null, {
@@ -55,31 +99,69 @@ export const noContent = () =>
 export const badRequest = (
   message = "Bad request.",
   errors?: unknown
-) => response(400, false, message, undefined, errors);
+) =>
+  response(
+    400,
+    false,
+    message,
+    undefined,
+    undefined,
+    errors
+  );
 
 export const unauthorized = (
   message = "Authentication required."
-) => response(401, false, message);
+) =>
+  response(
+    401,
+    false,
+    message
+  );
 
 export const forbidden = (
   message = "Access denied."
-) => response(403, false, message);
+) =>
+  response(
+    403,
+    false,
+    message
+  );
 
 export const notFound = (
   message = "Resource not found."
-) => response(404, false, message);
+) =>
+  response(
+    404,
+    false,
+    message
+  );
 
 export const methodNotAllowed = (
   message = "Method not allowed."
-) => response(405, false, message);
+) =>
+  response(
+    405,
+    false,
+    message
+  );
 
 export const conflict = (
   message = "Resource already exists."
-) => response(409, false, message);
+) =>
+  response(
+    409,
+    false,
+    message
+  );
 
 export const gone = (
   message = "Resource is no longer available."
-) => response(410, false, message);
+) =>
+  response(
+    410,
+    false,
+    message
+  );
 
 export const unprocessableEntity = (
   message = "Validation failed.",
@@ -90,12 +172,31 @@ export const unprocessableEntity = (
     false,
     message,
     undefined,
+    undefined,
     errors
+  );
+
+export const validationError = (
+  error: ZodError,
+  message = "Validation failed."
+) =>
+  response(
+    422,
+    false,
+    message,
+    undefined,
+    undefined,
+    error.flatten()
   );
 
 export const tooManyRequests = (
   message = "Too many requests."
-) => response(429, false, message);
+) =>
+  response(
+    429,
+    false,
+    message
+  );
 
 /* -------------------------------------------------------------------------- */
 /*                             Server Errors                                  */
@@ -110,23 +211,45 @@ export const internalServerError = (
     false,
     message,
     undefined,
-    process.env.NODE_ENV === "development"
+    undefined,
+    process.env.NODE_ENV ===
+      "development"
       ? error
       : undefined
   );
 
 export const notImplemented = (
   message = "Not implemented."
-) => response(501, false, message);
+) =>
+  response(
+    501,
+    false,
+    message
+  );
 
 export const badGateway = (
   message = "Bad gateway."
-) => response(502, false, message);
+) =>
+  response(
+    502,
+    false,
+    message
+  );
 
 export const serviceUnavailable = (
   message = "Service unavailable."
-) => response(503, false, message);
+) =>
+  response(
+    503,
+    false,
+    message
+  );
 
 export const gatewayTimeout = (
   message = "Gateway timeout."
-) => response(504, false, message);
+) =>
+  response(
+    504,
+    false,
+    message
+  );
