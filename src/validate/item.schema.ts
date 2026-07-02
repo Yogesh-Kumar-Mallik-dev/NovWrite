@@ -195,3 +195,70 @@ export const createMaterialSchema = z.object({
 });
 
 export type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*                               Update Schemas                               */
+/* -------------------------------------------------------------------------- */
+
+export const updateItemSchema =
+  createItemSchema.partial();
+
+export type UpdateItemInput = z.infer<
+  typeof updateItemSchema
+>;
+
+export const updateWeaponSchema =
+  createWeaponSchema.partial();
+
+export type UpdateWeaponInput = z.infer<
+  typeof updateWeaponSchema
+>;
+
+export const updateArmorSchema =
+  createArmorSchema.partial();
+
+export type UpdateArmorInput = z.infer<
+  typeof updateArmorSchema
+>;
+
+export const updatePillSchema =
+  createPillSchema.partial();
+
+export type UpdatePillInput = z.infer<
+  typeof updatePillSchema
+>;
+
+export const updateTalismanSchema =
+  createTalismanSchema.partial();
+
+export type UpdateTalismanInput = z.infer<
+  typeof updateTalismanSchema
+>;
+
+export const updateArtifactSchema =
+  createArtifactSchema.partial();
+
+export type UpdateArtifactInput = z.infer<
+  typeof updateArtifactSchema
+>;
+
+export const updateTreasureSchema =
+  createTreasureSchema.partial();
+
+export type UpdateTreasureInput = z.infer<
+  typeof updateTreasureSchema
+>;
+
+export const updateSecretScrollSchema =
+  createSecretScrollSchema.partial();
+
+export type UpdateSecretScrollInput = z.infer<
+  typeof updateSecretScrollSchema
+>;
+
+export const updateMaterialSchema =
+  createMaterialSchema.partial();
+
+export type UpdateMaterialInput = z.infer<
+  typeof updateMaterialSchema
+>;

@@ -1,0 +1,261 @@
+import {
+  Cultivation_Path,
+  RelationshipType,
+} from "@prisma/client";
+import { number, z } from "zod";
+
+import {
+  descriptionSchema,
+  nameSchema,
+  nonNegativeIntSchema,
+  objectIdSchema,
+  positiveIntSchema,
+  worldDateSchema,
+} from "./common";
+
+/* -------------------------------------------------------------------------- */
+/*                                 Utilities                                  */
+/* -------------------------------------------------------------------------- */
+
+function compareWorldDates(
+  a: z.infer<typeof worldDateSchema>,
+  b: z.infer<typeof worldDateSchema>
+): number {
+  if (a.year !== b.year) return a.year - b.year;
+  if (a.month !== b.month) return a.month - b.month;
+  return a.day - b.day;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                 Character                                  */
+/* -------------------------------------------------------------------------- */
+
+export const createCharacterSchema = z.object({
+  name: nameSchema,
+
+  dateOfBirth: worldDateSchema.optional(),
+
+  basePower: nonNegativeIntSchema.default(0),
+
+  spiritRootId: objectIdSchema,
+});
+
+export type CreateCharacterInput = z.infer<
+  typeof createCharacterSchema
+>;
+
+export const updateCharacterSchema =
+  createCharacterSchema.partial();
+
+export type UpdateCharacterInput = z.infer<
+  typeof updateCharacterSchema
+>;
+
+/* -------------------------------------------------------------------------- */
+/*                             Character Version                              */
+/* -------------------------------------------------------------------------- */
+
+export const createCharacterVersionSchema =
+  z.object({
+    characterId: objectIdSchema,
+
+    version: positiveIntSchema,
+
+    title: nameSchema.optional(),
+
+    description: descriptionSchema.optional(),
+  });
+
+export type CreateCharacterVersionInput =
+  z.infer<
+    typeof createCharacterVersionSchema
+  >;
+
+export const updateCharacterVersionSchema =
+  createCharacterVersionSchema.partial();
+
+export type UpdateCharacterVersionInput =
+  z.infer<
+    typeof updateCharacterVersionSchema
+  >;
+
+/* -------------------------------------------------------------------------- */
+/*                            Character Inventory                             */
+/* -------------------------------------------------------------------------- */
+
+const characterInventorySchema = z
+  .object({
+    characterId: objectIdSchema,
+
+    itemId: objectIdSchema,
+
+    quantity:
+      positiveIntSchema.default(1),
+
+    equipped:
+      z.boolean().default(false),
+
+    obtainedAt:
+      worldDateSchema.optional(),
+
+    lostAt:
+      worldDateSchema.optional(),
+
+    reason:
+      descriptionSchema.optional(),
+
+    allowTimelineAnomaly:
+      z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.allowTimelineAnomaly ||
+      !data.obtainedAt ||
+      !data.lostAt
+    ) {
+      return;
+    }
+
+    if (
+      compareWorldDates(
+        data.lostAt,
+        data.obtainedAt
+      ) < 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["lostAt"],
+        message:
+          "An item cannot be lost before it is obtained unless timeline anomalies are allowed.",
+      });
+    }
+  });
+
+export const createCharacterInventorySchema =
+  characterInventorySchema;
+
+export type CreateCharacterInventoryInput =
+  z.infer<
+    typeof createCharacterInventorySchema
+  >;
+
+export const updateCharacterInventorySchema =
+  characterInventorySchema.partial();
+
+export type UpdateCharacterInventoryInput =
+  z.infer<
+    typeof updateCharacterInventorySchema
+  >;
+
+/* -------------------------------------------------------------------------- */
+/*                          Character Cultivation                             */
+/* -------------------------------------------------------------------------- */
+
+export const createCharacterCultivationSchema =
+  z.object({
+    characterId: objectIdSchema,
+
+    path: z.enum(Cultivation_Path),
+
+    majorRealmId: objectIdSchema,
+
+    minorRealmId: objectIdSchema,
+
+    currentEnergy:
+      nonNegativeIntSchema.optional(),
+
+    peakReached:
+      z.boolean().default(false),
+  });
+
+export type CreateCharacterCultivationInput =
+  z.infer<
+    typeof createCharacterCultivationSchema
+  >;
+
+export const updateCharacterCultivationSchema =
+  createCharacterCultivationSchema.partial();
+
+export type UpdateCharacterCultivationInput =
+  z.infer<
+    typeof updateCharacterCultivationSchema
+  >;
+
+/* -------------------------------------------------------------------------- */
+/*                          Character Relationship                            */
+/* -------------------------------------------------------------------------- */
+
+const characterRelationSchema = z
+  .object({
+    sourceCharacterId:
+      objectIdSchema,
+
+    targetCharacterId:
+      objectIdSchema,
+
+    relationshipType:
+      z.enum(RelationshipType),
+
+    startDate:
+      worldDateSchema.optional(),
+
+    endDate:
+      worldDateSchema.optional(),
+
+    description:
+      descriptionSchema,
+
+    allowTimelineAnomaly:
+      z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.sourceCharacterId ===
+      data.targetCharacterId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["targetCharacterId"],
+        message:
+          "A character cannot have a relationship with themselves.",
+      });
+    }
+
+    if (
+      data.allowTimelineAnomaly ||
+      !data.startDate ||
+      !data.endDate
+    ) {
+      return;
+    }
+
+    if (
+      compareWorldDates(
+        data.endDate,
+        data.startDate
+      ) < 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endDate"],
+        message:
+          "A relationship cannot end before it starts unless timeline anomalies are allowed.",
+      });
+    }
+  });
+
+export const createCharacterRelationSchema =
+  characterRelationSchema;
+
+export type CreateCharacterRelationInput =
+  z.infer<
+    typeof createCharacterRelationSchema
+  >;
+
+export const updateCharacterRelationSchema =
+  characterRelationSchema.partial();
+
+export type UpdateCharacterRelationInput =
+  z.infer<
+    typeof updateCharacterRelationSchema
+  >;

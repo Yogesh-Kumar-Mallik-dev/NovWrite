@@ -12,8 +12,8 @@ model Location {
 
   childLocations Location[] @relation("LocationHierarchy")
 
-  residents CharacterLocation[]
-
+  residents        CharacterLocation[]
+  timeTravel       Boolean                   @default(false)
   historicalEvents LocationHistoricalEvent[]
 
   events HistoricalEvent[]
