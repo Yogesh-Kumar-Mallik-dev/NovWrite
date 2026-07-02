@@ -97,7 +97,9 @@ export interface WeekRange {
 /*                                  Validation                                */
 /* -------------------------------------------------------------------------- */
 
-export function validateDate(date: WorldDate): void {
+export const validateDate = (
+  date: WorldDate,
+): void => {
   if (date.month < 1 || date.month > MONTHS_PER_YEAR) {
     throw new RangeError(
       `Month must be between 1 and ${MONTHS_PER_YEAR}.`,
@@ -109,13 +111,15 @@ export function validateDate(date: WorldDate): void {
       `Day must be between 1 and ${DAYS_PER_MONTH}.`,
     );
   }
-}
+};
 
 /* -------------------------------------------------------------------------- */
 /*                                   Helpers                                  */
 /* -------------------------------------------------------------------------- */
 
-export function getMonthName(month: number): Month {
+export const getMonthName = (
+  month: number,
+): Month => {
   if (month < 1 || month > MONTHS_PER_YEAR) {
     throw new RangeError(
       `Month must be between 1 and ${MONTHS_PER_YEAR}.`,
@@ -123,9 +127,11 @@ export function getMonthName(month: number): Month {
   }
 
   return MONTHS[month - 1];
-}
+};
 
-export function getWeekName(week: number): Week {
+export const getWeekName = (
+  week: number,
+): Week => {
   if (week < 1 || week > WEEKS_PER_MONTH) {
     throw new RangeError(
       `Week must be between 1 and ${WEEKS_PER_MONTH}.`,
@@ -133,19 +139,23 @@ export function getWeekName(week: number): Week {
   }
 
   return WEEKS[week - 1];
-}
+};
 
 /* -------------------------------------------------------------------------- */
 /*                              Week Calculations                             */
 /* -------------------------------------------------------------------------- */
 
-export function getWeekday(date: WorldDate): Weekday {
+export const getWeekday = (
+  date: WorldDate,
+): Weekday => {
   validateDate(date);
 
   return WEEKDAYS[(date.day - 1) % DAYS_PER_WEEK];
-}
+};
 
-export function dayToWeek(day: number): WeekInfo {
+export const dayToWeek = (
+  day: number,
+): WeekInfo => {
   if (day < 1 || day > DAYS_PER_MONTH) {
     throw new RangeError(
       `Day must be between 1 and ${DAYS_PER_MONTH}.`,
@@ -160,11 +170,11 @@ export function dayToWeek(day: number): WeekInfo {
     dayOfWeek: ((day - 1) % DAYS_PER_WEEK) + 1,
     weekday: WEEKDAYS[(day - 1) % DAYS_PER_WEEK],
   };
-}
+};
 
-export function weekToDayRange(
+export const weekToDayRange = (
   week: number,
-): WeekRange {
+): WeekRange => {
   if (week < 1 || week > WEEKS_PER_MONTH) {
     throw new RangeError(
       `Week must be between 1 and ${WEEKS_PER_MONTH}.`,
@@ -180,16 +190,16 @@ export function weekToDayRange(
     startDay,
     endDay: startDay + DAYS_PER_WEEK - 1,
   };
-}
+};
 
 /* -------------------------------------------------------------------------- */
 /*                             Month Calculations                             */
 /* -------------------------------------------------------------------------- */
 
-export function dateToDayOfYear(
+export const dateToDayOfYear = (
   month: number,
   day: number,
-): number {
+): number => {
   if (month < 1 || month > MONTHS_PER_YEAR) {
     throw new RangeError(
       `Month must be between 1 and ${MONTHS_PER_YEAR}.`,
@@ -203,11 +213,11 @@ export function dateToDayOfYear(
   }
 
   return (month - 1) * DAYS_PER_MONTH + day;
-}
+};
 
-export function dayOfYearToDate(
+export const dayOfYearToDate = (
   dayOfYear: number,
-): MonthDay {
+): MonthDay => {
   if (dayOfYear < 1 || dayOfYear > DAYS_PER_YEAR) {
     throw new RangeError(
       `Day of year must be between 1 and ${DAYS_PER_YEAR}.`,
@@ -224,41 +234,39 @@ export function dayOfYearToDate(
     day:
       ((dayOfYear - 1) % DAYS_PER_MONTH) + 1,
   };
-}
+};
 
-export function getDayOfYear(
+export const getDayOfYear = (
   date: Pick<WorldDate, "month" | "day">,
-): number {
-  return dateToDayOfYear(
+): number =>
+  dateToDayOfYear(
     date.month,
     date.day,
   );
-}
 
 /* -------------------------------------------------------------------------- */
 /*                                 Formatting                                 */
 /* -------------------------------------------------------------------------- */
 
-export function formatDate(
+export const formatDate = (
   date: WorldDate,
-): string {
+): string => {
   validateDate(date);
 
   return `${date.year} ${getMonthName(
     date.month,
   )} ${date.day}`;
-}
+};
 
-export function formatLongDate(
+export const formatLongDate = (
   date: WorldDate,
-): string {
+): string => {
   validateDate(date);
 
   const week = dayToWeek(date.day);
 
   return `${date.year} ${getMonthName(
     date.month,
-  )}, ${week.weekName}, ${week.weekday}, Day ${
-    date.day
-  }`;
-}
+  )}, ${week.weekName}, ${week.weekday}, Day ${date.day
+    }`;
+};

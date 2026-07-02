@@ -1,44 +1,41 @@
-model QiMajorRealm {
+model MajorRealm {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  realm Qi_MajorRealm
+  path Cultivation_Path
+
+  qiRealm   Qi_MajorRealm?
+  bodyRealm Body_MajorRealm?
+  soulRealm Soul_MajorRealm?
 
   power              Int?
   description        String?
-  requiredQi         Int?
   lifespan           Int?
+  requiredEnergy     Int?
   breakthroughChance Float?
+
+  minorRealms MinorRealm[]
+  cultivation CharacterCultivation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model BodyMajorRealm {
+model MinorRealm {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  realm Body_MajorRealm?
+  majorRealmId String @db.ObjectId
+
+  majorRealm MajorRealm @relation(fields: [majorRealmId], references: [id], onDelete: Cascade)
+
+  realm Minor_Realm
 
   power              Int?
   description        String?
-  requiredBloodQi    Int?
-  lifespan           Int?
   breakthroughChance Float?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  characterCultivations CharacterCultivation[]
 
-model SoulMajorRealm {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  realm Soul_MajorRealm
-
-  power              Int?
-  description        String?
-  requiredSpiritQi   Int?
-  lifespan           Int?
-  breakthroughChance Float?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@unique([majorRealmId, realm])
 }

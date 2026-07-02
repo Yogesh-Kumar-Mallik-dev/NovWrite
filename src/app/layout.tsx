@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Novwrite"",
+  title: "Novwrite",
   description: "An authors dream for managing timeline and characters",
 };
 
-const  RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;

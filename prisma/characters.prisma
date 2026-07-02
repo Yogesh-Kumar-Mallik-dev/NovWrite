@@ -26,7 +26,8 @@ model Characters {
   titles        CharacterTitle[]
   grantedTitles CharacterTitle[] @relation("TitleGrantedByCharacter")
 
-  historicalEvents CharacterHistoricalEvent[]
+  historicalEvents      CharacterHistoricalEvent[]
+  characterCultivations CharacterCultivation[]
 
   occupations        CharacterOccupation[]
   grantedOccupations CharacterOccupation[] @relation("OccupationGrantedByCharacter")
@@ -73,4 +74,27 @@ model CharacterInventory {
   updatedAt DateTime @updatedAt
 
   @@index([characterId])
+}
+
+model CharacterCultivation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  characterId String     @db.ObjectId
+  character   Characters @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  path Cultivation_Path
+
+  majorRealmId String     @db.ObjectId
+  majorRealm   MajorRealm @relation(fields: [majorRealmId], references: [id])
+
+  minorRealmId String     @db.ObjectId
+  minorRealm   MinorRealm @relation(fields: [minorRealmId], references: [id])
+
+  currentEnergy Int?
+  peakReached   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([characterId, path])
 }

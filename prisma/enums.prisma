@@ -63,6 +63,12 @@ enum RelationshipType {
   Former_Disciple
 }
 
+enum Cultivation_Path {
+  qi
+  body
+  soul
+}
+
 enum Qi_MajorRealm {
   Body_Tempering
   Qi_Refining
