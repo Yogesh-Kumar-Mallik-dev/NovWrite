@@ -37,34 +37,3 @@ model Organization {
   @@index([founderId])
   @@index([parentOrganizationId])
 }
-
-model CharacterOrganization {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  characterId    String @db.ObjectId
-  organizationId String @db.ObjectId
-
-  character    Characters   @relation(fields: [characterId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
-
-  role OrganizationRole
-
-  contributionPoints Int?
-  reputation         Int?
-
-  joinedAt WorldDate?
-  leftAt   WorldDate?
-
-  reason String?
-
-  isCurrent Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([characterId, organizationId, role, isCurrent])
-  @@index([characterId])
-  @@index([organizationId])
-  @@index([role])
-  @@index([isCurrent])
-}

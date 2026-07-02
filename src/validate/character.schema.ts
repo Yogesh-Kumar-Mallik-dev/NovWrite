@@ -1,8 +1,10 @@
 import {
   Cultivation_Path,
   RelationshipType,
+  OrganizationRole,
 } from "@prisma/client";
-import { number, z } from "zod";
+
+import { z } from "zod";
 
 import {
   descriptionSchema,
@@ -258,4 +260,77 @@ export const updateCharacterRelationSchema =
 export type UpdateCharacterRelationInput =
   z.infer<
     typeof updateCharacterRelationSchema
+  >;
+
+/* -------------------------------------------------------------------------- */
+/*                         Character Organization                             */
+/* -------------------------------------------------------------------------- */
+
+const characterOrganizationSchema = z
+  .object({
+    characterId: objectIdSchema,
+
+    organizationId: objectIdSchema,
+
+    role: z.enum(OrganizationRole),
+
+    contributionPoints:
+      nonNegativeIntSchema.optional(),
+
+    reputation:
+      nonNegativeIntSchema.optional(),
+
+    joinedAt:
+      worldDateSchema.optional(),
+
+    leftAt:
+      worldDateSchema.optional(),
+
+    reason:
+      descriptionSchema.optional(),
+
+    isCurrent:
+      z.boolean().default(true),
+
+    allowTimelineAnomaly:
+      z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.allowTimelineAnomaly ||
+      !data.joinedAt ||
+      !data.leftAt
+    ) {
+      return;
+    }
+
+    if (
+      compareWorldDates(
+        data.leftAt,
+        data.joinedAt
+      ) < 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["leftAt"],
+        message:
+          "A character cannot leave an organization before joining unless timeline anomalies are allowed.",
+      });
+    }
+  });
+
+export const createCharacterOrganizationSchema =
+  characterOrganizationSchema;
+
+export type CreateCharacterOrganizationInput =
+  z.infer<
+    typeof createCharacterOrganizationSchema
+  >;
+
+export const updateCharacterOrganizationSchema =
+  characterOrganizationSchema.partial();
+
+export type UpdateCharacterOrganizationInput =
+  z.infer<
+    typeof updateCharacterOrganizationSchema
   >;

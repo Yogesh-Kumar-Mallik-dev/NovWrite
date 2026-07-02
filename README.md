@@ -133,7 +133,7 @@ including:
 ### Validation
 
 - [x] Shared validation infrastructure
-- [ ] Complete model validation
+- [x] Complete model validation
 
 ### API
 
