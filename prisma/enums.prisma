@@ -165,6 +165,16 @@ enum ArmorType {
   FullSet
 }
 
+enum TalismanType {
+  Healing
+  Cultivation
+  Breakthrough
+  Poison
+  Detoxification
+  BodyTempering
+  SoulNourishing
+}
+
 enum PillType {
   Healing
   Cultivation

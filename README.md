@@ -87,7 +87,7 @@ update<Model>Schema
 Shared validators live in:
 
 ```text
-src/lib/validation/common
+src/validation/common
 ```
 
 including:

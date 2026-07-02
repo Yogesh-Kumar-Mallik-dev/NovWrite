@@ -79,9 +79,10 @@ model Talisman {
   itemId String @unique @db.ObjectId
   item   Item   @relation(fields: [itemId], references: [id])
 
-  uses    Int?
-  element Elements?
-  effect  String?
+  catagory TalismanType
+  uses     Int?
+  element  Elements?
+  effect   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
