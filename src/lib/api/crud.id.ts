@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
-import { buildQuery } from "./query";
 import {
   CrudRegistryEntry,
   registry,
@@ -10,12 +9,13 @@ import {
 
 import {
   ok,
-  created,
-  internalServerError,
+  noContent,
   notFound,
   validationError,
+  internalServerError,
 } from "@/lib/api/response";
 
+import { validateObjectId } from "./objectId"
 
 import { handlePrismaError } from "./prismaError";
 /* -------------------------------------------------------------------------- */
@@ -27,8 +27,6 @@ function getRegistryEntry(
 ): CrudRegistryEntry | null {
   return registry[domain] ?? null;
 }
-
-
 
 function handleApiError(error: unknown) {
   if (error instanceof ZodError) {
@@ -44,24 +42,29 @@ function handleApiError(error: unknown) {
 
   return internalServerError(error);
 }
-
 /* -------------------------------------------------------------------------- */
-/*                              Collection GET                                */
+/*                                GET BY ID                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function handleGetCollection(
-  request: NextRequest,
+export async function handleGetById(
+  _request: NextRequest,
   {
     params,
   }: {
     params: Promise<{
       domain: string;
+      id: string;
     }>;
   }
 ) {
   try {
-    const { domain } = await params;
+    const { domain, id } = await params;
 
+    const invalid = validateObjectId(id);
+
+    if (invalid) {
+      return invalid;
+    }
 
     const entry =
       getRegistryEntry(domain);
@@ -72,54 +75,47 @@ export async function handleGetCollection(
       );
     }
 
-    const query = buildQuery(
-      request.nextUrl.searchParams,
-      entry
-    );
+    const record =
+      await entry.model.findUnique({
+        where: { id },
+        include: entry.include,
+      });
 
-    const [data, total] =
-      await Promise.all([
-        entry.model.findMany(query),
-        entry.model.count({
-          where: query.where,
-        }),
-      ]);
+    if (!record) {
+      return notFound();
+    }
 
-    return ok({
-      data,
-      pagination: {
-        total,
-        page:
-          query.skip /
-          query.take +
-          1,
-        limit: query.take,
-        pages: Math.ceil(
-          total / query.take
-        ),
-      },
-    });
+    return ok(record);
   } catch (error) {
     return handleApiError(error);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              Collection POST                               */
+/*                                   PATCH                                    */
 /* -------------------------------------------------------------------------- */
 
-export async function handleCreate(
+export async function handleUpdate(
   request: NextRequest,
   {
     params,
   }: {
     params: Promise<{
       domain: string;
+      id: string;
     }>;
   }
 ) {
   try {
-    const { domain } = await params;
+    const { domain, id } =
+      await params;
+
+    const invalid =
+      validateObjectId(id);
+
+    if (invalid) {
+      return invalid;
+    }
 
     const entry =
       getRegistryEntry(domain);
@@ -134,18 +130,65 @@ export async function handleCreate(
       await request.json();
 
     const data =
-      entry.createSchema.parse(
+      entry.updateSchema.parse(
         body
       );
 
-    const createdRecord =
-      await entry.model.create({
+    const record =
+      await entry.model.update({
+        where: { id },
         data,
       });
 
-    return created(
-      createdRecord
+    return ok(
+      record,
+      "Resource updated successfully."
     );
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  DELETE                                    */
+/* -------------------------------------------------------------------------- */
+
+export async function handleDelete(
+  _request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{
+      domain: string;
+      id: string;
+    }>;
+  }
+) {
+  try {
+    const { domain, id } =
+      await params;
+
+    const invalid =
+      validateObjectId(id);
+
+    if (invalid) {
+      return invalid;
+    }
+
+    const entry =
+      getRegistryEntry(domain);
+
+    if (!entry) {
+      return notFound(
+        "Unknown domain."
+      );
+    }
+
+    await entry.model.delete({
+      where: { id },
+    });
+
+    return noContent();
   } catch (error) {
     return handleApiError(error);
   }

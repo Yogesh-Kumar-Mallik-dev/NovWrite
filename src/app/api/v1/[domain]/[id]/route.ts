@@ -2,7 +2,7 @@ import {
   handleDelete,
   handleGetById,
   handleUpdate,
-} from "@/lib/api/crud";
+} from "@/lib/api/crud.id";
 
 export const GET = handleGetById;
 
