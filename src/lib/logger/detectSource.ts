@@ -29,6 +29,21 @@ export function detectSource(
       .get("x-requested-with")
       ?.toLowerCase() ?? "";
 
+  const secFetchSite =
+    request.headers
+      .get("sec-fetch-site")
+      ?.toLowerCase() ?? "";
+
+  const secFetchMode =
+    request.headers
+      .get("sec-fetch-mode")
+      ?.toLowerCase() ?? "";
+
+  const secFetchDest =
+    request.headers
+      .get("sec-fetch-dest")
+      ?.toLowerCase() ?? "";
+
   /* ---------------------------------------------------------------------- */
   /* API Clients                                                            */
   /* ---------------------------------------------------------------------- */
@@ -67,6 +82,13 @@ export function detectSource(
   /* ---------------------------------------------------------------------- */
 
   if (
+    secFetchSite === "same-origin" ||
+    secFetchSite === "same-site"
+  ) {
+    return "FRONTEND";
+  }
+
+  if (
     origin.length > 0 ||
     referer.length > 0
   ) {
@@ -77,6 +99,13 @@ export function detectSource(
       return "FRONTEND";
     }
 
+    return "BROWSER";
+  }
+
+  if (
+    secFetchMode === "navigate" ||
+    secFetchDest === "document"
+  ) {
     return "BROWSER";
   }
 

@@ -122,6 +122,19 @@ test("detectSource detects frontend from localhost referer", () => {
   );
 });
 
+test("detectSource detects frontend from same-origin fetch headers", () => {
+  assert.equal(
+    detectSource(
+      createRequest({
+        "sec-fetch-site":
+          "same-origin",
+        "sec-fetch-mode": "cors",
+      })
+    ),
+    "FRONTEND"
+  );
+});
+
 /* -------------------------------------------------------------------------- */
 /*                                 Browser                                    */
 /* -------------------------------------------------------------------------- */
@@ -144,6 +157,20 @@ test("detectSource detects browser from referer", () => {
       createRequest({
         referer:
           "https://example.com/page",
+      })
+    ),
+    "BROWSER"
+  );
+});
+
+test("detectSource detects browser from navigation fetch headers", () => {
+  assert.equal(
+    detectSource(
+      createRequest({
+        "sec-fetch-mode":
+          "navigate",
+        "sec-fetch-dest":
+          "document",
       })
     ),
     "BROWSER"
