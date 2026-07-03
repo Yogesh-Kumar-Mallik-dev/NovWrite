@@ -1,13 +1,17 @@
 import { NextRequest } from "next/server";
 
-import { createRequestInfo } from "./request";
 import {
+  createRequestInfo,
   createResponseInfo,
   logRequest,
 } from "./request";
+
 import { logger } from "./logger";
 
-import type { RequestInfo } from "./types";
+import type {
+  ApiLog,
+  RequestInfo,
+} from "./types";
 
 type LogMeta = {
   registry?: string;
@@ -26,6 +30,26 @@ export class LoggerApi {
     this.request =
       createRequestInfo(request);
   }
+
+  /* ---------------------------------------------------------------------- */
+  /*                           Test Hooks                                   */
+  /* ---------------------------------------------------------------------- */
+
+  protected dispatch(
+    log: Omit<ApiLog, "level">
+  ) {
+    logRequest(log);
+  }
+
+  protected debug(
+    log: Omit<ApiLog, "level">
+  ) {
+    logger.debug(log);
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /*                               Helpers                                  */
+  /* ---------------------------------------------------------------------- */
 
   private messageFromError(
     error: unknown,
@@ -54,13 +78,14 @@ export class LoggerApi {
     },
     error?: unknown
   ) {
-    const response = createResponseInfo(
-      this.request,
-      status,
-      status < 400
-    );
+    const response =
+      createResponseInfo(
+        this.request,
+        status,
+        status < 400
+      );
 
-    logRequest({
+    this.dispatch({
       request: this.request,
       response,
       registry: options.registry,
@@ -71,12 +96,17 @@ export class LoggerApi {
       blocked: options.blocked,
       message:
         options.message ??
-        (options.rows !== undefined
+        (options.rows !==
+          undefined
           ? `${options.rows} row(s) affected.`
           : undefined),
       error,
     });
   }
+
+  /* ---------------------------------------------------------------------- */
+  /*                            Success                                     */
+  /* ---------------------------------------------------------------------- */
 
   ok(options: {
     registry?: string;
@@ -125,6 +155,10 @@ export class LoggerApi {
     this.write(204, options);
   }
 
+  /* ---------------------------------------------------------------------- */
+  /*                             Client Errors                              */
+  /* ---------------------------------------------------------------------- */
+
   rateLimited(options: {
     registry?: string;
     handler?: string;
@@ -146,10 +180,11 @@ export class LoggerApi {
       422,
       {
         ...meta,
-        message: this.messageFromError(
-          error,
-          "Validation failed."
-        ),
+        message:
+          this.messageFromError(
+            error,
+            "Validation failed."
+          ),
       },
       error
     );
@@ -163,10 +198,11 @@ export class LoggerApi {
       400,
       {
         ...meta,
-        message: this.messageFromError(
-          error,
-          "Bad request."
-        ),
+        message:
+          this.messageFromError(
+            error,
+            "Bad request."
+          ),
       },
       error
     );
@@ -184,6 +220,10 @@ export class LoggerApi {
     });
   }
 
+  /* ---------------------------------------------------------------------- */
+  /*                             Server Errors                              */
+  /* ---------------------------------------------------------------------- */
+
   internal(
     error: unknown,
     meta?: LogMeta
@@ -192,21 +232,26 @@ export class LoggerApi {
       500,
       {
         ...meta,
-        message: this.messageFromError(
-          error,
-          "Internal server error."
-        ),
+        message:
+          this.messageFromError(
+            error,
+            "Internal server error."
+          ),
       },
       error
     );
   }
+
+  /* ---------------------------------------------------------------------- */
+  /*                                Prisma                                  */
+  /* ---------------------------------------------------------------------- */
 
   prisma(
     action: string,
     duration: number,
     rows?: number
   ) {
-    logger.debug({
+    this.debug({
       request: this.request,
       handler: "Prisma Client",
       operation: action,

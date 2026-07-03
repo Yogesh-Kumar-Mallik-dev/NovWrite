@@ -14,21 +14,20 @@ import {
 /*                              Logger Service                                */
 /* -------------------------------------------------------------------------- */
 
-class Logger {
-  private level: LogLevel =
-    DEFAULT_LOG_LEVEL;
+export class Logger {
+  private level: LogLevel;
 
-  constructor() {
+  constructor(
+    level: LogLevel = DEFAULT_LOG_LEVEL
+  ) {
     const env =
       process.env.LOG_LEVEL?.toUpperCase();
 
-    if (
+    this.level =
       env &&
-      env in LOG_LEVEL_PRIORITY
-    ) {
-      this.level =
-        env as LogLevel;
-    }
+        env in LOG_LEVEL_PRIORITY
+        ? (env as LogLevel)
+        : level;
   }
 
   /* ---------------------------------------------------------------------- */
@@ -48,9 +47,7 @@ class Logger {
     level: LogLevel,
     log: Omit<ApiLog, "level">
   ) {
-    if (
-      !this.enabled(level)
-    ) {
+    if (!this.enabled(level)) {
       return;
     }
 

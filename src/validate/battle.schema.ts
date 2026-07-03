@@ -104,6 +104,14 @@ function validateBattleParticipant(
   const hasOrganization =
     data.organizationId !== undefined;
 
+  // Allow completely empty payloads for PATCH.
+  if (
+    !hasCharacter &&
+    !hasOrganization
+  ) {
+    return;
+  }
+
   if (hasCharacter === hasOrganization) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

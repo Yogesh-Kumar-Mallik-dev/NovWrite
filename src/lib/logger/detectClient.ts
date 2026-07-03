@@ -3,7 +3,7 @@ import {
   ClientType,
 } from "./types";
 
-function detectBrowser(
+export function detectBrowser(
   userAgent: string
 ): Browser {
   const ua =
