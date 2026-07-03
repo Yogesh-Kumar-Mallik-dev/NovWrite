@@ -13,6 +13,8 @@ type LogMeta = {
   registry?: string;
   handler?: string;
   operation?: string;
+  triesPerMinute?: number;
+  blocked?: boolean;
 };
 
 export class LoggerApi {
@@ -47,6 +49,8 @@ export class LoggerApi {
       operation?: string;
       message?: string;
       rows?: number;
+      triesPerMinute?: number;
+      blocked?: boolean;
     },
     error?: unknown
   ) {
@@ -62,6 +66,9 @@ export class LoggerApi {
       registry: options.registry,
       handler: options.handler,
       operation: options.operation,
+      triesPerMinute:
+        options.triesPerMinute,
+      blocked: options.blocked,
       message:
         options.message ??
         (options.rows !== undefined
@@ -77,6 +84,8 @@ export class LoggerApi {
     operation?: string;
     message?: string;
     rows?: number;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }) {
     this.write(200, options);
   }
@@ -87,6 +96,8 @@ export class LoggerApi {
     operation?: string;
     message?: string;
     rows?: number;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }) {
     this.write(201, options);
   }
@@ -97,6 +108,8 @@ export class LoggerApi {
     operation?: string;
     message?: string;
     rows?: number;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }) {
     this.write(200, options);
   }
@@ -106,8 +119,23 @@ export class LoggerApi {
     handler?: string;
     operation?: string;
     message?: string;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }) {
     this.write(204, options);
+  }
+
+  rateLimited(options: {
+    registry?: string;
+    handler?: string;
+    operation?: string;
+    message?: string;
+    triesPerMinute?: number;
+  }) {
+    this.write(429, {
+      ...options,
+      blocked: true,
+    });
   }
 
   validation(

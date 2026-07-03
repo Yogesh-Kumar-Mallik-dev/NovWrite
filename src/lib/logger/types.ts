@@ -140,6 +140,10 @@ export interface ApiLog {
 
   message?: string;
 
+  triesPerMinute?: number;
+
+  blocked?: boolean;
+
   error?: unknown;
 }
 

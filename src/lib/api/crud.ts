@@ -13,6 +13,7 @@ import {
   created,
   internalServerError,
   notFound,
+  tooManyRequests,
   validationError,
 } from "@/lib/api/response";
 import {
@@ -22,6 +23,7 @@ import {
 
 
 import { handlePrismaError } from "./prismaError";
+import { checkRateLimit } from "./rateLimit";
 /* -------------------------------------------------------------------------- */
 /*                                  Helpers                                   */
 /* -------------------------------------------------------------------------- */
@@ -39,6 +41,8 @@ function handleApiError(
     registry?: string;
     handler: string;
     operation: string;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }
 ) {
   if (error instanceof ZodError) {
@@ -92,6 +96,24 @@ export async function handleGetCollection(
 ) {
   const log =
     beginRequest(request);
+
+  const rateLimit =
+    checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    log.rateLimited({
+      handler: "Collection Handler",
+      operation: "findMany+count",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      message: `Rate limit exceeded (${rateLimit.limitPerMinute}/min). Retry in ${rateLimit.retryAfterSeconds}s.`,
+    });
+
+    return tooManyRequests(
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+    );
+  }
+
   let domain: string | undefined;
 
   try {
@@ -106,6 +128,9 @@ export async function handleGetCollection(
         registry: domain,
         handler: "Collection Handler",
         operation: "findMany+count",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       });
       return notFound(
         "Unknown domain."
@@ -130,6 +155,9 @@ export async function handleGetCollection(
       handler: "Collection Handler",
       operation: "findMany+count",
       rows: data.length,
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      blocked: rateLimit.blocked,
     });
 
     return ok({
@@ -156,6 +184,9 @@ export async function handleGetCollection(
           "Collection Handler",
         operation:
           "findMany+count",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       }
     );
   }
@@ -177,6 +208,24 @@ export async function handleCreate(
 ) {
   const log =
     beginRequest(request);
+
+  const rateLimit =
+    checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    log.rateLimited({
+      handler: "Collection Handler",
+      operation: "create",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      message: `Rate limit exceeded (${rateLimit.limitPerMinute}/min). Retry in ${rateLimit.retryAfterSeconds}s.`,
+    });
+
+    return tooManyRequests(
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+    );
+  }
+
   let domain: string | undefined;
 
   try {
@@ -190,6 +239,9 @@ export async function handleCreate(
         registry: domain,
         handler: "Collection Handler",
         operation: "create",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       });
       return notFound(
         "Unknown domain."
@@ -214,6 +266,9 @@ export async function handleCreate(
       handler: "Collection Handler",
       operation: "create",
       rows: 1,
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      blocked: rateLimit.blocked,
     });
 
     return created(
@@ -228,6 +283,9 @@ export async function handleCreate(
         handler:
           "Collection Handler",
         operation: "create",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       }
     );
   }

@@ -11,6 +11,7 @@ import {
   ok,
   noContent,
   notFound,
+  tooManyRequests,
   validationError,
   internalServerError,
 } from "@/lib/api/response";
@@ -22,6 +23,7 @@ import {
 import { validateObjectId } from "./objectId"
 
 import { handlePrismaError } from "./prismaError";
+import { checkRateLimit } from "./rateLimit";
 /* -------------------------------------------------------------------------- */
 /*                                  Helpers                                   */
 /* -------------------------------------------------------------------------- */
@@ -39,6 +41,8 @@ function handleApiError(
     registry?: string;
     handler: string;
     operation: string;
+    triesPerMinute?: number;
+    blocked?: boolean;
   }
 ) {
   if (error instanceof ZodError) {
@@ -92,6 +96,24 @@ export async function handleGetById(
 ) {
   const log =
     beginRequest(request);
+
+  const rateLimit =
+    checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    log.rateLimited({
+      handler: "Resource Handler",
+      operation: "findUnique",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      message: `Rate limit exceeded (${rateLimit.limitPerMinute}/min). Retry in ${rateLimit.retryAfterSeconds}s.`,
+    });
+
+    return tooManyRequests(
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+    );
+  }
+
   let domain: string | undefined;
 
   try {
@@ -109,6 +131,9 @@ export async function handleGetById(
           registry: domain,
           handler: "Resource Handler",
           operation: "findUnique",
+          triesPerMinute:
+            rateLimit.triesPerMinute,
+          blocked: rateLimit.blocked,
         }
       );
       return invalid;
@@ -122,6 +147,9 @@ export async function handleGetById(
         registry: domain,
         handler: "Resource Handler",
         operation: "findUnique",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       });
       return notFound(
         "Unknown domain."
@@ -141,6 +169,9 @@ export async function handleGetById(
           registry: domain,
           handler: "Resource Handler",
           operation: "findUnique",
+          triesPerMinute:
+            rateLimit.triesPerMinute,
+          blocked: rateLimit.blocked,
         }
       );
       return notFound();
@@ -151,6 +182,9 @@ export async function handleGetById(
       handler: "Resource Handler",
       operation: "findUnique",
       rows: 1,
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      blocked: rateLimit.blocked,
     });
 
     return ok(record);
@@ -162,6 +196,9 @@ export async function handleGetById(
         registry: domain,
         handler: "Resource Handler",
         operation: "findUnique",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       }
     );
   }
@@ -184,6 +221,24 @@ export async function handleUpdate(
 ) {
   const log =
     beginRequest(request);
+
+  const rateLimit =
+    checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    log.rateLimited({
+      handler: "Resource Handler",
+      operation: "update",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      message: `Rate limit exceeded (${rateLimit.limitPerMinute}/min). Retry in ${rateLimit.retryAfterSeconds}s.`,
+    });
+
+    return tooManyRequests(
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+    );
+  }
+
   let domain: string | undefined;
 
   try {
@@ -202,6 +257,9 @@ export async function handleUpdate(
           registry: domain,
           handler: "Resource Handler",
           operation: "update",
+          triesPerMinute:
+            rateLimit.triesPerMinute,
+          blocked: rateLimit.blocked,
         }
       );
       return invalid;
@@ -215,6 +273,9 @@ export async function handleUpdate(
         registry: domain,
         handler: "Resource Handler",
         operation: "update",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       });
       return notFound(
         "Unknown domain."
@@ -240,6 +301,9 @@ export async function handleUpdate(
       handler: "Resource Handler",
       operation: "update",
       rows: 1,
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      blocked: rateLimit.blocked,
     });
 
     return ok(
@@ -254,6 +318,9 @@ export async function handleUpdate(
         registry: domain,
         handler: "Resource Handler",
         operation: "update",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       }
     );
   }
@@ -276,6 +343,24 @@ export async function handleDelete(
 ) {
   const log =
     beginRequest(request);
+
+  const rateLimit =
+    checkRateLimit(request);
+
+  if (!rateLimit.allowed) {
+    log.rateLimited({
+      handler: "Resource Handler",
+      operation: "delete",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      message: `Rate limit exceeded (${rateLimit.limitPerMinute}/min). Retry in ${rateLimit.retryAfterSeconds}s.`,
+    });
+
+    return tooManyRequests(
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+    );
+  }
+
   let domain: string | undefined;
 
   try {
@@ -294,6 +379,9 @@ export async function handleDelete(
           registry: domain,
           handler: "Resource Handler",
           operation: "delete",
+          triesPerMinute:
+            rateLimit.triesPerMinute,
+          blocked: rateLimit.blocked,
         }
       );
       return invalid;
@@ -307,6 +395,9 @@ export async function handleDelete(
         registry: domain,
         handler: "Resource Handler",
         operation: "delete",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       });
       return notFound(
         "Unknown domain."
@@ -323,6 +414,9 @@ export async function handleDelete(
       operation: "delete",
       message:
         "Resource deleted successfully.",
+      triesPerMinute:
+        rateLimit.triesPerMinute,
+      blocked: rateLimit.blocked,
     });
 
     return noContent();
@@ -334,6 +428,9 @@ export async function handleDelete(
         registry: domain,
         handler: "Resource Handler",
         operation: "delete",
+        triesPerMinute:
+          rateLimit.triesPerMinute,
+        blocked: rateLimit.blocked,
       }
     );
   }

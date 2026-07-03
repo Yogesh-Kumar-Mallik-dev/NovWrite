@@ -11,22 +11,35 @@ export function getSorting(
   sort: SortOptions;
 } {
   const { sort, order } = sortSchema.parse({
-    sort: searchParams.get("sort") ?? undefined,
-    order: searchParams.get("order") ?? undefined,
+    sort:
+      searchParams.get("sort") ??
+      undefined,
+
+    order:
+      searchParams.get("order") ??
+      undefined,
   });
+
+  const defaultOrderBy =
+    registry.defaultOrderBy ?? {
+      createdAt: "desc",
+    };
 
   if (
     !sort ||
     !registry.sortableFields.includes(sort)
   ) {
+    const [field, direction] =
+      Object.entries(
+        defaultOrderBy
+      )[0];
+
     return {
-      orderBy:
-        registry.defaultOrderBy ?? {
-          createdAt: "desc",
-        },
+      orderBy: defaultOrderBy,
 
       sort: {
-        order,
+        field,
+        order: direction,
       },
     };
   }

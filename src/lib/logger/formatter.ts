@@ -234,6 +234,31 @@ export function formatApiLog(
     );
   }
 
+  if (
+    log.triesPerMinute !==
+    undefined
+  ) {
+    rows.push(
+      row(
+        "Tries/min",
+        `${log.triesPerMinute}`
+      )
+    );
+  }
+
+  if (
+    log.blocked !== undefined
+  ) {
+    rows.push(
+      row(
+        "Blocked",
+        log.blocked
+          ? "Yes"
+          : "No"
+      )
+    );
+  }
+
   if (log.response) {
     rows.push(
       row(
