@@ -31,7 +31,7 @@ import { checkRateLimit } from "./rateLimit";
 function getRegistryEntry(
   domain: string
 ): CrudRegistryEntry | null {
-  return registry[domain] ?? null;
+  return registry[domain as keyof typeof registry] ?? null;
 }
 
 function handleApiError(

@@ -18,24 +18,39 @@ const PROGRESS_SPRING = { stiffness: 120, damping: 30, mass: 0.6 };
 type CommonProps = {
   /** Override the scroll source. Defaults to the page via useSmoothScroll. */
   progress?: MotionValue<number>;
+
   /** Spring-smooth the value. Disabled automatically under reduced motion. */
   spring?: boolean;
+
   className?: string;
 };
 
-export interface ScrollProgressBarProps extends CommonProps {
+type HorizontalBarProps = CommonProps & {
   variant?: "bar";
+  orientation?: "horizontal";
   position?: "top" | "bottom";
-  /** Bar thickness in px. */
-  height?: number;
-  /** Position the bar with `fixed` (page) or `absolute` (embedded). */
+  thickness?: number;
   fixed?: boolean;
-}
+};
+
+type VerticalBarProps = CommonProps & {
+  variant?: "bar";
+  orientation: "vertical";
+  position?: "left" | "right";
+  thickness?: number;
+  fixed?: boolean;
+};
+
+export type ScrollProgressBarProps =
+  | HorizontalBarProps
+  | VerticalBarProps;
 
 export interface ScrollProgressCircleProps extends CommonProps {
   variant: "circle";
+
   /** Diameter in px. */
   size?: number;
+
   /** Stroke width in px. */
   thickness?: number;
 }
@@ -57,11 +72,20 @@ export function ScrollProgress(props: ScrollProgressProps) {
   return <ScrollProgressBar {...props} />;
 }
 
+const BAR_POSITION = {
+  top: "top-0 left-0 right-0 origin-left",
+  bottom: "bottom-0 left-0 right-0 origin-left",
+
+  left: "left-0 top-0 bottom-0 origin-top",
+  right: "right-0 top-0 bottom-0 origin-top",
+} as const;
+
 function ScrollProgressBar({
   progress,
   spring = true,
+  orientation = "horizontal",
   position = "top",
-  height = 2,
+  thickness = 2,
   fixed = true,
   className,
 }: ScrollProgressBarProps) {
@@ -69,11 +93,21 @@ function ScrollProgressBar({
   return (
     <motion.div
       aria-hidden
-      style={{ height, scaleX: value }}
+      style={{
+        ...(orientation === "horizontal"
+          ? {
+            height: thickness,
+            scaleX: value,
+          }
+          : {
+            width: thickness,
+            scaleY: value,
+          }),
+      }}
       className={cn(
-        "left-0 right-0 z-50 origin-left bg-foreground",
+        "z-50 bg-foreground",
         fixed ? "fixed" : "absolute",
-        position === "top" ? "top-0" : "bottom-0",
+        BAR_POSITION[position],
         className,
       )}
     />

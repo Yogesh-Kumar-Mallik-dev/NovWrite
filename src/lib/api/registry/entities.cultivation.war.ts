@@ -5,197 +5,198 @@ import { defaults } from "./defaults";
 import type { CrudRegistryEntry } from "./types";
 
 export const entitiesCultivationWarRegistry = {
-    cultivationTechniques: {
-        ...defaults,
-        model: prisma.cultivationTechnique,
-        createSchema:
-            validation.createCultivationTechniqueSchema,
-        updateSchema:
-            validation.updateCultivationTechniqueSchema,
+  cultivationTechniques: {
+    ...defaults,
+    model: prisma.cultivationTechnique,
+    createSchema:
+      validation.createCultivationTechniqueSchema,
+    updateSchema:
+      validation.updateCultivationTechniqueSchema,
 
-        searchableFields: ["name"],
+    searchableFields: ["name"],
 
-        filterableFields: [
-            "grade",
-        ],
+    filterableFields: [
+      "grade",
+    ],
 
-        sortableFields: [
-            "name",
-            "grade",
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    sortableFields: [
+      "name",
+      "grade",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
 
-    fightingTechniques: {
-        ...defaults,
-        model: prisma.fightingTechnique,
-        createSchema:
-            validation.createFightingTechniqueSchema,
-        updateSchema:
-            validation.updateFightingTechniqueSchema,
+  fightingTechniques: {
+    ...defaults,
+    model: prisma.fightingTechnique,
+    createSchema:
+      validation.createFightingTechniqueSchema,
+    updateSchema:
+      validation.updateFightingTechniqueSchema,
 
-        searchableFields: ["name"],
+    searchableFields: ["name"],
 
-        filterableFields: [
-            "grade",
-            "type",
-        ],
+    filterableFields: [
+      "grade",
+      "type",
+    ],
 
-        sortableFields: [
-            "name",
-            "grade",
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    sortableFields: [
+      "name",
+      "grade",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
 
-    majorRealms: {
-        ...defaults,
-        model: prisma.majorRealm,
-        createSchema:
-            validation.createMajorRealmSchema,
-        updateSchema:
-            validation.updateMajorRealmSchema,
+  majorRealms: {
+    ...defaults,
+    model: prisma.majorRealm,
+    createSchema:
+      validation.createMajorRealmSchema,
+    updateSchema:
+      validation.updateMajorRealmSchema,
 
-        searchableFields: ["name"],
+    searchableFields: ["name"],
 
-        filterableFields: [
-            "path",
-        ],
+    filterableFields: [
+      "path",
+    ],
 
-        sortableFields: [
-            "name",
-            "order",
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    sortableFields: [
+      "name",
+      "order",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
 
-    minorRealms: {
-        ...defaults,
-        model: prisma.minorRealm,
-        createSchema:
-            validation.createMinorRealmSchema,
-        updateSchema:
-            validation.updateMinorRealmSchema,
+  minorRealms: {
+    ...defaults,
+    model: prisma.minorRealm,
+    createSchema:
+      validation.createMinorRealmSchema,
+    updateSchema:
+      validation.updateMinorRealmSchema,
 
-        searchableFields: ["name"],
+    searchableFields: ["name"],
 
-        sortableFields: [
-            "name",
-            "order",
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    sortableFields: [
+      "name",
+      "order",
+      "createdAt",
+      "updatedAt",
+    ],
+  },
 
-    spiritRoots: {
-        ...defaults,
-        model: prisma.spiritRoots,
+  spiritRoots: {
+    ...defaults,
+    model: prisma.spiritRoots,
 
-        createSchema:
-            validation.createSpiritRootSchema,
-        updateSchema:
-            validation.updateSpiritRootSchema,
+    createSchema:
+      validation.createSpiritRootSchema,
+    updateSchema:
+      validation.updateSpiritRootSchema,
 
-        searchableFields: ["name"],
+    searchableFields: ["name"],
 
-        filterableFields: [
-            "grade",
-        ],
+    filterableFields: [
+      "grade",
+    ],
 
-        sortableFields: [
-            "name",
-            "grade",
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    sortableFields: [
+      "name",
+      "grade",
+      "createdAt",
+      "updatedAt",
+    ],
 
-    battles: {
-        ...defaults,
-        model: prisma.battle,
+  },
 
-        createSchema:
-            validation.createBattleSchema,
-        updateSchema:
-            validation.updateBattleSchema,
+  battles: {
+    ...defaults,
+    model: prisma.battle,
 
-        filterableFields: [
-            "conflictType",
-            "outcome",
-            "warId",
-        ],
-    },
+    createSchema:
+      validation.createBattleSchema,
+    updateSchema:
+      validation.updateBattleSchema,
 
-    battleSides: {
-        ...defaults,
-        model: prisma.battleSide,
+    filterableFields: [
+      "conflictType",
+      "outcome",
+      "warId",
+    ],
+  },
 
-        createSchema:
-            validation.createBattleSideSchema,
-        updateSchema:
-            validation.updateBattleSideSchema,
+  battleSides: {
+    ...defaults,
+    model: prisma.battleSide,
 
-        filterableFields: [
-            "battleId",
-            "outcome",
-        ],
-    },
+    createSchema:
+      validation.createBattleSideSchema,
+    updateSchema:
+      validation.updateBattleSideSchema,
 
-    battleParticipants: {
-        ...defaults,
-        model: prisma.battleParticipant,
+    filterableFields: [
+      "battleId",
+      "outcome",
+    ],
+  },
 
-        createSchema:
-            validation.createBattleParticipantSchema,
-        updateSchema:
-            validation.updateBattleParticipantSchema,
+  battleParticipants: {
+    ...defaults,
+    model: prisma.battleParticipant,
 
-        filterableFields: [
-            "battleSideId",
-            "role",
-            "commander",
-        ],
-    },
+    createSchema:
+      validation.createBattleParticipantSchema,
+    updateSchema:
+      validation.updateBattleParticipantSchema,
 
-    wars: {
-        ...defaults,
-        model: prisma.war,
+    filterableFields: [
+      "battleSideId",
+      "role",
+      "commander",
+    ],
+  },
 
-        createSchema:
-            validation.createWarSchema,
-        updateSchema:
-            validation.updateWarSchema,
+  wars: {
+    ...defaults,
+    model: prisma.war,
 
-        filterableFields: [
-            "type",
-            "outcome",
-        ],
-    },
+    createSchema:
+      validation.createWarSchema,
+    updateSchema:
+      validation.updateWarSchema,
 
-    warParticipants: {
-        ...defaults,
+    filterableFields: [
+      "type",
+      "outcome",
+    ],
+  },
 
-        model: prisma.warParticipant,
+  warParticipants: {
+    ...defaults,
 
-        createSchema:
-            validation.createWarParticipantSchema,
+    model: prisma.warParticipant,
 
-        updateSchema:
-            validation.updateWarParticipantSchema,
+    createSchema:
+      validation.createWarParticipantSchema,
 
-        filterableFields: [
-            "warId",
-            "organizationId",
-            "role",
-            "side",
-        ],
+    updateSchema:
+      validation.updateWarParticipantSchema,
 
-        sortableFields: [
-            "createdAt",
-            "updatedAt",
-        ],
-    },
+    filterableFields: [
+      "warId",
+      "organizationId",
+      "role",
+      "side",
+    ],
+
+    sortableFields: [
+      "createdAt",
+      "updatedAt",
+    ],
+  },
 } satisfies Record<string, CrudRegistryEntry>;
