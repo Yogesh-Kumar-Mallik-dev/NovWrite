@@ -1,37 +1,42 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Manrope,
+  Geist_Mono,
+} from "next/font/google";
+
 import "./globals.css";
 import Provider from "@/providers/Provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
   subsets: ["latin"],
+  variable: "--font-manrope",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Novwrite",
-  description: "An authors dream for managing timeline and characters",
+  title: "NovWrite",
+  description:
+    "An author's dream for managing timeline and characters",
 };
 
-const RootLayout = ({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) => {
+}>) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body><Provider>{children}</Provider></body>
+      <body>
+        <Provider>{children}</Provider>
+      </body>
     </html>
   );
 }
-
-export default RootLayout;

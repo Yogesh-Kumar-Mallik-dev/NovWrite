@@ -1,5 +1,5 @@
 model Title {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name    String   @unique
   aliases String[]
@@ -20,25 +20,25 @@ model Title {
 }
 
 model CharacterTitle {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String @db.ObjectId
-  titleId     String @db.ObjectId
+  characterId String
+  titleId     String
 
   character Characters @relation(fields: [characterId], references: [id])
   title     Title      @relation(fields: [titleId], references: [id])
 
-  grantedByCharacterId String?     @db.ObjectId
+  grantedByCharacterId String?
   grantedByCharacter   Characters? @relation("TitleGrantedByCharacter", fields: [grantedByCharacterId], references: [id])
 
-  grantedByOrganizationId String?       @db.ObjectId
+  grantedByOrganizationId String?
   grantedByOrganization   Organization? @relation("TitleGrantedByOrganization", fields: [grantedByOrganizationId], references: [id])
 
-  historicalEventId String?          @db.ObjectId
+  historicalEventId String?
   historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
 
-  grantedAt WorldDate?
-  revokedAt WorldDate?
+  grantedAt Json?
+  revokedAt Json?
 
   reason String?
 

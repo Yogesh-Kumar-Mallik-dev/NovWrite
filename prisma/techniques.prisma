@@ -1,5 +1,5 @@
 model CultivationTechnique {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name  String
   grade Grade
@@ -21,7 +21,7 @@ model CultivationTechnique {
 }
 
 model FightingTechnique {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name  String
   grade Grade

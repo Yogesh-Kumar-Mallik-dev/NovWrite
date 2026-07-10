@@ -1,5 +1,5 @@
 model Item {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name  String
   grade Grade
@@ -25,9 +25,9 @@ model Item {
 }
 
 model Weapon {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   weaponType WeaponType
@@ -42,9 +42,9 @@ model Weapon {
 }
 
 model Armor {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   armorType ArmorType
@@ -58,9 +58,9 @@ model Armor {
 }
 
 model Pill {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   pillType PillType
@@ -74,9 +74,9 @@ model Pill {
 }
 
 model Talisman {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   catagory TalismanType
@@ -89,9 +89,9 @@ model Talisman {
 }
 
 model Artifact {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   category ArtifactCategory
@@ -116,9 +116,9 @@ model Artifact {
 }
 
 model Treasure {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   category TreasureCategory
@@ -137,13 +137,13 @@ model Treasure {
 }
 
 model SecretScroll {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   knowledgeType SecretKnowledgeType
-  knowledgeId   String              @db.ObjectId
+  knowledgeId   String
 
   oneTimeUse Boolean @default(false)
 
@@ -152,9 +152,9 @@ model SecretScroll {
 }
 
 model Material {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId String @unique @db.ObjectId
+  itemId String @unique
   item   Item   @relation(fields: [itemId], references: [id])
 
   type   MaterialType

@@ -1,11 +1,11 @@
 model Characters {
-  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  id          String             @id @default(cuid())
   name        String
-  dateOfBirth WorldDate?
+  dateOfBirth Json?
   species     CharacterSpecies[]
   basePower   Int                @default(0)
 
-  spiritRootId String      @db.ObjectId
+  spiritRootId String
   spiritRoot   SpiritRoots @relation(fields: [spiritRootId], references: [id])
 
   inventory CharacterInventory[]
@@ -40,9 +40,9 @@ model Characters {
 }
 
 model CharacterVersion {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String     @db.ObjectId
+  characterId String
   character   Characters @relation(fields: [characterId], references: [id])
 
   version Int
@@ -55,20 +55,20 @@ model CharacterVersion {
 }
 
 model CharacterInventory {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String     @db.ObjectId
+  characterId String
   character   Characters @relation(fields: [characterId], references: [id])
 
-  itemId String @db.ObjectId
+  itemId String
   item   Item   @relation(fields: [itemId], references: [id])
 
   quantity Int     @default(1)
   equipped Boolean @default(false)
 
-  obtainedAt WorldDate?
+  obtainedAt Json?
 
-  lostAt WorldDate?
+  lostAt Json?
   reason String?
 
   createdAt DateTime @default(now())
@@ -78,17 +78,17 @@ model CharacterInventory {
 }
 
 model CharacterCultivation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String     @db.ObjectId
+  characterId String
   character   Characters @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   path Cultivation_Path
 
-  majorRealmId String     @db.ObjectId
+  majorRealmId String
   majorRealm   MajorRealm @relation(fields: [majorRealmId], references: [id])
 
-  minorRealmId String     @db.ObjectId
+  minorRealmId String
   minorRealm   MinorRealm @relation(fields: [minorRealmId], references: [id])
 
   currentEnergy Int?
@@ -101,15 +101,15 @@ model CharacterCultivation {
 }
 
 model CharacterRelations {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  sourceCharacterId String @db.ObjectId
-  targetCharacterId String @db.ObjectId
+  sourceCharacterId String
+  targetCharacterId String
 
   relationshipType RelationshipType
 
-  startDate WorldDate?
-  endDate   WorldDate?
+  startDate Json?
+  endDate   Json?
 
   description String
 
@@ -124,10 +124,10 @@ model CharacterRelations {
 }
 
 model CharacterOrganization {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId    String @db.ObjectId
-  organizationId String @db.ObjectId
+  characterId    String
+  organizationId String
 
   character    Characters   @relation(fields: [characterId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
@@ -137,8 +137,8 @@ model CharacterOrganization {
   contributionPoints Int?
   reputation         Int?
 
-  joinedAt WorldDate?
-  leftAt   WorldDate?
+  joinedAt Json?
+  leftAt   Json?
 
   reason String?
 
