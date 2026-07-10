@@ -2,6 +2,7 @@
   "name": "NovWrite",
   "version": "0.1.2",
   "private": true,
+  "type": "module",
   "prisma": {
     "schema": "./prisma"
   },

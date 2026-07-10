@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../generated";
+import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import "dotenv/config";
@@ -30,4 +30,4 @@ if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
 
-export * from "../../generated";
+export * from "@/generated/prisma/client";
