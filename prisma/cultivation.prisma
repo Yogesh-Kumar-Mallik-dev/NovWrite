@@ -1,5 +1,5 @@
 model SpiritRoots {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   elements Elements[]
 
@@ -15,7 +15,7 @@ model SpiritRoots {
 }
 
 model Physique {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name  String
   grade Grade
@@ -35,7 +35,7 @@ model Physique {
 }
 
 model Bloodline {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name  String
   grade Grade

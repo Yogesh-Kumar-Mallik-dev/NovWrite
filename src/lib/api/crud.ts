@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma";
 import { ZodError } from "zod";
 
 import { buildQuery } from "./query";
@@ -94,11 +94,9 @@ export async function handleGetCollection(
     }>;
   }
 ) {
-  const log =
-    beginRequest(request);
+  const log = beginRequest(request);
 
-  const rateLimit =
-    checkRateLimit(request);
+  const rateLimit = checkRateLimit(request);
 
   if (!rateLimit.allowed) {
     log.rateLimited({
@@ -110,7 +108,7 @@ export async function handleGetCollection(
     });
 
     return tooManyRequests(
-      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`
+      `Rate limit exceeded (${rateLimit.limitPerMinute}/min).`,
     );
   }
 
@@ -119,9 +117,7 @@ export async function handleGetCollection(
   try {
     ({ domain } = await params);
 
-
-    const entry =
-      getRegistryEntry(domain);
+    const entry = getRegistryEntry(domain);
 
     if (!entry) {
       log.notFound("Unknown domain.", {
@@ -132,23 +128,33 @@ export async function handleGetCollection(
           rateLimit.triesPerMinute,
         blocked: rateLimit.blocked,
       });
-      return notFound(
-        "Unknown domain."
-      );
+
+      return notFound("Unknown domain.");
     }
 
     const query = buildQuery(
       request.nextUrl.searchParams,
-      entry
+      entry,
     );
 
-    const [data, total] =
+    const [data, totalItems] =
       await Promise.all([
         entry.model.findMany(query),
         entry.model.count({
           where: query.where,
         }),
       ]);
+
+    const page =
+      Math.floor(
+        query.skip / query.take,
+      ) + 1;
+
+    const limit = query.take;
+
+    const totalPages = Math.ceil(
+      totalItems / limit,
+    );
 
     log.ok({
       registry: domain,
@@ -163,15 +169,13 @@ export async function handleGetCollection(
     return ok({
       data,
       pagination: {
-        total,
-        page:
-          query.skip /
-          query.take +
-          1,
-        limit: query.take,
-        pages: Math.ceil(
-          total / query.take
-        ),
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasPrevious: page > 1,
+        hasNext:
+          page < totalPages,
       },
     });
   } catch (error) {
@@ -187,11 +191,10 @@ export async function handleGetCollection(
         triesPerMinute:
           rateLimit.triesPerMinute,
         blocked: rateLimit.blocked,
-      }
+      },
     );
   }
 }
-
 /* -------------------------------------------------------------------------- */
 /*                              Collection POST                               */
 /* -------------------------------------------------------------------------- */

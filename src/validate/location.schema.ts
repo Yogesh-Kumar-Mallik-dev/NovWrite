@@ -1,4 +1,4 @@
-import { LocationType } from "@prisma/client";
+import { LocationType } from "@/lib/prisma";
 import { z } from "zod";
 
 import {

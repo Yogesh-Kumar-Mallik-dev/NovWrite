@@ -1,12 +1,12 @@
 model Species {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name    String   @unique
   aliases String[]
 
   description String?
 
-  parentSpeciesId String?  @db.ObjectId
+  parentSpeciesId String?
   parentSpecies   Species? @relation("SpeciesHierarchy", fields: [parentSpeciesId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   childSpecies Species[] @relation("SpeciesHierarchy")
@@ -30,16 +30,16 @@ model Species {
 }
 
 model CharacterSpecies {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String @db.ObjectId
-  speciesId   String @db.ObjectId
+  characterId String
+  speciesId   String
 
   character Characters @relation(fields: [characterId], references: [id])
   species   Species    @relation(fields: [speciesId], references: [id])
 
-  acquiredAt WorldDate?
-  lostAt     WorldDate?
+  acquiredAt Json?
+  lostAt     Json?
 
   reason String?
 

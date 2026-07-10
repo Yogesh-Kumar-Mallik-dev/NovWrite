@@ -1,12 +1,12 @@
 model Occupation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name    String   @unique
   aliases String[]
 
   description String?
 
-  parentOccupationId String?     @db.ObjectId
+  parentOccupationId String?
   parentOccupation   Occupation? @relation("OccupationHierarchy", fields: [parentOccupationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   childOccupations Occupation[] @relation("OccupationHierarchy")
@@ -21,27 +21,27 @@ model Occupation {
 }
 
 model CharacterOccupation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId  String @db.ObjectId
-  occupationId String @db.ObjectId
+  characterId  String
+  occupationId String
 
   character  Characters @relation(fields: [characterId], references: [id])
   occupation Occupation @relation(fields: [occupationId], references: [id])
 
   grade Grade?
 
-  grantedByCharacterId String?     @db.ObjectId
+  grantedByCharacterId String?
   grantedByCharacter   Characters? @relation("OccupationGrantedByCharacter", fields: [grantedByCharacterId], references: [id])
 
-  grantedByOrganizationId String?       @db.ObjectId
+  grantedByOrganizationId String?
   grantedByOrganization   Organization? @relation("OccupationGrantedByOrganization", fields: [grantedByOrganizationId], references: [id])
 
-  historicalEventId String?          @db.ObjectId
+  historicalEventId String?
   historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
 
-  acquiredAt WorldDate?
-  lostAt     WorldDate?
+  acquiredAt Json?
+  lostAt     Json?
 
   reason String?
 

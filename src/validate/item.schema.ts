@@ -11,7 +11,7 @@ import {
   TreasureCategory,
   TalismanType,
   WeaponType,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 

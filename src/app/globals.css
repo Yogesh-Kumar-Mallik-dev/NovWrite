@@ -5,6 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: var(--font-manrope);
+
+  --font-ui: var(--font-inter);
+  --font-mono: var(--font-mono);
+  --font-editor: var(--font-editor);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);

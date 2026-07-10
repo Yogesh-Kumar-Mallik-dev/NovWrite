@@ -3,7 +3,7 @@ import { paginationSchema } from "@/validate";
 import { PaginationOptions } from "@/lib/api/types";
 
 export function getPagination(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ): PaginationOptions {
   const parsed = paginationSchema.parse({
     page: searchParams.get("page"),

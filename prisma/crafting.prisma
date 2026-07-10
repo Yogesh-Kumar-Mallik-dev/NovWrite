@@ -1,5 +1,5 @@
 model Recipe {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name String @unique
 
@@ -7,10 +7,10 @@ model Recipe {
 
   description String?
 
-  occupationId String     @db.ObjectId
+  occupationId String
   occupation   Occupation @relation(fields: [occupationId], references: [id])
 
-  resultItemId String @db.ObjectId
+  resultItemId String
   resultItem   Item   @relation("RecipeResult", fields: [resultItemId], references: [id])
 
   requiredRealm Qi_MajorRealm?
@@ -31,12 +31,12 @@ model Recipe {
 }
 
 model RecipeIngredient {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  recipeId String @db.ObjectId
+  recipeId String
   recipe   Recipe @relation(fields: [recipeId], references: [id])
 
-  itemId String @db.ObjectId
+  itemId String
   item   Item   @relation(fields: [itemId], references: [id])
 
   quantity Int @default(1)
@@ -51,22 +51,22 @@ model RecipeIngredient {
 }
 
 model CharacterCraft {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String     @db.ObjectId
+  characterId String
   character   Characters @relation(fields: [characterId], references: [id])
 
-  recipeId String @db.ObjectId
+  recipeId String
   recipe   Recipe @relation(fields: [recipeId], references: [id])
 
-  historicalEventId String?          @db.ObjectId
+  historicalEventId String?
   historicalEvent   HistoricalEvent? @relation(fields: [historicalEventId], references: [id])
 
   quantity Int @default(1)
 
   result CraftResult
 
-  craftedAt WorldDate?
+  craftedAt Json?
 
   notes String?
 
@@ -79,9 +79,9 @@ model CharacterCraft {
 }
 
 model Formation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  recipeId String @unique @db.ObjectId
+  recipeId String @unique
   recipe   Recipe @relation(fields: [recipeId], references: [id])
 
   category FormationCategory

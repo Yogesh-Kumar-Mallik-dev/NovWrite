@@ -1,5 +1,5 @@
 model HistoricalEvent {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   title String @unique
 
@@ -8,12 +8,12 @@ model HistoricalEvent {
 
   description String?
   crafts      CharacterCraft[]
-  date        WorldDate
+  date        Json
 
-  locationId String?   @db.ObjectId
+  locationId String?
   location   Location? @relation(fields: [locationId], references: [id])
 
-  parentEventId String?          @db.ObjectId
+  parentEventId String?
   parentEvent   HistoricalEvent? @relation("HistoricalEventHierarchy", fields: [parentEventId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   subEvents HistoricalEvent[] @relation("HistoricalEventHierarchy")
@@ -23,11 +23,13 @@ model HistoricalEvent {
   locationEvents     LocationHistoricalEvent[]
   itemEvents         ItemHistoricalEvent[]
 
-  titles    CharacterTitle[]
-  war       War?
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  battle    Battle?
+  titles CharacterTitle[]
+  war    War?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  battle Battle?
 
   occupations CharacterOccupation[]
 
@@ -38,10 +40,10 @@ model HistoricalEvent {
 }
 
 model CharacterHistoricalEvent {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String @db.ObjectId
-  eventId     String @db.ObjectId
+  characterId String
+  eventId     String
 
   character Characters      @relation(fields: [characterId], references: [id])
   event     HistoricalEvent @relation(fields: [eventId], references: [id])
@@ -59,10 +61,10 @@ model CharacterHistoricalEvent {
 }
 
 model OrganizationHistoricalEvent {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  organizationId String @db.ObjectId
-  eventId        String @db.ObjectId
+  organizationId String
+  eventId        String
 
   organization Organization    @relation(fields: [organizationId], references: [id])
   event        HistoricalEvent @relation(fields: [eventId], references: [id])
@@ -80,10 +82,10 @@ model OrganizationHistoricalEvent {
 }
 
 model LocationHistoricalEvent {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  locationId String @db.ObjectId
-  eventId    String @db.ObjectId
+  locationId String
+  eventId    String
 
   location Location        @relation(fields: [locationId], references: [id])
   event    HistoricalEvent @relation(fields: [eventId], references: [id])
@@ -101,10 +103,10 @@ model LocationHistoricalEvent {
 }
 
 model ItemHistoricalEvent {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  itemId  String @db.ObjectId
-  eventId String @db.ObjectId
+  itemId  String
+  eventId String
 
   item  Item            @relation(fields: [itemId], references: [id])
   event HistoricalEvent @relation(fields: [eventId], references: [id])

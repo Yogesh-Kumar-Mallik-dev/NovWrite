@@ -1,5 +1,5 @@
 model Organization {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name    String   @unique
   aliases String[]
@@ -8,27 +8,28 @@ model Organization {
 
   description String?
 
-  founderId String?     @db.ObjectId
+  founderId String?
   founder   Characters? @relation("OrganizationFounder", fields: [founderId], references: [id])
 
-  leaderId String?     @db.ObjectId
+  leaderId String?
   leader   Characters? @relation("OrganizationLeader", fields: [leaderId], references: [id])
 
-  parentOrganizationId String?       @db.ObjectId
+  parentOrganizationId String?
   parentOrganization   Organization? @relation("OrganizationHierarchy", fields: [parentOrganizationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   subOrganizations Organization[] @relation("OrganizationHierarchy")
 
-  foundedAt   WorldDate?
-  dissolvedAt WorldDate?
+  foundedAt   Json?
+  dissolvedAt Json?
 
   wars             WarParticipant[]
   members          CharacterOrganization[]
   historicalEvents OrganizationHistoricalEvent[]
   grantedTitles    CharacterTitle[]              @relation("TitleGrantedByOrganization")
 
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   battleParticipants BattleParticipant[]
   grantedOccupations CharacterOccupation[] @relation("OccupationGrantedByOrganization")
 

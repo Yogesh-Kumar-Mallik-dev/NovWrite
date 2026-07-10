@@ -11,4 +11,8 @@ export const navRegistry = [
     href: "/write",
     label: "Write Novel",
   },
+  {
+    href: "/spirit-roots",
+    label: "Spirit Roots",
+  },
 ];

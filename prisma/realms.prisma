@@ -1,5 +1,5 @@
 model MajorRealm {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   path Cultivation_Path
 
@@ -21,9 +21,9 @@ model MajorRealm {
 }
 
 model MinorRealm {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  majorRealmId String @db.ObjectId
+  majorRealmId String
 
   majorRealm MajorRealm @relation(fields: [majorRealmId], references: [id], onDelete: Cascade)
 

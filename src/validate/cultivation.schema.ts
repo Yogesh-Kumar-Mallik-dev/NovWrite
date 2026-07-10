@@ -1,4 +1,4 @@
-import { Grade, Elements } from "@prisma/client";
+import { Grade, Elements } from "@/lib/prisma";
 import { z } from "zod";
 
 import {

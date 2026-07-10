@@ -1,4 +1,4 @@
-import { OrganizationType } from "@prisma/client";
+import { OrganizationType } from "@/lib/prisma";
 import { z } from "zod";
 
 import {

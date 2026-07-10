@@ -1,8 +1,10 @@
 export interface Pagination {
-  total: number;
   page: number;
   limit: number;
-  pages: number;
+  totalItems: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
 }
 
 export interface ListPayload<T> {

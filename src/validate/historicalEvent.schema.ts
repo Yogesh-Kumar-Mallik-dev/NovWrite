@@ -1,7 +1,7 @@
 import {
   HistoricalEventScale,
   HistoricalEventType,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 

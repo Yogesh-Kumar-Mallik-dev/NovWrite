@@ -1,5 +1,5 @@
 model Location {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
   name String @unique
 
@@ -7,7 +7,7 @@ model Location {
 
   description String?
 
-  parentLocationId String?   @db.ObjectId
+  parentLocationId String?
   parentLocation   Location? @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   childLocations Location[] @relation("LocationHierarchy")
@@ -26,17 +26,17 @@ model Location {
 }
 
 model CharacterLocation {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(cuid())
 
-  characterId String @db.ObjectId
-  locationId  String @db.ObjectId
+  characterId String
+  locationId  String
 
   character Characters @relation(fields: [characterId], references: [id])
   location  Location   @relation(fields: [locationId], references: [id])
 
-  arrivedAt WorldDate?
+  arrivedAt Json?
 
-  leftAt WorldDate?
+  leftAt Json?
 
   reason String?
 

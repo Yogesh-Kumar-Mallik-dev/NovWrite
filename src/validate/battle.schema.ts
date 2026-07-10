@@ -2,7 +2,7 @@ import {
   BattleOutcome,
   BattleRole,
   ConflictType,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 
