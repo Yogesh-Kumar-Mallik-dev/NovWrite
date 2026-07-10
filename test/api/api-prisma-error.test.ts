@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma";
 
 import { handlePrismaError } from "@/lib/api/prismaError";
 

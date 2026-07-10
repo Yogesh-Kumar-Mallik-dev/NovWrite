@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/prisma";
 
 import {
   badRequest,

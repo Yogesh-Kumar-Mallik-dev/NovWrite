@@ -1,9 +1,15 @@
-import { defineConfig, env } from "prisma/config";
+import "dotenv/config";
 
-const databaseUrl = env("DATABASE_URL");
+import { defineConfig } from "prisma/config";
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set.");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`${name} is not set.`);
+  }
+
+  return value;
 }
 
 export default defineConfig({
@@ -12,6 +18,6 @@ export default defineConfig({
     path: "./prisma/migrations",
   },
   datasource: {
-    url: databaseUrl,
+    url: requireEnv("DATABASE_URL"),
   },
 });

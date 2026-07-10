@@ -5,7 +5,7 @@ import {
   Grade,
   Qi_MajorRealm,
   Soul_MajorRealm,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 

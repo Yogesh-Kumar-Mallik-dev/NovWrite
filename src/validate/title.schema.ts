@@ -1,4 +1,4 @@
-import { TitleType } from "@prisma/client";
+import { TitleType } from "@/lib/prisma";
 import { z } from "zod";
 
 import {

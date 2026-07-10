@@ -2,7 +2,7 @@ import {
   Cultivation_Path,
   RelationshipType,
   OrganizationRole,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 

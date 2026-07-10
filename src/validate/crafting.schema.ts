@@ -3,7 +3,7 @@ import {
   FormationCategory,
   Qi_MajorRealm,
   RecipeCategory,
-} from "@prisma/client";
+} from "@/lib/prisma";
 
 import { z } from "zod";
 

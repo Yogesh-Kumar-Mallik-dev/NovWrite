@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import "dotenv/config";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -28,3 +29,5 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
+
+export * from "../../generated";
