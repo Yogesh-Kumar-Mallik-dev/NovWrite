@@ -1,0 +1,117 @@
+# ==============================================================================
+# NovWrite Monorepo .gitignore
+# Covers Go backend, TypeScript Data Service, SvelteKit Web, Tauri Desktop,
+# Docker/Traefik infrastructure, and common developer toolchain artifacts.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+
+# ------------------------------------------------------------------------------
+# Operating System & File System Artifacts
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ------------------------------------------------------------------------------
+# IDEs & Editor Configuration
+# ------------------------------------------------------------------------------
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ------------------------------------------------------------------------------
+# Logs, Temporary Files & Cache Directories
+# ------------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+tmp/
+temp/
+.cache/
+.turbo/
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# ------------------------------------------------------------------------------
+# Node / TypeScript / Frontend Dependencies & Build Outputs
+# ------------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+dist/
+build/
+out/
+.output/
+.svelte-kit/
+.vercel/
+*.tsbuildinfo
+
+# ------------------------------------------------------------------------------
+# Tauri Desktop App Artifacts
+# ------------------------------------------------------------------------------
+src-tauri/target/
+frontend/desktop/src-tauri/target/
+
+# ------------------------------------------------------------------------------
+# Go Build & Test Artifacts
+# ------------------------------------------------------------------------------
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+c.out
+profile.out
+coverage.txt
+
+# ------------------------------------------------------------------------------
+# Testing & Code Coverage
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+
+# ------------------------------------------------------------------------------
+# Databases & Local Storage
+# ------------------------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.db-journal
+deploy/postgres/data/
+deploy/redis/data/
+
+# ------------------------------------------------------------------------------
+# Traefik & Infrastructure Runtime Data
+# ------------------------------------------------------------------------------
+deploy/traefik/acme.json
+deploy/certs/
