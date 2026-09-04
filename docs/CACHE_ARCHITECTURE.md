@@ -106,6 +106,7 @@ When an author modifies, inserts, or deletes an `Event` at historical sequence $
 1. **Calculate Invalidation Scope:**
    Any cached state snapshot with sequence number $S \ge K$ in project $P$ is now invalid because its causal history has changed.
 2. **Execute Redis Invalidation Pipeline:**
+
    ```bash
    # Atomically scan and delete all cached state snapshots >= K
    # In practice, handled via Redis scan or secondary index set:
@@ -113,9 +114,11 @@ When an author modifies, inserts, or deletes an `Event` at historical sequence $
    # Keys where seq >= K are evicted via UNLINK
    UNLINK novwrite:v1:proj:{projId}:state:seq:{K} ...
    ```
+
 3. **Publish Invalidation Message via Redis Pub/Sub:**
    - Channel: `novwrite:events:proj:{projId}`
    - Payload:
+
      ```json
      {
        "action": "TIMELINE_RETROACTIVE_MUTATION",
@@ -124,6 +127,7 @@ When an author modifies, inserts, or deletes an `Event` at historical sequence $
        "timestamp": 1757034000
      }
      ```
+
 4. **SSE Broadcast to Connected Clients:**
    Active client sessions listening on the project's SSE stream receive the invalidation message and re-evaluate their local continuity state reactively.
 

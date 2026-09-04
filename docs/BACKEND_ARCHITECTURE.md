@@ -153,7 +153,7 @@ sequenceDiagram
 syntax = "proto3";
 
 package novwrite.data.v1;
-option go_package = "github.com/novwrite/novwrite/proto/data/v1;datav1";
+option go_package = "github.com/Yogesh-Kumar-Mallik-dev/NovWrite/proto/data/v1;datav1";
 
 service DataService {
   rpc GetProjectState(GetProjectStateRequest) returns (GetProjectStateResponse);

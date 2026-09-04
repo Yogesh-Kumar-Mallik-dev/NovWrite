@@ -15,7 +15,16 @@ Ensure the following tools are installed on your workstation:
 
 ---
 
-## 2. Environment Configuration
+## 2. Clone Repository
+
+```bash
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+```
+
+---
+
+## 3. Environment Configuration
 
 Copy the example environment file:
 
@@ -34,15 +43,15 @@ Key environment variables:
 
 ---
 
-## 3. Running Locally
+## 4. Running Locally
 
-### 3.1 Start Infrastructure Containers
+### 4.1 Start Infrastructure Containers
 
 ```bash
 docker compose -f deploy/compose.yaml up -d postgres redis
 ```
 
-### 3.2 Initialize Prisma Schema
+### 4.2 Initialize Prisma Schema
 
 ```bash
 cd services/data
@@ -51,7 +60,7 @@ pnpm prisma migrate dev
 pnpm prisma generate
 ```
 
-### 3.3 Launch Services
+### 4.3 Launch Services
 
 - **Data Service (gRPC):**
   ```bash
@@ -68,7 +77,7 @@ pnpm prisma generate
 
 ---
 
-## 4. Agent & Developer Conventions
+## 5. Agent & Developer Conventions
 
 When contributing code or building features:
 
