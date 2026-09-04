@@ -1,8 +1,9 @@
 # Current Context
 
-- **Last Completed Task:** Updated [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md) and [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md) to:
-  1. Decouple the Prose Writing Space (NovWrite Prose Studio) and Creation Space (NovWrite World Studio) into standalone workspaces rather than forced in-page tabs.
-  2. Enforce strict anti-pattern prohibition: eliminate all nested tab-in-modal soup; establish first-class dedicated workbench pages for Characters & Entities, Power Systems & Progression Ladders, Universe Schemas & Custom Fields, Continuity Rules & Invariants, Causal Timeline & Events, and Relations Matrix.
-  3. Formulate simultaneous tri-platform co-development architecture (Web, Desktop via Tauri 2, and Mobile Android/PWA) sharing the same core components (`shadcn-svelte`), Svelte 5 runes state stores, types, and API transport with hand-in-hand responsiveness (280px–390px).
-- **Current State:** Architecture specifications and design decisions updated, formatted with Prettier, and ready for signed commit.
-- **Next Steps:** Await user guidance or proceed with foundational monorepo scaffolding and domain implementations.
+- **Last Completed Task:** Restored the complete Svelte 5 Runes State Architecture and state store definitions inside [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), locking in:
+  1. Decoupled standalone workspaces for Prose Studio (`/novel`) vs World Creation Studio (`/world/*`).
+  2. Strict prohibition of tab-and-modal soup in the creation space.
+  3. Co-development of all 3 frontends (Web, Desktop Tauri 2, Mobile Android/PWA) on a shared component and store foundation.
+  4. Reactive Svelte 5 Runes store implementation (`UniverseStore` with master-detail selection, search filtering, and per-entity historical change audit fetch).
+- **Current State:** Architecture documentation complete, formatted with Prettier, and ready for commit.
+- **Next Steps:** Proceed to foundational codebase scaffolding and implementation based on user direction.

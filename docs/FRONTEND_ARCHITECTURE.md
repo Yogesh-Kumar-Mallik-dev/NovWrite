@@ -1,6 +1,6 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 1.1 - Decoupled Standalone Workspaces & Tri-Platform Co-Development)  
+**Status:** Locked Baseline (Version 1.2 - Decoupled Standalone Workspaces & Tri-Platform Co-Development)  
 **Framework:** SvelteKit 2 with Svelte 5 (Runes Mode)  
 **Component Library:** `shadcn-svelte` (`nova` style, `zinc` base) / `Bits UI`  
 **Styling:** Tailwind CSS v4 (`@theme inline`)  
@@ -154,7 +154,88 @@ flowchart TD
 
 ---
 
-## 5. UI & Styling Specifications (MongoDB Compass / Linear Workbench)
+## 5. Svelte 5 Runes State Architecture
+
+State across all workspaces is managed via modular, reactive class instances utilizing Svelte 5 runes (`$state`, `$derived`, `$props`, `$effect`):
+
+```typescript
+// Block: BLOCK_STORE_UNIVERSE_001
+// Description: Reactive state store for dynamic universe entities, property schemas, and selection state.
+// Output: UniverseStore reactive class instance
+
+import { untrack } from "svelte";
+import type {
+  Entity,
+  EntityType,
+  PropertyDefinition,
+  EventEffect,
+} from "$lib/types";
+
+export class UniverseStore {
+  entities = $state<Entity[]>([]);
+  entityTypes = $state<EntityType[]>([]);
+  propertyDefinitions = $state<PropertyDefinition[]>([]);
+  selectedEntityId = $state<string | null>(null);
+  entityHistory = $state<Record<string, EventEffect[]>>({});
+  isLoading = $state<boolean>(false);
+  errorMessage = $state<string | null>(null);
+
+  selectedEntity = $derived(
+    this.entities.find((e) => e.id === this.selectedEntityId) ?? null,
+  );
+
+  selectedEntityHistory = $derived(
+    this.selectedEntityId
+      ? (this.entityHistory[this.selectedEntityId] ?? [])
+      : [],
+  );
+
+  filteredEntities = $derived.by(() => {
+    return (typeId: string | null, search: string) => {
+      let result = this.entities;
+      if (typeId) {
+        result = result.filter((e) => e.entityTypeId === typeId);
+      }
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        result = result.filter(
+          (e) =>
+            e.name.toLowerCase().includes(query) ||
+            e.aliases.some((a) => a.toLowerCase().includes(query)),
+        );
+      }
+      return result;
+    };
+  });
+
+  async selectEntity(id: string) {
+    this.selectedEntityId = id;
+    if (!this.entityHistory[id]) {
+      await this.fetchEntityHistory(id);
+    }
+  }
+
+  async fetchEntityHistory(entityId: string) {
+    try {
+      this.isLoading = true;
+      const res = await fetch(`/api/v1/entities/${entityId}/history`);
+      if (!res.ok) throw new Error("Failed to load entity history");
+      const data = await res.json();
+      this.entityHistory[entityId] = data;
+    } catch (err: any) {
+      this.errorMessage = `BLOCK_STORE_UNIVERSE_001: ${err.message}`;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+}
+
+export const universeStore = new UniverseStore();
+```
+
+---
+
+## 6. UI & Styling Specifications (MongoDB Compass / Linear Workbench)
 
 - **Borderlines & Separators:** High-contrast, sharp borderlines (`border-zinc-800` / `#27272a` in Dark mode; `border-zinc-200` / `#e4e4e7` in Light mode).
 - **Solid Dual Primary Palette:**
@@ -165,7 +246,7 @@ flowchart TD
 
 ---
 
-## 6. Hand-in-Hand Responsiveness & Android Parity Standards
+## 7. Hand-in-Hand Responsiveness & Android Parity Standards
 
 Every single page, data grid, and editor view must pass the following responsive guarantees:
 
