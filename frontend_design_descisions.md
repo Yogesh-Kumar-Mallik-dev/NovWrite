@@ -32,16 +32,21 @@ This document records the design preferences, framework choices, and UI/UX conve
 
 ---
 
-## 2. Core UI/UX Design Principles
+## 2. Core UI/UX Design Principles & Decoupled Workspaces
 
-1. **Ample & Unobstructed Space for Code / Scene Editor**:
+1. **Decoupled Standalone Spaces (Writing Space vs Creation Space)**:
+   - **NovWrite Prose Studio (Writing Space)** and **NovWrite World Studio (Creation / Canon Space)** operate as decoupled, standalone app workspaces. They are not tabs forced together inside a single cramped layout.
+   - **Strict Anti-Pattern Prohibition (No Tab-in-Modal Soup)**:
+     - Complex domains such as Character Builders, Custom Field Schemas, Power Progression Ladders, Techniques, Rules Builders, and Timeline Change History **MUST NEVER** be jammed into modals or nested tabs on a single screen.
+     - Each domain is a first-class, dedicated standalone page equipped with full-viewport master-detail data tables, rich attribute inspectors, and historical change tables.
+2. **Ample & Unobstructed Space for Prose Editor**:
    - The central scene markdown writing canvas receives **maximum screen real estate** (full-height, flexible wide margin, minimal toolbar overhead).
    - Sidebars (chapters/scenes tree) and inspector drawers (timeline/entities) must be compact, collapsible, or toggleable to ensure the writer has ample room for writing.
-2. **Context-Aware Drawers**:
-   - Timeline events, active universe entity properties, and rule verification guards reside in collapsable side drawers that slide seamlessly into view without disrupting writer flow.
-3. **Optimistic & Reactive Feedback**:
+3. **Context-Aware Drawers**:
+   - In the writing space, timeline events, active universe entity properties, and rule verification guards reside in collapsible side drawers that slide seamlessly into view without disrupting writer flow.
+4. **Optimistic & Reactive Feedback**:
    - Continuity warnings, invariant guard alerts, and timeline updates evaluate reactively in real time.
-4. **Consistency-First Data Visualization**:
+5. **Consistency-First Data Visualization**:
    - Invariant statuses and entity mutations are color-coded (e.g., emerald for verified continuity, purple & red for active timeline invariants and continuity guards).
 
 ---

@@ -1,9 +1,8 @@
 # Current Context
 
-- **Last Completed Task:** Added 4 comprehensive, locked-in architecture specification files to anchor system design:
-  1. [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md): PostgreSQL 18 schema with `pgvector`, dynamic JSONB schemas, event sourcing tables, HNSW indexing, and state folding mechanics.
-  2. [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md): Multi-tier Go application backend + TypeScript Prisma Data Service over gRPC, domain engines, continuity verification pipeline, block IDs, and 100% test coverage DI standards.
-  3. [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md): SvelteKit 2 + Svelte 5 Runes + `shadcn-svelte` component system, MongoDB Compass/Linear developer workbench aesthetic, dedicated multi-page workspaces (Writing Studio, Character/Entity Studio, Universe Schema Studio, Timeline Studio, Continuity Studio), and Android responsive parity (280px–390px).
-  4. [`docs/CACHE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/CACHE_ARCHITECTURE.md): Multi-tier Redis 7.x caching topology, folded state snapshot caching, Pub/Sub invalidation bus, and SSE event streaming.
-- **Current State:** Architecture specifications locked in and formatted. Git working tree ready for signed commit.
-- **Next Steps:** Proceed to foundational implementation (monorepo setup / core data models / Go backend and SvelteKit frontend scaffolding) based on user instructions.
+- **Last Completed Task:** Updated [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md) and [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md) to:
+  1. Decouple the Prose Writing Space (NovWrite Prose Studio) and Creation Space (NovWrite World Studio) into standalone workspaces rather than forced in-page tabs.
+  2. Enforce strict anti-pattern prohibition: eliminate all nested tab-in-modal soup; establish first-class dedicated workbench pages for Characters & Entities, Power Systems & Progression Ladders, Universe Schemas & Custom Fields, Continuity Rules & Invariants, Causal Timeline & Events, and Relations Matrix.
+  3. Formulate simultaneous tri-platform co-development architecture (Web, Desktop via Tauri 2, and Mobile Android/PWA) sharing the same core components (`shadcn-svelte`), Svelte 5 runes state stores, types, and API transport with hand-in-hand responsiveness (280px–390px).
+- **Current State:** Architecture specifications and design decisions updated, formatted with Prettier, and ready for signed commit.
+- **Next Steps:** Await user guidance or proceed with foundational monorepo scaffolding and domain implementations.
