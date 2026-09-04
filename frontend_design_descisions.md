@@ -26,9 +26,21 @@ This document records the design preferences, framework choices, and UI/UX conve
   - **Light & Dark Mode Support**:
     - Both Dark mode (default) and Light mode must be fully supported with persistent theme selection and clean contrast ratios across all components.
 
-### Mobile
+### Mobile (React Native & Expo)
 
-- Same MongoDB Compass-inspired solid Purple & Red theme, with instant Light/Dark mode parity and adaptive single-column views with bottom sheets and slide-overs.
+- **Framework**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/) (SDK 52+, [Expo Router](https://docs.expo.dev/router/introduction/))
+- **Styling Engine**: [NativeWind](https://www.nativewind.dev/) (Tailwind CSS v4 for React Native)
+- **Component Primitives (Official `shadcn/ui` Equivalent for React Native)**:
+  - **Library**: [React Native Reusables](https://reactnativereusables.com/) (`@rn-primitives`)
+  - **Philosophy**: Direct equivalent of `shadcn/ui` for React Native. Provides unstyled, accessible primitive components (`@rn-primitives`) styled with `NativeWind` utility classes that you own and copy-paste directly into your codebase.
+  - **Available Primitives**: `button`, `badge`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `popover`, `select`, `separator`, `sheet` (bottom sheet), `tabs`, `textarea`, `tooltip`, `table`.
+  - **Rule**: Always use `React Native Reusables` (`@rn-primitives` + `NativeWind`) to maintain exact 1:1 component and styling parity with `shadcn-svelte` on Web and Desktop.
+- **Icons**: `lucide-react-native`
+- **Navigation**: Expo Router (typed file-based navigation mirroring web route hierarchy).
+- **Color Scheme & Theme Parity**:
+  - Exact MongoDB Compass-inspired solid Purple (`#7c3aed`) and Red (`#dc2626`) palette.
+  - Instant Light/Dark mode parity synced with device settings or user override.
+  - Adaptive single-column views with native bottom action bars, bottom sheets, and sticky virtual keyboard toolbars.
 
 ---
 

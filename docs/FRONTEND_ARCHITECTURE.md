@@ -1,11 +1,12 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 1.2 - Decoupled Standalone Workspaces & Tri-Platform Co-Development)  
-**Framework:** SvelteKit 2 with Svelte 5 (Runes Mode)  
-**Component Library:** `shadcn-svelte` (`nova` style, `zinc` base) / `Bits UI`  
-**Styling:** Tailwind CSS v4 (`@theme inline`)  
-**Iconography:** `@lucide/svelte`  
-**Target Platforms (Co-Developed Together):** Web, Desktop (Tauri 2), Mobile (Android / Responsive PWA)
+**Status:** Locked Baseline (Version 1.3 - Decoupled Workspaces & React Native Mobile Parity)  
+**Web & Desktop Framework:** SvelteKit 2 with Svelte 5 (Runes Mode) & Tauri 2  
+**Mobile Framework:** React Native with Expo (SDK 52+, Expo Router)  
+**Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
+**Styling Engines:** Tailwind CSS v4 (Web/Desktop) & NativeWind v4 (Mobile)  
+**Iconography:** `@lucide/svelte` (Web/Desktop) & `lucide-react-native` (Mobile)  
+**Target Platforms (Co-Developed Together):** Web (SvelteKit), Desktop (Tauri 2), Mobile (React Native + Expo)
 
 ---
 
@@ -119,38 +120,60 @@ Every world building domain is implemented as a first-class, standalone workbenc
 
 ## 4. Tri-Platform Co-Development Architecture (Web, Desktop, Mobile)
 
-All three frontends are **developed together as a unified codebase** sharing common components, state stores, and data contracts:
+All three frontends are **co-developed together** as unified client applications sharing common design tokens, TypeScript contracts, and API transport protocols:
 
 ```mermaid
 flowchart TD
-    subgraph Core ["Shared Monorepo Frontend Core ($lib)"]
-        Components["shadcn-svelte UI Primitives ($lib/components/ui)"]
-        RunesStores["Svelte 5 Runes State Stores ($lib/stores)"]
-        Contracts["TypeScript Data Models & Enums ($lib/types)"]
-        APIClient["REST & SSE Client Transport ($lib/api)"]
+    subgraph Core ["Shared Monorepo Architecture & Contracts"]
+        Tokens["Design Tokens & Color Palette (Tailwind / NativeWind)"]
+        Contracts["TypeScript Data Models & Enums (`packages/types`)"]
+        APISpec["REST & SSE Endpoint Specs (`api/`)"]
     end
 
-    subgraph Targets ["3 Client Targets (Engineered Simultaneously)"]
-        WebClient["Web Application (SvelteKit Web / SPA)"]
-        DesktopClient["Desktop Application (Tauri 2 + SvelteKit)"]
-        MobileClient["Mobile Client (Android Web / PWA / Responsive)"]
+    subgraph WebDesk ["Web & Desktop Stack (SvelteKit + Tauri 2)"]
+        SvelteUI["shadcn-svelte Primitives (`$lib/components/ui`)"]
+        SvelteStores["Svelte 5 Runes Stores (`$lib/stores`)"]
+        WebDeskApp["Web (SvelteKit) & Desktop (Tauri 2)"]
+        SvelteUI & SvelteStores --> WebDeskApp
     end
 
-    Components & RunesStores & Contracts & APIClient --> WebClient
-    Components & RunesStores & Contracts & APIClient --> DesktopClient
-    Components & RunesStores & Contracts & APIClient --> MobileClient
+    subgraph MobileStack ["Native Mobile Stack (React Native + Expo)"]
+        RNUI["React Native Reusables (`@rn-primitives` + NativeWind)"]
+        RNStores["React Native Stores / TanStack Query"]
+        MobileApp["Native Mobile (Android / iOS via Expo)"]
+        RNUI & RNStores --> MobileApp
+    end
+
+    Tokens & Contracts & APISpec --> WebDesk
+    Tokens & Contracts & APISpec --> MobileStack
 ```
 
-### 4.1. Platform Parity Matrix
+### 4.1. React Native Ecosystem & `shadcn/ui` Equivalent for Mobile
 
-| Feature / Dimension         | Web Client                              | Desktop Client (Tauri 2)          | Mobile Client (Android)                      |
-| :-------------------------- | :-------------------------------------- | :-------------------------------- | :------------------------------------------- |
-| **Component Primitives**    | `shadcn-svelte` (`nova`/`zinc`)         | `shadcn-svelte` (`nova`/`zinc`)   | `shadcn-svelte` (`nova`/`zinc`)              |
-| **Theme System**            | Dark / Light Mode                       | Dark / Light Mode + OS Sync       | Dark / Light Mode + OS Sync                  |
-| **Navigation Model**        | Sidebars & Header Breadcrumbs           | Native Menu + Sidebars            | Bottom Action Bar + Slide-Over Sheets        |
-| **Creation Workspaces**     | Full Master-Detail Tables               | Full Master-Detail Tables         | Responsive Card Grids + Drilldown Pages      |
-| **Prose Editor**            | Full-height canvas + Keyboard shortcuts | Full-height canvas + Native Menus | Full-height canvas + Sticky Keyboard Toolbar |
-| **Continuity Verification** | Real-time SSE Alerts                    | Real-time SSE Alerts              | Real-time SSE Alerts                         |
+For native mobile client development, NovWrite adopts the modern React Native + Expo ecosystem:
+
+- **Framework & Routing**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/) (SDK 52+) and [Expo Router](https://docs.expo.dev/router/introduction/) (typed file-based routing mirroring the web workspace structure).
+- **Styling Engine**: [NativeWind v4](https://www.nativewind.dev/) (Tailwind CSS engine compiling Tailwind utility classes to native style sheets).
+- **Component Primitives (`shadcn/ui` Equivalent for React Native)**:
+  - **Library**: [React Native Reusables](https://reactnativereusables.com/) (`@rn-primitives`)
+  - **Architecture**: A direct port of `shadcn/ui` principles to React Native. Accessible, unstyled primitives (`@rn-primitives/dialog`, `@rn-primitives/dropdown-menu`, `@rn-primitives/popover`, `@rn-primitives/tabs`, `@rn-primitives/tooltip`) styled with `NativeWind` that you copy-paste directly into the project.
+  - **Parity**: Delivers identical visual styling, interaction patterns, and token usage as `shadcn-svelte` on Web and Desktop.
+- **Icons**: `lucide-react-native` (exact visual counterpart to `@lucide/svelte`).
+
+### 4.2. Platform Parity Matrix
+
+| Feature / Dimension           | Web Client                      | Desktop Client (Tauri 2)        | Mobile Client (React Native + Expo)           |
+| :---------------------------- | :------------------------------ | :------------------------------ | :-------------------------------------------- |
+| **Framework**                 | SvelteKit 2 (Svelte 5)          | Tauri 2 (SvelteKit 2)           | React Native (Expo SDK 52+)                   |
+| **Styling Engine**            | Tailwind CSS v4                 | Tailwind CSS v4                 | NativeWind v4 (Tailwind for RN)               |
+| **`shadcn` Component System** | `shadcn-svelte` (`nova`/`zinc`) | `shadcn-svelte` (`nova`/`zinc`) | **React Native Reusables** (`@rn-primitives`) |
+| **Routing Standard**          | SvelteKit File-Based Routes     | SvelteKit File-Based Routes     | Expo Router File-Based Routes                 |
+| **Icons Library**             | `@lucide/svelte`                | `@lucide/svelte`                | `lucide-react-native`                         |
+| **Theme System**              | Dark / Light Mode               | Dark / Light Mode + OS Sync     | Dark / Light Mode + OS Sync                   |
+| **Navigation Model**          | Sidebars & Header Breadcrumbs   | Native Window Menus + Sidebars  | Bottom Action Bar + Native Bottom Sheets      |
+| **Creation Workspaces**       | Full Master-Detail Data Grids   | Full Master-Detail Data Grids   | Responsive Card Grids + Drilldown Screens     |
+| **Prose Editor**              | Full-height canvas + Shortucts  | Full-height canvas + Shortcuts  | Full-height canvas + Keyboard Accessory Bar   |
+| **Continuity Verification**   | Real-time SSE Alerts            | Real-time SSE Alerts            | Real-time SSE / Push Alerts                   |
 
 ---
 
