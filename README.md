@@ -3,6 +3,8 @@
 > **A continuity-first novel creation platform with a user-defined story universe engine.**  
 > _You define the rules of your universe. NovWrite remembers them._
 
+**Repository:** [https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite](https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite)
+
 ---
 
 ## 1. Overview
