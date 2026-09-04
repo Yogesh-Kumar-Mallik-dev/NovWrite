@@ -41,8 +41,8 @@ flowchart TB
         end
     end
 
-    AppNav --> ProseApp
-    AppNav --> WorldApp
+    AppNav --> P1 & P2 & P3
+    AppNav --> W1 & W2 & W3 & W4 & W5 & W6 & W7
 ```
 
 ### 1.2. Strict Anti-Pattern Prohibition: Elimination of Tab-and-Modal Soup
@@ -144,8 +144,8 @@ flowchart TD
         RNUI & RNStores --> MobileApp
     end
 
-    Tokens & Contracts & APISpec --> WebDesk
-    Tokens & Contracts & APISpec --> MobileStack
+    Tokens & Contracts & APISpec --> WebDeskApp
+    Tokens & Contracts & APISpec --> MobileApp
 ```
 
 ### 4.1. React Native Ecosystem & `shadcn/ui` Equivalent for Mobile
