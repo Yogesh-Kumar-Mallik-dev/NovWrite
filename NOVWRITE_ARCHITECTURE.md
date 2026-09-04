@@ -26,6 +26,7 @@ flowchart TB
     subgraph Client ["Client Layer"]
         W["Web Client (SvelteKit + Tailwind)"]
         D["Desktop Client (Tauri 2)"]
+        M["Mobile Client (React Native + Expo)"]
     end
 
     subgraph API ["Application API Layer (Go)"]
@@ -47,9 +48,9 @@ flowchart TB
         S3[("Object Storage (Media & Exports)")]
     end
 
-    Client -->|REST HTTP / SSE| Router
+    W & D & M -->|"REST HTTP / SSE"| Router
     Router --> Auth & Editor & Continuity & AIGW
-    Auth & Editor & Continuity & AIGW -->|gRPC| gRPC
+    Auth & Editor & Continuity & AIGW -->|"gRPC"| gRPC
     gRPC --> Prisma
     Prisma --> PG
     AIGW --> Redis

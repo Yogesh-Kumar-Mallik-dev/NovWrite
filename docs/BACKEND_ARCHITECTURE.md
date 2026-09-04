@@ -15,6 +15,7 @@ flowchart TB
     subgraph Clients ["Client Layer"]
         Web["Web Client (SvelteKit)"]
         Desk["Desktop Client (Tauri 2)"]
+        Mobile["Mobile Client (React Native)"]
     end
 
     subgraph GoBackend ["Application Core & API Layer (Go)"]
@@ -38,15 +39,15 @@ flowchart TB
         Redis[("Redis 7 (Cache & PubSub)")]
     end
 
-    Clients -->|REST / SSE (JSON)| Router
+    Web & Desk & Mobile -->|"REST / SSE"| Router
     Router --> AuthSvc & NovelSvc & TimelineSvc & UniverseSvc & ContinuityEngine & AIGateway
 
-    NovelSvc & TimelineSvc & UniverseSvc & ContinuityEngine & AIGateway -->|Internal gRPC| GRPCServer
+    NovelSvc & TimelineSvc & UniverseSvc & ContinuityEngine & AIGateway -->|"Internal gRPC"| GRPCServer
     GRPCServer --> PrismaClient
     PrismaClient --> QueryCompiler
     QueryCompiler --> PG
 
-    AIGateway & TimelineSvc -->|Cache & Stream Buffer| Redis
+    AIGateway & TimelineSvc -->|"Cache & Stream Buffer"| Redis
 ```
 
 ---

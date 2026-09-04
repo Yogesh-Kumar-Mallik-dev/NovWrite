@@ -11,11 +11,12 @@
 
 ```mermaid
 flowchart TB
-    subgraph Clients ["Clients"]
-        Browser["SvelteKit Web / Tauri"]
+    subgraph Clients ["Clients Layer"]
+        Browser["SvelteKit Web / Tauri / Mobile"]
     end
 
     subgraph GoAPI ["Go Application API"]
+        Router["Chi Router & SSE Gateway"]
         L1["L1 In-Memory Fast Cache (Process Local)"]
         FoldWorker["Fold State Worker & Throttler"]
     end
@@ -33,15 +34,15 @@ flowchart TB
         Postgres[("PostgreSQL 18")]
     end
 
-    Browser -->|HTTP / SSE| GoAPI
-    GoAPI --> L1
-    L1 -->|Cache Miss| RedisTiers
-    RedisTiers -->|Cache Miss / Lock| FoldWorker
-    FoldWorker -->|gRPC Query| DataSvc
+    Browser -->|"HTTP / SSE"| Router
+    Router --> L1
+    L1 -->|"Cache Miss"| StateSnapshots & AuthCache & SchemaCache & AICache
+    StateSnapshots -->|"Cache Miss / Mutex"| FoldWorker
+    FoldWorker -->|"gRPC Query"| DataSvc
     DataSvc --> Postgres
 
-    PubSubBus -->|Push State Invalidation & Violations| GoAPI
-    GoAPI -->|SSE Stream| Browser
+    PubSubBus -->|"Push Invalidation & Violations"| Router
+    Router -->|"SSE Stream"| Browser
 ```
 
 ---
