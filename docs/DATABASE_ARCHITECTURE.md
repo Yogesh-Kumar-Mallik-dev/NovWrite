@@ -75,6 +75,19 @@ CREATE TABLE projects (
     CONSTRAINT uq_project_owner_slug UNIQUE (owner_id, slug)
 );
 
+-- Multi-User Project Memberships & RBAC
+CREATE TABLE project_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL, -- OWNER, ADMIN, EDITOR, CONTRIBUTOR, VIEWER
+    permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
+    invited_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_project_member UNIQUE (project_id, user_id)
+);
+
 -- Novels within a project
 CREATE TABLE novels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,6 +95,7 @@ CREATE TABLE novels (
     title VARCHAR(255) NOT NULL,
     synopsis TEXT,
     order_index INT NOT NULL DEFAULT 0,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -94,12 +108,13 @@ CREATE TABLE chapters (
     title VARCHAR(255) NOT NULL,
     order_index INT NOT NULL,
     global_sequence_number INT NOT NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_chapter_order UNIQUE (novel_id, order_index)
 );
 
--- Scenes (individual writing units)
+-- Scenes (individual writing units with author attribution)
 CREATE TABLE scenes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chapter_id UUID NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
@@ -109,9 +124,34 @@ CREATE TABLE scenes (
     word_count INT NOT NULL DEFAULT 0,
     order_index INT NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'draft', -- draft, in_review, canon
+    last_edited_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_scene_order UNIQUE (chapter_id, order_index)
+);
+
+-- Collaborative Scene Active Locks & Heartbeat Leases
+CREATE TABLE scene_leases (
+    scene_id UUID PRIMARY KEY REFERENCES scenes(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    locked_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    heartbeat_token VARCHAR(64) NOT NULL,
+    acquired_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
+-- Immutable Admin Override & Canon Exception Audit Log
+CREATE TABLE admin_override_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    admin_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    target_type VARCHAR(50) NOT NULL, -- CONTINUITY_VIOLATION, TIMELINE_BRANCH, SCENE_LOCK, SCHEMA_MUTATION
+    target_id UUID NOT NULL,
+    action VARCHAR(50) NOT NULL, -- FORCE_APPROVE_VIOLATION, BREAK_SCENE_LOCK, MERGE_BRANCH_OVERRIDE, SCHEMA_FORCE_MIGRATE
+    justification TEXT NOT NULL,
+    previous_state JSONB NOT NULL,
+    new_state JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
 
@@ -340,3 +380,45 @@ To compute the authoritative state of an entity at chapter sequence $N$:
 1. **Prisma as Schema Authority:** All structural changes originate in `services/data/prisma/schema.prisma` and are applied using `pnpm prisma migrate dev`.
 2. **Zero Destructive Alterations:** Production migrations must never drop dynamic property columns directly; property deprecation flags in `property_definitions` are used instead.
 3. **Data Backfill Transactions:** Migrations involving event replay or snapshot rebuilds must execute inside explicit PostgreSQL transactions with row-level locks on affected `project_id`s.
+
+---
+
+## 7. Multi-User RBAC & Admin Override Governance Matrix
+
+### 7.1. Role Hierarchy & Project Permissions
+
+| Role            | Description                      | Prose Drafting    | World & Entity CRUD  | Timeline Mutations | Schema & Rules  | Admin Overrides                                  |
+| :-------------- | :------------------------------- | :---------------- | :------------------- | :----------------- | :-------------- | :----------------------------------------------- |
+| **OWNER**       | Universe Creator / Project Owner | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Full Override Authority + Billing & Deletion     |
+| **ADMIN**       | Lead Lorekeeper / Senior Editor  | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Canon Overrides, Lock Breaking, Conflict Merging |
+| **EDITOR**      | Co-Writer / Chapter Author       | Full Read/Write   | Create/Edit Entities | Log Scene Events   | Read Only       | None                                             |
+| **CONTRIBUTOR** | World Builder / Beta Writer      | Draft Submissions | Draft Proposals      | Propose Events     | Read Only       | None                                             |
+| **VIEWER**      | Beta Reader / Proofreader        | Read Only         | Read Only            | Read Only          | Read Only       | None                                             |
+
+### 7.2. Admin Override Power Boundaries: What Admins CAN vs CANNOT Override
+
+```mermaid
+flowchart TD
+    Admin["Project Admin / Owner Action"]
+
+    Admin --> CanOverride["WHAT ADMINS CAN OVERRIDE (Explicit Power)"]
+    Admin --> CannotOverride["WHAT ADMINS CANNOT OVERRIDE (Strict Safety Rails)"]
+
+    subgraph Permitted ["Authorized Overrides (Logged to admin_override_logs)"]
+        C1["Force-Approve Continuity Violations<br/>(e.g., Miraculous resurrection, Divine intervention)"]
+        C2["Break Stale Scene Locks<br/>(When a co-author disconnects or abandons an active lease)"]
+        C3["Resolve Timeline Branch Merges<br/>(Select canonical historical branch between conflicting drafts)"]
+        C4["Force Dynamic Schema Evolutions<br/>(Apply new required properties across legacy entities)"]
+        C5["Quarantine / Soft-Archive Broken Entities<br/>(Safely isolate malformed entities without breaking relational FKs)"]
+    end
+    CanOverride --> Permitted
+
+    subgraph Prohibited ["Strict Architectural Safety Rails (Enforced by Engine)"]
+        X1["CANNOT Overwrite Historical Audit Trail<br/>(EventEffects remain append-only; overrides log new corrective events)"]
+        X2["CANNOT Transfer / Delete Project Ownership<br/>(Exclusively reserved for OWNER role)"]
+        X3["CANNOT Access Cross-Tenant Private Projects<br/>(Zero visibility or authority across other projects)"]
+        X4["CANNOT Forge Cryptographic Snapshot Hashes<br/>(Integrity checksums are calculated deterministically by Go backend)"]
+        X5["CANNOT Impersonate Author Attribution<br/>(Edits retain true author identity in immutable audit logs)"]
+    end
+    CannotOverride --> Prohibited
+```

@@ -45,3 +45,11 @@ This document records the core design principles, trade-offs, and technical deci
   3. The specific historical event that established that baseline.
   4. Explicit resolution actions (Accept New Canon, Add Missing Event, Edit Prose).
 - **Consequences:** Builds trust with authors by providing transparent evidence and one-click remediation.
+
+---
+
+## Decision 6: Multi-User Collaboration, RBAC & Explainable Admin Overrides
+
+- **Context:** Creative projects often involve co-authors, world builders, lead lorekeepers, and beta readers working concurrently in shared universes. Fictional storytelling occasionally demands intentional canon deviations (e.g. miraculous resurrection, divine paradoxes) that automated invariant rules would otherwise reject.
+- **Decision:** Implement multi-tenant RBAC (`OWNER`, `ADMIN`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`) with collaborative heartbeat scene leases (`scene_leases`). Empower project `ADMIN`s and `OWNER`s to force-approve continuity exceptions with mandatory textual justifications logged to immutable `admin_override_logs`, while strictly prohibiting cross-tenant access, audit tampering, or ownership deletion by non-owners.
+- **Consequences:** Enables secure, concurrent multi-user novel writing and lorekeeping while maintaining complete audit accountability and narrative flexibility.
