@@ -52,12 +52,17 @@ erDiagram
 ### 3.1. Identity, Tenancy & Prose Hierarchy
 
 ```sql
--- Users and authentication
+-- Users and authentication (with Platform Admin & MFA support)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     display_name VARCHAR(100) NOT NULL,
+    is_platform_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    mfa_secret VARCHAR(255),
+    stripe_customer_id VARCHAR(100),
+    account_status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, suspended, pending_mfa_reset
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -75,17 +80,29 @@ CREATE TABLE projects (
     CONSTRAINT uq_project_owner_slug UNIQUE (owner_id, slug)
 );
 
--- Multi-User Project Memberships & RBAC
+-- Multi-User Project Memberships & Author Roles
 CREATE TABLE project_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(50) NOT NULL, -- OWNER, ADMIN, EDITOR, CONTRIBUTOR, VIEWER
+    role VARCHAR(50) NOT NULL, -- LEAD_AUTHOR, CO_AUTHOR, EDITOR, CONTRIBUTOR, VIEWER
     permissions JSONB NOT NULL DEFAULT '{}'::jsonb,
     invited_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_project_member UNIQUE (project_id, user_id)
+);
+
+-- Platform-Level Admin Audit Log (User Management, MFA Resets, Billing & Support Assistance)
+CREATE TABLE platform_admin_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    admin_user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action_type VARCHAR(50) NOT NULL, -- MFA_RESET, PASSWORD_RESET_TRIGGERED, ACCOUNT_UNLOCKED, REFUND_ISSUED, SUBSCRIPTION_ADJUSTED, SUPPORT_DATA_REPAIR
+    justification TEXT NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb, -- e.g. {"refund_amount_cents": 2900, "stripe_charge_id": "ch_..."}
+    ip_address VARCHAR(45),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Novels within a project
@@ -383,28 +400,30 @@ To compute the authoritative state of an entity at chapter sequence $N$:
 
 ---
 
-## 7. Multi-User RBAC & Admin Override Governance Matrix
+### 7. Multi-User Author Roles & Project Collaboration Matrix
 
-### 7.1. Role Hierarchy & Project Permissions
+In-app project workspaces utilize author-centric roles:
 
-| Role            | Description                      | Prose Drafting    | World & Entity CRUD  | Timeline Mutations | Schema & Rules  | Admin Overrides                                  |
-| :-------------- | :------------------------------- | :---------------- | :------------------- | :----------------- | :-------------- | :----------------------------------------------- |
-| **OWNER**       | Universe Creator / Project Owner | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Full Override Authority + Billing & Deletion     |
-| **ADMIN**       | Lead Lorekeeper / Senior Editor  | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Canon Overrides, Lock Breaking, Conflict Merging |
-| **EDITOR**      | Co-Writer / Chapter Author       | Full Read/Write   | Create/Edit Entities | Log Scene Events   | Read Only       | None                                             |
-| **CONTRIBUTOR** | World Builder / Beta Writer      | Draft Submissions | Draft Proposals      | Propose Events     | Read Only       | None                                             |
-| **VIEWER**      | Beta Reader / Proofreader        | Read Only         | Read Only            | Read Only          | Read Only       | None                                             |
+### 7.1. In-App Author Role Hierarchy
 
-### 7.2. Admin Override Power Boundaries: What Admins CAN vs CANNOT Override
+| Role              | Creative Title                    | Prose Drafting    | World & Entity CRUD  | Timeline Mutations | Schema & Rules  | Project Canon Overrides                          |
+| :---------------- | :-------------------------------- | :---------------- | :------------------- | :----------------- | :-------------- | :----------------------------------------------- |
+| **`LEAD_AUTHOR`** | Primary Author / Universe Creator | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Full Authority + Invites & Project Deletion      |
+| **`CO_AUTHOR`**   | Co-Author / Senior Lorekeeper     | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Canon Overrides, Lock Breaking, Conflict Merging |
+| **`EDITOR`**      | Chapter / Line Editor             | Full Read/Write   | Create/Edit Entities | Log Scene Events   | Read Only       | None                                             |
+| **`CONTRIBUTOR`** | Lore Builder / Guest Writer       | Draft Submissions | Draft Proposals      | Propose Events     | Read Only       | None                                             |
+| **`VIEWER`**      | Beta Reader / Proofreader         | Read Only         | Read Only            | Read Only          | Read Only       | None                                             |
+
+### 7.2. Co-Author & Lead Author Canon Overrides
 
 ```mermaid
 flowchart TD
-    Admin["Project Admin / Owner Action"]
+    AuthorAction["Lead Author / Co-Author In-App Action"]
 
-    Admin --> CanOverride["WHAT ADMINS CAN OVERRIDE (Explicit Power)"]
-    Admin --> CannotOverride["WHAT ADMINS CANNOT OVERRIDE (Strict Safety Rails)"]
+    AuthorAction --> CanOverride["WHAT AUTHORS CAN OVERRIDE (Canon Authority)"]
+    AuthorAction --> CannotOverride["WHAT AUTHORS CANNOT OVERRIDE (Project Integrity Rails)"]
 
-    subgraph Permitted ["Authorized Overrides (Logged to admin_override_logs)"]
+    subgraph Permitted ["Authorized Project Overrides (Logged to admin_override_logs)"]
         C1["Force-Approve Continuity Violations<br/>(e.g., Miraculous resurrection, Divine intervention)"]
         C2["Break Stale Scene Locks<br/>(When a co-author disconnects or abandons an active lease)"]
         C3["Resolve Timeline Branch Merges<br/>(Select canonical historical branch between conflicting drafts)"]
@@ -415,10 +434,33 @@ flowchart TD
 
     subgraph Prohibited ["Strict Architectural Safety Rails (Enforced by Engine)"]
         X1["CANNOT Overwrite Historical Audit Trail<br/>(EventEffects remain append-only; overrides log new corrective events)"]
-        X2["CANNOT Transfer / Delete Project Ownership<br/>(Exclusively reserved for OWNER role)"]
+        X2["CANNOT Transfer / Delete Project Ownership<br/>(Exclusively reserved for LEAD_AUTHOR role)"]
         X3["CANNOT Access Cross-Tenant Private Projects<br/>(Zero visibility or authority across other projects)"]
         X4["CANNOT Forge Cryptographic Snapshot Hashes<br/>(Integrity checksums are calculated deterministically by Go backend)"]
         X5["CANNOT Impersonate Author Attribution<br/>(Edits retain true author identity in immutable audit logs)"]
     end
     CannotOverride --> Prohibited
 ```
+
+---
+
+## 8. Platform Administration (System Operations & User Support)
+
+Platform Administrators (`is_platform_admin = TRUE`) provide infrastructure, account security, billing, and operational support to end users.
+
+### 8.1. Platform Admin Capabilities: Empowering User Assistance
+
+| Support Domain              | Administrative Action                    | Purpose & Workflow                                                                                 | Audit Requirement                                            |
+| :-------------------------- | :--------------------------------------- | :------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| **Account Auth & Security** | **MFA / 2FA Reset**                      | Assist legitimate users locked out due to lost authenticators after identity verification          | Logged to `platform_admin_audit_logs` with support ticket ID |
+| **Account Lifecycle**       | **Unlock Account / Password Reset**      | Clear security lockouts, trigger verified reset links, revoke compromised session tokens           | Full IP and timestamp log                                    |
+| **Billing & Payments**      | **Refund Processing & Tier Adjustments** | Issue partial/full refunds via Stripe gateway, adjust subscription tiers, resolve billing disputes | Stripe charge ID, refund amount, and justification logged    |
+| **Data Integrity Support**  | **Manual Snapshot Repair / Re-Index**    | Repair corrupted state snapshots or re-index vector embeddings upon user support request           | Target `project_id` and repair execution log captured        |
+| **Compliance & Safety**     | **Account Quarantine / DMCA Takedown**   | Temporarily suspend malicious or infringing accounts under legal / terms compliance                | Legal case / report reference logged                         |
+
+### 8.2. Platform Admin Prohibitions & Strict Security Boundaries
+
+1. **NO Plaintext Password Access:** Passwords are cryptographically hashed using Argon2id/bcrypt. Platform admins cannot view or decrypt passwords under any circumstance.
+2. **NO Unconsented Private Manuscript Reading:** Platform admins cannot silently browse or read private user prose. Access to project data for debugging requires an explicit, time-bounded **User Support Access Grant** generated by the user.
+3. **NO Raw Credit Card Data Access:** Platform complies with PCI-DSS by tokenizing all payment methods via Stripe; admins only view masked IDs and transaction statuses.
+4. **NO Audit Tampering:** `platform_admin_audit_logs` is append-only and cannot be altered or truncated by platform administrators.

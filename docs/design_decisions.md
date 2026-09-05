@@ -48,8 +48,10 @@ This document records the core design principles, trade-offs, and technical deci
 
 ---
 
-## Decision 6: Multi-User Collaboration, RBAC & Explainable Admin Overrides
+## Decision 6: Multi-User Collaboration, Creative Author Roles & Platform Administration
 
-- **Context:** Creative projects often involve co-authors, world builders, lead lorekeepers, and beta readers working concurrently in shared universes. Fictional storytelling occasionally demands intentional canon deviations (e.g. miraculous resurrection, divine paradoxes) that automated invariant rules would otherwise reject.
-- **Decision:** Implement multi-tenant RBAC (`OWNER`, `ADMIN`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`) with collaborative heartbeat scene leases (`scene_leases`). Empower project `ADMIN`s and `OWNER`s to force-approve continuity exceptions with mandatory textual justifications logged to immutable `admin_override_logs`, while strictly prohibiting cross-tenant access, audit tampering, or ownership deletion by non-owners.
-- **Consequences:** Enables secure, concurrent multi-user novel writing and lorekeeping while maintaining complete audit accountability and narrative flexibility.
+- **Context:** Creative projects involve co-authors, world builders, lead lorekeepers, and beta readers working concurrently in shared universes. Fictional storytelling occasionally demands intentional canon deviations (e.g. miraculous resurrection, divine paradoxes) that automated invariant rules would otherwise reject. Additionally, platform-level operations require distinct support capabilities (MFA resets, account recovery, billing refunds, snapshot repairs) without compromising manuscript privacy or system integrity.
+- **Decision:**
+  1. **In-App Project Roles:** Implement multi-tenant creative roles (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`) with collaborative heartbeat scene leases (`scene_leases`). Empower `LEAD_AUTHOR`s and `CO_AUTHOR`s to force-approve continuity exceptions and break orphaned scene locks with mandatory textual justifications logged to immutable `admin_override_logs`.
+  2. **Platform Administration:** Establish a separate platform-level operational tier (`is_platform_admin = TRUE`) empowering support engineers to assist users with MFA resets, account unlocking, Stripe refund processing, and universe snapshot repairs (logged to append-only `platform_admin_audit_logs`). Strictly prohibit plaintext password exposure, unconsented manuscript browsing without user grants, raw card data access, and log tampering.
+- **Consequences:** Enables secure, concurrent multi-user novel writing and lorekeeping while maintaining strict operational separation, complete audit accountability, and narrative flexibility.

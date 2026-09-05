@@ -51,15 +51,15 @@ flowchart TB
 
 All keys follow strict namespacing: `novwrite:<environment>:<tenant_id>:<subsystem>:<identifier>`
 
-| Tier                       | Namespace Pattern                                          | Purpose                                                          | Format              | TTL                    | Eviction Strategy                |
-| :------------------------- | :--------------------------------------------------------- | :--------------------------------------------------------------- | :------------------ | :--------------------- | :------------------------------- |
-| **1. Auth & RBAC**         | `novwrite:v1:user:{userId}:session:{sessionId}`            | User session claims, token validity, project role permissions    | JSON                | 1 Hour (Sliding)       | Expiration                       |
-| **2. State Snapshot**      | `novwrite:v1:proj:{projId}:state:seq:{sequenceNumber}`     | Pre-folded point-in-time universe entity states                  | Protobuf / LZ4 JSON | 24 Hours               | Cascading Eviction on Event Edit |
-| **3. Schema & Rules**      | `novwrite:v1:proj:{projId}:schema:rules`                   | Compiled property definitions and active continuity rules        | JSON                | 12 Hours               | Write-Through Invalidation       |
-| **4. AI Grounding**        | `novwrite:v1:proj:{projId}:ai:grounding:{sceneId}`         | Serialized canonical context + vector search results for prompts | JSON                | 30 Minutes             | LRU Eviction                     |
-| **5. Distributed Lock**    | `novwrite:v1:proj:{projId}:lock:fold:seq:{sequenceNumber}` | Single-flight fold calculation mutex (prevents thundering herd)  | String              | 10 Seconds             | Atomic Release / Expiry          |
-| **6. Scene Lease Lock**    | `novwrite:v1:proj:{projId}:scene:{sceneId}:lease`          | Active collaborative scene editing lock & heartbeat token        | JSON                | 60 Seconds (Heartbeat) | Expiry or Admin Override Break   |
-| **7. Multi-User Presence** | `novwrite:v1:proj:{projId}:presence`                       | Active collaborator user IDs and active scene positions          | Redis Hash / Set    | 30 Seconds (Heartbeat) | Heartbeat Refresh                |
+| Tier                       | Namespace Pattern                                          | Purpose                                                          | Format              | TTL                    | Eviction Strategy                       |
+| :------------------------- | :--------------------------------------------------------- | :--------------------------------------------------------------- | :------------------ | :--------------------- | :-------------------------------------- |
+| **1. Auth & RBAC**         | `novwrite:v1:user:{userId}:session:{sessionId}`            | User session claims, token validity, project role permissions    | JSON                | 1 Hour (Sliding)       | Expiration                              |
+| **2. State Snapshot**      | `novwrite:v1:proj:{projId}:state:seq:{sequenceNumber}`     | Pre-folded point-in-time universe entity states                  | Protobuf / LZ4 JSON | 24 Hours               | Cascading Eviction on Event Edit        |
+| **3. Schema & Rules**      | `novwrite:v1:proj:{projId}:schema:rules`                   | Compiled property definitions and active continuity rules        | JSON                | 12 Hours               | Write-Through Invalidation              |
+| **4. AI Grounding**        | `novwrite:v1:proj:{projId}:ai:grounding:{sceneId}`         | Serialized canonical context + vector search results for prompts | JSON                | 30 Minutes             | LRU Eviction                            |
+| **5. Distributed Lock**    | `novwrite:v1:proj:{projId}:lock:fold:seq:{sequenceNumber}` | Single-flight fold calculation mutex (prevents thundering herd)  | String              | 10 Seconds             | Atomic Release / Expiry                 |
+| **6. Scene Lease Lock**    | `novwrite:v1:proj:{projId}:scene:{sceneId}:lease`          | Active collaborative scene editing lock & heartbeat token        | JSON                | 60 Seconds (Heartbeat) | Expiry or Lead/Co-Author Override Break |
+| **7. Multi-User Presence** | `novwrite:v1:proj:{projId}:presence`                       | Active collaborator user IDs and active scene positions          | Redis Hash / Set    | 30 Seconds (Heartbeat) | Heartbeat Refresh                       |
 
 ---
 

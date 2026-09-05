@@ -245,29 +245,29 @@ To prevent concurrent overwrite conflicts when multiple co-authors work on a sha
 1. **Acquire Lease:** When an author opens a scene for editing, the client issues `POST /api/v1/projects/{id}/scenes/{sceneId}/lock`. The Go backend records an entry in `scene_leases` and returns a 60-second heartbeat lease token.
 2. **Heartbeat Renewal:** The client pings `POST /api/v1/projects/{id}/scenes/{sceneId}/heartbeat` every 20 seconds to extend the lease.
 3. **Read-Only Peer View:** Other authors attempting to edit the same scene receive an active editor indicator with the current writer's identity and avatar, placing their editor in synchronized read-only mode.
-4. **Admin Lock Breaking:** If a writer disconnects without releasing the lease, a Project `ADMIN` or `OWNER` can break the lock via `DELETE /api/v1/projects/{id}/scenes/{sceneId}/lock` (logged to `admin_override_logs`).
+4. **Lock Breaking:** If a writer disconnects without releasing the lease, a `CO_AUTHOR` or `LEAD_AUTHOR` can break the lock via `DELETE /api/v1/projects/{id}/scenes/{sceneId}/lock` (logged to `admin_override_logs`).
 
 ---
 
-## 9. Admin Override Execution Engine & Audit Governance
+## 9. In-App Author Override Engine & Project Governance
 
 ### 9.1. Block-Based Override Execution Standard
 
-Every administrative override in Go must execute through the audited override pipeline with unique block IDs:
+Every in-app canon override in Go must execute through the audited override pipeline with unique block IDs:
 
 ```go
-// Block: BLOCK_ADMIN_OVERRIDE_VIOLATION_001
-// Description: Allows Project Admins to force-approve an intentional canon invariant exception (e.g. resurrection miracle) with mandatory justification.
-// Inputs: ctx context.Context, projectID uuid.UUID, adminID uuid.UUID, req *ForceApproveViolationRequest
+// Block: BLOCK_AUTHOR_OVERRIDE_VIOLATION_001
+// Description: Allows Lead Authors and Co-Authors to force-approve an intentional canon invariant exception (e.g. resurrection miracle) with mandatory justification.
+// Inputs: ctx context.Context, projectID uuid.UUID, authorID uuid.UUID, req *ForceApproveViolationRequest
 // Output: (*AuditLogEntry, error)
-func (s *AdminOverrideService) ForceApproveViolation(ctx context.Context, projectID uuid.UUID, adminID uuid.UUID, req *ForceApproveViolationRequest) (*AuditLogEntry, error) {
+func (s *AuthorOverrideService) ForceApproveViolation(ctx context.Context, projectID uuid.UUID, authorID uuid.UUID, req *ForceApproveViolationRequest) (*AuditLogEntry, error) {
     if strings.TrimSpace(req.Justification) == "" {
-        return nil, fmt.Errorf("BLOCK_ADMIN_OVERRIDE_VIOLATION_001: override justification is mandatory and cannot be empty")
+        return nil, fmt.Errorf("BLOCK_AUTHOR_OVERRIDE_VIOLATION_001: override justification is mandatory and cannot be empty")
     }
 
-    role, err := s.membershipRepo.GetUserRole(ctx, projectID, adminID)
-    if err != nil || (role != RoleOwner && role != RoleAdmin) {
-        return nil, fmt.Errorf("BLOCK_ADMIN_OVERRIDE_VIOLATION_001: unauthorized; requires OWNER or ADMIN role")
+    role, err := s.membershipRepo.GetUserRole(ctx, projectID, authorID)
+    if err != nil || (role != RoleLeadAuthor && role != RoleCoAuthor) {
+        return nil, fmt.Errorf("BLOCK_AUTHOR_OVERRIDE_VIOLATION_001: unauthorized; requires LEAD_AUTHOR or CO_AUTHOR role")
     }
 
     // Execute state override & log immutable audit trail...
@@ -275,14 +275,52 @@ func (s *AdminOverrideService) ForceApproveViolation(ctx context.Context, projec
 }
 ```
 
-### 9.2. Admin Override Decision Matrix: Permitted vs Prohibited
+### 9.2. Project Author Override Decision Matrix: Permitted vs Prohibited
 
-| Target Operation                        | Permitted for ADMIN? | Permitted for OWNER? | Audit Requirement                                               | Immutable Safety Rail                                             |
-| :-------------------------------------- | :------------------- | :------------------- | :-------------------------------------------------------------- | :---------------------------------------------------------------- |
-| **Force-Approve Invariant Violation**   | Yes                  | Yes                  | Mandatory textual justification logged to `admin_override_logs` | Cannot erase violation history; marks resolved with override flag |
-| **Break Stale Scene Lock**              | Yes                  | Yes                  | Lease expiration verification or reason logged                  | Cannot overwrite uncommitted client drafts                        |
-| **Merge Conflicting Timeline Branches** | Yes                  | Yes                  | Conflict resolution rationale recorded                          | Replays new branch; past effects remain append-only               |
-| **Modify Project Custom Schemas**       | Yes                  | Yes                  | Schema version bump logged                                      | Legacy entity data preserved with deprecation flags               |
-| **Transfer / Delete Project**           | **NO**               | **YES**              | Multi-factor confirmation + Owner password check                | Project deletion is strictly restricted to project OWNER          |
-| **Cross-Tenant Project Access**         | **NO**               | **NO**               | Blocked at SQL & JWT middleware level                           | Absolute tenant isolation between different fictional universes   |
-| **Impersonate Author Attribution**      | **NO**               | **NO**               | Blocked by cryptographic user ID binding                        | Edits always record the executing user's true ID                  |
+| Target Operation                        | Permitted for CO_AUTHOR? | Permitted for LEAD_AUTHOR? | Audit Requirement                                               | Immutable Safety Rail                                             |
+| :-------------------------------------- | :----------------------- | :------------------------- | :-------------------------------------------------------------- | :---------------------------------------------------------------- |
+| **Force-Approve Invariant Violation**   | Yes                      | Yes                        | Mandatory textual justification logged to `admin_override_logs` | Cannot erase violation history; marks resolved with override flag |
+| **Break Stale Scene Lock**              | Yes                      | Yes                        | Lease expiration verification or reason logged                  | Cannot overwrite uncommitted client drafts                        |
+| **Merge Conflicting Timeline Branches** | Yes                      | Yes                        | Conflict resolution rationale recorded                          | Replays new branch; past effects remain append-only               |
+| **Modify Project Custom Schemas**       | Yes                      | Yes                        | Schema version bump logged                                      | Legacy entity data preserved with deprecation flags               |
+| **Transfer / Delete Project**           | **NO**                   | **YES**                    | Multi-factor confirmation + Owner password check                | Project deletion is strictly restricted to LEAD_AUTHOR            |
+| **Cross-Tenant Project Access**         | **NO**                   | **NO**                     | Blocked at SQL & JWT middleware level                           | Absolute tenant isolation between different fictional universes   |
+| **Impersonate Author Attribution**      | **NO**                   | **NO**                     | Blocked by cryptographic user ID binding                        | Edits always record the executing user's true ID                  |
+
+---
+
+## 10. Platform Administration API & Support Operations
+
+Platform Administrators (`is_platform_admin = true`) access a dedicated operational subsystem to assist end users:
+
+### 10.1. Platform Admin API Routes & Middleware
+
+Protected by `PlatformAdminAuthMiddleware` requiring active session token with `is_platform_admin == true` and step-up MFA verification:
+
+- `GET /api/v1/platform/users` — Search and view user account metadata, subscription status, and auth history.
+- `POST /api/v1/platform/users/{userId}/mfa/reset` — Reset user 2FA after verified identity check (logs support ticket ID).
+- `POST /api/v1/platform/users/{userId}/unlock` — Clear brute-force account lockout.
+- `POST /api/v1/platform/billing/refunds` — Issue partial/full Stripe refunds and adjust customer subscription tiers.
+- `POST /api/v1/platform/support/repair-project-snapshots` — Trigger deterministic snapshot rebuild for corrupted universes upon user support request.
+
+### 10.2. Platform Admin Block Standard
+
+```go
+// Block: BLOCK_PLATFORM_ADMIN_MFA_RESET_001
+// Description: Allows Platform Admins to reset a user's lost MFA credentials after verifying identity via support ticket.
+// Inputs: ctx context.Context, adminID uuid.UUID, targetUserID uuid.UUID, ticketID string, reason string
+// Output: error
+func (s *PlatformAdminService) ResetUserMFA(ctx context.Context, adminID uuid.UUID, targetUserID uuid.UUID, ticketID, reason string) error {
+    if strings.TrimSpace(ticketID) == "" || strings.TrimSpace(reason) == "" {
+        return fmt.Errorf("BLOCK_PLATFORM_ADMIN_MFA_RESET_001: support ticket ID and reason are mandatory")
+    }
+
+    err := s.userRepo.ClearMFA(ctx, targetUserID)
+    if err != nil {
+        return fmt.Errorf("BLOCK_PLATFORM_ADMIN_MFA_RESET_001: failed to clear user MFA: %w", err)
+    }
+
+    s.auditLogger.LogPlatformAdminAction(ctx, adminID, targetUserID, "MFA_RESET", fmt.Sprintf("Ticket: %s | Reason: %s", ticketID, reason))
+    return nil
+}
+```
