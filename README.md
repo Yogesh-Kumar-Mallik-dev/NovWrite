@@ -65,15 +65,21 @@ The central design principle: **The author's world state—not an AI model's mem
 
 ## 4. Documentation Index
 
-- [Agent Instructions & Rules](file:///home/yogesh/Projects/NovWrite/agents.md)
-- [Current Context & Progress](file:///home/yogesh/Projects/NovWrite/current_context.md)
-- [Monorepo Architecture Specification](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md)
-- [Technical Architecture Guide](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md)
-- [API & gRPC Guide](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md)
-- [Developer Onboarding](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md)
-- [Design Decisions](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md)
-- [Recommended Commands](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md)
-- [Architecture Decision Records (ADRs)](file:///home/yogesh/Projects/NovWrite/docs/adr/0001-initial-architecture-baseline.md)
+- **Academic & Formal Specifications:**
+  - **[NovWrite B.Tech Capstone Project Report (`Novwrite.docx`)](file:///home/yogesh/Projects/NovWrite/Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
+- **Core Architecture Specifications:**
+  - [Database Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md)
+  - [Backend Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md)
+  - [Frontend Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md)
+  - [Cache Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/CACHE_ARCHITECTURE.md)
+- **Guides & Context:**
+  - [Agent Instructions & Rules](file:///home/yogesh/Projects/NovWrite/agents.md)
+  - [Frontend Design Decisions](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md)
+  - [Current Context & Progress](file:///home/yogesh/Projects/NovWrite/current_context.md)
+  - [Monorepo Architecture Specification](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md)
+  - [API & gRPC Guide](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md)
+  - [Developer Onboarding Guide](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md)
+  - [Design Decisions Log](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md)
 
 ---
 
