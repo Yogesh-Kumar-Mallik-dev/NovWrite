@@ -67,6 +67,7 @@ The central design principle: **The author's world state—not an AI model's mem
 
 - **Academic & Formal Specifications:**
   - **[NovWrite B.Tech Capstone Project Report (`Novwrite.docx`)](file:///home/yogesh/Projects/NovWrite/Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
+  - **[Documentation & Specification Changelog (`changes.md`)](file:///home/yogesh/Projects/NovWrite/changes.md)** — Chronological timeline of specification and report revisions.
 - **Core Architecture Specifications:**
   - [Database Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md)
   - [Backend Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md)
