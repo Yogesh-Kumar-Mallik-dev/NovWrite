@@ -38,11 +38,36 @@ timeline
                : Dedicated Git Branches (world & novel) with Upstream Tracking
                : Zero Direct Cross-Talk Invariant & @novwrite/bridge Contracts
                : Single-Page Communication Diagnostics Hub (/dev/communication-hub)
+    2026-09-06 : Version 1.8 (MVP Phased Implementation Plan & Development Test Seeder)
+               : Strict YAGNI In-Scope vs Out-of-Scope MVP Boundaries
+               : Phase-by-Phase Execution for main, world, and novel Branches
+               : One-Click Development Test Data Seeder (Chronicles of Aethelgard)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 1.8] — 2026-09-06
+
+**Scope:** MVP Phased Implementation Plan & One-Click Development Test Seeder  
+**Target Documents:** [`docs/MVP_PHASED_PLAN.md`](file:///home/yogesh/Projects/NovWrite/docs/MVP_PHASED_PLAN.md), [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md)
+
+#### Added
+
+- **Strict MVP Scope Charter & YAGNI Prohibitions:**
+  - Codified clear in-scope vs out-of-scope boundaries (excluding complex CRDTs, GNN embeddings, and multi-currency billing in MVP; focusing on deterministic state folding, scene lease locks, and isolated workbenches).
+- **Branch-Specific Phased Implementation Plan:**
+  - **Main Branch (`main`):** Phase 0.1 (Monorepo), Phase 0.2 (DB Migrations & Prisma), Phase 0.3 (`@novwrite/bridge` with mock adapter), Phase 0.4 (Dev Seeder Engine), Phase 0.5 (Diagnostics Hub `/dev/communication-hub`).
+  - **World Branch (`world`):** Phase W1 (Dynamic Schema), Phase W2 (Timeline Event Sourcing), Phase W3 (State Fold Engine & Invariants), Phase W4 (World Studio UI Suite), Phase W5 (World Bridge Server).
+  - **Novel Branch (`novel`):** Phase N1 (Manuscript Runes Store), Phase N2 (Rich Text Prose Editor & Mentions), Phase N3 (Scene Leases & Locks), Phase N4 (Lore Drawer & Continuity HUD), Phase N5 (Novel Bridge Client).
+  - **Integration (`main`):** Phase I1 (Cross-Domain Bridge Integration Suite), Phase I2 (One-Click Demo Universe End-to-End Walkthrough).
+- **Development-Only One-Click Test Data Filler (`BLOCK_DEV_SEEDER_ENGINE_001`):**
+  - Integrated `POST /api/v1/dev/seed` and UI trigger to instantly populate the interconnected _"Chronicles of Aethelgard"_ dataset (3 characters, 2 locations, 5 timeline events with mutations, 2 invariant rules, 3 manuscript scenes with intentional violation and lease test cases).
+- **Academic Report & Specification Synchronization:**
+  - Regenerated [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx) to **Version 1.8**, integrating Chapter 7.2 (MVP Phased Implementation Plan & Development Test Seeder).
+
+---
 
 ### [Version 1.7] — 2026-09-06
 
