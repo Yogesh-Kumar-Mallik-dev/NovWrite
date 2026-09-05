@@ -233,3 +233,56 @@ All HTTP error responses must adhere to `application/problem+json`:
    - Guard clause early returns and edge cases.
    - Error wrapping and block ID assertions.
 3. **Deterministic Mocking:** Use mock implementations of `DataServiceClient` for pure in-memory test execution without running database instances.
+
+---
+
+## 8. Multi-User Collaboration & Concurrency Engine
+
+### 8.1. Scene Lock & Heartbeat Lease Protocol
+
+To prevent concurrent overwrite conflicts when multiple co-authors work on a shared novel:
+
+1. **Acquire Lease:** When an author opens a scene for editing, the client issues `POST /api/v1/projects/{id}/scenes/{sceneId}/lock`. The Go backend records an entry in `scene_leases` and returns a 60-second heartbeat lease token.
+2. **Heartbeat Renewal:** The client pings `POST /api/v1/projects/{id}/scenes/{sceneId}/heartbeat` every 20 seconds to extend the lease.
+3. **Read-Only Peer View:** Other authors attempting to edit the same scene receive an active editor indicator with the current writer's identity and avatar, placing their editor in synchronized read-only mode.
+4. **Admin Lock Breaking:** If a writer disconnects without releasing the lease, a Project `ADMIN` or `OWNER` can break the lock via `DELETE /api/v1/projects/{id}/scenes/{sceneId}/lock` (logged to `admin_override_logs`).
+
+---
+
+## 9. Admin Override Execution Engine & Audit Governance
+
+### 9.1. Block-Based Override Execution Standard
+
+Every administrative override in Go must execute through the audited override pipeline with unique block IDs:
+
+```go
+// Block: BLOCK_ADMIN_OVERRIDE_VIOLATION_001
+// Description: Allows Project Admins to force-approve an intentional canon invariant exception (e.g. resurrection miracle) with mandatory justification.
+// Inputs: ctx context.Context, projectID uuid.UUID, adminID uuid.UUID, req *ForceApproveViolationRequest
+// Output: (*AuditLogEntry, error)
+func (s *AdminOverrideService) ForceApproveViolation(ctx context.Context, projectID uuid.UUID, adminID uuid.UUID, req *ForceApproveViolationRequest) (*AuditLogEntry, error) {
+    if strings.TrimSpace(req.Justification) == "" {
+        return nil, fmt.Errorf("BLOCK_ADMIN_OVERRIDE_VIOLATION_001: override justification is mandatory and cannot be empty")
+    }
+
+    role, err := s.membershipRepo.GetUserRole(ctx, projectID, adminID)
+    if err != nil || (role != RoleOwner && role != RoleAdmin) {
+        return nil, fmt.Errorf("BLOCK_ADMIN_OVERRIDE_VIOLATION_001: unauthorized; requires OWNER or ADMIN role")
+    }
+
+    // Execute state override & log immutable audit trail...
+    return auditEntry, nil
+}
+```
+
+### 9.2. Admin Override Decision Matrix: Permitted vs Prohibited
+
+| Target Operation                        | Permitted for ADMIN? | Permitted for OWNER? | Audit Requirement                                               | Immutable Safety Rail                                             |
+| :-------------------------------------- | :------------------- | :------------------- | :-------------------------------------------------------------- | :---------------------------------------------------------------- |
+| **Force-Approve Invariant Violation**   | Yes                  | Yes                  | Mandatory textual justification logged to `admin_override_logs` | Cannot erase violation history; marks resolved with override flag |
+| **Break Stale Scene Lock**              | Yes                  | Yes                  | Lease expiration verification or reason logged                  | Cannot overwrite uncommitted client drafts                        |
+| **Merge Conflicting Timeline Branches** | Yes                  | Yes                  | Conflict resolution rationale recorded                          | Replays new branch; past effects remain append-only               |
+| **Modify Project Custom Schemas**       | Yes                  | Yes                  | Schema version bump logged                                      | Legacy entity data preserved with deprecation flags               |
+| **Transfer / Delete Project**           | **NO**               | **YES**              | Multi-factor confirmation + Owner password check                | Project deletion is strictly restricted to project OWNER          |
+| **Cross-Tenant Project Access**         | **NO**               | **NO**               | Blocked at SQL & JWT middleware level                           | Absolute tenant isolation between different fictional universes   |
+| **Impersonate Author Attribution**      | **NO**               | **NO**               | Blocked by cryptographic user ID binding                        | Edits always record the executing user's true ID                  |

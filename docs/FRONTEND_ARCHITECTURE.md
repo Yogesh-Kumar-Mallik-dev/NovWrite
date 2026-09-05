@@ -285,3 +285,37 @@ Every single page, data grid, and editor view must pass the following responsive
 4. **Adaptive Continuum:**
    - A narrow desktop window looks and behaves like the mobile client.
    - A mobile client opened on a tablet, foldable inner screen, or external monitor expands into the full multi-pane workbench layout.
+
+---
+
+## 8. Multi-User Collaboration UI & Admin Override Gatekeepers
+
+### 8.1. Multi-User Presence & Scene Lock Banner
+
+1. **Active Co-Author Avatar Stack:** The studio header displays live avatar chips of all collaborators currently active in the project workspace (synced over SSE).
+2. **Locked Scene Overlay & Banner:** When an author opens a scene locked by another writer, the prose canvas transitions to synchronized read-only mode with a high-contrast top banner:
+   - _Message:_ `"Locked: Co-author @Elena is actively editing this scene (Lease expires in 42s)."`
+   - _Admin Action:_ A `Break Lock` button is conditionally rendered only for users with `ADMIN` or `OWNER` roles, opening an audit justification prompt.
+
+### 8.2. Role-Based Action Gatekeepers & Admin Override Modal
+
+```mermaid
+flowchart TD
+    UserAction["User Initiates Critical Action"]
+    RoleCheck{"User Project Role?"}
+
+    UserAction --> RoleCheck
+
+    RoleCheck -->|CONTRIBUTOR| ContribPath["Renders 'Submit Draft / Proposal' Button<br/>(Queued for review in /world/audit)"]
+    RoleCheck -->|EDITOR| EditorPath["Renders 'Save & Update Canon' Button<br/>(Evaluates continuity invariants)"]
+    RoleCheck -->|ADMIN / OWNER| AdminPath["Renders 'Force-Approve Exception' Button<br/>(Opens Admin Override Modal)"]
+
+    subgraph Modal ["Admin Override Modal (shadcn Dialog)"]
+        M1["Displays Contradiction & Causal Event"]
+        M2["Mandatory Justification Textarea (min 15 chars)"]
+        M3["Confirm Override (Logs to admin_override_logs)"]
+    end
+    AdminPath --> Modal
+```
+
+- **Author Attribution Chips:** Every scene version, entity property change, and timeline event displays an author badge (`Created by @username · 2h ago`) linking to the user profile and change audit table.

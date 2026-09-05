@@ -16,6 +16,7 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 3. **Events as State Transitions:** World mutations occur exclusively through recorded events (e.g. `Battle of Xian`, `Artifact Transfer`, `Breakthrough`).
 4. **User-Defined Universes:** No genre assumptions. Authors define custom entity types, fields, progression ladders, and relationship semantics.
 5. **Explainable Continuity Warnings:** Any continuity violation detected by the system points directly to the historical events establishing the current state and offers concrete resolution actions.
+6. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`OWNER`, `ADMIN`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), collaborative scene leases, and immutable Admin Override logs ensure safe co-authoring and explainable exceptions.
 
 ---
 
