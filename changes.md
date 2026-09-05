@@ -34,11 +34,36 @@ timeline
                : Platform Admin Capabilities (MFA Reset, Refunds, Data Repair)
                : Strict Operational Boundaries & Manuscript Privacy Grants
                : Creative In-App Roles (Lead Author, Co-Author, Editor)
+    2026-09-06 : Version 1.7 (Two-Front Branching & Dedicated Communication Gateway)
+               : Dedicated Git Branches (world & novel) with Upstream Tracking
+               : Zero Direct Cross-Talk Invariant & @novwrite/bridge Contracts
+               : Single-Page Communication Diagnostics Hub (/dev/communication-hub)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 1.7] — 2026-09-06
+
+**Scope:** Two-Front Isolated Branching Model & Centralized Cross-Domain Communication Layer  
+**Target Documents:** [`docs/COMMUNICATION_LAYER.md`](file:///home/yogesh/Projects/NovWrite/docs/COMMUNICATION_LAYER.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx)
+
+#### Added
+
+- **Two-Front Git Branching Architecture:**
+  - Created and published dedicated remote branches: `origin/world` (World Studio, dynamic schemas, timeline fold engine, rules graph) and `origin/novel` (Prose Studio, manuscript tree, TipTap rich text, collaborative scene leases).
+  - Configured upstream git tracking (`git branch -u origin/world` and `git branch -u origin/novel`) with isolated development lifecycles.
+- **The Zero Direct Cross-Talk Invariant:**
+  - Established strict boundary rules prohibiting raw cross-domain imports or direct SQL joins between prose content and dynamic lore models.
+  - Specified `@novwrite/bridge` as the single authoritative communication contract (Protobuf RPC and Zod schemas) for all inter-space queries (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
+- **Centralized Communication Diagnostics Hub (`/dev/communication-hub`):**
+  - Designed a single-page diagnostic dashboard to inspect real-time inter-space traffic, detect payload schema discrepancies, simulate mock responses, and replay failing requests.
+  - Centralized RFC 7807 problem normalizer ensuring all cross-domain communication errors are debugged and resolved in one place.
+- **Academic Report & Specification Synchronization:**
+  - Regenerated [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx) to **Version 1.7**, integrating the Two-Front Architecture and Communication Bridge into Chapter 1, Chapter 2, and the Executive Summary.
+
+---
 
 ### [Version 1.6] — 2026-09-06
 

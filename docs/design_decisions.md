@@ -55,3 +55,11 @@ This document records the core design principles, trade-offs, and technical deci
   1. **In-App Project Roles:** Implement multi-tenant creative roles (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`) with collaborative heartbeat scene leases (`scene_leases`). Empower `LEAD_AUTHOR`s and `CO_AUTHOR`s to force-approve continuity exceptions and break orphaned scene locks with mandatory textual justifications logged to immutable `admin_override_logs`.
   2. **Platform Administration:** Establish a separate platform-level operational tier (`is_platform_admin = TRUE`) empowering support engineers to assist users with MFA resets, account unlocking, Stripe refund processing, and universe snapshot repairs (logged to append-only `platform_admin_audit_logs`). Strictly prohibit plaintext password exposure, unconsented manuscript browsing without user grants, raw card data access, and log tampering.
 - **Consequences:** Enables secure, concurrent multi-user novel writing and lorekeeping while maintaining strict operational separation, complete audit accountability, and narrative flexibility.
+
+---
+
+## Decision 7: Two-Front Git Branching & Dedicated Communication Gateway
+
+- **Context:** Coupling novel drafting logic directly to dynamic worldbuilding engines leads to architectural spaghetti, cross-domain test fragility, and merge conflicts between writers and lore engineers. Cross-domain communication errors are difficult to diagnose when distributed arbitrarily across endpoints.
+- **Decision:** Divide development into two strictly isolated fronts on dedicated git branches (`novel` and `world`). Prohibit direct cross-domain imports or raw database joins between prose and lore. Route all inter-space interactions through a dedicated, strictly typed Communication Layer (`@novwrite/bridge`), backed by a centralized Single-Page Diagnostic Console (`/dev/communication-hub`) to capture, debug, mock, and resolve all cross-domain communication errors in one place.
+- **Consequences:** Accelerates parallel engineering velocity, enforces complete boundary isolation, simplifies debugging of cross-space communication errors, and provides seamless mocking for frontend teams.
