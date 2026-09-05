@@ -288,16 +288,16 @@ Every single page, data grid, and editor view must pass the following responsive
 
 ---
 
-## 8. Multi-User Collaboration UI & Admin Override Gatekeepers
+## 8. Multi-User Collaboration UI & Author Override Gatekeepers
 
 ### 8.1. Multi-User Presence & Scene Lock Banner
 
 1. **Active Co-Author Avatar Stack:** The studio header displays live avatar chips of all collaborators currently active in the project workspace (synced over SSE).
 2. **Locked Scene Overlay & Banner:** When an author opens a scene locked by another writer, the prose canvas transitions to synchronized read-only mode with a high-contrast top banner:
    - _Message:_ `"Locked: Co-author @Elena is actively editing this scene (Lease expires in 42s)."`
-   - _Admin Action:_ A `Break Lock` button is conditionally rendered only for users with `ADMIN` or `OWNER` roles, opening an audit justification prompt.
+   - _Author Action:_ A `Break Lock` button is conditionally rendered only for users with `CO_AUTHOR` or `LEAD_AUTHOR` roles, opening an audit justification prompt.
 
-### 8.2. Role-Based Action Gatekeepers & Admin Override Modal
+### 8.2. Role-Based Action Gatekeepers & Canon Override Modal
 
 ```mermaid
 flowchart TD
@@ -308,14 +308,25 @@ flowchart TD
 
     RoleCheck -->|CONTRIBUTOR| ContribPath["Renders 'Submit Draft / Proposal' Button<br/>(Queued for review in /world/audit)"]
     RoleCheck -->|EDITOR| EditorPath["Renders 'Save & Update Canon' Button<br/>(Evaluates continuity invariants)"]
-    RoleCheck -->|ADMIN / OWNER| AdminPath["Renders 'Force-Approve Exception' Button<br/>(Opens Admin Override Modal)"]
+    RoleCheck -->|CO_AUTHOR / LEAD_AUTHOR| AuthorPath["Renders 'Force-Approve Exception' Button<br/>(Opens Canon Override Modal)"]
 
-    subgraph Modal ["Admin Override Modal (shadcn Dialog)"]
+    subgraph Modal ["Canon Override Modal (shadcn Dialog)"]
         M1["Displays Contradiction & Causal Event"]
         M2["Mandatory Justification Textarea (min 15 chars)"]
         M3["Confirm Override (Logs to admin_override_logs)"]
     end
-    AdminPath --> Modal
+    AuthorPath --> Modal
 ```
 
 - **Author Attribution Chips:** Every scene version, entity property change, and timeline event displays an author badge (`Created by @username · 2h ago`) linking to the user profile and change audit table.
+
+---
+
+## 9. Platform Administration Portal (System & Support Operations)
+
+A dedicated, isolated operational portal (`/platform-admin`) accessible only to users with `is_platform_admin == true`:
+
+- **User Lookup & Account Management:** Comprehensive search by email, username, or Stripe customer ID with account status controls (active, suspended, MFA reset pending).
+- **MFA Reset & Security Assist Desk:** Secure workflow to clear lost 2FA authenticators upon identity verification, requiring mandatory support ticket reference.
+- **Payment & Refund Console:** View subscription billing history, issue partial/full Stripe refunds, and manage tier entitlements.
+- **Snapshot Diagnostics & Repair Utility:** Trigger background re-indexing and snapshot repairs for user-submitted corrupted universes.
