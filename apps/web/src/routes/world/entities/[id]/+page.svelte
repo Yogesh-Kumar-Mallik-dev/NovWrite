@@ -224,13 +224,64 @@
     return computed;
   });
 
+  // Calculate live formula for a sub-blueprint
+  function getSubBlueprintComputedFormula(
+    targetBp: BlueprintDef,
+    subFieldName: string,
+    subPropValues: Record<string, any>
+  ): { label: string; formatted: string; expr: string } | null {
+    const formulaField = targetBp.fields.find((f) => f.fieldType === 'FORMULA' && f.formulaExpression);
+    if (!formulaField || !formulaField.formulaExpression) return null;
+
+    try {
+      const res = evaluateFormula(formulaField.formulaExpression, subPropValues || {});
+      if (!res.success || res.value === undefined) return null;
+      const val = res.value;
+      return {
+        label: formulaField.label || formulaField.name,
+        formatted: Number.isInteger(val) ? String(val) : val.toFixed(2),
+        expr: formulaField.formulaExpression,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const directFields = $derived(
+    blueprint
+      ? blueprint.fields.filter(
+          (f) => f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
+        )
+      : []
+  );
+
+  const subBlueprintRefFields = $derived(
+    blueprint
+      ? blueprint.fields.filter((f) => {
+          if (f.fieldType !== 'BLUEPRINT_REF') return false;
+          const target = worldStore.getBlueprint(f.targetBlueprintId);
+          return target && target.blueprintClass === 'SECOND_CLASS';
+        })
+      : []
+  );
+
+  const relationalEntityRefFields = $derived(
+    blueprint
+      ? blueprint.fields.filter((f) => {
+          if (f.fieldType !== 'BLUEPRINT_REF') return false;
+          const target = worldStore.getBlueprint(f.targetBlueprintId);
+          return !target || target.blueprintClass === 'FIRST_CLASS';
+        })
+      : []
+  );
+
   function handleSaveEntity() {
     if (!entity || !name.trim()) return;
 
     worldStore.updateEntity(entity.id, {
       name: name.trim(),
       description: description.trim(),
-      properties: { ...properties },
+      properties: JSON.parse(JSON.stringify(properties)),
     });
 
     saveMessage = 'Entity state & formulas successfully updated!';
@@ -266,7 +317,7 @@
     </div>
   </div>
 {:else}
-  <div class="max-w-4xl mx-auto space-y-6 pb-16">
+  <div class="max-w-4xl mx-auto space-y-7 pb-20">
     <!-- Breadcrumb -->
     <Breadcrumb
       items={[
@@ -299,7 +350,7 @@
           <a href={`/world/schemas/${blueprint.id}`} target="_blank">
             <Button variant="outline" size="sm" class="text-xs">
               <Edit3 class="w-3.5 h-3.5 text-teal-400" />
-              <span>Edit Blueprint</span>
+              <span>Edit Blueprint Schema</span>
             </Button>
           </a>
         {/if}
@@ -320,39 +371,17 @@
       </div>
     {/if}
 
-    <!-- Live Computed Formulas Banner -->
-    {#if Object.keys(liveComputedFormulas).length > 0}
-      <div class="bg-gradient-to-r from-amber-950/30 to-zinc-900 rounded-lg border border-amber-900/40 p-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
-            <Calculator class="w-4 h-4 text-amber-400" />
-            <span>Live Evaluated Mathematical Formulas</span>
-          </h3>
-          <span class="text-[10px] text-amber-500/80 font-mono">Auto-evaluates on property changes</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
-            <div class="p-3.5 rounded bg-black/40 border border-amber-900/50 space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-zinc-300">{fData.label}</span>
-                <span class="text-sm font-bold font-mono text-amber-300">{fData.formatted}</span>
-              </div>
-              <div class="text-[10px] font-mono text-amber-500/70 line-clamp-1" title={fData.expr}>
-                Formula: {fData.expr}
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {/if}
-
     <!-- Primary Entity Overview -->
     <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
-      <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-        <ArchetypeIcon class="w-4 h-4 text-teal-400" />
-        <span>{archetypeContext.archetypeLabel} Identity</span>
-      </h3>
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+          <ArchetypeIcon class="w-4 h-4 text-teal-400" />
+          <span>{archetypeContext.archetypeLabel} Identity</span>
+        </h3>
+        <span class="text-[11px] text-teal-400 font-medium px-2.5 py-0.5 rounded bg-teal-950/70 border border-teal-800/60">
+          Archetype: {entity.blueprintName}
+        </span>
+      </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field id="entity-name" label={archetypeContext.nameLabel} required>
@@ -365,7 +394,7 @@
         </Field>
 
         <Field id="entity-bp" label="Blueprint Archetype">
-          <Input id="entity-bp" value={entity.blueprintName} disabled class="w-full text-xs opacity-70" />
+          <Input id="entity-bp" value={entity.blueprintName} disabled class="w-full text-xs opacity-70 cursor-not-allowed" />
         </Field>
       </div>
 
@@ -380,41 +409,47 @@
       </Field>
     </div>
 
-    <!-- Dynamic Blueprint Properties Workbench -->
-    {#if blueprint}
-      <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
+    <!-- Dynamic Template Attributes (Direct Fields) -->
+    {#if blueprint && directFields.length > 0}
+      <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
         <div class="border-b border-zinc-800 pb-3">
           <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
             <Sparkles class="w-4 h-4 text-teal-400" />
-            <span>Blueprint Attributes & Dynamic Fields ({blueprint.name})</span>
+            <span>Dynamic Template Attributes ({blueprint.name})</span>
           </h3>
           <p class="text-xs text-zinc-500 mt-0.5">
             Modify state values to trigger real-time formula updates and causal state folds.
           </p>
         </div>
 
-        <div class="space-y-4">
-          {#each blueprint.fields as field}
-            <!-- 1. ENUM FIELD (e.g. Gender with Male/Female) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {#each directFields as field}
+            <!-- ENUM FIELD -->
             {#if field.fieldType === 'ENUM'}
-              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-2">
+              <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-2.5 col-span-1 md:col-span-2">
                 <div class="flex items-center justify-between">
-                  <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                  <Label class="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
                     <ListFilter class="w-3.5 h-3.5 text-teal-400" />
                     <span>{field.label}</span>
                     <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
                   </Label>
                 </div>
 
-                <div class="space-y-2 max-w-xl">
-                  <Select
-                    bind:value={properties[field.name]}
-                    options={formatEnumOptions(field.options)}
-                  />
+                {#if field.description}
+                  <p class="text-[11px] text-zinc-400">{field.description}</p>
+                {/if}
+
+                <div class="space-y-2">
+                  <div class="max-w-md">
+                    <Select
+                      bind:value={properties[field.name]}
+                      options={formatEnumOptions(field.options)}
+                    />
+                  </div>
 
                   {#if field.options && field.options.length > 0}
-                    <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span class="text-[10px] text-zinc-500 mr-1 font-medium">Template Options:</span>
+                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span class="text-[10px] text-zinc-500 mr-1 font-medium">Quick Select:</span>
                       {#each field.options as opt}
                         {@const optVal = typeof opt === 'string' ? opt : opt.value}
                         {@const optLabel = typeof opt === 'string' ? opt : opt.label}
@@ -442,157 +477,252 @@
                 </div>
               </div>
 
-            <!-- 2. BLUEPRINT REFERENCE (Sub-Blueprints e.g. Cultivation or Affection) -->
-            {:else if field.fieldType === 'BLUEPRINT_REF'}
-              {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-              <div class="p-4 rounded-lg border border-cyan-950/80 bg-cyan-950/15 space-y-3">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2 text-xs font-bold text-cyan-300">
-                    <Link2 class="w-4 h-4 text-cyan-400" />
-                    <span>{field.label}</span>
-                    <span class="text-[11px] font-normal text-zinc-400">
-                      (Sub-Blueprint: {targetBp ? targetBp.name : field.targetBlueprintName})
-                    </span>
-                  </div>
-                  {#if targetBp}
-                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
-                      {targetBp.blueprintClass === 'SECOND_CLASS' ? '2nd-Class Sub-System' : '1st-Class Entity Link'}
-                    </span>
-                  {/if}
-                </div>
-
-                {#if targetBp && targetBp.blueprintClass === 'SECOND_CLASS' && properties[field.name]}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
-                    {#each targetBp.fields as subF}
-                      {#if subF.fieldType !== 'FORMULA'}
-                        <div class="space-y-1.5 p-2.5 rounded bg-zinc-900 border border-zinc-800">
-                          <span class="block text-[11px] font-medium text-zinc-300">
-                            {subF.label}
-                            {#if subF.unit}<span class="text-zinc-500 font-mono">({subF.unit})</span>{/if}
-                          </span>
-                          {#if subF.fieldType === 'ENUM'}
-                            <div class="space-y-1.5">
-                              <Select
-                                bind:value={properties[field.name][subF.name]}
-                                options={formatEnumOptions(subF.options)}
-                              />
-                              {#if subF.options && subF.options.length > 0}
-                                <div class="flex flex-wrap gap-1 pt-0.5">
-                                  {#each subF.options as opt}
-                                    {@const optVal = typeof opt === 'string' ? opt : opt.value}
-                                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
-                                    {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
-                                    {@const isSelected = properties[field.name][subF.name] === optVal || properties[field.name][subF.name] === optLabel}
-                                    <button
-                                      type="button"
-                                      onclick={() => (properties[field.name][subF.name] = optVal)}
-                                      class={`px-1.5 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
-                                        isSelected
-                                          ? 'bg-cyan-950 text-cyan-200 border border-cyan-700 ring-1 ring-cyan-500/50'
-                                          : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200'
-                                      }`}
-                                    >
-                                      <span>{optLabel}</span>
-                                      {#if optPower !== undefined}
-                                        <span class="text-[8px] font-mono opacity-80">({optPower})</span>
-                                      {/if}
-                                    </button>
-                                  {/each}
-                                </div>
-                              {/if}
-                            </div>
-                          {:else if subF.fieldType === 'NUMBER'}
-                            <Input
-                              type="number"
-                              min={subF.min}
-                              max={subF.max}
-                              step={subF.step || 1}
-                              bind:value={properties[field.name][subF.name]}
-                              class="text-xs font-mono"
-                            />
-                          {:else if subF.fieldType === 'BOOLEAN'}
-                            <Select
-                              bind:value={properties[field.name][subF.name]}
-                              options={[
-                                { value: 'true', label: 'True / Enabled' },
-                                { value: 'false', label: 'False / Disabled' },
-                              ]}
-                            />
-                          {:else}
-                            <Input
-                              bind:value={properties[field.name][subF.name]}
-                              class="text-xs"
-                            />
-                          {/if}
-                        </div>
-                      {/if}
-                    {/each}
-                  </div>
-                {:else if targetBp && targetBp.blueprintClass === 'FIRST_CLASS'}
-                  <!-- If referencing a 1st-Class Blueprint, allow selecting an instantiated entity instance -->
-                  {@const candidateEntities = worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id)}
-                  <div class="space-y-1.5 pt-1">
-                    <span class="block text-[11px] text-zinc-400">
-                      Select an instantiated {targetBp.name} entity instance ({candidateEntities.length} available):
-                    </span>
-                    <div class="max-w-md">
-                      <Select
-                        bind:value={properties[field.name]}
-                        options={[
-                          { value: '', label: 'None (Unassigned)' },
-                          ...candidateEntities.map((e) => ({
-                            value: e.id,
-                            label: `${e.name} (${e.category})`,
-                          })),
-                        ]}
-                      />
-                    </div>
-                  </div>
-                {/if}
-              </div>
-
-            <!-- 3. FORMULA DISPLAY -->
-            {:else if field.fieldType === 'FORMULA'}
-              <!-- Handled in top live formula banner -->
-
-            <!-- 4. NUMBER FIELD -->
+            <!-- NUMBER FIELD -->
             {:else if field.fieldType === 'NUMBER'}
-              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
                 <div class="flex items-center justify-between">
-                  <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                  <Label class="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
                     <Hash class="w-3.5 h-3.5 text-emerald-400" />
                     <span>{field.label}</span>
                     {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
                   </Label>
                   {#if field.min !== undefined && field.max !== undefined}
-                    <span class="text-[10px] font-mono text-zinc-500">Range: [{field.min} to {field.max}]</span>
+                    <span class="text-[10px] font-mono text-zinc-500">[{field.min} - {field.max}]</span>
                   {/if}
                 </div>
 
-                <div class="max-w-xs">
-                  <Input
-                    type="number"
-                    min={field.min}
-                    max={field.max}
-                    step={field.step || 1}
-                    bind:value={properties[field.name]}
-                    class="text-xs font-mono"
-                  />
-                </div>
+                {#if field.description}
+                  <p class="text-[10px] text-zinc-400">{field.description}</p>
+                {/if}
+
+                <Input
+                  type="number"
+                  min={field.min}
+                  max={field.max}
+                  step={field.step || 1}
+                  bind:value={properties[field.name]}
+                  class="text-xs font-mono"
+                />
               </div>
 
-            <!-- 5. STRING / TEXT FIELD -->
+            <!-- BOOLEAN FIELD -->
+            {:else if field.fieldType === 'BOOLEAN'}
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
+                <span class="block text-xs font-medium text-zinc-200">{field.label}</span>
+                <Select
+                  bind:value={properties[field.name]}
+                  options={[
+                    { value: 'true', label: 'True / Enabled' },
+                    { value: 'false', label: 'False / Disabled' },
+                  ]}
+                />
+              </div>
+
+            <!-- STRING FIELD -->
             {:else}
-              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
-                <span class="block text-xs font-medium text-zinc-300">
-                  {field.label}
-                </span>
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
+                <span class="block text-xs font-medium text-zinc-200">{field.label}</span>
+                {#if field.description}
+                  <p class="text-[10px] text-zinc-400">{field.description}</p>
+                {/if}
                 <Input
                   bind:value={properties[field.name]}
                   class="text-xs"
                 />
               </div>
             {/if}
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Sub-Blueprint Systems & Scales (2nd-Class Schemas) -->
+    {#if subBlueprintRefFields.length > 0}
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <Layers class="w-4 h-4 text-cyan-400" />
+            <span>Sub-Blueprint Systems & Scales (2nd-Class Schemas)</span>
+          </h3>
+          <span class="text-[11px] text-cyan-400/80 font-mono">Nested Sub-Systems</span>
+        </div>
+
+        {#each subBlueprintRefFields as field}
+          {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+          {#if targetBp}
+            {@const subFormula = properties[field.name] ? getSubBlueprintComputedFormula(targetBp, field.name, properties[field.name]) : null}
+            <div class="p-5 rounded-lg border border-cyan-900/60 bg-gradient-to-br from-cyan-950/20 via-zinc-900 to-zinc-900 space-y-4 shadow-sm shadow-cyan-950/30">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyan-900/40 pb-3">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                    <Link2 class="w-4 h-4 text-cyan-400" />
+                    <span>{field.label}</span>
+                    <span class="text-zinc-500 font-mono">({field.name})</span>
+                  </div>
+                  <p class="text-[11px] text-zinc-400">{targetBp.description}</p>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
+                    Sub-Blueprint: {targetBp.name}
+                  </span>
+                  <a href={`/world/schemas/${targetBp.id}`} target="_blank">
+                    <Button variant="outline" size="sm" class="h-6 text-[10px] px-2 text-cyan-300 border-cyan-800 hover:bg-cyan-950/50">
+                      <Edit3 class="w-2.5 h-2.5" />
+                      <span>Schema</span>
+                    </Button>
+                  </a>
+                </div>
+              </div>
+
+              {#if properties[field.name]}
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {#each targetBp.fields as subF}
+                    {#if subF.fieldType !== 'FORMULA'}
+                      <div class="space-y-2 p-3 rounded-lg bg-zinc-950/80 border border-zinc-800">
+                        <div class="flex items-center justify-between">
+                          <span class="block text-[11px] font-medium text-zinc-200">
+                            {subF.label}
+                            {#if subF.unit}<span class="text-zinc-500 font-mono">({subF.unit})</span>{/if}
+                          </span>
+                          {#if subF.min !== undefined && subF.max !== undefined}
+                            <span class="text-[9px] font-mono text-zinc-500">[{subF.min}-{subF.max}]</span>
+                          {/if}
+                        </div>
+
+                        {#if subF.fieldType === 'ENUM'}
+                          <div class="space-y-1.5">
+                            <Select
+                              bind:value={properties[field.name][subF.name]}
+                              options={formatEnumOptions(subF.options)}
+                            />
+                            {#if subF.options && subF.options.length > 0}
+                              <div class="flex flex-wrap gap-1 pt-0.5">
+                                {#each subF.options as opt}
+                                  {@const optVal = typeof opt === 'string' ? opt : opt.value}
+                                  {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                                  {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
+                                  {@const isSelected = properties[field.name][subF.name] === optVal || properties[field.name][subF.name] === optLabel}
+                                  <button
+                                    type="button"
+                                    onclick={() => (properties[field.name][subF.name] = optVal)}
+                                    class={`px-2 py-0.5 rounded text-[10px] font-medium transition flex items-center gap-1 ${
+                                      isSelected
+                                        ? 'bg-cyan-950 text-cyan-200 border border-cyan-600 ring-1 ring-cyan-500/50'
+                                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                    }`}
+                                  >
+                                    <span>{optLabel}</span>
+                                    {#if optPower !== undefined}
+                                      <span class="text-[8px] font-mono opacity-90">⚡{optPower}</span>
+                                    {/if}
+                                  </button>
+                                {/each}
+                              </div>
+                            {/if}
+                          </div>
+                        {:else if subF.fieldType === 'NUMBER'}
+                          <Input
+                            type="number"
+                            min={subF.min}
+                            max={subF.max}
+                            step={subF.step || 1}
+                            bind:value={properties[field.name][subF.name]}
+                            class="text-xs font-mono"
+                          />
+                        {:else if subF.fieldType === 'BOOLEAN'}
+                          <Select
+                            bind:value={properties[field.name][subF.name]}
+                            options={[
+                              { value: 'true', label: 'True / Enabled' },
+                              { value: 'false', label: 'False / Disabled' },
+                            ]}
+                          />
+                        {:else}
+                          <Input
+                            bind:value={properties[field.name][subF.name]}
+                            class="text-xs"
+                          />
+                        {/if}
+                      </div>
+                    {/if}
+                  {/each}
+                </div>
+
+                {#if subFormula}
+                  <div class="p-2.5 rounded bg-cyan-950/40 border border-cyan-900/50 flex items-center justify-between text-xs">
+                    <span class="text-cyan-300 font-medium">{subFormula.label}:</span>
+                    <div class="flex items-center gap-2 font-mono">
+                      <span class="text-[10px] text-cyan-400/70">{subFormula.expr}</span>
+                      <span class="px-2 py-0.5 rounded bg-cyan-900/60 font-bold text-cyan-200">{subFormula.formatted}</span>
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {/if}
+        {/each}
+      </div>
+    {/if}
+
+    <!-- 1st-Class Relational Entity Links -->
+    {#if relationalEntityRefFields.length > 0}
+      <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
+        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+          <Link2 class="w-4 h-4 text-teal-400" />
+          <span>1st-Class Relational Entity Connections</span>
+        </h3>
+
+        {#each relationalEntityRefFields as field}
+          {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+          {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id) : worldStore.entities.filter((e) => e.id !== entity.id)}
+          <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-2">
+            <Label class="text-xs font-medium text-zinc-200">
+              {field.label} ({targetBp ? targetBp.name : 'Entity'})
+            </Label>
+            <div class="max-w-md">
+              <Select
+                bind:value={properties[field.name]}
+                options={[
+                  { value: '', label: 'None (Unassigned)' },
+                  ...candidateEntities.map((e) => ({
+                    value: e.id,
+                    label: `${e.name} (${e.category})`,
+                  })),
+                ]}
+              />
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    <!-- Live Evaluated Mathematical Formulas Banner -->
+    {#if Object.keys(liveComputedFormulas).length > 0}
+      <div class="bg-gradient-to-r from-amber-950/40 via-zinc-900 to-zinc-900 rounded-lg border border-amber-900/50 p-6 space-y-4 shadow-md shadow-amber-950/20">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+            <Calculator class="w-4 h-4 text-amber-400" />
+            <span>Live Evaluated Mathematical Formulas</span>
+          </h3>
+          <span class="text-[10px] text-amber-400/90 font-mono bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-800/70">
+            Auto-evaluates instantly as you adjust any option above
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
+            <div class="p-4 rounded-lg bg-black/60 border border-amber-900/70 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-zinc-100">{fData.label}</span>
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-950 border border-amber-600 text-amber-300 font-mono text-base font-bold shadow-sm">
+                  <span>{fData.formatted}</span>
+                </div>
+              </div>
+              <div class="text-[11px] font-mono text-amber-400/80 pt-1" title={fData.expr}>
+                Formula: {fData.expr}
+              </div>
+            </div>
           {/each}
         </div>
       </div>
