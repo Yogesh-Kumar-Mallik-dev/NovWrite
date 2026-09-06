@@ -63,7 +63,50 @@ This document records the design preferences, framework choices, and UI/UX conve
 
 ---
 
-## 3. Unified Responsive Design & Platform Parity
+## 3. Visual Styling Standards, Badge Discipline & Form Controls
+
+### 3.1. Strict Prohibition of Excessive Gradients & Visual Noise
+
+- **Solid, Grounded Surfaces Over Gradients**: NovWrite is an authoring and lorekeeping IDE/workbench, **not a marketing landing page**.
+- **Rule**: Avoid multi-color rainbow gradients, glossy glassmorphism, animated glow borders, and heavy drop shadows.
+- **Permitted Usage**: Solid background colors (`zinc-900`, `zinc-950`, `slate-900`), crisp 1px borders (`border-zinc-800` / `border-slate-200`), and subtle monochromatic depth accents. Subtle 2% linear fades are only permitted for scroll fades and backdrop scrims.
+
+### 3.2. Badge Discipline (Restricted Primarily to Data Tables & Status Pills)
+
+- **The "Badge Explosion" Anti-Pattern**: Do NOT turn every piece of metadata, entity name, timestamp, or label into a colorful pill badge. Excessive badges create visual clutter and dilute the semantic value of badges.
+- **Where Badges ARE Permitted**:
+  - **Data Tables (`Table` / Data Grids)**: State/status columns (e.g. `ALIVE`, `DEAD`, `DRAFT`, `PUBLISHED`), entity category indicators, and cultivation realm tiers.
+  - **Header Status Indicators**: A single compact status pill in the Prose Studio header (e.g. `[● Canon Verified]`, `[▲ 1 Invariant Warning]`).
+- **Where Badges ARE Prohibited**:
+  - Regular body text, form field labels, sidebar folder trees, breadcrumbs, and arbitrary card headers. Use subtle typography hierarchy (`text-muted-foreground`, `font-mono text-xs`) instead.
+
+### 3.3. Dropdown Standard: Mandatory `Select` from `shadcn-svelte`
+
+- **Rule**: For all dropdown menus, category selectors, enum choosers, and option pickers, **ALWAYS use the official `Select` component from `shadcn-svelte`** (`$lib/components/ui/select`) or `React Native Reusables` on mobile.
+- **Prohibitions**:
+  - NEVER use native unstyled `<select>` elements.
+  - NEVER build custom DIY dropdowns with raw `<div>` click listeners.
+  - Use `Select` (with `Select.Root`, `Select.Trigger`, `Select.Value`, `Select.Content`, `Select.Item`) to guarantee keyboard navigation, ARIA accessibility, focus ring styling, and theme consistency.
+
+---
+
+## 4. AI UI/UX Anti-Patterns & Developer Best Practices
+
+When building frontend components, AI coding agents frequently fall into repetitive UI pitfalls. All agents must proactively audit against this checklist:
+
+| AI Anti-Pattern / Mistake                       | Why It Fails                                                                                    | Mandatory Best Practice                                                                                                                                        |
+| :---------------------------------------------- | :---------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. "Card Sprawl" (Wall of Boxes)**            | Wrapping every single input or label in a separate bordered `<Card>` destroys visual hierarchy. | Group related data into dense master-detail tables, clean definition lists (`<dl>`), or structured two-column forms.                                           |
+| **2. Modal Inside Modal**                       | Opening a modal from a modal traps the user and breaks mobile responsiveness.                   | Use slide-over side sheets (`Sheet`), inline master-detail drawers, or full page routes (`/world/*`).                                                          |
+| **3. Missing Empty & Loading States**           | Showing empty blank screens or crashing on empty arrays leaves users confused.                  | Always provide designed empty states (e.g., Lucide icon + clear headline + primary action button `[+ Create First Entity]`) and skeleton loaders (`Skeleton`). |
+| **4. Low Contrast & Illegible Text**            | Using `text-zinc-500` or `text-gray-400` on dark backgrounds fails WCAG AA contrast.            | Ensure text meets 4.5:1 contrast. Use `text-foreground` for primary and `text-muted-foreground` with verified contrast for secondary copy.                     |
+| **5. Missing Keyboard Accessibility**           | Click-only interfaces slow down professional writers and worldbuilders.                         | Support `Esc` to close drawers, `Tab` order on forms, and global keyboard shortcuts (`Cmd/Ctrl + S` save, `Cmd/Ctrl + K` command palette).                     |
+| **6. Arbitrary Spacing & Inconsistent Padding** | Mixing random margins (`m-3`, `p-5`, `gap-7`) causes a disjointed feel.                         | Adhere strictly to the 4px Tailwind grid: `p-2` (8px), `p-4` (16px), `p-6` (24px), `gap-2`, `gap-4`.                                                           |
+| **7. Fake/Placeholder Data in Prod Components** | Hardcoding `John Doe` or `lorem ipsum` in production code causes regressions.                   | Consume real schema stores or mock fixtures from `@novwrite/bridge` and the One-Click Seeder.                                                                  |
+
+---
+
+## 5. Unified Responsive Design & Platform Parity
 
 - **Component & Layout Parity Across All 3 Frontends**:
   - All three client platforms (**Web**, **Desktop**, and **Mobile**) share identical UI components, navigation hierarchy, and design elements (barring platform/OS-specific handling such as native file pickers, window chrome, and system trays).
