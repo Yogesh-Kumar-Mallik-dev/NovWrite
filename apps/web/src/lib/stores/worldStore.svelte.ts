@@ -174,6 +174,8 @@ export interface ContinuityViolationItem {
   overriddenAt?: string;
 }
 
+const WORLD_STATE_STORAGE_KEY = 'novwrite_world_state_v1';
+
 export class WorldStateStore {
   blueprints = $state<BlueprintDef[]>([]);
   entities = $state<EntityItem[]>([]);
@@ -182,7 +184,52 @@ export class WorldStateStore {
   violations = $state<ContinuityViolationItem[]>([]);
 
   constructor() {
+    this.loadFromStorage();
     this.recomputeAllEntityFormulas();
+  }
+
+  loadFromStorage(): void {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(WORLD_STATE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.blueprints)) this.blueprints = parsed.blueprints;
+        if (Array.isArray(parsed.entities)) this.entities = parsed.entities;
+        if (Array.isArray(parsed.timelineEvents)) this.timelineEvents = parsed.timelineEvents;
+        if (Array.isArray(parsed.rules)) this.rules = parsed.rules;
+        if (Array.isArray(parsed.violations)) this.violations = parsed.violations;
+      }
+    } catch (e) {
+      console.warn('[WorldStore] Failed to load state from localStorage:', e);
+    }
+  }
+
+  saveToStorage(): void {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    try {
+      const payload = {
+        blueprints: this.blueprints,
+        entities: this.entities,
+        timelineEvents: this.timelineEvents,
+        rules: this.rules,
+        violations: this.violations,
+      };
+      localStorage.setItem(WORLD_STATE_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('[WorldStore] Failed to save state to localStorage:', e);
+    }
+  }
+
+  clearState(): void {
+    this.blueprints = [];
+    this.entities = [];
+    this.timelineEvents = [];
+    this.rules = [];
+    this.violations = [];
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
+    }
   }
 
   // =====================================
@@ -214,6 +261,7 @@ export class WorldStateStore {
       fields: data.fields || [],
     };
     this.blueprints.push(newBlueprint);
+    this.saveToStorage();
     return newBlueprint;
   }
 
@@ -232,6 +280,7 @@ export class WorldStateStore {
     };
 
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return this.blueprints[idx];
   }
 
@@ -241,6 +290,7 @@ export class WorldStateStore {
     if (idx === -1) return false;
     this.blueprints.splice(idx, 1);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -262,6 +312,7 @@ export class WorldStateStore {
 
     bp.fields.push(newField);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return newField;
   }
 
@@ -282,6 +333,7 @@ export class WorldStateStore {
     };
 
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return bp.fields[fIdx];
   }
 
@@ -294,6 +346,7 @@ export class WorldStateStore {
 
     bp.fields.splice(fIdx, 1);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -317,6 +370,7 @@ export class WorldStateStore {
     if (!field.options) field.options = [];
     field.options.push(option);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -332,6 +386,7 @@ export class WorldStateStore {
     if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
     field.options[optionIndex] = updatedOption;
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -346,6 +401,7 @@ export class WorldStateStore {
     if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
     field.options.splice(optionIndex, 1);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -372,6 +428,7 @@ export class WorldStateStore {
 
     newEntity.computedFormulas = this.evaluateEntityFormulas(newEntity, bp);
     this.entities.push(newEntity);
+    this.saveToStorage();
     return newEntity;
   }
 
@@ -395,6 +452,7 @@ export class WorldStateStore {
     this.entities[idx].computedFormulas = this.evaluateEntityFormulas(
       this.entities[idx],
     );
+    this.saveToStorage();
     return this.entities[idx];
   }
 
@@ -403,6 +461,7 @@ export class WorldStateStore {
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return false;
     this.entities.splice(idx, 1);
+    this.saveToStorage();
     return true;
   }
 
@@ -549,6 +608,7 @@ export class WorldStateStore {
     };
     this.timelineEvents.push(newEvent);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return newEvent;
   }
 
@@ -563,6 +623,7 @@ export class WorldStateStore {
       ...updates,
     };
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return this.timelineEvents[idx];
   }
 
@@ -571,6 +632,7 @@ export class WorldStateStore {
     if (idx === -1) return false;
     this.timelineEvents.splice(idx, 1);
     this.recomputeAllEntityFormulas();
+    this.saveToStorage();
     return true;
   }
 
@@ -671,6 +733,7 @@ export class WorldStateStore {
       id: `rule-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
     };
     this.rules.push(newRule);
+    this.saveToStorage();
     return newRule;
   }
 
@@ -684,6 +747,7 @@ export class WorldStateStore {
       ...this.rules[idx],
       ...updates,
     };
+    this.saveToStorage();
     return this.rules[idx];
   }
 
@@ -691,6 +755,7 @@ export class WorldStateStore {
     const r = this.getRule(id);
     if (!r) return false;
     r.enabled = !r.enabled;
+    this.saveToStorage();
     return true;
   }
 
@@ -698,6 +763,7 @@ export class WorldStateStore {
     const idx = this.rules.findIndex((r) => r.id === id);
     if (idx === -1) return false;
     this.rules.splice(idx, 1);
+    this.saveToStorage();
     return true;
   }
 
@@ -724,6 +790,7 @@ export class WorldStateStore {
     viol.overrideJustification = justification.trim();
     viol.overriddenBy = authorName;
     viol.overriddenAt = new Date().toISOString();
+    this.saveToStorage();
     return true;
   }
 
@@ -758,6 +825,7 @@ export class WorldStateStore {
         ],
       });
       this.violations.splice(idx, 1);
+      this.saveToStorage();
       return true;
     }
 
@@ -771,11 +839,13 @@ export class WorldStateStore {
         weaponEnt.properties.current_wielder = charEnt.id;
       }
       this.violations.splice(idx, 1);
+      this.saveToStorage();
       return true;
     }
 
     // Default dismiss
     this.violations.splice(idx, 1);
+    this.saveToStorage();
     return true;
   }
 
@@ -783,6 +853,7 @@ export class WorldStateStore {
     const idx = this.violations.findIndex((v: ContinuityViolationItem) => v.id === id);
     if (idx === -1) return false;
     this.violations.splice(idx, 1);
+    this.saveToStorage();
     return true;
   }
 

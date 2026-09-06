@@ -171,7 +171,7 @@
     ? worldStore.getBlueprint(initialBpId)
     : worldStore.getFirstClassBlueprints()[0];
 
-  let selectedBlueprintId = $state(defaultBp ? defaultBp.id : 'bp-first-character');
+  let selectedBlueprintId = $state(defaultBp ? defaultBp.id : (worldStore.getFirstClassBlueprints()[0]?.id || ''));
 
   let selectedBlueprint = $derived(
     worldStore.getBlueprint(selectedBlueprintId) || worldStore.getFirstClassBlueprints()[0]
@@ -182,6 +182,13 @@
   let properties = $state<Record<string, any>>(
     getInitialPropertiesForBlueprint(defaultBp)
   );
+
+  $effect(() => {
+    if (!selectedBlueprintId && firstClassBlueprints.length > 0) {
+      selectedBlueprintId = firstClassBlueprints[0].id;
+      properties = getInitialPropertiesForBlueprint(firstClassBlueprints[0]);
+    }
+  });
 
   function handleSelectBlueprint(bpId: string) {
     selectedBlueprintId = bpId;
