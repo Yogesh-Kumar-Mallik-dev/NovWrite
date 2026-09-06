@@ -222,7 +222,7 @@ export class DynamicSchemaEngine {
   ): Promise<DynamicPropertyDef> {
     let fieldType: BlueprintFieldType = "STRING";
     const pt = property.propertyType || property.fieldType;
-    if (pt === "NUMBER" || pt === "BOOLEAN" || pt === "ENUM" || pt === "BLUEPRINT_REF" || pt === "FORMULA") {
+    if (pt === "NUMBER" || pt === "BOOLEAN" || pt === "ENUM" || pt === "VALUE_TYPE" || pt === "BLUEPRINT_REF" || pt === "FORMULA") {
       fieldType = pt;
     } else if (pt === "ENUM_SINGLE" || pt === "ENUM_MULTI") {
       fieldType = "ENUM";

@@ -60,7 +60,7 @@ flowchart TB
 - **HTTP Routing & Middleware:** Chi-based routing, JWT/session authentication, project tenancy scoping, rate limiting, and request correlation tracing.
 - **Universe & Blueprint Engine (`universe`):**
   - Manages **1st-Class Blueprints** (Entity Archetypes: Characters, Weapons, Sanctuaries, Factions) and **2nd-Class Blueprints** (Sub-Schemas & Gauges: Cultivation Ranks, Affection Scales, Power Matrices).
-  - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including dual-valued enums (`{ label, value, power }`) and relational `BLUEPRINT_REF` links.
+  - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including pure categorical enums (`ENUM`), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), and relational `BLUEPRINT_REF` links.
   - Executes AST mathematical formulas server-side during entity persistence and event mutation.
 - **Prose & Novel Engine (`novel`):** Managing scene markdown, word count telemetry, chapter hierarchies, entity mentions, and collaborative 60-second heartbeat scene locks (`scene_leases`).
 - **Timeline & State Fold Engine (`timeline`):** Pure deterministic event folding, point-in-time state reconstruction, and historical snapshot generation over ordered `EventEffect` sequences.
@@ -130,7 +130,7 @@ flowchart TD
     subgraph BlueprintService ["Blueprint Domain Service (universe/blueprint.go)"]
         BP1["1st-Class Archetypes<br/>(Characters, Weapons, Realms, Factions)"]
         BP2["2nd-Class Sub-Schemas<br/>(Cultivation Ranks, Affection Scales, Matrices)"]
-        BP3["Dynamic Field Validator<br/>(Types: String, Number, Boolean, Enum, Ref, Formula)"]
+        BP3["Dynamic Field Validator<br/>(Types: String, Number, Boolean, Enum, ValueType, Ref, Formula)"]
     end
 
     subgraph EntityService ["Entity Domain Service (universe/entity.go)"]

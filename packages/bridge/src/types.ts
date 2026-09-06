@@ -24,14 +24,18 @@ export type BlueprintFieldType =
   | "NUMBER"
   | "BOOLEAN"
   | "ENUM"
+  | "VALUE_TYPE"
   | "BLUEPRINT_REF"
   | "FORMULA";
 
-export interface EnumOption {
+export interface ValueTypeOption {
   label: string;
   value: string;
   power?: number;
 }
+
+// Backwards-compatible alias
+export type EnumOption = ValueTypeOption;
 
 export interface DynamicFieldDef {
   id: string;

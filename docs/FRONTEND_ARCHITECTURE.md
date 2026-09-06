@@ -101,6 +101,11 @@ classDiagram
     class EnumOption {
         +string label
         +string value
+    }
+
+    class ValueTypeOption {
+        +string label
+        +string value
         +number power
     }
 
@@ -110,6 +115,7 @@ classDiagram
         NUMBER
         BOOLEAN
         ENUM
+        VALUE_TYPE
         BLUEPRINT_REF
         FORMULA
     }
@@ -129,6 +135,7 @@ classDiagram
     BlueprintDef --> DynamicFieldDef
     DynamicFieldDef --> BlueprintFieldType
     DynamicFieldDef --> EnumOption
+    DynamicFieldDef --> ValueTypeOption
     EntityItem --> BlueprintDef : "instantiates (1st-Class only)"
 ```
 
@@ -145,13 +152,20 @@ classDiagram
 - **Limitation:** **CANNOT** instantiate standalone entity objects on their own. They exist purely as embedded schemas within 1st-Class entities or other 2nd-Class sub-blueprints.
 - **Dot-Notation Traversal:** Embedded properties are accessed via dot notation in formula expressions (e.g. `cultivation.major_realm`, `romantic_feelings.affection_level`).
 
-### 2.3. Dual-Valued Enums (`{ label, value, power }`)
+### 2.3. Categorical Enums (`ENUM`) & Weighted Value Types (`VALUE_TYPE`)
 
-Enums in NovWrite bridge qualitative narrative categorization with quantitative power ratings:
+NovWrite distinctly separates pure categorical choices from quantitative, weighted domain ratings:
 
-- **`label`**: Author-facing display text (e.g. `"Dual-Yin-Yang Physique"`, `"Divine / Celestial"`, `"Heaven Step"`).
-- **`value`**: Machine-readable identifier (e.g. `"dual_yin_yang"`, `"divine_celestial"`, `"heaven_step"`).
-- **`power`**: Optional numerical power weight or multiplier (e.g. `2.5`, `1000`, `50`) that can be ingested directly by the mathematical formula engine.
+1. **`ENUM` (Pure String Categorical Enumeration):**
+   - Pure string categorical options (e.g. `["Sword", "Saber", "Spear"]` or `["Righteous Dao", "Demonic Path"]`).
+   - Used for narrative categorization, weapon types, elemental affinities, or moral alignments where no mathematical power number is needed.
+   - Evaluated as categorical string literals in logical expressions (`IF(weapon_type == "Sword", 1.2, 1.0)`).
+
+2. **`VALUE_TYPE` (Weighted Categorical Options with Power / Numeric Values):**
+   - Rich options combining qualitative narrative labels with quantitative numeric weights:
+     - **`label`**: Author-facing display text (e.g. `"Divine / Celestial"`, `"Heaven Step"`, `"Supreme Core"`).
+     - **`value`**: Machine-readable identifier (e.g. `"divine_celestial"`, `"heaven_step"`, `"supreme_core"`).
+     - **`power`**: Numeric power multiplier or base weight (e.g. `1000`, `2.5`, `50`) ingested automatically by formulas when the variable is referenced in math expressions.
 
 ### 2.4. Dynamic Field Types Reference
 
@@ -160,7 +174,8 @@ Enums in NovWrite bridge qualitative narrative categorization with quantitative 
 | **`STRING`** | Text Input / Textarea | Freeform textual lore, origin story, bloodline notes | String matching & truthiness checks in `IF` |
 | **`NUMBER`** | Numeric Input + Stepper | Numeric values with `min`, `max`, `step`, and `unit` (e.g. `Points`, `Rank`, `Atk`, `Km`) | Direct arithmetic operand |
 | **`BOOLEAN`** | Toggle Switch | Binary flag (e.g. `awakened_dao_heart`, `is_bound`) | Boolean logic (`AND`, `OR`, `NOT`, `IF`) |
-| **`ENUM`** | Select Popover / Option Chips | Categorical options with optional numeric `power` ratings | Contributes `power` or option value to formulas |
+| **`ENUM`** | Select / Pill Picker | Pure string categorical choices (e.g. `["Sword", "Saber"]`) | Categorical string equality in conditionals |
+| **`VALUE_TYPE`** | Select with Power Chips / Quick Select | Categorical options with numeric `power` ratings | Contributes `power` / numeric weight to formulas |
 | **`BLUEPRINT_REF`** | Entity Picker (1st-Class) / Sub-Form (2nd-Class) | Relational link to another entity or embedded sub-blueprint | Nested dot-notation variable traversal |
 | **`FORMULA`** | Read-Only Live Calculation Pill | Safe AST mathematical & logical expression | Output variable available to subsequent formulas |
 

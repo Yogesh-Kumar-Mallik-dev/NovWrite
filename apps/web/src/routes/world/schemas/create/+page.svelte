@@ -67,10 +67,10 @@
       fieldType: 'ENUM',
       description: 'Biological / spiritual gender category',
       options: [
-        { label: 'Male', value: 'Male', power: 0, numericValue: 0 },
-        { label: 'Female', value: 'Female', power: 0, numericValue: 0 },
-        { label: 'Dual-Yin-Yang', value: 'Dual-Yin-Yang', power: 50, numericValue: 50 },
-        { label: 'Celestial / Genderless', value: 'Celestial / Genderless', power: 100, numericValue: 100 },
+        { label: 'Male', value: 'Male' },
+        { label: 'Female', value: 'Female' },
+        { label: 'Dual-Yin-Yang', value: 'Dual-Yin-Yang' },
+        { label: 'Celestial / Genderless', value: 'Celestial / Genderless' },
       ],
       newOptionLabel: '',
       newOptionPower: undefined,
@@ -97,10 +97,11 @@
   const fieldTypeOptions = [
     { value: 'STRING', label: 'Text (String)' },
     { value: 'NUMBER', label: 'Number (Numeric with bounds)' },
-    { value: 'ENUM', label: 'Enum / Custom Categories (Options with Power/Value)' },
+    { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
+    { value: 'ENUM', label: 'Enum (Standard String Categories)' },
+    { value: 'VALUE_TYPE', label: 'Value Type (Options with Power / Numeric Weights)' },
     { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
-    { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
   ];
 
   // Available blueprints for referencing
@@ -191,8 +192,21 @@
         };
 
         if (f.fieldType === 'ENUM') {
-          def.options = f.options.length > 0 ? [...f.options] : ['Default'];
+          def.options = f.options.length > 0
+            ? f.options.map((o: any) => (typeof o === 'string' ? o : o.label || o.value))
+            : ['Default'];
           def.defaultValue = f.defaultValue || def.options[0];
+        } else if (f.fieldType === 'VALUE_TYPE') {
+          def.options = f.options.length > 0
+            ? f.options.map((o: any) => ({
+                label: typeof o === 'string' ? o : o.label,
+                value: typeof o === 'string' ? o.toLowerCase().replace(/\s+/g, '_') : (o.value || (o.label ? o.label.toLowerCase().replace(/\s+/g, '_') : '')),
+                power: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
+                numericValue: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
+              }))
+            : [{ label: 'Default', value: 'default', power: 0, numericValue: 0 }];
+          const first = def.options[0];
+          def.defaultValue = f.defaultValue || (typeof first === 'object' ? first.value : first);
         } else if (f.fieldType === 'NUMBER') {
           def.min = f.min;
           def.max = f.max;
@@ -434,30 +448,92 @@
 
           <!-- Type-Specific Specialized Configurator -->
 
-          <!-- 1. ENUM / DUAL-VALUED CATEGORY BUILDER -->
+          <!-- 1. ENUM BUILDER (PURE STRING CHOICES) -->
           {#if field.fieldType === 'ENUM'}
             <div class="p-3.5 bg-zinc-900 rounded-lg border border-zinc-800 space-y-3">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5 text-xs text-teal-400 font-medium">
                   <ListFilter class="w-3.5 h-3.5" />
-                  <span>Dual-Valued Enum Categories (Name + Numeric Power/Value for Formulas)</span>
+                  <span>Enum Options (Standard Categorical String Choices)</span>
                 </div>
-                <span class="text-[10px] text-zinc-500 font-mono">e.g. &#123; qi_refining : 100 &#125;</span>
+                <span class="text-[10px] text-zinc-500 font-mono">e.g. ["Sword", "Saber", "Spear"]</span>
               </div>
 
               <!-- Options Tags -->
               <div class="space-y-2">
                 {#if field.options.length === 0}
-                  <p class="text-xs text-zinc-500 italic">No options defined yet. Add an option name and numeric power below.</p>
+                  <p class="text-xs text-zinc-500 italic">No enum options defined yet. Add option labels below.</p>
                 {/if}
 
                 <div class="flex flex-wrap gap-2">
                   {#each field.options as opt, optIdx}
+                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
                     <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800/90 border border-zinc-700 text-xs text-zinc-200">
-                      <span class="font-medium text-zinc-100">{opt.label}</span>
-                      {#if opt.power !== undefined || opt.numericValue !== undefined}
+                      <span class="font-medium text-zinc-100">{optLabel}</span>
+                      <button
+                        type="button"
+                        onclick={() => removeOptionFromField(index, optIdx)}
+                        class="text-zinc-400 hover:text-red-400 transition ml-1"
+                        title="Remove Option"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+
+              <!-- Add Enum Option Input -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+                <div class="sm:col-span-10">
+                  <Input
+                    bind:value={field.newOptionLabel}
+                    placeholder="Option Label (e.g. Sword, Saber, Spear, Righteous Dao)"
+                    class="text-xs"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOptionToField(index);
+                      }
+                    }}
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <Button variant="secondary" size="sm" class="w-full h-9" onclick={() => addOptionToField(index)}>
+                    <Plus class="w-3 h-3" />
+                    <span>Add</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          {/if}
+
+          <!-- 2. VALUE_TYPE BUILDER (OPTIONS WITH POWER / NUMERIC WEIGHTS) -->
+          {#if field.fieldType === 'VALUE_TYPE'}
+            <div class="p-3.5 bg-zinc-900 rounded-lg border border-zinc-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 text-xs text-indigo-400 font-medium">
+                  <Sparkles class="w-3.5 h-3.5" />
+                  <span>Value Type Categories (Options with Power / Numeric Weights for Formulas)</span>
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono">e.g. &#123; divine : 1000 &#125;</span>
+              </div>
+
+              <!-- Options Tags -->
+              <div class="space-y-2">
+                {#if field.options.length === 0}
+                  <p class="text-xs text-zinc-500 italic">No value types defined yet. Add an option label and numeric power below.</p>
+                {/if}
+
+                <div class="flex flex-wrap gap-2">
+                  {#each field.options as opt, optIdx}
+                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                    {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800/90 border border-zinc-700 text-xs text-zinc-200">
+                      <span class="font-medium text-zinc-100">{optLabel}</span>
+                      {#if optPower !== undefined}
                         <span class="text-[11px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/60">
-                          Power: {opt.power ?? opt.numericValue}
+                          Power: {optPower}
                         </span>
                       {/if}
                       <button
@@ -473,12 +549,12 @@
                 </div>
               </div>
 
-              <!-- Add Dual-Valued Option Inputs -->
+              <!-- Add Value Type Option Inputs -->
               <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
                 <div class="sm:col-span-6">
                   <Input
                     bind:value={field.newOptionLabel}
-                    placeholder="Option Name (e.g. Qi Refining, Foundation)"
+                    placeholder="Option Name (e.g. Qi Refining, Foundation, Divine)"
                     class="text-xs"
                     onkeydown={(e) => {
                       if (e.key === 'Enter') {

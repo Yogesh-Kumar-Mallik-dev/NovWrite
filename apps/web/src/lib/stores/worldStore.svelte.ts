@@ -12,15 +12,23 @@ import {
 export type BlueprintClass = "FIRST_CLASS" | "SECOND_CLASS";
 
 export type BlueprintFieldType =
-  "STRING" | "NUMBER" | "BOOLEAN" | "ENUM" | "BLUEPRINT_REF" | "FORMULA";
+  | "STRING"
+  | "NUMBER"
+  | "BOOLEAN"
+  | "ENUM"
+  | "VALUE_TYPE"
+  | "BLUEPRINT_REF"
+  | "FORMULA";
 
-export interface EnumOptionItem {
+export interface ValueTypeOptionItem {
   label: string; // Display Name (e.g. "Qi Refining")
   value: string; // Storage key / code (e.g. "qi_refining")
   numericValue?: number; // Numeric Power / Score (e.g. 100)
   power?: number; // Alias for numeric power
   description?: string;
 }
+
+export type EnumOptionItem = ValueTypeOptionItem;
 
 export interface DynamicFieldDef {
   id: string;
@@ -884,7 +892,7 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || field.fieldType !== "ENUM") return false;
+    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE")) return false;
     if (!field.options) field.options = [];
     field.options.push(option);
     this.recomputeAllEntityFormulas();
@@ -900,7 +908,7 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
     field.options[optionIndex] = updatedOption;
     this.recomputeAllEntityFormulas();
     return true;
@@ -914,7 +922,7 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
     field.options.splice(optionIndex, 1);
     this.recomputeAllEntityFormulas();
     return true;
@@ -995,9 +1003,9 @@ export class WorldStateStore {
     const computed: Record<string, number> = {};
     const context: Record<string, any> = { ...entity.properties };
 
-    // Enrich context with dual-valued enum options and resolved references
+    // Enrich context with dual-valued value_type/enum options and resolved references
     for (const field of blueprint.fields) {
-      if (field.fieldType === "ENUM" && field.options) {
+      if ((field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") && field.options) {
         const rawVal = entity.properties[field.name];
         if (rawVal !== undefined && rawVal !== null) {
           const matchingOpt = field.options.find((opt) => {
@@ -1023,7 +1031,7 @@ export class WorldStateStore {
           if (subProps && typeof subProps === "object") {
             const enrichedSub: Record<string, any> = { ...subProps };
             for (const subF of targetBp.fields) {
-              if (subF.fieldType === "ENUM" && subF.options) {
+              if ((subF.fieldType === "ENUM" || subF.fieldType === "VALUE_TYPE") && subF.options) {
                 const subRawVal = subProps[subF.name];
                 if (subRawVal !== undefined && subRawVal !== null) {
                   const subMatchingOpt = subF.options.find((opt) => {

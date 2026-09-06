@@ -68,8 +68,9 @@ NovWrite cleanly separates world-building archetypes from concrete instantiated 
 - **2nd-Class Blueprints (`SECOND_CLASS` - Sub-Schemas & Continuous Scales):**
   - Reusable nested schemas and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`, `Soul Profile`).
   - Embedded inside 1st-Class blueprints or other 2nd-Class blueprints; cannot instantiate standalone entities.
-- **Dual-Valued Enums (`{ label, value, power }`):**
-  - Bridges qualitative categorization (e.g. `gender`, `physique`, `element`) with quantitative power weights for formulas.
+- **Categorical Enums (`ENUM`) & Weighted Value Types (`VALUE_TYPE`):**
+  - `ENUM`: Pure string categorical constants (`["Sword", "Saber", "Spear"]`) for narrative taxonomy without numeric power.
+  - `VALUE_TYPE`: Dual-valued options (`[{ label: "Divine", value: "divine", power: 1000 }]`) bridging qualitative categorization with quantitative power weights for formulas.
 - **Sandboxed Mathematical & Logical Formula Engine (`formulaEngine.ts`):**
   - Safe AST expression parser evaluating arithmetic, nested dot-notation variables (`cultivation.major_realm`), logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
   - Re-evaluates formulas reactively in real-time as attributes change.
