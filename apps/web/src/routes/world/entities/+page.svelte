@@ -203,12 +203,10 @@
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <a href={blueprintFilter !== 'ALL' ? `/world/entities/create?blueprintId=${blueprintFilter}` : '/world/entities/create'}>
-        <Button size="sm">
-          <Plus class="w-3.5 h-3.5" />
-          <span>Instantiate Entity</span>
-        </Button>
-      </a>
+      <Button size="sm" href={blueprintFilter !== 'ALL' ? `/world/entities/create?blueprintId=${blueprintFilter}` : '/world/entities/create'}>
+        <Plus class="w-3.5 h-3.5" />
+        <span>Instantiate Entity</span>
+      </Button>
     </div>
   </div>
 
@@ -510,12 +508,10 @@
                 <!-- Actions Column -->
                 <TableCell class="px-4 py-3 text-right align-middle w-[120px] whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
-                    <a href={`/world/entities/${entity.id}`}>
-                      <Button variant="outline" size="sm" class="h-7 text-xs px-2.5">
-                        <Edit3 class="w-3 h-3" />
-                        <span>Inspect</span>
-                      </Button>
-                    </a>
+                    <Button href={`/world/entities/${entity.id}`} variant="outline" size="sm" class="h-7 text-xs px-2.5">
+                      <Edit3 class="w-3 h-3" />
+                      <span>Inspect</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
