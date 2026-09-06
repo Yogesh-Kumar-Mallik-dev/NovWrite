@@ -29,9 +29,18 @@
     onchange,
   }: Props = $props();
 
-  const selectedLabel = $derived(
-    options.find((opt) => opt.value === value)?.label || ""
+  const matchedOpt = $derived(
+    options.find(
+      (opt) =>
+        opt.value === value ||
+        opt.label === value ||
+        (opt.value && value && opt.value.toLowerCase() === String(value).toLowerCase()) ||
+        (opt.label && value && opt.label.toLowerCase() === String(value).toLowerCase())
+    )
   );
+
+  const selectedLabel = $derived(matchedOpt ? matchedOpt.label : (value ? String(value) : ""));
+  const normalizedValue = $derived(matchedOpt ? matchedOpt.value : (value || ""));
 
   function handleValueChange(newVal: string) {
     value = newVal;
@@ -41,7 +50,7 @@
 
 <Select.Root
   type="single"
-  {value}
+  value={normalizedValue}
   onValueChange={handleValueChange}
   {disabled}
   items={options}

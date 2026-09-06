@@ -48,14 +48,17 @@
   const blueprintId = $derived(page.params.id);
   const blueprint = $derived(worldStore.getBlueprint(blueprintId));
 
+  const initialBp = worldStore.getBlueprint(page.params.id);
+
   // Confirmation States
   let fieldToDelete = $state<{ id: string; name: string } | null>(null);
   let deleteBpConfirmOpen = $state(false);
 
-  let name = $state('');
-  let blueprintClass = $state<BlueprintClass>('FIRST_CLASS');
-  let category = $state('');
-  let description = $state('');
+  let loadedBpId = $state<string | null>(initialBp?.id || null);
+  let name = $state(initialBp?.name || '');
+  let blueprintClass = $state<BlueprintClass>(initialBp?.blueprintClass || 'FIRST_CLASS');
+  let category = $state(initialBp?.category || '');
+  let description = $state(initialBp?.description || '');
   let saveMessage = $state<string | null>(null);
 
   // New field draft state
@@ -111,11 +114,14 @@
   );
 
   $effect(() => {
-    if (blueprint) {
-      name = blueprint.name;
-      blueprintClass = blueprint.blueprintClass;
-      category = blueprint.category;
-      description = blueprint.description || '';
+    const currentId = blueprintId;
+    const bp = worldStore.getBlueprint(currentId);
+    if (bp && bp.id !== loadedBpId) {
+      loadedBpId = bp.id;
+      name = bp.name;
+      blueprintClass = bp.blueprintClass;
+      category = bp.category;
+      description = bp.description || '';
       if (!newFieldTargetBp && availableTargetBlueprints.length > 0) {
         newFieldTargetBp = availableTargetBlueprints[0].value;
       }
