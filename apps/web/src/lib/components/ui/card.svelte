@@ -12,7 +12,7 @@
 
 <div
   class={cn(
-    "rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-100 shadow-sm",
+    "rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-colors",
     className
   )}
   {...rest}
