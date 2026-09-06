@@ -47,11 +47,34 @@
   let carouselEl = $state<HTMLDivElement | null>(null);
   let searchArchetypeQuery = $state('');
   let selectedCategoryFilter = $state('ALL');
+  let canScrollLeft = $state(false);
+  let canScrollRight = $state(true);
+  let activeSlideIndex = $state(0);
+  let totalSlides = $state(1);
+
+  function updateScrollState() {
+    if (!carouselEl) return;
+    const { scrollLeft, scrollWidth, clientWidth } = carouselEl;
+    canScrollLeft = scrollLeft > 10;
+    canScrollRight = scrollLeft + clientWidth < scrollWidth - 10;
+    if (clientWidth > 0) {
+      activeSlideIndex = Math.round(scrollLeft / clientWidth);
+      totalSlides = Math.max(1, Math.ceil(scrollWidth / clientWidth));
+    }
+  }
 
   function scrollCarousel(direction: 'left' | 'right') {
     if (!carouselEl) return;
-    const amount = direction === 'left' ? -340 : 340;
+    const { clientWidth } = carouselEl;
+    const amount = direction === 'left' ? -clientWidth : clientWidth;
     carouselEl.scrollBy({ left: amount, behavior: 'smooth' });
+    setTimeout(updateScrollState, 350);
+  }
+
+  function scrollToSlide(index: number) {
+    if (!carouselEl) return;
+    carouselEl.scrollTo({ left: index * carouselEl.clientWidth, behavior: 'smooth' });
+    setTimeout(updateScrollState, 350);
   }
 
   const allCategories = $derived([
@@ -72,6 +95,14 @@
       return matchesCategory && matchesSearch;
     })
   );
+
+  $effect(() => {
+    // When filter changes, reset scroll and update controls
+    if (carouselEl && filteredBlueprints) {
+      carouselEl.scrollTo({ left: 0, behavior: 'auto' });
+      setTimeout(updateScrollState, 50);
+    }
+  });
 
   function getDefaultOptionValue(
     options?: Array<
@@ -463,164 +494,187 @@
 
   <!-- SECTION 1: Carousel of 1st-Class Blueprint Archetype Cards -->
   <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
-    <!-- Carousel Controls Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <Boxes class="w-4 h-4 text-teal-400" />
-          <span>Select 1st-Class Blueprint Archetype</span>
-        </h3>
-        <p class="text-[11px] text-zinc-500 mt-0.5">
-          1st-Class Blueprints instantiate concrete standalone universe entity objects.
-        </p>
+    <!-- Carousel Header & Category Tabs -->
+    <div class="space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <Boxes class="w-4 h-4 text-teal-400" />
+            <span>Select 1st-Class Blueprint Archetype</span>
+          </h3>
+          <p class="text-[11px] text-zinc-500 mt-0.5">
+            1st-Class Blueprints instantiate standalone universe entity objects. Use the carousel below to select an archetype.
+          </p>
+        </div>
+
+        <span class="text-[10px] text-zinc-400 font-mono self-start sm:self-auto">
+          {filteredBlueprints.length} Archetypes Available
+        </span>
       </div>
 
-      <!-- Navigation Arrows & Counter -->
-      <div class="flex items-center gap-2 self-end sm:self-auto">
-        <span class="text-[10px] text-zinc-400 font-mono">
-          {filteredBlueprints.length} Archetypes
-        </span>
-        <div class="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            class="h-7 w-7 p-0"
-            onclick={() => scrollCarousel('left')}
-            title="Scroll Left"
-          >
-            <ChevronLeft class="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            class="h-7 w-7 p-0"
-            onclick={() => scrollCarousel('right')}
-            title="Scroll Right"
-          >
-            <ChevronRight class="w-3.5 h-3.5" />
-          </Button>
+      <!-- Filter Tabs & Search -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {#each allCategories as cat}
+            <button
+              type="button"
+              onclick={() => (selectedCategoryFilter = cat)}
+              class={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
+                selectedCategoryFilter === cat
+                  ? 'bg-teal-950 text-teal-300 border border-teal-700'
+                  : 'bg-zinc-950/70 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+              }`}
+            >
+              {cat === 'ALL' ? 'All Archetypes' : cat}
+            </button>
+          {/each}
+        </div>
+
+        <div class="relative w-full sm:w-52 shrink-0">
+          <Search class="w-3.5 h-3.5 absolute left-2.5 top-2 text-zinc-500" />
+          <Input
+            bind:value={searchArchetypeQuery}
+            placeholder="Filter archetypes..."
+            class="pl-8 h-7 text-[11px] w-full"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Category Filter Tabs & Search -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {#each allCategories as cat}
+    <!-- Carousel Deck with Side Navigation Buttons and Hidden Scrollbar -->
+    <div class="relative px-1 pt-1">
+      <!-- Left Carousel Button -->
+      <button
+        type="button"
+        onclick={() => scrollCarousel('left')}
+        disabled={!canScrollLeft}
+        aria-label="Previous Archetypes"
+        class="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 hover:border-teal-500 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center shadow-lg shadow-black/80 transition disabled:opacity-20 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+      >
+        <ChevronLeft class="w-4 h-4 text-teal-400" />
+      </button>
+
+      <!-- Right Carousel Button -->
+      <button
+        type="button"
+        onclick={() => scrollCarousel('right')}
+        disabled={!canScrollRight}
+        aria-label="Next Archetypes"
+        class="absolute -right-3 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 hover:border-teal-500 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center shadow-lg shadow-black/80 transition disabled:opacity-20 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+      >
+        <ChevronRight class="w-4 h-4 text-teal-400" />
+      </button>
+
+      <!-- Carousel Cards Track (Exact Page Grid, No Cut-Offs, Invisible Scrollbar) -->
+      <div
+        bind:this={carouselEl}
+        onscroll={updateScrollState}
+        class="flex items-stretch gap-3 overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {#each filteredBlueprints as bp}
+          {@const Icon = getArchetypeIcon(bp)}
+          {@const isSelected = selectedBlueprintId === bp.id}
+          {@const formulaCount = bp.fields.filter((f) => f.fieldType === 'FORMULA').length}
+          {@const subSystemCount = bp.fields.filter((f) => {
+            if (f.fieldType !== 'BLUEPRINT_REF') return false;
+            const target = worldStore.getBlueprint(f.targetBlueprintId);
+            return target && target.blueprintClass === 'SECOND_CLASS';
+          }).length}
+          {@const relationalLinkCount = bp.fields.filter((f) => {
+            if (f.fieldType !== 'BLUEPRINT_REF') return false;
+            const target = worldStore.getBlueprint(f.targetBlueprintId);
+            return !target || target.blueprintClass === 'FIRST_CLASS';
+          }).length}
+
           <button
             type="button"
-            onclick={() => (selectedCategoryFilter = cat)}
-            class={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
-              selectedCategoryFilter === cat
-                ? 'bg-teal-950 text-teal-300 border border-teal-700'
-                : 'bg-zinc-950/70 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+            onclick={() => handleSelectBlueprint(bp.id)}
+            class={`w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
+              isSelected
+                ? 'border-teal-500 bg-gradient-to-b from-teal-950/40 via-zinc-900 to-zinc-900 ring-1 ring-teal-500/60 shadow-md shadow-teal-950/50'
+                : 'border-zinc-800 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-900/60'
             }`}
           >
-            {cat === 'ALL' ? 'All Archetypes' : cat}
-          </button>
-        {/each}
-      </div>
-
-      <div class="relative w-full sm:w-56 shrink-0">
-        <Search class="w-3.5 h-3.5 absolute left-2.5 top-2 text-zinc-500" />
-        <Input
-          bind:value={searchArchetypeQuery}
-          placeholder="Filter archetypes..."
-          class="pl-8 h-7 text-[11px] w-full"
-        />
-      </div>
-    </div>
-
-    <!-- Horizontal Scrollable Carousel Track -->
-    <div
-      bind:this={carouselEl}
-      class="flex items-stretch gap-3.5 overflow-x-auto pb-3 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent"
-    >
-      {#each filteredBlueprints as bp}
-        {@const Icon = getArchetypeIcon(bp)}
-        {@const isSelected = selectedBlueprintId === bp.id}
-        {@const formulaCount = bp.fields.filter((f) => f.fieldType === 'FORMULA').length}
-        {@const subSystemCount = bp.fields.filter((f) => {
-          if (f.fieldType !== 'BLUEPRINT_REF') return false;
-          const target = worldStore.getBlueprint(f.targetBlueprintId);
-          return target && target.blueprintClass === 'SECOND_CLASS';
-        }).length}
-        {@const relationalLinkCount = bp.fields.filter((f) => {
-          if (f.fieldType !== 'BLUEPRINT_REF') return false;
-          const target = worldStore.getBlueprint(f.targetBlueprintId);
-          return !target || target.blueprintClass === 'FIRST_CLASS';
-        }).length}
-
-        <button
-          type="button"
-          onclick={() => handleSelectBlueprint(bp.id)}
-          class={`w-[280px] sm:w-[310px] shrink-0 snap-start p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
-            isSelected
-              ? 'border-teal-500 bg-gradient-to-b from-teal-950/40 via-zinc-900 to-zinc-900 ring-1 ring-teal-500/60 shadow-md shadow-teal-950/50'
-              : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-900/60'
-          }`}
-        >
-          <div>
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <div class={`p-1.5 rounded-lg ${isSelected ? 'bg-teal-900/60 text-teal-300 border border-teal-700' : 'bg-zinc-800/80 text-zinc-400'}`}>
-                  <Icon class="w-4 h-4" />
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <div class={`p-1.5 rounded-lg ${isSelected ? 'bg-teal-900/60 text-teal-300 border border-teal-700' : 'bg-zinc-800/80 text-zinc-400'}`}>
+                    <Icon class="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div class="font-bold text-xs text-zinc-100">{bp.name}</div>
+                    <span class="text-[10px] text-zinc-400 font-medium">{bp.category}</span>
+                  </div>
                 </div>
-                <div>
-                  <div class="font-bold text-xs text-zinc-100">{bp.name}</div>
-                  <span class="text-[10px] text-zinc-400 font-medium">{bp.category}</span>
-                </div>
+                {#if isSelected}
+                  <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700">
+                    <Check class="w-3 h-3" />
+                    <span>Selected</span>
+                  </span>
+                {/if}
               </div>
-              {#if isSelected}
-                <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700">
-                  <Check class="w-3 h-3" />
-                  <span>Selected</span>
+
+              <p class="text-[11px] text-zinc-400 mt-2.5 line-clamp-2 leading-relaxed">
+                {bp.description}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-zinc-800/80 text-[10px] font-mono">
+              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-teal-400">
+                {bp.fields.length} fields
+              </span>
+              {#if formulaCount > 0}
+                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">
+                  {formulaCount} math
+                </span>
+              {/if}
+              {#if subSystemCount > 0}
+                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-cyan-400">
+                  {subSystemCount} sub-systems
+                </span>
+              {/if}
+              {#if relationalLinkCount > 0}
+                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-purple-400">
+                  {relationalLinkCount} links
                 </span>
               {/if}
             </div>
+          </button>
+        {/each}
 
-            <p class="text-[11px] text-zinc-400 mt-2.5 line-clamp-2 leading-relaxed">
-              {bp.description}
-            </p>
+        <!-- Create New 1st-Class Blueprint Card -->
+        <a
+          href="/world/schemas/create?blueprintClass=FIRST_CLASS"
+          target="_blank"
+          class="w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 hover:border-teal-500 hover:bg-teal-950/10 transition flex flex-col justify-center items-center text-center space-y-2 text-zinc-400 hover:text-teal-300 min-h-[160px]"
+        >
+          <div class="p-2 rounded-full bg-zinc-900 border border-zinc-800">
+            <Plus class="w-4 h-4 text-teal-400" />
           </div>
+          <div class="font-bold text-xs">Create 1st-Class Blueprint</div>
+          <p class="text-[10px] text-zinc-500 max-w-[180px]">
+            Define new fields, categories, formulas, and relational schemas.
+          </p>
+        </a>
+      </div>
 
-          <div class="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-zinc-800/80 text-[10px] font-mono">
-            <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-teal-400">
-              {bp.fields.length} dynamic fields
-            </span>
-            {#if formulaCount > 0}
-              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">
-                {formulaCount} formulas
-              </span>
-            {/if}
-            {#if subSystemCount > 0}
-              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-cyan-400">
-                {subSystemCount} sub-systems
-              </span>
-            {/if}
-            {#if relationalLinkCount > 0}
-              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-purple-400">
-                {relationalLinkCount} 1st-class links
-              </span>
-            {/if}
-          </div>
-        </button>
-      {/each}
-
-      <!-- Create New Blueprint Card -->
-      <a
-        href="/world/schemas/create?blueprintClass=FIRST_CLASS"
-        target="_blank"
-        class="w-[240px] shrink-0 snap-start p-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 hover:border-teal-500 hover:bg-teal-950/10 transition flex flex-col justify-center items-center text-center space-y-2 text-zinc-400 hover:text-teal-300"
-      >
-        <div class="p-2 rounded-full bg-zinc-900 border border-zinc-800">
-          <Plus class="w-4 h-4 text-teal-400" />
+      <!-- Pagination Dots -->
+      {#if totalSlides > 1}
+        <div class="flex items-center justify-center gap-1.5 pt-3">
+          {#each Array(totalSlides) as _, idx}
+            <button
+              type="button"
+              onclick={() => scrollToSlide(idx)}
+              class={`h-1.5 rounded-full transition-all ${
+                activeSlideIndex === idx
+                  ? 'w-6 bg-teal-400'
+                  : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            ></button>
+          {/each}
         </div>
-        <div class="font-bold text-xs">Create 1st-Class Blueprint</div>
-        <p class="text-[10px] text-zinc-500 max-w-[180px]">
-          Define new fields, categories, formulas, and relational schemas.
-        </p>
-      </a>
+      {/if}
     </div>
 
     <!-- Identity & Lore Inputs -->
