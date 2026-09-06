@@ -214,9 +214,44 @@ const initialBlueprints: BlueprintDef[] = [
         name: "gender",
         label: "Gender Identity",
         fieldType: "ENUM",
-        options: ["Male", "Female", "Dual-Yin-Yang", "Genderless / Celestial"],
+        options: [
+          { label: "Male", value: "Male" },
+          { label: "Female", value: "Female" },
+          { label: "Dual Yin-Yang", value: "Dual-Yin-Yang" },
+          { label: "Celestial / Transcendent", value: "Celestial" },
+        ],
         defaultValue: "Male",
-        description: "Biological / spiritual gender category",
+        description: "Biological or spiritual gender identity",
+      },
+      {
+        id: "f-char-role",
+        name: "character_role",
+        label: "Narrative Archetype / Role",
+        fieldType: "ENUM",
+        options: [
+          { label: "Protagonist / Chosen One", value: "protagonist" },
+          { label: "Antagonist / Arch-Rival", value: "antagonist" },
+          { label: "Grandmaster / Mentor", value: "mentor" },
+          { label: "Deuteragonist / Companion", value: "companion" },
+          { label: "Sect Elder / Guardian", value: "elder" },
+        ],
+        defaultValue: "protagonist",
+        description: "Core story role and narrative function",
+      },
+      {
+        id: "f-char-affinity",
+        name: "elemental_affinity",
+        label: "Elemental Spiritual Root",
+        fieldType: "ENUM",
+        options: [
+          { label: "Heavenly Thunder Root", value: "thunder", power: 1500, numericValue: 1500 },
+          { label: "Pure Solar Fire Root", value: "fire", power: 1200, numericValue: 1200 },
+          { label: "Abyssal Frost Root", value: "frost", power: 1100, numericValue: 1100 },
+          { label: "Void Chaos Root", value: "void", power: 2500, numericValue: 2500 },
+          { label: "Mortal Five-Element Root", value: "five_elements", power: 300, numericValue: 300 },
+        ],
+        defaultValue: "thunder",
+        description: "Inherent spiritual cultivation element with power multiplier",
       },
       {
         id: "f-char-cultivation",
@@ -447,6 +482,8 @@ const initialEntities: EntityItem[] = [
       "Protagonist and grand disciple of the Silver Vanguard sword sect.",
     properties: {
       gender: "Male",
+      character_role: "protagonist",
+      elemental_affinity: "thunder",
       cultivation: {
         realm_name: "Core Formation",
         major_realm: 3,
@@ -476,6 +513,8 @@ const initialEntities: EntityItem[] = [
       "Astral Covenant sorceress with void distortion runes and dual-spirit bloodline.",
     properties: {
       gender: "Female",
+      character_role: "companion",
+      elemental_affinity: "void",
       cultivation: {
         realm_name: "Core Formation",
         major_realm: 3,
