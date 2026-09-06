@@ -60,17 +60,18 @@ flowchart TB
 - **HTTP Routing & Middleware:** Chi-based routing, JWT/session authentication, project tenancy scoping, rate limiting, and request correlation tracing.
 - **Universe & Blueprint Engine (`universe`):**
   - Manages **1st-Class Blueprints** (Entity Archetypes: Characters, Weapons, Sanctuaries, Factions) and **2nd-Class Blueprints** (Sub-Schemas & Gauges: Cultivation Ranks, Affection Scales, Power Matrices).
-  - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including pure categorical enums (`ENUM`), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), and relational `BLUEPRINT_REF` links.
-  - Executes AST mathematical formulas server-side during entity persistence and event mutation.
+  - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including pure categorical enums (`ENUM`), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), freeform arrays (`ARRAY`), blueprint references (`BLUEPRINT_REF`), and blueprint array references (`ARRAY_REF`).
+  - **Zero-Trust Validation & Sanitization:** Automatically forces lowercase machine keys (`strings.ToLower`), rejects duplicate field keys (`DUPLICATE_FIELD_KEY`), executes field type slate wipe (strips stale bounds/options/formulas), and normalizes entity property keys.
+  - **Server-Side AST Formula Engine (`formula_engine.go`):** Executes full recursive descent AST formula parsing and deterministic calculation server-side during entity persistence and event mutation. Never trusts client-sent formula values.
 - **Prose & Novel Engine (`novel`):** Managing scene markdown, word count telemetry, chapter hierarchies, entity mentions, and collaborative 60-second heartbeat scene locks (`scene_leases`).
 - **Timeline & State Fold Engine (`timeline`):** Pure deterministic event folding, point-in-time state reconstruction, and historical snapshot generation over ordered `EventEffect` sequences.
 - **Continuity & Rules Engine (`continuity`):** Invariant rule execution, predicate evaluation against folded state, relational link validation, and explainable violation traceback generation.
 - **AI Context Gateway (`ai`):** Assembling grounded prompts from canonical state and `pgvector` similarity, streaming model completions via SSE.
 
-### 2.2. TypeScript Data Service (`services/data/`)
+### 2.2. TypeScript Data Service (`services/data/` / `apps/data-service/`)
 
 - **Isolation Scope:** Encapsulates direct database queries, migrations, and Prisma ORM client operations.
-- **No Business Logic:** The data service does NOT perform continuity validation or narrative logic; it provides high-speed, type-safe persistence, JSONB attribute querying, and vector indexing.
+- **Domain Engine Parity:** Houses dual-engine TypeScript implementations of Schema Engine (`schemaEngine.ts`), Property Validator (`propertyValidator.ts`), State Fold Engine (`stateFoldEngine.ts`), Timeline Engine (`timelineEngine.ts`), and AST Formula Engine (`formulaEngine.ts`) maintaining 100% parity with the Go backend.
 - **Coarse-Grained Domain gRPC API:**
   - `GetProjectState(projectId, sequenceNumber)`
   - `CreateEventWithEffects(projectId, eventData, effects)`
@@ -148,6 +149,7 @@ flowchart TD
 ```
 
 ### 4.2. Relational Entity Graph Traversal & Reference Integrity
+
 - 1st-Class Blueprints can define fields of type `BLUEPRINT_REF` targeting other 1st-Class Blueprints (e.g. `cultivator.sect_id -> Ancient Faction & Sect`, `cultivator.equipped_weapon -> Sacred Weapon & Relic`).
 - The backend validates reference integrity during instantiation and mutation, preventing dangling entity references.
 - Circular references in formula dependencies are detected via cycle-detection algorithms before expression execution.

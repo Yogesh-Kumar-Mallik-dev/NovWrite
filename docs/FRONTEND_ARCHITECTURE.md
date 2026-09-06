@@ -1,6 +1,6 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.0 - Blueprint vs. Entity Paradigm, Dual-Valued Enums, Dynamic Formula Engine, Archetype Carousel & Dedicated Page Routes)  
+**Status:** Locked Baseline (Version 2.2 - Blueprint vs. Entity Paradigm, Zero-Trust Parity, ARRAY/ARRAY_REF, Dynamic Formula Engine, Archetype Carousel & Dedicated Page Routes)  
 **Web & Desktop Framework:** SvelteKit 2 with Svelte 5 (Runes Mode) & Tauri 2  
 **Mobile Framework:** React Native with Expo (SDK 52+, Expo Router)  
 **Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (`bits-ui` in `zinc` on Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
@@ -48,8 +48,8 @@ flowchart TB
 To ensure maximum focus, deep linking, and zero modal crowding, all primary domains are partitioned into dedicated, full-page routes:
 
 1. **Default List View (`/`)**: High-density table/grid of records with full search, category filtering, per-blueprint column pickers, and a prominent `[+ Create]` action button.
-2. **Dedicated Creation View (`/create`)**: Full-canvas form with Archetype Carousel for selecting 1st-Class Blueprints, dynamic field inputs, sub-blueprint forms, relational links, and real-time live formula preview.
-3. **Dedicated Update / Inspector View (`/[id]`)**: Deep-linkable detail workbench for editing properties, inspecting causal sequence numbers, previewing formula recalculations, and managing relational links.
+2. **Dedicated Creation View (`/create`)**: Full-canvas form with Archetype Carousel for selecting 1st-Class Blueprints, dynamic field inputs, sub-blueprint forms, relational links, and real-time live formula preview. Blueprints start completely clean from scratch with zero hardcoded dummy fields. Saving automatically redirects back to `/world/schemas` or `/world/entities`.
+3. **Dedicated Update / Inspector View (`/[id]`)**: Deep-linkable detail workbench for editing properties, inspecting causal sequence numbers, previewing formula recalculations, and managing relational links. Full dynamic field modification with automatic field type slate wipe.
 
 ### 1.3. Strict Anti-Pattern Prohibitions
 
@@ -116,7 +116,9 @@ classDiagram
         BOOLEAN
         ENUM
         VALUE_TYPE
+        ARRAY
         BLUEPRINT_REF
+        ARRAY_REF
         FORMULA
     }
 
@@ -169,15 +171,15 @@ NovWrite distinctly separates pure categorical choices from quantitative, weight
 
 ### 2.4. Dynamic Field Types Reference
 
-| Field Type | Form Widget / Input Control | Description & Configuration | Formula Interoperability |
-| :--- | :--- | :--- | :--- |
-| **`STRING`** | Text Input / Textarea | Freeform textual lore, origin story, bloodline notes | String matching & truthiness checks in `IF` |
-| **`NUMBER`** | Numeric Input + Stepper | Numeric values with `min`, `max`, `step`, and `unit` (e.g. `Points`, `Rank`, `Atk`, `Km`) | Direct arithmetic operand |
-| **`BOOLEAN`** | Toggle Switch | Binary flag (e.g. `awakened_dao_heart`, `is_bound`) | Boolean logic (`AND`, `OR`, `NOT`, `IF`) |
-| **`ENUM`** | Select / Pill Picker | Pure string categorical choices (e.g. `["Sword", "Saber"]`) | Categorical string equality in conditionals |
-| **`VALUE_TYPE`** | Select with Power Chips / Quick Select | Categorical options with numeric `power` ratings | Contributes `power` / numeric weight to formulas |
-| **`BLUEPRINT_REF`** | Entity Picker (1st-Class) / Sub-Form (2nd-Class) | Relational link to another entity or embedded sub-blueprint | Nested dot-notation variable traversal |
-| **`FORMULA`** | Read-Only Live Calculation Pill | Safe AST mathematical & logical expression | Output variable available to subsequent formulas |
+| Field Type          | Form Widget / Input Control                      | Description & Configuration                                                               | Formula Interoperability                         |
+| :------------------ | :----------------------------------------------- | :---------------------------------------------------------------------------------------- | :----------------------------------------------- |
+| **`STRING`**        | Text Input / Textarea                            | Freeform textual lore, origin story, bloodline notes                                      | String matching & truthiness checks in `IF`      |
+| **`NUMBER`**        | Numeric Input + Stepper                          | Numeric values with `min`, `max`, `step`, and `unit` (e.g. `Points`, `Rank`, `Atk`, `Km`) | Direct arithmetic operand                        |
+| **`BOOLEAN`**       | Toggle Switch                                    | Binary flag (e.g. `awakened_dao_heart`, `is_bound`)                                       | Boolean logic (`AND`, `OR`, `NOT`, `IF`)         |
+| **`ENUM`**          | Select / Pill Picker                             | Pure string categorical choices (e.g. `["Sword", "Saber"]`)                               | Categorical string equality in conditionals      |
+| **`VALUE_TYPE`**    | Select with Power Chips / Quick Select           | Categorical options with numeric `power` ratings                                          | Contributes `power` / numeric weight to formulas |
+| **`BLUEPRINT_REF`** | Entity Picker (1st-Class) / Sub-Form (2nd-Class) | Relational link to another entity or embedded sub-blueprint                               | Nested dot-notation variable traversal           |
+| **`FORMULA`**       | Read-Only Live Calculation Pill                  | Safe AST mathematical & logical expression                                                | Output variable available to subsequent formulas |
 
 ---
 
@@ -262,16 +264,16 @@ Every world building domain is implemented as a first-class, standalone workbenc
 
 All three frontends are **co-developed together** as unified client applications sharing common design tokens, TypeScript contracts, and API transport protocols:
 
-| Feature / Dimension           | Web Client                      | Desktop Client (Tauri 2)        | Mobile Client (React Native + Expo)           |
-| :---------------------------- | :------------------------------ | :------------------------------ | :-------------------------------------------- |
-| **Framework**                 | SvelteKit 2 (Svelte 5)          | Tauri 2 (SvelteKit 2)           | React Native (Expo SDK 52+)                   |
-| **Styling Engine**            | Tailwind CSS v4                 | Tailwind CSS v4                 | NativeWind v4 (Tailwind for RN)               |
-| **`shadcn` Component System** | `shadcn-svelte` (`zinc`)        | `shadcn-svelte` (`zinc`)        | **React Native Reusables** (`@rn-primitives`) |
-| **Routing Standard**          | SvelteKit File-Based Routes     | SvelteKit File-Based Routes     | Expo Router File-Based Routes                 |
-| **Icons Library**             | `@lucide/svelte`                | `@lucide/svelte`                | `lucide-react-native`                         |
-| **Formula Engine**            | `formulaEngine.ts`              | `formulaEngine.ts`              | Shared TypeScript package (`@novwrite/core`)  |
-| **Navigation Model**          | Header Breadcrumbs + Sub-Nav    | Native Window Menus + Sub-Nav   | Bottom Action Bar + Native Bottom Sheets      |
-| **Zero-Badge Policy**         | Enforced across all views       | Enforced across all views       | Enforced across all views                     |
+| Feature / Dimension           | Web Client                   | Desktop Client (Tauri 2)      | Mobile Client (React Native + Expo)           |
+| :---------------------------- | :--------------------------- | :---------------------------- | :-------------------------------------------- |
+| **Framework**                 | SvelteKit 2 (Svelte 5)       | Tauri 2 (SvelteKit 2)         | React Native (Expo SDK 52+)                   |
+| **Styling Engine**            | Tailwind CSS v4              | Tailwind CSS v4               | NativeWind v4 (Tailwind for RN)               |
+| **`shadcn` Component System** | `shadcn-svelte` (`zinc`)     | `shadcn-svelte` (`zinc`)      | **React Native Reusables** (`@rn-primitives`) |
+| **Routing Standard**          | SvelteKit File-Based Routes  | SvelteKit File-Based Routes   | Expo Router File-Based Routes                 |
+| **Icons Library**             | `@lucide/svelte`             | `@lucide/svelte`              | `lucide-react-native`                         |
+| **Formula Engine**            | `formulaEngine.ts`           | `formulaEngine.ts`            | Shared TypeScript package (`@novwrite/core`)  |
+| **Navigation Model**          | Header Breadcrumbs + Sub-Nav | Native Window Menus + Sub-Nav | Bottom Action Bar + Native Bottom Sheets      |
+| **Zero-Badge Policy**         | Enforced across all views    | Enforced across all views     | Enforced across all views                     |
 
 ---
 
@@ -283,7 +285,7 @@ State across all workspaces is managed via modular, reactive class instances uti
 // Block: BLOCK_WORLD_STORE_RUNE_003
 // Description: Reactive state store for 1st/2nd class blueprints, dynamic fields, dual-valued enums, formulas, and entities.
 
-import { evaluateFormula } from '../engine/formulaEngine.ts';
+import { evaluateFormula } from "../engine/formulaEngine.ts";
 
 export class WorldStateStore {
   blueprints = $state<BlueprintDef[]>([...initialBlueprints]);
@@ -294,14 +296,17 @@ export class WorldStateStore {
   }
 
   getFirstClassBlueprints(): BlueprintDef[] {
-    return this.blueprints.filter((b) => b.blueprintClass === 'FIRST_CLASS');
+    return this.blueprints.filter((b) => b.blueprintClass === "FIRST_CLASS");
   }
 
   getSecondClassBlueprints(): BlueprintDef[] {
-    return this.blueprints.filter((b) => b.blueprintClass === 'SECOND_CLASS');
+    return this.blueprints.filter((b) => b.blueprintClass === "SECOND_CLASS");
   }
 
-  evaluateEntityFormulas(entity: EntityItem, bp?: BlueprintDef): Record<string, number> {
+  evaluateEntityFormulas(
+    entity: EntityItem,
+    bp?: BlueprintDef,
+  ): Record<string, number> {
     const blueprint = bp || this.getBlueprint(entity.blueprintId);
     if (!blueprint) return {};
 
@@ -310,17 +315,25 @@ export class WorldStateStore {
 
     // Inject enum power ratings into formula context
     for (const field of blueprint.fields) {
-      if (field.fieldType === 'ENUM' && field.options) {
+      if (field.fieldType === "ENUM" && field.options) {
         const val = entity.properties[field.name];
-        const matched = field.options.find((o) => (typeof o === 'string' ? o === val : o.value === val || o.label === val));
-        if (matched && typeof matched === 'object' && matched.power !== undefined) {
+        const matched = field.options.find((o) =>
+          typeof o === "string"
+            ? o === val
+            : o.value === val || o.label === val,
+        );
+        if (
+          matched &&
+          typeof matched === "object" &&
+          matched.power !== undefined
+        ) {
           context[`${field.name}_power`] = matched.power;
         }
       }
     }
 
     for (const field of blueprint.fields) {
-      if (field.fieldType === 'FORMULA' && field.formulaExpression) {
+      if (field.fieldType === "FORMULA" && field.formulaExpression) {
         const evalRes = evaluateFormula(field.formulaExpression, context);
         if (evalRes.success && evalRes.value !== undefined) {
           computed[field.name] = evalRes.value;
@@ -340,7 +353,9 @@ export const worldStore = new WorldStateStore();
 ## 7. Color-Coded CodeMirror 6 JSON Workbench Architecture
 
 ### 7.1. Motivation & Technical Stack
+
 While visual form controls offer intuitive editing for structured entity properties, complex universe design frequently requires direct JSON payload manipulation, bulk property editing, and debugging. NovWrite embeds a first-class CodeMirror 6 JSON editor ([`JsonEditor.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/json-editor/json-editor.svelte)) with:
+
 - **Modular CodeMirror 6 Packages**: `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-json`, `@lezer/highlight`.
 - **Custom Token Palette**:
   - **Property Keys**: Cyan (`#38bdf8`, `fontWeight: '600'`)
@@ -358,13 +373,17 @@ While visual form controls offer intuitive editing for structured entity propert
 ## 8. Error Handling & Full-Screen Isolation Architecture (404 & 500)
 
 ### 8.1. SvelteKit Global Error Handling Standard
+
 NovWrite integrates a centralized SvelteKit error handler ([`+error.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/+error.svelte)) that routes dynamic status codes to universe-themed error screens:
+
 - **Status 404 (Timeline Paradox)**: Rendered when a route, entity, or chapter coordinates cannot be found in the canon index.
 - **Status 500 / 5xx (Continuity Invariant Collapse)**: Rendered when an unexpected exception or invariant conflict interrupts deterministic state folding.
 - **Standalone Route Parity**: Direct access to `/404` and `/500` routes is supported for design verification and diagnostics.
 
 ### 8.2. Full-Screen Chrome Isolation
+
 On error pages, all extraneous application chrome (the top development header, main navigation bar, studio switcher, and project indicator) is strictly removed from the layout. The user is presented with a distraction-free, focused recovery canvas featuring:
+
 - Large thematic hero number (`404` / `500`) with ambient glow halos.
 - Clear, readable causal fault explanations.
 - Structured primary actions (**Return to Home Hub**, **Go Back**, **Recalibrate Timeline**, **Continuity Audit**).
@@ -375,6 +394,7 @@ On error pages, all extraneous application chrome (the top development header, m
 ## 9. Theme Switcher Sliding Toggle Architecture
 
 The application theme toggle ([`theme-toggle.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/theme-toggle.svelte)) implements a sliding switch design:
+
 - **Interactive Thumb**: Smooth animated sliding pill (`transition-transform duration-200 ease-in-out`) transitioning across the track.
 - **Single Inactive Icon Display**: Only the non-active target mode icon is visible on the exposed track (the Sun icon is visible when in Dark mode; the Moon icon is visible when in Light mode).
 - **Accessibility**: Full keyboard navigation support (`Enter` / `Space`), ARIA `role="switch"` and `aria-checked` bindings.
@@ -384,8 +404,9 @@ The application theme toggle ([`theme-toggle.svelte`](file:///home/yogesh/Projec
 ## 10. Svelte 5 Pure Derivation & Synchronous Lifecycle Standard
 
 ### 10.1. Pure Derived Getters Rule
+
 In Svelte 5, derived values (`$derived`) must be strictly pure functions. Calling getters or methods that mutate state (e.g. assigning to `$state` variables or cached formulas) inside a `$derived` derivation causes runtime aborts during client-side navigation. All store getters (e.g. `worldStore.getEntity`, `worldStore.getBlueprint`) must be side-effect free.
 
 ### 10.2. Synchronous Initial Form State
-To eliminate flickering, empty input states, and race conditions during SSR and client page navigation, edit pages (`/world/entities/[id]`, `/world/schemas/[id]`) compute their initial form state synchronously via `getInitialEntityState()` before mounting rather than relying on delayed asynchronous effects.
 
+To eliminate flickering, empty input states, and race conditions during SSR and client page navigation, edit pages (`/world/entities/[id]`, `/world/schemas/[id]`) compute their initial form state synchronously via `getInitialEntityState()` before mounting rather than relying on delayed asynchronous effects.

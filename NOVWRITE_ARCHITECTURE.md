@@ -1,6 +1,6 @@
 # NovWrite Platform Architecture
 
-**Status:** Technical Specification Baseline (Version 2.1 - First & Second Class Blueprints, Mathematical Formula Engine, CodeMirror JSON Workbench & Isolated Error Canvases)  
+**Status:** Technical Specification Baseline (Version 2.2 - Zero-Trust Validation Parity, Deterministic AST Formulas, Array Fields & Graceful Lifecycle Scripts)  
 **Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, and deployment.
 
 ---
@@ -15,13 +15,14 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 2. **Explicit State Over Implicit Assumptions:** Character attributes, locations, items, affiliations, and relationships are stored as structured state.
 3. **Events as State Transitions:** World mutations occur exclusively through recorded events (e.g. `Battle of Xian`, `Artifact Transfer`, `Breakthrough`).
 4. **Blueprint (Class) vs. Entity (Object) Paradigm:** Clear separation between structural blueprints/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas) and concrete instantiated universe objects.
-5. **Pure Categorical ENUM, Weighted VALUE_TYPE & AST Mathematical Formulas:** Pure string categorical choices (`ENUM`) alongside dual-valued weighted options (`VALUE_TYPE`: `{ label, value, power }`) feed directly into safe AST formula parsers for live combat power and stat calculations.
-6. **CodeMirror 6 JSON Workbench & Bi-Directional State:** First-class color-coded JSON editing with automatic word-wrapping, syntax diagnostics, and bi-directional reactive synchronization with visual form fields.
-7. **Full-Screen Isolated Error Canvases:** Centralized SvelteKit error architecture (`+error.svelte`) routing 404 and 500 exceptions to dedicated, chrome-free canvases with word-wrapped JSON diagnostic traces.
-8. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
-9. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
-10. **Dedicated Page-Based Routing & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`) with clean modern visual design without badge clutter, featuring Archetype Carousels and customizable columns.
-
+5. **Categorical ENUM, Weighted VALUE_TYPE, ARRAY & ARRAY_REF:** Pure string categorical choices (`ENUM`), dual-valued weighted options (`VALUE_TYPE`), freeform string lists (`ARRAY`), and entity references (`ARRAY_REF`) feed directly into safe AST formula parsers for live calculations.
+6. **Zero-Trust Backend Validation Parity:** Backend never trusts frontend formatting; forces lowercase machine keys (`.toLowerCase()`, `strings.ToLower`), rejects duplicate keys, executes field type slate wipe, and normalizes entity property keys.
+7. **Deterministic Server-Side AST Formula Engine:** Safe AST expression evaluators (`formula_engine.go` & `formulaEngine.ts`) compute all formula fields deterministically on the backend during entity mutation.
+8. **CodeMirror 6 JSON Workbench & Bi-Directional State:** First-class color-coded JSON editing with automatic word-wrapping, syntax diagnostics, and bi-directional reactive synchronization with visual form fields.
+9. **Full-Screen Isolated Error Canvases:** Centralized SvelteKit error architecture (`+error.svelte`) routing 404 and 500 exceptions to dedicated, chrome-free canvases with word-wrapped JSON diagnostic traces.
+10. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
+11. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
+12. **Dedicated Page-Based Routing, Zero-Badge Policy & Bits UI Selects:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`), clean slate dynamic field initialization, 100% Bits UI Select dropdown usage, and automatic post-save redirection.
 
 ---
 

@@ -68,12 +68,20 @@ NovWrite cleanly separates world-building archetypes from concrete instantiated 
 - **2nd-Class Blueprints (`SECOND_CLASS` - Sub-Schemas & Continuous Scales):**
   - Reusable nested schemas and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`, `Soul Profile`).
   - Embedded inside 1st-Class blueprints or other 2nd-Class blueprints; cannot instantiate standalone entities.
-- **Categorical Enums (`ENUM`) & Weighted Value Types (`VALUE_TYPE`):**
+- **Categorical Enums (`ENUM`), Weighted Value Types (`VALUE_TYPE`) & Arrays (`ARRAY`, `ARRAY_REF`):**
   - `ENUM`: Pure string categorical constants (`["Sword", "Saber", "Spear"]`) for narrative taxonomy without numeric power.
   - `VALUE_TYPE`: Dual-valued options (`[{ label: "Divine", value: "divine", power: 1000 }]`) bridging qualitative categorization with quantitative power weights for formulas.
-- **Sandboxed Mathematical & Logical Formula Engine (`formulaEngine.ts`):**
-  - Safe AST expression parser evaluating arithmetic, nested dot-notation variables (`cultivation.major_realm`), logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
-  - Re-evaluates formulas reactively in real-time as attributes change.
+  - `ARRAY`: Freeform string/item lists (e.g. titles, martial arts techniques, epithets).
+  - `ARRAY_REF`: Array of entity references pointing to target blueprints (e.g. equipped artifacts, mastered spells).
+- **Zero-Trust Backend Validation Parity & Lowercase Machine Keys:**
+  - Strict lowercasing (`.toLowerCase()` / `strings.ToLower`) and sanitization (`[^a-z0-9_\.]`) for all field machine keys.
+  - Schema-level rejection of duplicate field machine keys within a single blueprint (`DUPLICATE_FIELD_KEY`).
+  - Field Type Slate Wipe: Modifying a field type sanitizes and wipes irrelevant type-specific configuration (number bounds on strings/enums/arrays, options on numbers/formulas, formula expressions on booleans/enums).
+  - Case-insensitive / normalized lowercase entity property lookup and validation.
+- **Dual Server-Side Mathematical & Logical Formula Engine (`formula_engine.go` & `formulaEngine.ts`):**
+  - Safe recursive descent AST expression parser evaluating arithmetic, nested dot-notation variables (`cultivation.major_realm`), logical conditionals (`IF`, `&&`, `||`, `==`, `!=`, `<`, `>`, `<=`, `>=`), and math functions (`CLAMP`, `MIN`, `MAX`, `ROUND`, `FLOOR`, `CEIL`, `ABS`, `SQRT`, `POW`, `MOD`).
+  - Server-side deterministic recomputation of all formula fields during entity creation and mutation without trusting client numbers.
+  - Circular dependency prevention (formulas cannot reference their own output variable).
 
 ### 2.4 Timeline & Event State Engine (`timeline`)
 
@@ -105,13 +113,13 @@ NovWrite cleanly separates world-building archetypes from concrete instantiated 
 
 Every major domain is partitioned into a dedicated 3-tier route structure:
 
-| Workbench Route | Purpose | Key Capabilities |
-| :--- | :--- | :--- |
-| `/world/entities` | Entities Catalog & Inspector | List (`/`) with per-blueprint customizable columns, Create (`/create`) with Archetype Carousel & live formulas, Update/Detail (`/[id]`) |
-| `/world/schemas` | Blueprints & Schemas Architect | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for 1st-Class Archetypes & 2nd-Class Sub-Schemas (Progression Ladders, Affection Gauges, Formulas) |
-| `/world/timeline` | Causal Timeline | Narrative vs Chronological sequence visualization and atomic mutation logs |
-| `/world/rules` | Rules & Invariants | Predicate builder and violation severity configurations |
-| `/world/audit` | Continuity Health | Universe violation tracker and one-click canon reconciler |
+| Workbench Route   | Purpose                        | Key Capabilities                                                                                                                                           |
+| :---------------- | :----------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/world/entities` | Entities Catalog & Inspector   | List (`/`) with per-blueprint customizable columns, Create (`/create`) with Archetype Carousel & live formulas, Update/Detail (`/[id]`)                    |
+| `/world/schemas`  | Blueprints & Schemas Architect | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for 1st-Class Archetypes & 2nd-Class Sub-Schemas (Progression Ladders, Affection Gauges, Formulas) |
+| `/world/timeline` | Causal Timeline                | Narrative vs Chronological sequence visualization and atomic mutation logs                                                                                 |
+| `/world/rules`    | Rules & Invariants             | Predicate builder and violation severity configurations                                                                                                    |
+| `/world/audit`    | Continuity Health              | Universe violation tracker and one-click canon reconciler                                                                                                  |
 
 - **Zero-Badge Policy:** Strict prohibition of badges/pill tags across all views. Replaced with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
 - **Archetype Carousel:** Horizontal scroll deck on `/world/entities/create` with always-visible side navigation buttons (disabled, hover, active states), single-card stepping, no cutoffs, and hidden scrollbars.

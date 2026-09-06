@@ -62,17 +62,28 @@ This document records the design preferences, framework choices, and UI/UX conve
 
 ## 3. Blueprint Creation, Formulas & Dynamic Properties UX
 
-### 3.1. Complete Freedom in Blueprint Creation
-- Users have total freedom to construct custom blueprints from scratch with arbitrary categories, freeform domain tags, and multi-typed fields.
+### 3.1. Complete Freedom in Blueprint Creation & Clean Slate Architecture
+
+- **Clean Slate Guarantee**: Creating a blueprint starts completely from scratch with a blank dynamic fields array—never preload dummy or arbitrary fields (e.g. `gender`).
+- **Strict Lowercase Machine Keys**: Field machine keys (`name`) must strictly be lowercased (`.toLowerCase()`) and sanitized (`[^a-z0-9_\.]`).
+- **Full Dynamic Field Editing & Slate Wipe**:
+  - Authors can freely edit field types, names, labels, and bounds at any time.
+  - Changing a field's type automatically wipes irrelevant type-specific configuration (e.g., number bounds or formulas on strings/enums; options on numbers/formulas) ensuring clean state.
+- **Post-Save Route Redirection**:
+  - After creating or saving edits on a blueprint or entity, always seamlessly navigate the user back to the primary domain table (`/world/schemas` for blueprints; `/world/entities` for entities).
 - **First-Class vs. Second-Class Blueprint Hierarchy**:
   - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible entities in the timeline (e.g. `Cultivator / Protagonist`, `Sacred Weapon & Relic`, `Sanctuary & Realm`, `Sect & Faction`).
   - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) referenced inside 1st-Class blueprints.
 
-### 3.2. Dynamic Enum Categories
-- When building `ENUM` fields, users can define and manage dynamic option tags (e.g. `gender` with custom categories `["Male", "Female", "Dual-Yin-Yang", "Celestial"]`).
-- In entity forms, these options dynamically populate accessible `Select` dropdown components.
+### 3.2. Dynamic Enum Categories & Array Types
+
+- When building `ENUM` fields, users can define and manage dynamic option tags (e.g. `elemental_affinities` with `["Fire", "Water", "Lightning", "Wind"]`).
+- When building `ARRAY` fields, users can store freeform string/item lists (e.g., titles, martial arts techniques).
+- When building `ARRAY_REF` fields, users can multi-select referenced entities of a target blueprint.
+- In entity forms, options dynamically populate accessible `Select` dropdown components.
 
 ### 3.3. Mathematical & Logical Formula Editor UX
+
 - Blueprints support computed `FORMULA` fields evaluated by a safe, sandboxed AST expression engine ([`formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/engine/formulaEngine.ts)).
 - **Formula Editor Toolbar**:
   - Quick-insert variable chips for all sibling and dot-notation fields (e.g., `cultivation.major_realm`, `attack`, `special_Physique`).
@@ -87,11 +98,13 @@ This document records the design preferences, framework choices, and UI/UX conve
 ## 4. Visual Styling Standards & Zero-Badge Policy
 
 ### 4.1. Strict Prohibition of Excessive Gradients & Visual Noise
+
 - **Solid, Grounded Surfaces Over Gradients**: NovWrite is an authoring and lorekeeping IDE/workbench, **not a marketing landing page**.
 - **Rule**: Avoid multi-color rainbow gradients, glossy glassmorphism, animated glow borders, and heavy drop shadows.
 - **Permitted Usage**: Solid background colors (`zinc-900`, `zinc-950`, `slate-900`), crisp 1px borders (`border-zinc-800` / `border-slate-200`), and subtle monochromatic depth accents.
 
 ### 4.2. Complete Prohibition of Badges (Zero-Badge Policy)
+
 - **Zero Badges Across the UI**: Badges, colored pill tags, and badge-adjacent chips are **strictly prohibited** across all application views.
 - **Modern UI Replacements**:
   - **Status & Identity**: Use semantic **Icons with subtle typography** (e.g. green circle dot for clean state, red alert for violation, pink heart for affection bonds, amber calculator for formulas).
@@ -100,10 +113,12 @@ This document records the design preferences, framework choices, and UI/UX conve
   - **Typography & Tags**: Use clean, low-contrast monospace typography (`font-mono text-xs text-zinc-400`) and simple text labels without bordered chip backgrounds.
 
 ### 4.3. Communication Layer Separation from Frontend UI
+
 - **Communication Layer Is Internal**: The `@novwrite/bridge` RPC/SSE transport and internal diagnostic message hubs are backend communication machinery and **MUST NOT be exposed as primary UI navigation items** in the main user-facing frontend.
 - **User-Facing Focus**: The frontend must focus exclusively on the core creative authoring workflows (**Prose Studio** and **World Studio**). Internal communication debugging belongs strictly in dev CLI tooling or isolated hidden debug routes (`/dev/communication-hub`).
 
 ### 4.4. Dropdown Standard: Mandatory `Select` from `shadcn-svelte`
+
 - **Rule**: For all dropdown menus, category selectors, enum choosers, and option pickers, **ALWAYS use the official `Select` component from `shadcn-svelte`** (`$lib/components/ui/select`) or `React Native Reusables` on mobile.
 - **Prohibitions**:
   - NEVER use native unstyled `<select>` elements.
@@ -111,6 +126,7 @@ This document records the design preferences, framework choices, and UI/UX conve
   - Use `Select` (with `Select.Root`, `Select.Trigger`, `Select.Value`, `Select.Content`, `Select.Item`) to guarantee keyboard navigation, ARIA accessibility, focus ring styling, and theme consistency.
 
 ### 4.5. JSON Editor Standard: CodeMirror 6 with Syntax Highlighting & Word Wrapping
+
 - **Rule**: For all raw JSON editing and diagnostics inspection, embed the official CodeMirror 6 component (`$lib/components/ui/json-editor/json-editor.svelte`).
 - **Features Required**:
   - Word wrapping (`EditorView.lineWrapping`) enabled by default so text does not clip or cause horizontal overflow.
@@ -118,10 +134,12 @@ This document records the design preferences, framework choices, and UI/UX conve
   - Dynamic light/dark theme synchronization via `themeStore.mode`.
 
 ### 4.6. Theme Switcher Standard: Sliding Toggle with Single Inactive Icon
+
 - **Rule**: Theme toggle must be a sliding switch with an animated thumb.
 - **Icon Convention**: Only display the inactive target icon on the exposed slot of the track (Sun icon when in Dark mode; Moon icon when in Light mode).
 
 ### 4.7. Error Screens Standard: Full-Screen Isolated Canvases with Generous Whitespace
+
 - **Rule**: 404 and 500 error pages must be completely isolated full-screen views.
 - **Chrome Removal**: Remove all top development bars, main navigation bars, and studio switchers on error pages.
 - **Spacing**: Ample vertical breathing room (`space-y-10 md:space-y-12`, `py-16 md:py-24`) between badge, hero number, description, buttons, and diagnostic inspector.
@@ -139,4 +157,3 @@ All AI coding agents must proactively audit against this checklist before submit
 5. **Did you test live formula reactivity?** $\to$ Ensure dynamic formulas re-evaluate seamlessly on state modifications.
 6. **Did you ensure getters called in `$derived` are side-effect free?** $\to$ Never mutate `$state` inside derivations.
 7. **Did you verify error screens have chrome stripped and word wrapping enabled?** $\to$ Check full isolation on 404/500 routes.
-

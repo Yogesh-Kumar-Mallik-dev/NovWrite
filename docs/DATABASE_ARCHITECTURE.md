@@ -1,8 +1,8 @@
 # Database Architecture Specification
 
-**Status:** Locked Baseline (Version 2.0 - First & Second Class Blueprints, Relational Entity Graph, Formula Evaluation & State Sourcing)  
+**Status:** Locked Baseline (Version 2.2 - First & Second Class Blueprints, Relational Entity Graph, ARRAY/ARRAY_REF, Formula Evaluation & State Sourcing)  
 **Engine:** PostgreSQL 18 with `pgvector` extension  
-**ORM / Data Access:** TypeScript Data Service (`services/data/`) using Prisma ORM & Coarse-Grained gRPC
+**ORM / Data Access:** TypeScript Data Service (`services/data/` / `apps/data-service/`) using Prisma ORM & Coarse-Grained gRPC
 
 ---
 
@@ -208,7 +208,7 @@ CREATE TABLE blueprint_fields (
     name VARCHAR(100) NOT NULL,
     key VARCHAR(100) NOT NULL,
     label VARCHAR(150) NOT NULL,
-    field_type VARCHAR(50) NOT NULL, -- STRING, NUMBER, BOOLEAN, ENUM, VALUE_TYPE, BLUEPRINT_REF, FORMULA
+    field_type VARCHAR(50) NOT NULL, -- STRING, NUMBER, BOOLEAN, ENUM, VALUE_TYPE, ARRAY, BLUEPRINT_REF, ARRAY_REF, FORMULA
     options JSONB NOT NULL DEFAULT '[]'::jsonb, -- e.g. ["Sword", "Saber"] for ENUM, or [{"label": "Divine", "value": "divine", "power": 1000}] for VALUE_TYPE
     target_blueprint_id UUID REFERENCES blueprints(id) ON DELETE SET NULL,
     min_val DOUBLE PRECISION,

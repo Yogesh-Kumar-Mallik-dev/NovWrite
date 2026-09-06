@@ -1,24 +1,26 @@
 # Current Context
 
-- **Active Branch:** `world` (World Studio, Dynamic Schemas, Timeline, AST Formulas & Isolated Error Architecture).
-- **Execution Constraints:** **Strictly DO NOT push changes to remote git without explicit user permission.** Local signed commits (`git commit -S`) are standard.
-- **Architectural Baseline:** **Version 2.0 (Blueprint vs. Entity Paradigm, Pure ENUM vs. Weighted VALUE_TYPE, Dynamic AST Formula Engine, CodeMirror 6 JSON Workbench, Isolated 404/500 Error Canvases, Sliding Theme Switch & Tri-Platform Standards)**.
+- **Active Branch:** `world` (and mirrored to `main`).
+- **Execution Constraints:** **Local signed commits (`git commit -S`) are standard.**
+- **Architectural Baseline:** **Version 2.2 (Zero-Trust Backend Validation Parity, Deterministic Server-Side AST Formula Engine, Dynamic Field Type Slate Wipe, Array/Array-Ref Field Types, Universal Bits UI Selects & Graceful Monorepo Scripts)**.
 - **Recent Accomplishments:**
-  - **Full Codebase Architecture Migration & Infrastructure Solidification**:
-    - **Database Schema (`apps/data-service/prisma/schema.prisma`)**: Native `Blueprint` (with `FIRST_CLASS`, `SECOND_CLASS`), `BlueprintField` (with `BlueprintFieldType` containing `STRING, NUMBER, BOOLEAN, ENUM, VALUE_TYPE, BLUEPRINT_REF, FORMULA`, options JSONB, `targetBlueprintId`, bounds, and `formulaExpression`), `Entity` (with `properties` and `computedFormulas` JSONB), `EntityRelationship`, and `UserBlueprintColumnPreference`.
-    - **Bridge Layer (`packages/bridge`)**: Contracts and Zod type schemas for `BlueprintClass`, `BlueprintFieldType`, `EnumOption`, `ValueTypeOption`, `DynamicFieldDef`, `BlueprintDef`, `EntityItem`, and `EntityRelationshipItem`. All unit tests passing (4/4).
-    - **Data Service Engine (`apps/data-service/src/*`)**: `DynamicSchemaEngine`, `propertyValidator`, `effectApplier`, `stateFoldEngine`, and `devSeeder`. All unit tests passing (26/26).
-    - **Go Backend (`apps/api/internal/*`)**: Schema validators for `BlueprintDef`, `DynamicFieldDef`, `TypeValueType`, `ValueTypeOption`, and `ValidateEntityAttributes`. All Go tests passing (`go test ./...`).
-    - **Web Application & UI Routes (`apps/web/src/routes/*`)**:
-      - **CodeMirror 6 JSON Workbench (`JsonEditor.svelte`)**: Embedded color-coded editor with Cyan keys, Emerald strings, Orange numbers, Rose booleans, Purple null, Slate brackets, bidirectional form synchronization, and automatic word-wrapping (`EditorView.lineWrapping`).
-      - **Isolated 404 & 500 Error Architecture**: Centralized SvelteKit handler ([`+error.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/+error.svelte)) and dedicated preview routes ([`/404`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/404/+page.svelte), [`/500`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/500/+page.svelte)) featuring completely stripped application chrome, generous vertical breathing room, ambient lore themes, and word-wrapped syntax-highlighted JSON diagnostics.
-      - **Sliding-Switch Theme Toggle (`theme-toggle.svelte`)**: Animated thumb switch displaying only the non-active target icon (Sun when dark, Moon when light).
-      - **Svelte 5 Lifecycle & Pure Derivations**: Removed side-effects from `$derived` getters in `worldStore` and implemented synchronous form initialization.
+  - **Zero-Trust Backend Validation Parity**:
+    - **Go API Backend (`apps/api/internal/world/*`)**: Implemented recursive descent AST formula parser and evaluator (`formula_engine.go`), and schema/entity sanitizer (`schema_validator.go`) enforcing lowercase machine keys (`strings.ToLower`), rejecting duplicate blueprint keys (`DUPLICATE_FIELD_KEY`), dynamic field type slate wipe, and deterministic server-side formula recomputations. All unit tests passing (`schema_validator_test.go`, `formula_engine_test.go`).
+    - **TypeScript Data Service (`apps/data-service/src/world/*`)**: Implemented TypeScript AST formula engine (`formulaEngine.ts`) and validation sanitizers (`propertyValidator.ts`, `schemaEngine.ts`). All 34 unit tests passing (`validationParity.test.ts`, `schemaEngine.test.ts`, etc.).
+    - **Bridge Layer (`packages/bridge/src/*`)**: Zod contracts (`contracts.ts`) preprocess and sanitize field machine keys to lowercase and reject duplicate field keys in `BlueprintDefSchema`. All 6 unit tests passing (`bridge.test.ts`).
+  - **Field Type Expansion & Dynamic Field Editing**:
+    - Added `ARRAY` (freeform item arrays) and `ARRAY_REF` (target blueprint reference arrays) across Prisma schema, Go backend, Data Service, Bridge, and Web UI.
+    - Full dynamic field editing with automatic type-specific slate wipe (wipes irrelevant bounds, options, or formulas when field type changes).
+  - **Clean Slate Architecture & UI Polish**:
+    - Dynamic fields start completely from scratch without hardcoded dummy fields (e.g. `gender`).
+    - Standardized 100% of dropdowns onto `shadcn-svelte` / `Bits UI` `Select` component.
+    - Added automatic route redirect back to `/world/schemas` or `/world/entities` upon successful save/edit.
+    - Added database reset script `./flush_db.sh`.
+  - **Graceful Monorepo Lifecycle Scripts**:
+    - Created robust `./dev.sh`, `./build.sh`, `./check.sh`, and `./test.sh` scripts with health check polling, process management, and graceful shutdown handling (SIGINT/SIGTERM with port freeing).
   - **Verification Completed**:
-    - `pnpm --recursive run build`: 100% build success across all workspace packages (`@novwrite/bridge`, `@novwrite/data-service`, `@novwrite/web`).
-    - `pnpm --recursive run test`: All test suites passing.
-    - `cd apps/api && go test ./...`: All Go unit test suites passing with 0 errors.
-    - `pnpm --filter @novwrite/web check`: `svelte-check` reported 0 errors and 0 warnings.
+    - `./check.sh`: Monorepo typecheck passed cleanly with 0 errors across all packages.
+    - `./test.sh`: 100% passing across `@novwrite/bridge` (6/6), `@novwrite/data-service` (34/34), Go API backend (all unit tests), and `@novwrite/web` (0 svelte-check diagnostics).
+    - Git commits signed with GPG and synced across `world` and `main` branches.
 - **Next Steps:**
-  - Request user confirmation before pushing to remote `origin/world` or deploying to staging.
-
+  - Proceed with planned Prose Studio (Novel Domain) phases or additional World Studio features.

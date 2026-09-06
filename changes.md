@@ -57,11 +57,51 @@ timeline
                : Full-Screen Isolated 404 & 500 Canvases with SvelteKit +error.svelte
                : Sliding Theme Toggle with Single Inactive Target Icon
                : Svelte 5 Pure Derivation & Synchronous Lifecycle Standard
+    2026-09-07 : Version 2.2 (Zero-Trust Backend Validation Parity & Clean Slate Architecture)
+               : Strict Lowercase Machine Keys & Duplicate Field Key Rejection
+               : Field Type Slate Wipe & Server-Side Deterministic AST Formula Engine
+               : Array & Array Reference Field Types (ARRAY, ARRAY_REF)
+               : 100% Bits UI Select Dropdowns & Post-Save Route Redirections
+               : Graceful Monorepo Lifecycle Scripts (dev.sh, build.sh, check.sh, test.sh, flush_db.sh)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.2] — 2026-09-07
+
+**Scope:** Zero-Trust Backend Validation Parity, Deterministic Server-Side AST Formula Engine, Dynamic Field Type Slate Wipe, Array/Array-Ref Field Types, Universal Bits UI Selects & Graceful Monorepo Scripts  
+**Target Documents:** [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md), [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/MVP_PHASED_PLAN.md`](file:///home/yogesh/Projects/NovWrite/docs/MVP_PHASED_PLAN.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md)
+
+#### Added
+
+- **Zero-Trust Backend Validation Parity & Key Sanitization (`schema_validator.go`, `propertyValidator.ts`, `contracts.ts`):**
+  - **Strict Lowercase Field Machine Keys:** Automatically converts and sanitizes all field machine keys (`name`) to lowercase (`.toLowerCase()`, `strings.ToLower`) and strips non-conforming characters (`[^a-z0-9_\.]`).
+  - **Duplicate Field Key Rejection:** Blueprints strictly reject duplicate field machine keys within a single blueprint schema (`DUPLICATE_FIELD_KEY`).
+  - **Field Type Slate Wipe:** When a field's type is modified, the backend and frontend dynamically wipe irrelevant type configuration (e.g. number bounds on strings/enums/arrays, options on numbers/formulas, formula expressions on booleans/enums).
+  - **Case-Insensitive Property Normalization:** Entity payloads with mixed or uppercase keys (e.g. `Base_Attack`, `MULTIPLIER`) are normalized to lowercase before matching against dynamic schema definitions.
+- **Dual Server-Side AST Formula Engines (`formula_engine.go` & `formulaEngine.ts`):**
+  - Full recursive descent AST tokenizer, parser, and evaluator implemented in both Go API (`apps/api`) and TypeScript Data Service (`apps/data-service`).
+  - Evaluates arithmetic operations, logical conditionals (`IF`, `&&`, `||`, `==`, `!=`, `<`, `>`, `<=`, `>=`), and math functions (`CLAMP`, `MIN`, `MAX`, `ROUND`, `FLOOR`, `CEIL`, `ABS`, `SQRT`, `POW`, `MOD`).
+  - Dot-notation variable resolution (e.g. `stats.strength`, `cultivation.rank`) with case-insensitive matching.
+  - Server-side deterministic recomputation of all formula fields during entity creation and mutation without trusting client numbers.
+  - Circular dependency prevention (formulas cannot reference their own output variable).
+- **Array (`ARRAY`) & Array Reference (`ARRAY_REF`) Field Types:**
+  - `ARRAY`: Freeform array of strings or items (e.g., titles, martial arts techniques, epithets). Supports comma-separated string coercion and JSON array payloads.
+  - `ARRAY_REF`: Array of entity references pointing to a target blueprint. Supports array of UUIDs and objects with ID properties.
+  - Full parity across Prisma schema, Go backend, Data Service, Bridge Zod contracts, and Svelte UI.
+- **Clean Slate Architecture & UI Polish:**
+  - Dynamic fields in blueprint creation start completely clean from scratch without hardcoded dummy fields (e.g. `gender`).
+  - Standardized `shadcn-svelte` / `Bits UI` `Select` component across 100% of application dropdowns.
+  - Smooth navigation redirect back to `/world/schemas` or `/world/entities` upon successful save or update.
+  - Complete database reset utility script (`./flush_db.sh`) for clean testing.
+- **Graceful Monorepo Orchestration Scripts:**
+  - `./dev.sh`: Graceful startup with health checks (PostgreSQL, Redis, Go backend, Data Service, Web UI), PID tracking, and graceful shutdown on `SIGINT`/`SIGTERM` with port freeing.
+  - `./build.sh`: Graceful build script compiling all monorepo packages, Go binaries, and web client.
+  - `./check.sh` & `./test.sh`: Automated monorepo typecheck and comprehensive test runner.
+
+---
 
 ### [Version 2.1] — 2026-09-06
 

@@ -22,13 +22,15 @@ The central design principle: **The author's world state—not an AI model's mem
 - **First-Class & Second-Class Blueprint System**: Complete freedom to create universes from scratch.
   - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible universe actors in the timeline (Characters, Sacred Relics, Realms, Factions, Sects) with full causal mutation history.
   - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) referenced across entities.
-- **Dynamic Enum Categories & Blueprint References**: Define arbitrary options for enum fields (e.g., `gender` with `["Male", "Female", "Dual-Yin-Yang", "Celestial"]`) and interlink blueprints with dot-notation attribute resolution.
-- **Sandboxed Mathematical & Logical Formula Engine**: Write complex mathematical formulas for computed properties (e.g. `Total Combat Power = (cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`) that recalculate in real-time as properties change.
-- **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard.
+- **Dynamic Enums, Value Types, Arrays & Blueprint References**: Define options for enum fields, power-weighted value types, freeform item arrays (`ARRAY`), and entity reference arrays (`ARRAY_REF`).
+- **Zero-Trust Backend Validation Parity**: Strict lowercase machine key coercion (`.toLowerCase()`, `strings.ToLower`), duplicate key rejection, field type slate wipe, and normalized property lookup across both Go and TypeScript backends.
+- **Deterministic Server-Side AST Formula Engine**: Write complex mathematical formulas for computed properties (e.g. `Total Combat Power = (cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`) that recalculate in real-time on frontend and are validated and computed deterministically on the backend.
+- **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking**: At any scene or chapter, NovWrite reconstructs the exact world state (who is alive, who owns what item, current power tiers, faction standings, known secrets).
 - **Event & State-Change Engine**: Events are modeled as explicit state mutations with causal history.
 - **Evidence-Based Continuity Warnings**: When new prose contradicts established canon (e.g. dead character appearing, item in wrong inventory, realm violation), NovWrite highlights the contradiction, cites the historical events responsible, and provides one-click resolutions.
 - **Grounded AI Assistant**: AI operations (drafting, scene analysis, entity extraction) operate on structured story state and retrieval context rather than ungrounded hallucination.
+- **Graceful Lifecycle Orchestration**: 1-click dev server (`./dev.sh`), build (`./build.sh`), typecheck (`./check.sh`), test runner (`./test.sh`), and database flusher (`./flush_db.sh`).
 
 ---
 
