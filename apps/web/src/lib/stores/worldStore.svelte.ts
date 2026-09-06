@@ -80,6 +80,98 @@ export interface EntityItem {
   lastMutatedSeqNumber: number;
 }
 
+// =====================================
+// Timeline & Event Sourcing Types
+// =====================================
+
+export type EffectOperation =
+  | "SET"
+  | "INCREMENT"
+  | "DECREMENT"
+  | "APPEND"
+  | "REMOVE"
+  | "TRANSFER";
+
+export interface TimelineEffectItem {
+  id?: string;
+  targetEntityId: string;
+  entityName?: string;
+  propertyKey: string; // Direct or dot notation e.g. "attack" or "cultivation.major_realm"
+  operation: EffectOperation;
+  value: any;
+}
+
+export interface TimelineEventItem {
+  id: string;
+  narrativeSequenceNumber: number;
+  chronologicalOrder: number;
+  title: string;
+  description: string;
+  anchorChapterTitle?: string;
+  anchorSceneTitle?: string;
+  anchorSceneId?: string;
+  effects: TimelineEffectItem[];
+  createdAt?: string;
+}
+
+// =====================================
+// Invariant Rules Types
+// =====================================
+
+export type RuleSeverity = "BLOCKING_ERROR" | "WARNING" | "ADVISORY_NOTE";
+
+export type RuleType =
+  | "STATE_GUARD"
+  | "NUMERIC_BOUNDS"
+  | "PREREQUISITE"
+  | "RELATIONAL_GUARD"
+  | "FORMULA_BOUNDARY";
+
+export interface InvariantRuleItem {
+  id: string;
+  name: string;
+  severity: RuleSeverity;
+  type: RuleType;
+  targetBlueprintId?: string;
+  targetBlueprintName?: string;
+  targetCategory?: string;
+  predicateExpression: string;
+  predicateSummary: string;
+  description: string;
+  enabled: boolean;
+  suggestedResolution?: string;
+}
+
+// =====================================
+// Continuity Audit & RFC 7807 Types
+// =====================================
+
+export interface ContinuityViolationItem {
+  id: string;
+  code: string; // e.g. "INVARIANT_STATE_ILLEGAL_ACTION"
+  ruleId?: string;
+  ruleName: string;
+  severity: RuleSeverity;
+  sceneId: string;
+  sceneTitle: string;
+  sequenceNumber: number;
+  entityId: string;
+  entityName: string;
+  property: string;
+  expectedValue: string;
+  calculatedValue: string;
+  historicalCausalEventId?: string;
+  historicalCausalEventTitle?: string;
+  historicalCausalSequence?: number;
+  message: string;
+  rfc7807Uri: string;
+  suggestedResolution: string;
+  overridden?: boolean;
+  overrideJustification?: string;
+  overriddenBy?: string;
+  overriddenAt?: string;
+}
+
 // Initial default blueprints showcasing First-Class, Second-Class, Enums, Blueprint References, and Formulas
 const initialBlueprints: BlueprintDef[] = [
   // 1. Second-Class Blueprint: Romantic Affection Scale
@@ -750,15 +842,365 @@ const initialEntities: EntityItem[] = [
       headquarters_sanctuary: "d4444444-4444-4444-a444-444444444444",
       sacred_guardian_relic: "c3333333-3333-4333-a333-333333333333",
       disciple_count: 8500,
-      qi_vein_grade: "tier_4",
+      grand_elder_power: 450,
+      sect_heritage_rank: "immortal_heritage",
+      domain_territory_scale: 120,
     },
     lastMutatedSeqNumber: 10,
+  },
+];
+
+const initialTimelineEvents: TimelineEventItem[] = [
+  {
+    id: "ev-1",
+    narrativeSequenceNumber: 10,
+    chronologicalOrder: 100,
+    title: "Initiation at Celestial Cloud Peak",
+    description:
+      "Eldrin awakens his Thunder Spirit Vein and is accepted as an outer court disciple of the Azure Cloud Sword Sect.",
+    anchorChapterTitle: "Chapter 1: The Gathering Tempest",
+    anchorSceneTitle: "Scene 1: The Mountain Gate Trials",
+    anchorSceneId: "scene-awakening-10",
+    effects: [
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.major_realm",
+        operation: "SET",
+        value: 1,
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.realm_name",
+        operation: "SET",
+        value: "Qi Refining",
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "attack",
+        operation: "SET",
+        value: 300,
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "sect_allegiance",
+        operation: "SET",
+        value: "e5555555-5555-4555-a555-555555555555",
+      },
+    ],
+    createdAt: "2026-09-01T10:00:00Z",
+  },
+  {
+    id: "ev-2",
+    narrativeSequenceNumber: 25,
+    chronologicalOrder: 102,
+    title: "Bestowal of the Dawnbreaker Blade",
+    description:
+      "The Grand Elder confers the solar-forged Dawnbreaker Blade upon Eldrin following the Inner Sect Tournament.",
+    anchorChapterTitle: "Chapter 3: Blade of the Sun",
+    anchorSceneTitle: "Scene 2: The Ancestral Vault",
+    anchorSceneId: "scene-bestowal-25",
+    effects: [
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "bound_weapon",
+        operation: "SET",
+        value: "c3333333-3333-4333-a333-333333333333",
+      },
+      {
+        targetEntityId: "c3333333-3333-4333-a333-333333333333",
+        entityName: "Dawnbreaker Blade of Aethelgard",
+        propertyKey: "current_wielder",
+        operation: "SET",
+        value: "a1111111-1111-4111-a111-111111111111",
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "attack",
+        operation: "INCREMENT",
+        value: 450,
+      },
+    ],
+    createdAt: "2026-09-02T12:00:00Z",
+  },
+  {
+    id: "ev-3",
+    narrativeSequenceNumber: 35,
+    chronologicalOrder: 105,
+    title: "Foundation Stage Breakthrough & Astral Bond",
+    description:
+      "Eldrin and Lyra perform dual cultivation resonance, breaking through to Foundation Realm 3.",
+    anchorChapterTitle: "Chapter 5: Astral Resonance",
+    anchorSceneTitle: "Scene 1: The Silver Jade Pool",
+    anchorSceneId: "scene-breakthrough-35",
+    effects: [
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.major_realm",
+        operation: "SET",
+        value: 2,
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.realm_name",
+        operation: "SET",
+        value: "Foundation",
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "romantic_feelings.affection_level",
+        operation: "INCREMENT",
+        value: 200,
+      },
+      {
+        targetEntityId: "b2222222-2222-4222-a222-222222222222",
+        entityName: "Lyra of the Astral Veil",
+        propertyKey: "romantic_feelings.affection_level",
+        operation: "INCREMENT",
+        value: 250,
+      },
+    ],
+    createdAt: "2026-09-03T15:30:00Z",
+  },
+  {
+    id: "ev-4",
+    narrativeSequenceNumber: 50,
+    chronologicalOrder: 108,
+    title: "Clash at Crimson Ridge & Core Formation",
+    description:
+      "Surrounded by Void Syndicate assassins, Eldrin unlocks the Silver Dawn Celestial Core and achieves Core Formation.",
+    anchorChapterTitle: "Chapter 8: The Crimson Crucible",
+    anchorSceneTitle: "Scene 3: Thunder Over Crimson Ridge",
+    anchorSceneId: "scene-duel-50",
+    effects: [
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.major_realm",
+        operation: "SET",
+        value: 3,
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "cultivation.realm_name",
+        operation: "SET",
+        value: "Core Formation",
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "attack",
+        operation: "SET",
+        value: 1200,
+      },
+      {
+        targetEntityId: "a1111111-1111-4111-a111-111111111111",
+        entityName: "Eldrin the Spellblade",
+        propertyKey: "special_Physique",
+        operation: "SET",
+        value: 2.0,
+      },
+    ],
+    createdAt: "2026-09-04T18:00:00Z",
+  },
+  {
+    id: "ev-5",
+    narrativeSequenceNumber: 80,
+    chronologicalOrder: 50, // Flashback to Year 50
+    title: "Flashback: The Ancient Sovereign's Sealing",
+    description:
+      "Historical flashback 58 years ago showing the sealing of the demonic abyss beneath Mount Aethelgard.",
+    anchorChapterTitle: "Chapter 12: Echoes of the Past",
+    anchorSceneTitle: "Scene 1: The Abyssal Seal",
+    anchorSceneId: "scene-flashback-80",
+    effects: [
+      {
+        targetEntityId: "d4444444-4444-4444-a444-444444444444",
+        entityName: "Celestial Cloud Peak Sanctuary",
+        propertyKey: "spatial_stability",
+        operation: "SET",
+        value: 0.98,
+      },
+    ],
+    createdAt: "2026-09-05T09:00:00Z",
+  },
+];
+
+const initialRules: InvariantRuleItem[] = [
+  {
+    id: "rule-1",
+    name: "Deceased Entity Action Restriction",
+    severity: "BLOCKING_ERROR",
+    type: "STATE_GUARD",
+    targetCategory: "Characters",
+    targetBlueprintId: "bp-first-character",
+    targetBlueprintName: "Cultivator / Protagonist",
+    predicateExpression: "status != 'DEAD' || attempted_action == 'RESURRECTION'",
+    predicateSummary:
+      "IF status == DEAD THEN FORBID [CAST_SPELL, ATTACK, WIELD_WEAPON, SPEAK]",
+    description:
+      "Deceased characters cannot perform active spells, combat attacks, or dialogue without a preceding resurrection event.",
+    enabled: true,
+    suggestedResolution:
+      "Insert a Resurrection or Reincarnation timeline event before this scene.",
+  },
+  {
+    id: "rule-2",
+    name: "Core Formation Domain Prerequisite",
+    severity: "BLOCKING_ERROR",
+    type: "PREREQUISITE",
+    targetCategory: "Characters",
+    targetBlueprintId: "bp-first-character",
+    targetBlueprintName: "Cultivator / Protagonist",
+    predicateExpression: "cultivation.major_realm >= 3",
+    predicateSummary:
+      "REQUIRES cultivation.major_realm >= 3 (Core Formation) FOR [Astral_Veil_Domain, Heavenly_Thunder_Clash]",
+    description:
+      "High-tier domain techniques and Heavenly Thunder spells strictly require Core Formation (Realm 3) cultivation or higher.",
+    enabled: true,
+    suggestedResolution:
+      "Advance character's cultivation stage via Breakthrough event at an earlier sequence.",
+  },
+  {
+    id: "rule-3",
+    name: "Sacred Relic Wielder Synchronization",
+    severity: "WARNING",
+    type: "RELATIONAL_GUARD",
+    targetCategory: "Relics & Armaments",
+    targetBlueprintId: "bp-first-artifact",
+    targetBlueprintName: "Sacred Weapon & Relic",
+    predicateExpression: "current_wielder != null && bound_weapon == entity.id",
+    predicateSummary: "WIELDER(Sacred_Relic) MUST_MATCH character.bound_weapon",
+    description:
+      "Sacred soul-forged weapons cannot emit soul-resonance waves if the wielder entity's bound_weapon does not match.",
+    enabled: true,
+    suggestedResolution:
+      "Link character's bound_weapon attribute to the weapon in entity properties or log a Wielding Event.",
+  },
+  {
+    id: "rule-4",
+    name: "Non-Negative Martial Bounds",
+    severity: "BLOCKING_ERROR",
+    type: "NUMERIC_BOUNDS",
+    targetCategory: "Characters",
+    targetBlueprintId: "bp-first-character",
+    targetBlueprintName: "Cultivator / Protagonist",
+    predicateExpression: "attack >= 0 && defence >= 0",
+    predicateSummary: "attack >= 0 AND defence >= 0",
+    description:
+      "Base martial attributes and physical defensive power cannot fall below 0 under any curse or debuff.",
+    enabled: true,
+    suggestedResolution:
+      "Adjust decrementing debuff effect values to stay within positive bounds.",
+  },
+  {
+    id: "rule-5",
+    name: "Sect Grand Barrier Influence Threshold",
+    severity: "WARNING",
+    type: "FORMULA_BOUNDARY",
+    targetCategory: "Factions & Sects",
+    targetBlueprintId: "bp-first-faction",
+    targetBlueprintName: "Ancient Faction & Sect",
+    predicateExpression: "total_sect_influence >= 1500",
+    predicateSummary: "FORMULA(total_sect_influence) >= 1500",
+    description:
+      "Sect guardian formation requires total sect influence rating >= 1500 to withstand foreign invasion.",
+    enabled: true,
+    suggestedResolution:
+      "Increase sworn disciple count or upgrade ancestral spirit vein tier.",
+  },
+];
+
+const initialViolations: ContinuityViolationItem[] = [
+  {
+    id: "viol-1",
+    code: "INVARIANT_STATE_ILLEGAL_ACTION",
+    ruleId: "rule-1",
+    ruleName: "Deceased Entity Action Restriction",
+    severity: "BLOCKING_ERROR",
+    sceneId: "scene-forbidden-ritual-55",
+    sceneTitle: "Scene 4: The Forbidden Ritual (Chapter 9)",
+    sequenceNumber: 55,
+    entityId: "a1111111-1111-4111-a111-111111111111",
+    entityName: "Lord Malakor",
+    property: "status",
+    expectedValue: "Action 'CAST_SPELL' forbidden when status is DEAD",
+    calculatedValue: "status: DEAD, attemptedAction: CAST_SPELL",
+    historicalCausalEventId: "ev-4",
+    historicalCausalEventTitle: "Clash at Crimson Ridge & Core Formation",
+    historicalCausalSequence: 50,
+    message:
+      "Rule 'Deceased Entity Action Restriction' violated: Lord Malakor was marked DEAD at Seq #50 and cannot execute action 'CAST_SPELL' in Scene 4 without resurrection.",
+    rfc7807Uri:
+      "https://novwrite.io/errors/invariants/invariant-state-illegal-action",
+    suggestedResolution:
+      "Insert a Resurrection event before Scene 4 or change the acting antagonist.",
+  },
+  {
+    id: "viol-2",
+    code: "INVARIANT_REQUIRED_PREREQUISITE_MISSING",
+    ruleId: "rule-2",
+    ruleName: "Core Formation Domain Prerequisite",
+    severity: "BLOCKING_ERROR",
+    sceneId: "scene-mountain-trial-20",
+    sceneTitle: "Scene 2: The Mountain Gate Trials (Chapter 2)",
+    sequenceNumber: 20,
+    entityId: "a1111111-1111-4111-a111-111111111111",
+    entityName: "Eldrin the Spellblade",
+    property: "cultivation.major_realm",
+    expectedValue: "cultivation.major_realm >= 3 (Core Formation)",
+    calculatedValue: "cultivation.major_realm = 1 (Qi Refining Stage)",
+    historicalCausalEventId: "ev-1",
+    historicalCausalEventTitle: "Initiation at Celestial Cloud Peak",
+    historicalCausalSequence: 10,
+    message:
+      "Rule 'Core Formation Domain Prerequisite' violated: Eldrin the Spellblade attempts to cast 'Heavenly Thunder Clash' in Scene 2 while at Realm 1 (Qi Refining).",
+    rfc7807Uri:
+      "https://novwrite.io/errors/invariants/invariant-required-prerequisite-missing",
+    suggestedResolution:
+      "Advance Eldrin's breakthrough event to Seq #18 or downgrade the spell in Scene 2.",
+  },
+  {
+    id: "viol-3",
+    code: "INVARIANT_RELATIONAL_LINK_DESYNC",
+    ruleId: "rule-3",
+    ruleName: "Sacred Relic Wielder Synchronization",
+    severity: "WARNING",
+    sceneId: "scene-defense-floating-sanctuary-28",
+    sceneTitle: "Scene 3: Defense of the Floating Sanctuary (Chapter 4)",
+    sequenceNumber: 28,
+    entityId: "c3333333-3333-4333-a333-333333333333",
+    entityName: "Dawnbreaker Blade of Aethelgard",
+    property: "current_wielder",
+    expectedValue: "current_wielder matches Eldrin.bound_weapon",
+    calculatedValue: "current_wielder: Eldrin, Eldrin.bound_weapon: null",
+    historicalCausalEventId: "ev-2",
+    historicalCausalEventTitle: "Bestowal of the Dawnbreaker Blade",
+    historicalCausalSequence: 25,
+    message:
+      "Rule 'Sacred Relic Wielder Synchronization' warning: Dawnbreaker Blade lists Eldrin as wielder, but Eldrin has not equipped the blade.",
+    rfc7807Uri:
+      "https://novwrite.io/errors/invariants/invariant-relational-link-desync",
+    suggestedResolution:
+      "Update Eldrin's bound_weapon attribute to link Dawnbreaker Blade.",
   },
 ];
 
 export class WorldStateStore {
   blueprints = $state<BlueprintDef[]>([...initialBlueprints]);
   entities = $state<EntityItem[]>([...initialEntities]);
+  timelineEvents = $state<TimelineEventItem[]>([...initialTimelineEvents]);
+  rules = $state<InvariantRuleItem[]>([...initialRules]);
+  violations = $state<ContinuityViolationItem[]>([...initialViolations]);
 
   constructor() {
     this.recomputeAllEntityFormulas();
@@ -1083,6 +1525,271 @@ export class WorldStateStore {
     }
 
     return computed;
+  }
+
+  // =====================================
+  // Timeline CRUD & Point-in-Time State Folding
+  // =====================================
+
+  getTimelineEvents(
+    sortMode: "narrative" | "chronological" = "narrative",
+  ): TimelineEventItem[] {
+    return [...this.timelineEvents].sort((a, b) => {
+      if (sortMode === "narrative") {
+        return a.narrativeSequenceNumber - b.narrativeSequenceNumber;
+      }
+      return a.chronologicalOrder - b.chronologicalOrder;
+    });
+  }
+
+  getTimelineEvent(id?: string): TimelineEventItem | undefined {
+    if (!id) return undefined;
+    return this.timelineEvents.find((e) => e.id === id);
+  }
+
+  addTimelineEvent(eventData: Omit<TimelineEventItem, "id">): TimelineEventItem {
+    const newEvent: TimelineEventItem = {
+      ...eventData,
+      id: `ev-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
+      createdAt: eventData.createdAt || new Date().toISOString(),
+    };
+    this.timelineEvents.push(newEvent);
+    this.recomputeAllEntityFormulas();
+    return newEvent;
+  }
+
+  updateTimelineEvent(
+    id: string,
+    updates: Partial<Omit<TimelineEventItem, "id">>,
+  ): TimelineEventItem | undefined {
+    const idx = this.timelineEvents.findIndex((e) => e.id === id);
+    if (idx === -1) return undefined;
+    this.timelineEvents[idx] = {
+      ...this.timelineEvents[idx],
+      ...updates,
+    };
+    this.recomputeAllEntityFormulas();
+    return this.timelineEvents[idx];
+  }
+
+  deleteTimelineEvent(id: string): boolean {
+    const idx = this.timelineEvents.findIndex((e) => e.id === id);
+    if (idx === -1) return false;
+    this.timelineEvents.splice(idx, 1);
+    this.recomputeAllEntityFormulas();
+    return true;
+  }
+
+  foldStateAtSequence(
+    targetSeq: number,
+    mode: "narrative" | "chronological" = "narrative",
+  ): EntityItem[] {
+    const baseEntities: EntityItem[] = JSON.parse(JSON.stringify(this.entities));
+    const activeEvents = [...this.timelineEvents]
+      .filter((ev) =>
+        mode === "narrative"
+          ? ev.narrativeSequenceNumber <= targetSeq
+          : ev.chronologicalOrder <= targetSeq,
+      )
+      .sort((a, b) =>
+        mode === "narrative"
+          ? a.narrativeSequenceNumber - b.narrativeSequenceNumber
+          : a.chronologicalOrder - b.chronologicalOrder,
+      );
+
+    for (const ev of activeEvents) {
+      for (const eff of ev.effects) {
+        const targetEntity = baseEntities.find(
+          (e) =>
+            e.id === eff.targetEntityId ||
+            e.name === eff.entityName ||
+            e.name === eff.targetEntityId,
+        );
+        if (!targetEntity) continue;
+
+        targetEntity.lastMutatedSeqNumber = ev.narrativeSequenceNumber;
+
+        const keys = eff.propertyKey.split(".");
+        let curr: any = targetEntity.properties;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+          const k = keys[i];
+          if (!curr[k] || typeof curr[k] !== "object") {
+            curr[k] = {};
+          }
+          curr = curr[k];
+        }
+
+        const finalKey = keys[keys.length - 1];
+
+        switch (eff.operation) {
+          case "SET":
+          case "TRANSFER":
+            curr[finalKey] = eff.value;
+            break;
+          case "INCREMENT":
+            curr[finalKey] =
+              (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
+            break;
+          case "DECREMENT":
+            curr[finalKey] =
+              (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
+            break;
+          case "APPEND":
+            if (Array.isArray(curr[finalKey])) {
+              curr[finalKey].push(eff.value);
+            } else {
+              curr[finalKey] = [eff.value];
+            }
+            break;
+          case "REMOVE":
+            if (Array.isArray(curr[finalKey])) {
+              curr[finalKey] = curr[finalKey].filter((x: any) => x !== eff.value);
+            }
+            break;
+        }
+      }
+    }
+
+    for (const ent of baseEntities) {
+      ent.computedFormulas = this.evaluateEntityFormulas(ent);
+    }
+
+    return baseEntities;
+  }
+
+  // =====================================
+  // Invariant Rules CRUD
+  // =====================================
+
+  getRules(): InvariantRuleItem[] {
+    return this.rules;
+  }
+
+  getRule(id?: string): InvariantRuleItem | undefined {
+    if (!id) return undefined;
+    return this.rules.find((r) => r.id === id);
+  }
+
+  addRule(ruleData: Omit<InvariantRuleItem, "id">): InvariantRuleItem {
+    const newRule: InvariantRuleItem = {
+      ...ruleData,
+      id: `rule-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
+    };
+    this.rules.push(newRule);
+    return newRule;
+  }
+
+  updateRule(
+    id: string,
+    updates: Partial<Omit<InvariantRuleItem, "id">>,
+  ): InvariantRuleItem | undefined {
+    const idx = this.rules.findIndex((r) => r.id === id);
+    if (idx === -1) return undefined;
+    this.rules[idx] = {
+      ...this.rules[idx],
+      ...updates,
+    };
+    return this.rules[idx];
+  }
+
+  toggleRule(id: string): boolean {
+    const r = this.getRule(id);
+    if (!r) return false;
+    r.enabled = !r.enabled;
+    return true;
+  }
+
+  deleteRule(id: string): boolean {
+    const idx = this.rules.findIndex((r) => r.id === id);
+    if (idx === -1) return false;
+    this.rules.splice(idx, 1);
+    return true;
+  }
+
+  // =====================================
+  // Continuity Audit & RFC 7807 Violations
+  // =====================================
+
+  getViolations(): ContinuityViolationItem[] {
+    return this.violations;
+  }
+
+  runContinuityAudit(): ContinuityViolationItem[] {
+    return this.violations;
+  }
+
+  overrideViolation(
+    id: string,
+    justification: string,
+    authorName: string = "Lead Author",
+  ): boolean {
+    const viol = this.violations.find((v) => v.id === id);
+    if (!viol) return false;
+    viol.overridden = true;
+    viol.overrideJustification = justification.trim();
+    viol.overriddenBy = authorName;
+    viol.overriddenAt = new Date().toISOString();
+    return true;
+  }
+
+  reconcileViolation(id: string, actionType: string): boolean {
+    const idx = this.violations.findIndex((v) => v.id === id);
+    if (idx === -1) return false;
+    const viol = this.violations[idx];
+
+    if (actionType === "AUTO_LOG_BREAKTHROUGH") {
+      this.addTimelineEvent({
+        narrativeSequenceNumber: Math.max(1, viol.sequenceNumber - 2),
+        chronologicalOrder: 106,
+        title: `Breakthrough: Advanced Cultivation Realm for ${viol.entityName}`,
+        description: `Auto-reconciled breakthrough event advancing ${viol.entityName} to Core Formation stage before ${viol.sceneTitle}.`,
+        anchorSceneTitle: viol.sceneTitle,
+        anchorSceneId: viol.sceneId,
+        effects: [
+          {
+            targetEntityId: viol.entityId,
+            entityName: viol.entityName,
+            propertyKey: "cultivation.major_realm",
+            operation: "SET",
+            value: 3,
+          },
+          {
+            targetEntityId: viol.entityId,
+            entityName: viol.entityName,
+            propertyKey: "cultivation.realm_name",
+            operation: "SET",
+            value: "Core Formation",
+          },
+        ],
+      });
+      this.violations.splice(idx, 1);
+      return true;
+    }
+
+    if (actionType === "AUTO_LINK_RELATIONAL_WEAPON") {
+      const weaponEnt = this.entities.find(
+        (e: EntityItem) => e.category === "Relics & Armaments",
+      );
+      const charEnt = this.entities.find((e: EntityItem) => e.category === "Characters");
+      if (weaponEnt && charEnt) {
+        charEnt.properties.bound_weapon = weaponEnt.id;
+        weaponEnt.properties.current_wielder = charEnt.id;
+      }
+      this.violations.splice(idx, 1);
+      return true;
+    }
+
+    // Default dismiss
+    this.violations.splice(idx, 1);
+    return true;
+  }
+
+  dismissViolation(id: string): boolean {
+    const idx = this.violations.findIndex((v: ContinuityViolationItem) => v.id === id);
+    if (idx === -1) return false;
+    this.violations.splice(idx, 1);
+    return true;
   }
 
   recomputeAllEntityFormulas(): void {

@@ -38,6 +38,7 @@
     worldStore,
     type BlueprintDef,
     type DynamicFieldDef,
+    type EntityItem,
   } from '$lib/stores/worldStore.svelte';
   import { evaluateFormula } from '$lib/engine/formulaEngine';
 
@@ -80,11 +81,11 @@
 
   const allCategories = $derived([
     'ALL',
-    ...Array.from(new Set(firstClassBlueprints.map((b) => b.category))),
+    ...Array.from(new Set<string>(firstClassBlueprints.map((b: BlueprintDef) => b.category))),
   ]);
 
   const filteredBlueprints = $derived(
-    firstClassBlueprints.filter((bp) => {
+    firstClassBlueprints.filter((bp: BlueprintDef) => {
       const matchesCategory =
         selectedCategoryFilter === 'ALL' || bp.category === selectedCategoryFilter;
       const q = searchArchetypeQuery.toLowerCase().trim();
@@ -416,14 +417,14 @@
   const directFields = $derived(
     selectedBlueprint
       ? selectedBlueprint.fields.filter(
-          (f) => f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
+          (f: DynamicFieldDef) => f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
         )
       : []
   );
 
   const subBlueprintRefFields = $derived(
     selectedBlueprint
-      ? selectedBlueprint.fields.filter((f) => {
+      ? selectedBlueprint.fields.filter((f: DynamicFieldDef) => {
           if (f.fieldType !== 'BLUEPRINT_REF') return false;
           const target = worldStore.getBlueprint(f.targetBlueprintId);
           return target && target.blueprintClass === 'SECOND_CLASS';
@@ -433,7 +434,7 @@
 
   const relationalEntityRefFields = $derived(
     selectedBlueprint
-      ? selectedBlueprint.fields.filter((f) => {
+      ? selectedBlueprint.fields.filter((f: DynamicFieldDef) => {
           if (f.fieldType !== 'BLUEPRINT_REF') return false;
           const target = worldStore.getBlueprint(f.targetBlueprintId);
           return !target || target.blueprintClass === 'FIRST_CLASS';
@@ -575,13 +576,13 @@
         {#each filteredBlueprints as bp}
           {@const Icon = getArchetypeIcon(bp)}
           {@const isSelected = selectedBlueprintId === bp.id}
-          {@const formulaCount = bp.fields.filter((f) => f.fieldType === 'FORMULA').length}
-          {@const subSystemCount = bp.fields.filter((f) => {
+          {@const formulaCount = bp.fields.filter((f: DynamicFieldDef) => f.fieldType === 'FORMULA').length}
+          {@const subSystemCount = bp.fields.filter((f: DynamicFieldDef) => {
             if (f.fieldType !== 'BLUEPRINT_REF') return false;
             const target = worldStore.getBlueprint(f.targetBlueprintId);
             return target && target.blueprintClass === 'SECOND_CLASS';
           }).length}
-          {@const relationalLinkCount = bp.fields.filter((f) => {
+          {@const relationalLinkCount = bp.fields.filter((f: DynamicFieldDef) => {
             if (f.fieldType !== 'BLUEPRINT_REF') return false;
             const target = worldStore.getBlueprint(f.targetBlueprintId);
             return !target || target.blueprintClass === 'FIRST_CLASS';
@@ -1017,7 +1018,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each relationalEntityRefFields as field}
           {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-          {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id) : worldStore.entities}
+          {@const candidateEntities = targetBp ? worldStore.entities.filter((e: EntityItem) => e.blueprintId === targetBp.id) : worldStore.entities}
           <div class="p-4 rounded-lg border border-purple-950/70 bg-purple-950/15 space-y-2.5">
             <div class="flex items-center justify-between">
               <Label class="text-xs font-medium text-purple-200 flex items-center gap-1.5">
@@ -1038,7 +1039,7 @@
                 bind:value={properties[field.name]}
                 options={[
                   { value: '', label: 'None (Unassigned)' },
-                  ...candidateEntities.map((e) => ({
+                  ...candidateEntities.map((e: EntityItem) => ({
                     value: e.id,
                     label: `${e.name} (${e.category})`,
                   })),
