@@ -1,0 +1,285 @@
+// ==============================================================================
+// NovWrite Database Schema (Prisma)
+// Block Standard: BLOCK_DB_PRISMA_SCHEMA_001
+// ==============================================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ProjectRole {
+  LEAD_AUTHOR
+  CO_AUTHOR
+  EDITOR
+  CONTRIBUTOR
+  VIEWER
+}
+
+enum EntityCategory {
+  CHARACTER
+  LOCATION
+  ARTIFACT
+  FACTION
+  LORE_CONCEPT
+}
+
+enum PropertyType {
+  STRING
+  NUMBER
+  BOOLEAN
+  ENUM_SINGLE
+  ENUM_MULTI
+  ENTITY_REF
+  LADDER_TIER
+}
+
+enum InvariantSeverity {
+  BLOCKING_ERROR
+  WARNING
+  ADVISORY_NOTE
+}
+
+enum EffectOperation {
+  SET
+  INCREMENT
+  DECREMENT
+  APPEND
+  REMOVE
+  TRANSFER
+}
+
+model User {
+  id               String      @id @default(uuid()) @db.Uuid
+  email            String      @unique @db.VarChar(255)
+  username         String      @unique @db.VarChar(100)
+  passwordHash     String      @map("password_hash") @db.VarChar(255)
+  isPlatformAdmin  Boolean     @default(false) @map("is_platform_admin")
+  mfaEnabled       Boolean     @default(false) @map("mfa_enabled")
+  mfaSecret        String?     @map("mfa_secret") @db.VarChar(255)
+  stripeCustomerId String?     @map("stripe_customer_id") @db.VarChar(255)
+  accountStatus    String      @default("ACTIVE") @map("account_status") @db.VarChar(50)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  ownedProjects       Project[]                 @relation("ProjectOwner")
+  projectMemberships  ProjectMember[]
+  adminOverrideLogs   AdminOverrideLog[]
+  platformAuditLogs   PlatformAdminAuditLog[]   @relation("AdminUser")
+  targetPlatformLogs  PlatformAdminAuditLog[]   @relation("TargetUser")
+  sceneLeases         SceneLease[]
+
+  @@map("users")
+}
+
+model PlatformAdminAuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  adminUserId  String   @map("admin_user_id") @db.Uuid
+  targetUserId String?  @map("target_user_id") @db.Uuid
+  actionType   String   @map("action_type") @db.VarChar(100)
+  ticketId     String?  @map("ticket_id") @db.VarChar(100)
+  details      Json     @default("{}") @db.JsonB
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  adminUser    User     @relation("AdminUser", fields: [adminUserId], references: [id], onDelete: Restrict)
+  targetUser   User?    @relation("TargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([adminUserId])
+  @@index([targetUserId])
+  @@index([actionType])
+  @@map("platform_admin_audit_logs")
+}
+
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerId     String   @map("owner_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  genre       String?  @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  owner               User                        @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members             ProjectMember[]
+  entityTypes         EntityTypeDefinition[]
+  dynamicProperties   DynamicPropertyDefinition[]
+  timelineEvents      TimelineEvent[]
+  invariantRules      InvariantRule[]
+  manuscripts         Manuscript[]
+  adminOverrideLogs   AdminOverrideLog[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid()) @db.Uuid
+  projectId String      @map("project_id") @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  role      ProjectRole @default(CONTRIBUTOR)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model EntityTypeDefinition {
+  id          String         @id @default(uuid()) @db.Uuid
+  projectId   String         @map("project_id") @db.Uuid
+  name        String         @db.VarChar(100)
+  category    EntityCategory
+  description String?        @db.Text
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  properties  DynamicPropertyDefinition[]
+
+  @@unique([projectId, name])
+  @@map("entity_type_definitions")
+}
+
+model DynamicPropertyDefinition {
+  id           String               @id @default(uuid()) @db.Uuid
+  projectId    String               @map("project_id") @db.Uuid
+  entityTypeId String               @map("entity_type_id") @db.Uuid
+  name         String               @db.VarChar(100)
+  propertyType PropertyType         @map("property_type")
+  defaultValue Json?                @map("default_value") @db.JsonB
+  validation   Json?                @db.JsonB
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz
+
+  project      Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  entityType   EntityTypeDefinition @relation(fields: [entityTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, entityTypeId, name])
+  @@map("dynamic_property_definitions")
+}
+
+model TimelineEvent {
+  id                       String        @id @default(uuid()) @db.Uuid
+  projectId                String        @map("project_id") @db.Uuid
+  narrativeSequenceNumber  Int           @map("narrative_sequence_number")
+  chronologicalOrder       Int           @map("chronological_order")
+  title                    String        @db.VarChar(255)
+  description              String?       @db.Text
+  anchorSceneId            String?       @map("anchor_scene_id") @db.Uuid
+  createdAt                DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  project                  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  effects                  EventEffect[]
+
+  @@unique([projectId, narrativeSequenceNumber])
+  @@index([projectId, chronologicalOrder])
+  @@map("timeline_events")
+}
+
+model EventEffect {
+  id           String          @id @default(uuid()) @db.Uuid
+  eventId      String          @map("event_id") @db.Uuid
+  targetEntity String          @map("target_entity_id") @db.Uuid
+  propertyKey  String          @map("property_key") @db.VarChar(100)
+  operation    EffectOperation @default(SET)
+  value        Json            @db.JsonB
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  event        TimelineEvent   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([targetEntity])
+  @@map("event_effects")
+}
+
+model InvariantRule {
+  id          String            @id @default(uuid()) @db.Uuid
+  projectId   String            @map("project_id") @db.Uuid
+  name        String            @db.VarChar(255)
+  severity    InvariantSeverity @default(BLOCKING_ERROR)
+  predicate   Json              @db.JsonB
+  description String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("invariant_rules")
+}
+
+model Manuscript {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @map("project_id") @db.Uuid
+  title     String    @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chapters  Chapter[]
+
+  @@map("manuscripts")
+}
+
+model Chapter {
+  id           String     @id @default(uuid()) @db.Uuid
+  manuscriptId String     @map("manuscript_id") @db.Uuid
+  title        String     @db.VarChar(255)
+  orderIndex   Int        @map("order_index")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  manuscript   Manuscript @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
+  scenes       Scene[]
+
+  @@unique([manuscriptId, orderIndex])
+  @@map("chapters")
+}
+
+model Scene {
+  id             String      @id @default(uuid()) @db.Uuid
+  chapterId      String      @map("chapter_id") @db.Uuid
+  title          String      @db.VarChar(255)
+  orderIndex     Int         @map("order_index")
+  sequenceNumber Int         @map("sequence_number")
+  proseContent   String      @default("") @map("prose_content") @db.Text
+  wordCount      Int         @default(0) @map("word_count")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  chapter        Chapter     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  lease          SceneLease?
+
+  @@index([chapterId, orderIndex])
+  @@map("scenes")
+}
+
+model SceneLease {
+  sceneId   String   @id @map("scene_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  scene     Scene    @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("scene_leases")
+}
+
+model AdminOverrideLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  adminUserId   String   @map("admin_user_id") @db.Uuid
+  actionType    String   @map("action_type") @db.VarChar(100)
+  targetId      String   @map("target_id") @db.VarChar(255)
+  justification String   @db.Text
+  details       Json     @default("{}") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  adminUser     User     @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, actionType])
+  @@map("admin_override_logs")
+}
