@@ -25,15 +25,15 @@ func NewDevSeederHandler(env string) *DevSeederHandler {
 
 // DevSeedResponse represents the payload returned after seeding.
 type DevSeedResponse struct {
-	Success              bool   `json:"success"`
-	ProjectID            string `json:"projectId"`
-	ProjectName          string `json:"projectName"`
-	UniverseName         string `json:"universeName"`
-	SeededEntitiesCount  int    `json:"seededEntitiesCount"`
-	SeededEventsCount    int    `json:"seededEventsCount"`
-	SeededRulesCount     int    `json:"seededRulesCount"`
-	SeededScenesCount    int    `json:"seededScenesCount"`
-	Message              string `json:"message"`
+	Success             bool   `json:"success"`
+	ProjectID           string `json:"projectId"`
+	ProjectName         string `json:"projectName"`
+	UniverseName        string `json:"universeName"`
+	SeededEntitiesCount int    `json:"seededEntitiesCount"`
+	SeededEventsCount   int    `json:"seededEventsCount"`
+	SeededRulesCount    int    `json:"seededRulesCount"`
+	SeededScenesCount   int    `json:"seededScenesCount"`
+	Message             string `json:"message"`
 }
 
 // RFC7807Error represents an RFC 7807 Problem Details object.
