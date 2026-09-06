@@ -522,10 +522,7 @@
       'Entity Updated',
       `Properties & live formulas for "${name.trim()}" successfully saved.`
     );
-    saveMessage = 'Entity state & formulas successfully updated!';
-    setTimeout(() => {
-      saveMessage = null;
-    }, 3000);
+    goto('/world/entities');
   }
 
   function confirmDeleteAction() {
