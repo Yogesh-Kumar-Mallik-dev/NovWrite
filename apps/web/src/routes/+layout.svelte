@@ -127,11 +127,6 @@
         <ThemeToggle size="sm" />
       </div>
     </nav>
-  {:else}
-    <!-- Clean floating theme toggle on isolated error screens -->
-    <div class="absolute top-5 right-6 z-50">
-      <ThemeToggle size="sm" />
-    </div>
   {/if}
 
   <!-- Page Content -->
