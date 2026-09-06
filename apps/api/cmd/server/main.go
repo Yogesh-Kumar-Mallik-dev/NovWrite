@@ -55,6 +55,13 @@ func main() {
 		r.Post("/reset", devHandler.ResetHandler)
 	})
 
+	// World Bridge Handlers (Demo State Context)
+	bridgeHandler := handlers.NewWorldBridgeHandler(nil, nil, nil)
+	r.Route("/api/v1/bridge", func(r chi.Router) {
+		r.Post("/ground", bridgeHandler.HandleSceneGrounding)
+		r.Post("/audit", bridgeHandler.HandleContinuityAudit)
+	})
+
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("[NovWrite API] Server starting on %s (Environment: %s)", addr, env)
 	if err := http.ListenAndServe(addr, r); err != nil {
