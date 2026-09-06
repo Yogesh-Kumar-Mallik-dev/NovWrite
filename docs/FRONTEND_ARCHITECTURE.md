@@ -334,3 +334,58 @@ export class WorldStateStore {
 
 export const worldStore = new WorldStateStore();
 ```
+
+---
+
+## 7. Color-Coded CodeMirror 6 JSON Workbench Architecture
+
+### 7.1. Motivation & Technical Stack
+While visual form controls offer intuitive editing for structured entity properties, complex universe design frequently requires direct JSON payload manipulation, bulk property editing, and debugging. NovWrite embeds a first-class CodeMirror 6 JSON editor ([`JsonEditor.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/json-editor/json-editor.svelte)) with:
+- **Modular CodeMirror 6 Packages**: `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-json`, `@lezer/highlight`.
+- **Custom Token Palette**:
+  - **Property Keys**: Cyan (`#38bdf8`, `fontWeight: '600'`)
+  - **String Literals**: Emerald (`#34d399`)
+  - **Numeric Literals**: Amber / Orange (`#fb923c`)
+  - **Booleans**: Rose (`#f43f5e`, `fontWeight: 'bold'`)
+  - **Null**: Purple (`#a855f7`, `fontWeight: 'bold'`)
+  - **Punctuation & Brackets**: Slate (`#94a3b8` / `#cbd5e1`)
+- **Word Wrapping (`EditorView.lineWrapping`)**: Long property descriptions, nested lore notes, and trace stacks wrap cleanly without causing horizontal container blowouts.
+- **Dynamic Theme Synchronization**: Listens reactively to `themeStore.mode` to reconfigure CodeMirror compartments between light and dark themes in real time.
+- **Bi-Directional State Synchronization**: Changes in the Visual Form update the Raw JSON buffer, and valid edits inside the CodeMirror JSON view immediately reflect back in the visual form inputs and AST formulas.
+
+---
+
+## 8. Error Handling & Full-Screen Isolation Architecture (404 & 500)
+
+### 8.1. SvelteKit Global Error Handling Standard
+NovWrite integrates a centralized SvelteKit error handler ([`+error.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/+error.svelte)) that routes dynamic status codes to universe-themed error screens:
+- **Status 404 (Timeline Paradox)**: Rendered when a route, entity, or chapter coordinates cannot be found in the canon index.
+- **Status 500 / 5xx (Continuity Invariant Collapse)**: Rendered when an unexpected exception or invariant conflict interrupts deterministic state folding.
+- **Standalone Route Parity**: Direct access to `/404` and `/500` routes is supported for design verification and diagnostics.
+
+### 8.2. Full-Screen Chrome Isolation
+On error pages, all extraneous application chrome (the top development header, main navigation bar, studio switcher, and project indicator) is strictly removed from the layout. The user is presented with a distraction-free, focused recovery canvas featuring:
+- Large thematic hero number (`404` / `500`) with ambient glow halos.
+- Clear, readable causal fault explanations.
+- Structured primary actions (**Return to Home Hub**, **Go Back**, **Recalibrate Timeline**, **Continuity Audit**).
+- Diagnostic panels with word-wrapped, syntax-highlighted JSON error traces and 1-click clipboard copy with toast notifications.
+
+---
+
+## 9. Theme Switcher Sliding Toggle Architecture
+
+The application theme toggle ([`theme-toggle.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/theme-toggle.svelte)) implements a sliding switch design:
+- **Interactive Thumb**: Smooth animated sliding pill (`transition-transform duration-200 ease-in-out`) transitioning across the track.
+- **Single Inactive Icon Display**: Only the non-active target mode icon is visible on the exposed track (the Sun icon is visible when in Dark mode; the Moon icon is visible when in Light mode).
+- **Accessibility**: Full keyboard navigation support (`Enter` / `Space`), ARIA `role="switch"` and `aria-checked` bindings.
+
+---
+
+## 10. Svelte 5 Pure Derivation & Synchronous Lifecycle Standard
+
+### 10.1. Pure Derived Getters Rule
+In Svelte 5, derived values (`$derived`) must be strictly pure functions. Calling getters or methods that mutate state (e.g. assigning to `$state` variables or cached formulas) inside a `$derived` derivation causes runtime aborts during client-side navigation. All store getters (e.g. `worldStore.getEntity`, `worldStore.getBlueprint`) must be side-effect free.
+
+### 10.2. Synchronous Initial Form State
+To eliminate flickering, empty input states, and race conditions during SSR and client page navigation, edit pages (`/world/entities/[id]`, `/world/schemas/[id]`) compute their initial form state synchronously via `getInitialEntityState()` before mounting rather than relying on delayed asynchronous effects.
+

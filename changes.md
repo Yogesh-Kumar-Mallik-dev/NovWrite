@@ -52,11 +52,40 @@ timeline
                : Sandboxed Mathematical & Logical Formula Engine (formulaEngine.ts)
                : Dedicated 3-Tier Page-Based Routing Standard (List, Create, Update)
                : Absolute Zero-Badge Policy Across All UI Screens
+    2026-09-06 : Version 2.1 (CodeMirror 6 JSON Workbench, Error Isolation & Sliding Theme Switch)
+               : CodeMirror 6 JSON Editor with Syntax Highlighting & Word-Wrapping
+               : Full-Screen Isolated 404 & 500 Canvases with SvelteKit +error.svelte
+               : Sliding Theme Toggle with Single Inactive Target Icon
+               : Svelte 5 Pure Derivation & Synchronous Lifecycle Standard
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.1] — 2026-09-06
+
+**Scope:** CodeMirror 6 Color-Coded JSON Workbench, Full-Screen Isolated Error Architecture, Sliding Switch Theme Toggle & Svelte 5 Pure Derivation Standards  
+**Target Documents:** [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added
+
+- **Color-Coded CodeMirror 6 JSON Editor (`JsonEditor.svelte`):**
+  - Custom token palette matching NovWrite tokens (Cyan property keys, Emerald strings, Orange numbers, Rose booleans, Purple null, Slate brackets).
+  - Bi-directional synchronization between Visual Form inputs, AST computed formulas, and Raw JSON editor state.
+  - Enabled `EditorView.lineWrapping` to prevent horizontal container overflow on long properties and stack traces.
+  - Real-time dark and light theme reconfiguration via `themeStore.mode`.
+- **Full-Screen 404 & 500 Error Architecture (`+error.svelte`):**
+  - SvelteKit centralized error routing dynamically handling 404 (Timeline Paradox) and 500 (Continuity Invariant Collapse) with standalone preview routes (`/404`, `/500`).
+  - Strict removal of all application chrome (dev header, main navigation, studio switcher, and theme switch) on error routes for an isolated, focused recovery canvas.
+  - Generous vertical whitespace (`space-y-10 md:space-y-12`, `py-16 md:py-24`) between badge, hero number, description, buttons, and diagnostic inspector.
+  - Word-wrapped, syntax-highlighted JSON diagnostic trace console with 1-click clipboard copy and toast confirmation.
+- **Sliding-Switch Theme Toggle (`theme-toggle.svelte`):**
+  - Smooth animated sliding thumb switch displaying exclusively the inactive destination icon on the exposed track (Sun icon when in Dark mode; Moon icon when in Light mode).
+- **Svelte 5 Pure Derivation Standard:**
+  - Removed state mutation side-effects from `$derived` getters in `worldStore` and standardized on synchronous initial state computation (`getInitialEntityState`) across edit routes.
+
+---
 
 ### [Version 2.0] — 2026-09-06
 

@@ -1,6 +1,6 @@
 # NovWrite Platform Architecture
 
-**Status:** Technical Specification Baseline (Version 2.0 - First & Second Class Blueprints, Mathematical Formula Engine, Relational Graphs & Zero-Badge Standards)  
+**Status:** Technical Specification Baseline (Version 2.1 - First & Second Class Blueprints, Mathematical Formula Engine, CodeMirror JSON Workbench & Isolated Error Canvases)  
 **Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, and deployment.
 
 ---
@@ -16,9 +16,12 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 3. **Events as State Transitions:** World mutations occur exclusively through recorded events (e.g. `Battle of Xian`, `Artifact Transfer`, `Breakthrough`).
 4. **Blueprint (Class) vs. Entity (Object) Paradigm:** Clear separation between structural blueprints/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas) and concrete instantiated universe objects.
 5. **Pure Categorical ENUM, Weighted VALUE_TYPE & AST Mathematical Formulas:** Pure string categorical choices (`ENUM`) alongside dual-valued weighted options (`VALUE_TYPE`: `{ label, value, power }`) feed directly into safe AST formula parsers for live combat power and stat calculations.
-6. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
-7. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
-8. **Dedicated Page-Based Routing & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`) with clean modern visual design without badge clutter, featuring Archetype Carousels and customizable columns.
+6. **CodeMirror 6 JSON Workbench & Bi-Directional State:** First-class color-coded JSON editing with automatic word-wrapping, syntax diagnostics, and bi-directional reactive synchronization with visual form fields.
+7. **Full-Screen Isolated Error Canvases:** Centralized SvelteKit error architecture (`+error.svelte`) routing 404 and 500 exceptions to dedicated, chrome-free canvases with word-wrapped JSON diagnostic traces.
+8. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
+9. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
+10. **Dedicated Page-Based Routing & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`) with clean modern visual design without badge clutter, featuring Archetype Carousels and customizable columns.
+
 
 ---
 
