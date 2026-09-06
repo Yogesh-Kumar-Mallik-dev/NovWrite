@@ -855,14 +855,6 @@ export class WorldStateStore {
       ent.computedFormulas = this.evaluateEntityFormulas(ent);
     }
   }
-
-  // Backwards compatibility aliases for previous schema / systems views
-  get schemas() {
-    return this.blueprints;
-  }
-  get systems() {
-    return this.getSecondClassBlueprints();
-  }
 }
 
 export const worldStore = new WorldStateStore();

@@ -31,17 +31,16 @@ flowchart TB
         end
 
         subgraph WorldApp ["NovWrite World Studio (Creation / Canon Space)"]
-            W1["/world/entities<br/>Entities Registry & Inspector"]
-            W2["/world/schemas<br/>1st & 2nd Class Blueprint Architect"]
-            W3["/world/systems<br/>2nd-Class Sub-Systems & Affection Scales"]
+            W1["/world/entities<br/>Entities Registry, Customizable Tables & Inspector"]
+            W2["/world/schemas<br/>1st & 2nd Class Blueprints & Schemas Architect"]
+            W3["/world/timeline<br/>Causal Timeline & Event Stream"]
             W4["/world/rules<br/>Continuity Rules & Invariant Builder"]
-            W5["/world/timeline<br/>Causal Timeline & Event Stream"]
-            W6["/world/audit<br/>Continuity Health & Canon Reconciler"]
+            W5["/world/audit<br/>Continuity Health & Canon Reconciler"]
         end
     end
 
     AppNav --> P1 & P2 & P3
-    AppNav --> W1 & W2 & W3 & W4 & W5 & W6
+    AppNav --> W1 & W2 & W3 & W4 & W5
 ```
 
 ### 1.2. Dedicated Page-Based Routing Standard
@@ -162,19 +161,15 @@ $$\text{Total Combat Power} = (\text{cultivation.major\_realm} \times \text{cult
 Every world building domain is implemented as a first-class, standalone workbench:
 
 ### 4.1. Universe Entities Workbench (`/world/entities`)
-- **List Page (`/world/entities`)**: Table showing archetype identities, custom enum values (`Male`/`Female`), affection bond stages, and live computed combat powers.
-- **Create Page (`/world/entities/create`)**: Instantiation form bound to 1st-Class Blueprints with dynamic enum selects, sub-blueprint forms, and live formula cards.
+- **List Page (`/world/entities`)**: Table showing archetype identities, customizable per-blueprint columns, custom enum values (`Male`/`Female` with numeric power levels), nested sub-blueprint properties, and live computed mathematical formulas.
+- **Create Page (`/world/entities/create`)**: Instantiation form bound to 1st-Class Blueprints with dynamic enum selects, sub-blueprint forms, and real-time live formula preview.
 - **Update Page (`/world/entities/[id]`)**: Deep inspector for modifying attributes, inspecting causal sequence numbers, and previewing real-time formula recalculations.
 
 ### 4.2. Blueprints & Schemas Workbench (`/world/schemas`)
-- **List Page (`/world/schemas`)**: Filter by 1st-Class vs 2nd-Class blueprints, category tags, search, and field breakdown.
-- **Create Page (`/world/schemas/create`)**: Blueprint architect with dynamic enum option manager, target reference picker, and mathematical formula editor with token insertion chips.
-- **Update Page (`/world/schemas/[id]`)**: Live field editor, formula test sandbox, and enum category modifiers.
-
-### 4.3. 2nd-Class Sub-Systems Workbench (`/world/systems`)
-- **List Page (`/world/systems`)**: Dedicated catalog for Progression Ladders, Affection Scales, and Power Matrices.
-- **Create Page (`/world/systems/create`)**: Quick configurator for multi-tier ladders or continuous affection gauges.
-- **Update Page (`/world/systems/[id]`)**: Inspector for sub-blueprint attributes and mechanics.
+- **Unified Registry**: Integrates both **1st-Class Archetypes** (Characters, Relics, Locations, Factions) and **2nd-Class Sub-Schemas** (Progression Ladders, Affection Gauges, Power Matrices, Magic Circuits) under one coherent schema engine.
+- **List Page (`/world/schemas`)**: Filter by 1st-Class vs 2nd-Class blueprints, category tags, search, and dynamic fields summary.
+- **Create Page (`/world/schemas/create`)**: Full-canvas blueprint architect with dual-valued enum options (`{ label, power }`), target blueprint reference selector, bounds, and mathematical formula engine with token insertion chips.
+- **Update Page (`/world/schemas/[id]`)**: Deep inspector, inline option adder/remover with power metrics, dynamic field attachments, and sandbox formula evaluation.
 
 ---
 
