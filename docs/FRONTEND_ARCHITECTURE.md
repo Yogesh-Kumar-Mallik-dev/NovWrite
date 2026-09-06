@@ -330,3 +330,31 @@ A dedicated, isolated operational portal (`/platform-admin`) accessible only to 
 - **MFA Reset & Security Assist Desk:** Secure workflow to clear lost 2FA authenticators upon identity verification, requiring mandatory support ticket reference.
 - **Payment & Refund Console:** View subscription billing history, issue partial/full Stripe refunds, and manage tier entitlements.
 - **Snapshot Diagnostics & Repair Utility:** Trigger background re-indexing and snapshot repairs for user-submitted corrupted universes.
+
+---
+
+## 10. UI/UX Quality Standards, Visual Noise Constraints & AI Anti-Pattern Prevention
+
+To ensure a cohesive, professional IDE experience inspired by **Linear** and **MongoDB Compass**, all frontend components must strictly adhere to visual noise constraints and avoid common AI-generated design failures.
+
+### 10.1. Visual Styling & Component Standards
+
+1. **Avoid Excessive Gradients & Visual Shimmer:**
+   - The application is a serious authoring workbench, not a consumer marketing site.
+   - Use solid, grounded surfaces (`zinc-900`, `zinc-950`, `slate-900`) with clean 1px borders (`border-zinc-800`, `border-slate-200`).
+   - Multi-color rainbow gradients, glossy glassmorphism, and neon glow borders are strictly prohibited.
+2. **Strict Badge Discipline:**
+   - **Permitted Usage:** Badges are reserved primarily for **Data Tables** (e.g. status columns `ALIVE`, `DEAD`, `DRAFT`, `PUBLISHED`, entity category pills) and compact header status pills (e.g. `[● Canon Verified]`).
+   - **Prohibited Usage:** Do NOT scatter badges across regular body text, form field labels, breadcrumbs, or random card headers. Use subtle typography (`text-muted-foreground font-mono text-xs`) instead.
+3. **Mandatory `Select` Component from `shadcn-svelte`:**
+   - For all dropdown menus, enum pickers, and category selectors, always use the official `Select` primitive from `shadcn-svelte` (`$lib/components/ui/select`) or `@rn-primitives` on mobile.
+   - Native unstyled `<select>` elements and DIY div-based click dropdowns are strictly prohibited.
+
+### 10.2. AI UI/UX Anti-Pattern Checklist
+
+All developers and AI agents must audit frontend work against the following anti-patterns before submitting changes:
+
+- **No Card Sprawl:** Do not wrap every small input or label in a separate bordered `<Card>`. Organize data into dense master-detail tables or structured forms.
+- **No Modal Inside Modal:** Never open dialogs from other dialogs. Use slide-over sheets (`Sheet`) or dedicated `/world/*` routes.
+- **Complete Empty & Loading States:** Every table and list view must include designed empty states (with an icon, headline, and primary action button) and skeleton loaders (`Skeleton`).
+- **Keyboard Navigation & Accessibility:** All interactive elements must support `Tab` navigation, `Esc` closing for overlays, and meet WCAG AA 4.5:1 text contrast ratios.

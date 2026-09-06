@@ -42,11 +42,37 @@ timeline
                : Strict YAGNI In-Scope vs Out-of-Scope MVP Boundaries
                : Phase-by-Phase Execution for main, world, and novel Branches
                : One-Click Development Test Data Seeder (Chronicles of Aethelgard)
+    2026-09-06 : Version 1.9 (UI/UX Quality Standards & AI Anti-Pattern Prevention)
+               : Strict Prohibition of Excessive Gradients & Glow Shimmer
+               : Table-First Badge Discipline & shadcn-svelte Select Standard
+               : Comprehensive AI UI/UX Anti-Pattern Checklist (agents.md & docs)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 1.9] — 2026-09-06
+
+**Scope:** Frontend UI/UX Quality Standards, Visual Noise Constraints & AI Anti-Pattern Prevention  
+**Target Documents:** [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md)
+
+#### Added
+
+- **Strict Gradient & Visual Noise Elimination:**
+  - Codified rules barring gratuitous rainbow gradients, glossy glassmorphism, and neon glow effects.
+  - Enforced solid, grounded surfaces (`zinc-900`/`slate-900`) inspired by MongoDB Compass and Linear.
+- **Badge Discipline Standard:**
+  - Restricted badge usage primarily to **Data Tables** (status/category indicators: `ALIVE`, `DEAD`, `PUBLISHED`) and compact header status pills (`[● Canon Verified]`).
+  - Prohibited badge spamming across body text, card headers, and form field labels.
+- **Dropdown Component Standard:**
+  - Mandated the use of the official `Select` primitive from `shadcn-svelte` (`$lib/components/ui/select`) and `React Native Reusables` (`@rn-primitives`) for all dropdown selectors, banning native unstyled `<select>` tags and DIY div click hacks.
+- **AI UI/UX Anti-Pattern Checklist in `agents.md`:**
+  - Added Rule 10 requiring all agents to audit frontend implementations against the AI UI anti-pattern checklist (no card sprawl, no modal inside modal, designed empty/loading skeleton states, complete keyboard navigation, WCAG AA 4.5:1 text contrast).
+- **Academic Report & Specification Synchronization:**
+  - Regenerated [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx) to **Version 1.9**, integrating Section 5.3 (UI/UX Standards, Visual Noise Constraints & AI Anti-Pattern Prevention).
+
+---
 
 ### [Version 1.8] — 2026-09-06
 
