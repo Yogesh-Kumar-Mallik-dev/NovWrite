@@ -31,6 +31,7 @@
     worldStore,
     type EntityItem,
     type BlueprintDef,
+    type DynamicFieldDef,
   } from '$lib/stores/worldStore.svelte';
   import { evaluateFormula } from '$lib/engine/formulaEngine';
 
@@ -250,14 +251,14 @@
   const directFields = $derived(
     blueprint
       ? blueprint.fields.filter(
-          (f) => f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
+          (f: DynamicFieldDef) => f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
         )
       : []
   );
 
   const subBlueprintRefFields = $derived(
     blueprint
-      ? blueprint.fields.filter((f) => {
+      ? blueprint.fields.filter((f: DynamicFieldDef) => {
           if (f.fieldType !== 'BLUEPRINT_REF') return false;
           const target = worldStore.getBlueprint(f.targetBlueprintId);
           return target && target.blueprintClass === 'SECOND_CLASS';
@@ -267,7 +268,7 @@
 
   const relationalEntityRefFields = $derived(
     blueprint
-      ? blueprint.fields.filter((f) => {
+      ? blueprint.fields.filter((f: DynamicFieldDef) => {
           if (f.fieldType !== 'BLUEPRINT_REF') return false;
           const target = worldStore.getBlueprint(f.targetBlueprintId);
           return !target || target.blueprintClass === 'FIRST_CLASS';
@@ -692,7 +693,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           {#each relationalEntityRefFields as field}
             {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-            {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id) : worldStore.entities.filter((e) => e.id !== entity.id)}
+            {@const candidateEntities = targetBp ? worldStore.entities.filter((e: EntityItem) => e.blueprintId === targetBp.id && e.id !== entity.id) : worldStore.entities.filter((e: EntityItem) => e.id !== entity.id)}
             <div class="p-4 rounded-lg border border-purple-950/70 bg-purple-950/15 space-y-2.5">
               <div class="flex items-center justify-between">
                 <Label class="text-xs font-medium text-purple-200 flex items-center gap-1.5">
@@ -713,7 +714,7 @@
                   bind:value={properties[field.name]}
                   options={[
                     { value: '', label: 'None (Unassigned)' },
-                    ...candidateEntities.map((e) => ({
+                    ...candidateEntities.map((e: EntityItem) => ({
                       value: e.id,
                       label: `${e.name} (${e.category})`,
                     })),

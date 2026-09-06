@@ -55,11 +55,13 @@
     }
   });
 
+  import type { BlueprintDef, EntityItem } from '$lib/stores/worldStore.svelte';
+
   const firstClassBlueprints = $derived(worldStore.getFirstClassBlueprints());
 
   const blueprintOptions = $derived([
     { value: 'ALL', label: 'All Blueprint Archetypes' },
-    ...firstClassBlueprints.map((bp) => ({
+    ...firstClassBlueprints.map((bp: BlueprintDef) => ({
       value: bp.id,
       label: `${bp.name} (${bp.category})`,
     })),
@@ -67,7 +69,7 @@
 
   const allCategories = $derived([
     { value: 'ALL', label: 'All Categories' },
-    ...Array.from(new Set(worldStore.entities.map((e) => e.category))).map((c) => ({
+    ...Array.from(new Set<string>(worldStore.entities.map((e: EntityItem) => e.category))).map((c) => ({
       value: c,
       label: c,
     })),
@@ -97,7 +99,7 @@
   );
 
   const filteredEntities = $derived(
-    worldStore.entities.filter((e) => {
+    worldStore.entities.filter((e: EntityItem) => {
       const matchesBp = blueprintFilter === 'ALL' || e.blueprintId === blueprintFilter;
       const matchesCat = categoryFilter === 'ALL' || e.category === categoryFilter;
       const q = searchQuery.toLowerCase();

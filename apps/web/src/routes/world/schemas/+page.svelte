@@ -15,7 +15,7 @@
   } from 'lucide-svelte';
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
-  import { worldStore, type BlueprintClass } from '$lib/stores/worldStore.svelte';
+  import { worldStore, type BlueprintClass, type BlueprintDef, type DynamicFieldDef } from '$lib/stores/worldStore.svelte';
 
   let searchQuery = $state('');
   let selectedClassFilter = $state<'ALL' | BlueprintClass>('ALL');
@@ -23,11 +23,11 @@
 
   // Categories list
   const allCategories = $derived(
-    Array.from(new Set(worldStore.blueprints.map((b) => b.category))).sort()
+    Array.from(new Set<string>(worldStore.blueprints.map((b: BlueprintDef) => b.category))).sort()
   );
 
   const filteredBlueprints = $derived(
-    worldStore.blueprints.filter((b) => {
+    worldStore.blueprints.filter((b: BlueprintDef) => {
       const matchClass = selectedClassFilter === 'ALL' || b.blueprintClass === selectedClassFilter;
       const matchCat = selectedCategoryFilter === 'ALL' || b.category === selectedCategoryFilter;
       const q = searchQuery.toLowerCase();
@@ -36,7 +36,7 @@
         b.name.toLowerCase().includes(q) ||
         b.description.toLowerCase().includes(q) ||
         b.category.toLowerCase().includes(q) ||
-        b.fields.some((f) => f.name.toLowerCase().includes(q) || f.label.toLowerCase().includes(q));
+        b.fields.some((f: DynamicFieldDef) => f.name.toLowerCase().includes(q) || f.label.toLowerCase().includes(q));
 
       return matchClass && matchCat && matchSearch;
     })

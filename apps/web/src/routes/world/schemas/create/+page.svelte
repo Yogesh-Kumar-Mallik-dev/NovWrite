@@ -104,9 +104,11 @@
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
   ];
 
+  import type { BlueprintDef } from '$lib/stores/worldStore.svelte';
+
   // Available blueprints for referencing
   let availableTargetBlueprints = $derived(
-    worldStore.blueprints.map((bp) => ({
+    worldStore.blueprints.map((bp: BlueprintDef) => ({
       value: bp.id,
       label: `${bp.name} (${bp.blueprintClass === 'FIRST_CLASS' ? '1st Class' : '2nd Class'} · ${bp.category})`,
     }))

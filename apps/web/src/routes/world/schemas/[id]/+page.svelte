@@ -29,6 +29,7 @@
     type BlueprintClass,
     type BlueprintFieldType,
     type DynamicFieldDef,
+    type BlueprintDef,
   } from '$lib/stores/worldStore.svelte';
   import {
     evaluateFormula,
@@ -91,7 +92,7 @@
   ];
 
   let availableTargetBlueprints = $derived(
-    worldStore.blueprints.map((bp) => ({
+    worldStore.blueprints.map((bp: BlueprintDef) => ({
       value: bp.id,
       label: `${bp.name} (${bp.blueprintClass === 'FIRST_CLASS' ? '1st Class' : '2nd Class'} · ${bp.category})`,
     }))
@@ -199,7 +200,7 @@
 
   function handleAddOptionToExistingField(fieldId: string) {
     if (!blueprint) return;
-    const targetField = blueprint.fields.find((f) => f.id === fieldId || f.name === fieldId);
+    const targetField = blueprint.fields.find((f: DynamicFieldDef) => f.id === fieldId || f.name === fieldId);
     const label = (inlineNewOptionLabels[fieldId] || '').trim();
     if (!label) return;
     const power = inlineNewOptionPowers[fieldId];
@@ -582,7 +583,7 @@
                 class="font-mono text-xs w-full bg-black/60 border-amber-900/60"
               />
               <div class="flex flex-wrap gap-1">
-                {#each blueprint.fields.map((f) => f.name) as fKey}
+                {#each blueprint.fields.map((f: DynamicFieldDef) => f.name) as fKey}
                   <button
                     type="button"
                     onclick={() => (newFieldFormula = newFieldFormula ? `${newFieldFormula} ${fKey}` : fKey)}
