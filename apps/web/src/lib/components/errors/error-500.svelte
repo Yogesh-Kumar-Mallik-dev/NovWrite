@@ -50,6 +50,37 @@
     )
   );
 
+  function highlightJson(jsonStr: string): string {
+    if (!jsonStr) return "";
+    const escaped = jsonStr
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    return escaped.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      (match) => {
+        let cls = "text-amber-600 dark:text-amber-400"; // number
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            const key = match.slice(0, match.lastIndexOf('"') + 1);
+            const trailing = match.slice(match.lastIndexOf('"') + 1);
+            return `<span class="text-sky-600 dark:text-sky-400 font-semibold">${key}</span><span class="text-muted-foreground">${trailing}</span>`;
+          } else {
+            return `<span class="text-emerald-600 dark:text-emerald-400">${match}</span>`;
+          }
+        } else if (/true|false/.test(match)) {
+          cls = "text-rose-600 dark:text-rose-400 font-bold";
+        } else if (/null/.test(match)) {
+          cls = "text-purple-600 dark:text-purple-400 font-bold";
+        }
+        return `<span class="${cls}">${match}</span>`;
+      }
+    );
+  }
+
+  const highlightedDiagnostics = $derived(highlightJson(diagnosticPayload));
+
   async function handleCopyDiagnostics() {
     try {
       await navigator.clipboard.writeText(diagnosticPayload);
@@ -185,8 +216,8 @@
           </div>
 
           <pre
-            class="p-3.5 rounded-md bg-background/80 border border-border text-[11px] leading-relaxed text-muted-foreground overflow-x-auto selection:bg-primary/20"
-          ><code>{diagnosticPayload}</code></pre>
+            class="p-4 rounded-md bg-background/90 border border-border text-[11px] sm:text-xs leading-relaxed font-mono whitespace-pre-wrap break-words [word-break:break-word] overflow-hidden selection:bg-primary/20 text-foreground/80 max-w-full"
+          ><code>{@html highlightedDiagnostics}</code></pre>
         </div>
       {/if}
     </Card>
