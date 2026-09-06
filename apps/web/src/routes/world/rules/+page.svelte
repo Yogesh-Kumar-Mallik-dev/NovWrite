@@ -28,6 +28,7 @@
   import { Switch } from "$lib/components/ui/switch";
   import ConfirmDialog from "$lib/components/ui/confirm-dialog.svelte";
   import EmptyState from "$lib/components/ui/empty-state.svelte";
+  import Select from "$lib/components/ui/select.svelte";
   import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
@@ -62,6 +63,23 @@
   let formSuggestedResolution = $state("");
   let formEnabled = $state(true);
 
+  // Filter Options
+  const severityFilterOptions = [
+    { value: "ALL", label: "All Severities" },
+    { value: "BLOCKING_ERROR", label: "Blocking Only" },
+    { value: "WARNING", label: "Warnings Only" },
+    { value: "ADVISORY_NOTE", label: "Advisory Notes" },
+  ];
+
+  const typeFilterOptions = [
+    { value: "ALL", label: "All Rule Types" },
+    { value: "STATE_GUARD", label: "State Guard" },
+    { value: "NUMERIC_BOUNDS", label: "Numeric Bounds" },
+    { value: "PREREQUISITE", label: "Prerequisite" },
+    { value: "RELATIONAL_GUARD", label: "Relational Guard" },
+    { value: "FORMULA_BOUNDARY", label: "Formula Boundary" },
+  ];
+
   // Severity Options
   const severityOptions: { value: RuleSeverity; label: string }[] = [
     { value: "BLOCKING_ERROR", label: "BLOCKING_ERROR (Strict Invariant)" },
@@ -77,6 +95,15 @@
     { value: "RELATIONAL_GUARD", label: "RELATIONAL_GUARD (Wielder / Ownership)" },
     { value: "FORMULA_BOUNDARY", label: "FORMULA_BOUNDARY (Computed Score Floor/Ceiling)" },
   ];
+
+  // Target Blueprint Options
+  const targetBlueprintOptions = $derived([
+    { value: "", label: "Universal (All Blueprints & Entities)" },
+    ...worldStore.blueprints.map((bp: BlueprintDef) => ({
+      value: bp.id,
+      label: `${bp.name} (${bp.category})`,
+    })),
+  ]);
 
   // Derived filtered rules
   const filteredRules = $derived(
@@ -266,28 +293,22 @@
 
     <div class="flex flex-wrap items-center gap-2">
       <!-- Severity Filter -->
-      <select
-        bind:value={selectedSeverityFilter}
-        class="bg-background border border-input rounded-md px-2.5 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring h-8"
-      >
-        <option value="ALL">All Severities</option>
-        <option value="BLOCKING_ERROR">Blocking Only</option>
-        <option value="WARNING">Warnings Only</option>
-        <option value="ADVISORY_NOTE">Advisory Notes</option>
-      </select>
+      <div class="w-40">
+        <Select
+          bind:value={selectedSeverityFilter}
+          options={severityFilterOptions}
+          class="h-8 text-xs min-h-[32px]"
+        />
+      </div>
 
       <!-- Type Filter -->
-      <select
-        bind:value={selectedTypeFilter}
-        class="bg-background border border-input rounded-md px-2.5 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring h-8"
-      >
-        <option value="ALL">All Rule Types</option>
-        <option value="STATE_GUARD">State Guard</option>
-        <option value="NUMERIC_BOUNDS">Numeric Bounds</option>
-        <option value="PREREQUISITE">Prerequisite</option>
-        <option value="RELATIONAL_GUARD">Relational Guard</option>
-        <option value="FORMULA_BOUNDARY">Formula Boundary</option>
-      </select>
+      <div class="w-48">
+        <Select
+          bind:value={selectedTypeFilter}
+          options={typeFilterOptions}
+          class="h-8 text-xs min-h-[32px]"
+        />
+      </div>
     </div>
   </div>
 
@@ -466,44 +487,35 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <Label for="rule-severity">Severity Level</Label>
-              <select
+              <Select
                 id="rule-severity"
-                class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
                 bind:value={formSeverity}
-              >
-                {#each severityOptions as opt}
-                  <option value={opt.value}>{opt.label}</option>
-                {/each}
-              </select>
+                options={severityOptions}
+                class="h-9 text-xs"
+              />
             </div>
 
             <div class="space-y-1.5">
               <Label for="rule-type">Rule Type</Label>
-              <select
+              <Select
                 id="rule-type"
-                class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
                 bind:value={formType}
-              >
-                {#each typeOptions as opt}
-                  <option value={opt.value}>{opt.label}</option>
-                {/each}
-              </select>
+                options={typeOptions}
+                class="h-9 text-xs"
+              />
             </div>
           </div>
 
           <!-- Target Blueprint / Scope -->
           <div class="space-y-1.5">
             <Label for="rule-target-bp">Target Blueprint Scope</Label>
-            <select
+            <Select
               id="rule-target-bp"
-              class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
               bind:value={formTargetBlueprintId}
-            >
-              <option value="">Universal (All Blueprints & Entities)</option>
-              {#each worldStore.blueprints as bp}
-                <option value={bp.id}>{bp.name} ({bp.category})</option>
-              {/each}
-            </select>
+              options={targetBlueprintOptions}
+              placeholder="Select blueprint scope..."
+              class="h-9 text-xs"
+            />
           </div>
 
           <!-- Predicate Condition & Summary -->

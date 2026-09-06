@@ -33,7 +33,7 @@
     DialogDescription,
     DialogFooter,
   } from "$lib/components/ui/dialog";
-  import { ConfirmDialog, EmptyState } from "$lib/components/ui";
+  import { ConfirmDialog, EmptyState, Select } from "$lib/components/ui";
   import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
@@ -119,6 +119,14 @@
     { value: "REMOVE", label: "REMOVE (Filter from Array)" },
     { value: "TRANSFER", label: "TRANSFER (Move Relational ID)" },
   ];
+
+  // Entity options for effect target selection
+  const entityOptions = $derived(
+    worldStore.entities.map((ent: EntityItem) => ({
+      value: ent.id,
+      label: ent.name,
+    }))
+  );
 
   function openAddModal() {
     modalMode = "add";
@@ -687,16 +695,14 @@
                     <!-- Target Entity -->
                     <div class="sm:col-span-1">
                       <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-target-${idx}`}>Target Entity</Label>
-                      <select
+                      <Select
                         id={`eff-target-${idx}`}
-                        class="w-full bg-background border border-input rounded-md px-2 py-1 text-xs text-foreground"
                         value={eff.targetEntityId}
-                        onchange={(e) => handleTargetEntityChange(idx, e.currentTarget.value)}
-                      >
-                        {#each worldStore.entities as ent}
-                          <option value={ent.id}>{ent.name}</option>
-                        {/each}
-                      </select>
+                        options={entityOptions}
+                        placeholder="Select entity..."
+                        onchange={(val) => handleTargetEntityChange(idx, val)}
+                        class="h-8 text-xs min-h-[32px]"
+                      />
                     </div>
 
                     <!-- Property Key -->
@@ -714,15 +720,13 @@
                     <!-- Operation -->
                     <div class="sm:col-span-1">
                       <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-op-${idx}`}>Operation</Label>
-                      <select
+                      <Select
                         id={`eff-op-${idx}`}
-                        class="w-full bg-background border border-input rounded-md px-2 py-1 text-xs text-foreground font-mono"
                         bind:value={eff.operation}
-                      >
-                        {#each operationOptions as op}
-                          <option value={op.value}>{op.label}</option>
-                        {/each}
-                      </select>
+                        options={operationOptions}
+                        placeholder="Select operation..."
+                        class="h-8 text-xs font-mono min-h-[32px]"
+                      />
                     </div>
 
                     <!-- Value & Delete -->
