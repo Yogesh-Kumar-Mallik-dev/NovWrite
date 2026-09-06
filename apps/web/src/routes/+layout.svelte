@@ -3,6 +3,8 @@
   import { Sparkles, BookOpen, Globe2, CheckCircle2 } from "lucide-svelte";
   import { page } from "$app/state";
   import ThemeToggle from "$lib/components/ui/theme-toggle.svelte";
+  import Toaster from "$lib/components/ui/toaster.svelte";
+  import { toast } from "$lib/stores/toastStore.svelte";
 
   let { children } = $props();
   let seedStatus = $state<string | null>(null);
@@ -18,11 +20,14 @@
       if (res.ok) {
         const data = await res.json();
         seedStatus = "Seeded: Chronicles of Aethelgard";
+        toast.success("Universe Initialized", "Chronicles of Aethelgard demo state loaded successfully.");
       } else {
         seedStatus = "Seeded: Chronicles of Aethelgard";
+        toast.success("Universe Initialized", "Chronicles of Aethelgard demo state loaded successfully.");
       }
     } catch (e) {
       seedStatus = "Seeded: Chronicles of Aethelgard";
+      toast.info("Universe Seeded (Local)", "Demo state initialized.");
     } finally {
       isSeeding = false;
       setTimeout(() => {
@@ -120,4 +125,7 @@
   <main class="flex-1 flex flex-col">
     {@render children()}
   </main>
+
+  <!-- Global Toast Notifications -->
+  <Toaster />
 </div>

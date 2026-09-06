@@ -29,7 +29,9 @@
     Field,
     Textarea,
     Breadcrumb,
+    EmptyState,
   } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
     CardContent,
@@ -446,11 +448,11 @@
 
   function handleCreateEntity() {
     if (!name.trim()) {
-      alert(`${archetypeContext.nameLabel} is required.`);
+      toast.error('Validation Error', `${archetypeContext.nameLabel} is required.`);
       return;
     }
     if (!selectedBlueprint) {
-      alert('Please select a valid blueprint archetype.');
+      toast.error('Validation Error', 'Please select a valid blueprint archetype.');
       return;
     }
 
@@ -463,6 +465,7 @@
       properties: JSON.parse(JSON.stringify(properties)),
     });
 
+    toast.success("Entity Instantiated", `"${name.trim()}" was successfully created from blueprint "${selectedBlueprint.name}".`);
     goto('/world/entities');
   }
 </script>

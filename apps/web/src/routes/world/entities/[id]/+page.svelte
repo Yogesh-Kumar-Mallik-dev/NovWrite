@@ -26,7 +26,10 @@
     Field,
     Textarea,
     Breadcrumb,
+    ConfirmDialog,
+    EmptyState,
   } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
     CardContent,
@@ -43,6 +46,7 @@
 
   const entityId = $derived(page.params.id);
   const entity = $derived(worldStore.getEntity(entityId));
+  let deleteConfirmOpen = $state(false);
   const blueprint = $derived(
     entity ? worldStore.getBlueprint(entity.blueprintId) : undefined
   );
@@ -291,18 +295,20 @@
       properties: JSON.parse(JSON.stringify(properties)),
     });
 
+    toast.success("Entity Updated", `Properties & live formulas for "${name.trim()}" saved.`);
     saveMessage = 'Entity state & formulas successfully updated!';
     setTimeout(() => {
       saveMessage = null;
     }, 3000);
   }
 
-  function handleDeleteEntity() {
+  function confirmDeleteAction() {
     if (!entity) return;
-    if (confirm(`Are you sure you want to permanently delete "${entity.name}"?`)) {
-      worldStore.deleteEntity(entity.id);
-      goto('/world/entities');
-    }
+    const entName = entity.name;
+    worldStore.deleteEntity(entity.id);
+    toast.success("Entity Deleted", `Entity "${entName}" was removed.`);
+    deleteConfirmOpen = false;
+    goto('/world/entities');
   }
 </script>
 
@@ -315,13 +321,13 @@
         { label: 'Entity Not Found' },
       ]}
     />
-    <Card class="p-12 text-center space-y-3 border-border bg-card">
-      <Shield class="w-8 h-8 text-muted-foreground mx-auto" />
-      <h2 class="text-base font-bold text-foreground">Entity Not Found</h2>
-      <a href="/world/entities">
-        <Button variant="outline" size="sm">Return to Entities Workbench</Button>
-      </a>
-    </Card>
+    <EmptyState
+      icon={Shield}
+      title="Entity Not Found"
+      description="The requested story entity does not exist or has been deleted from the active world state."
+      actionText="Return to Entities Workbench"
+      actionHref="/world/entities"
+    />
   </div>
 {:else}
   <div class="max-w-4xl mx-auto space-y-7 pb-20">
@@ -792,7 +798,7 @@
 
     <!-- Save Actions -->
     <div class="flex items-center justify-between pt-4 border-t border-border">
-      <Button variant="outline" size="sm" onclick={handleDeleteEntity} class="text-destructive hover:bg-destructive/10 hover:border-destructive/30">
+      <Button variant="outline" size="sm" onclick={() => (deleteConfirmOpen = true)} class="text-destructive hover:bg-destructive/10 hover:border-destructive/30">
         <Trash2 class="w-3.5 h-3.5" />
         <span>Delete Entity</span>
       </Button>
@@ -803,5 +809,15 @@
       </Button>
     </div>
   </div>
+
+  <!-- Delete Entity Confirmation Dialog -->
+  <ConfirmDialog
+    open={deleteConfirmOpen}
+    title="Delete Entity"
+    description={`Are you sure you want to delete "${entity.name}"? This entity will be permanently removed from the universe along with all assigned properties.`}
+    confirmText="Delete Entity"
+    onConfirm={confirmDeleteAction}
+    onCancel={() => (deleteConfirmOpen = false)}
+  />
 {/if}
 

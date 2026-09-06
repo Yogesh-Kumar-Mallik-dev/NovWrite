@@ -21,7 +21,9 @@
     Field,
     Textarea,
     Breadcrumb,
+    EmptyState,
   } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
     CardContent,
@@ -178,7 +180,7 @@
 
   function handleCreateBlueprint() {
     if (!name.trim()) {
-      alert('Blueprint name is required.');
+      toast.error('Validation Error', 'Blueprint name is required.');
       return;
     }
 
@@ -241,6 +243,7 @@
       fields: validFields,
     });
 
+    toast.success('Blueprint Created', `Blueprint "${name.trim()}" has been initialized.`);
     goto('/world/schemas');
   }
 </script>
@@ -395,13 +398,14 @@
     <!-- Fields List -->
     <div class="space-y-4">
       {#if fields.length === 0}
-        <div class="text-center py-8 border border-dashed border-border rounded-lg">
-          <p class="text-xs text-muted-foreground">No fields defined yet. Click below to add your first field.</p>
-          <Button variant="outline" size="sm" class="mt-3" onclick={addField}>
-            <Plus class="w-3.5 h-3.5" />
-            <span>Add Field</span>
-          </Button>
-        </div>
+        <EmptyState
+          icon={Boxes}
+          title="No Dynamic Fields Configured"
+          description="Add dynamic fields, enums, values with power ratings, relations, or formulas to define this schema."
+          actionText="+ Add First Field"
+          onAction={addField}
+          compact={true}
+        />
       {/if}
 
       {#each fields as field, index (field.id)}

@@ -26,6 +26,9 @@
     TableCell,
   } from "$lib/components/ui/table";
   import { Switch } from "$lib/components/ui/switch";
+  import ConfirmDialog from "$lib/components/ui/confirm-dialog.svelte";
+  import EmptyState from "$lib/components/ui/empty-state.svelte";
+  import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
     type InvariantRuleItem,
@@ -43,6 +46,9 @@
   let isModalOpen = $state(false);
   let modalMode = $state<"add" | "edit">("add");
   let activeEditId = $state<string | null>(null);
+
+  // Deletion Confirmation Dialog State
+  let ruleToDelete = $state<{ id: string; name: string } | null>(null);
 
   // Form Fields
   let formName = $state("");
@@ -110,13 +116,13 @@
     activeEditId = null;
     formName = "";
     formSeverity = "BLOCKING_ERROR";
-    formType = "NUMERIC_BOUNDS";
-    formTargetBlueprintId = worldStore.blueprints[0]?.id || "";
-    formTargetCategory = worldStore.blueprints[0]?.category || "Characters";
-    formPredicateExpression = "mana_capacity >= 0";
-    formPredicateSummary = "mana_capacity >= 0";
+    formType = "STATE_GUARD";
+    formTargetBlueprintId = "";
+    formTargetCategory = "";
+    formPredicateExpression = "";
+    formPredicateSummary = "";
     formDescription = "";
-    formSuggestedResolution = "Add a prior spiritual replenishment event or reduce mana expenditure.";
+    formSuggestedResolution = "";
     formEnabled = true;
     isModalOpen = true;
   }
@@ -130,7 +136,7 @@
     formTargetBlueprintId = rule.targetBlueprintId || "";
     formTargetCategory = rule.targetCategory || "";
     formPredicateExpression = rule.predicateExpression;
-    formPredicateSummary = rule.predicateSummary;
+    formPredicateSummary = rule.predicateSummary || "";
     formDescription = rule.description;
     formSuggestedResolution = rule.suggestedResolution || "";
     formEnabled = rule.enabled;
@@ -156,6 +162,7 @@
         suggestedResolution: formSuggestedResolution.trim() || undefined,
         enabled: formEnabled,
       });
+      toast.success("Invariant Rule Created", `Rule "${formName.trim()}" has been established.`);
     } else if (activeEditId) {
       worldStore.updateRule(activeEditId, {
         name: formName.trim(),
@@ -170,14 +177,21 @@
         suggestedResolution: formSuggestedResolution.trim() || undefined,
         enabled: formEnabled,
       });
+      toast.success("Invariant Rule Updated", `Rule "${formName.trim()}" changes saved.`);
     }
 
     isModalOpen = false;
   }
 
-  function handleDeleteRule(id: string) {
-    if (confirm("Are you sure you want to delete this invariant rule?")) {
-      worldStore.deleteRule(id);
+  function handleDeleteRule(id: string, name: string) {
+    ruleToDelete = { id, name };
+  }
+
+  function confirmDeleteRule() {
+    if (ruleToDelete) {
+      worldStore.deleteRule(ruleToDelete.id);
+      toast.success("Invariant Rule Deleted", `Rule "${ruleToDelete.name}" was removed from the universe.`);
+      ruleToDelete = null;
     }
   }
 
@@ -185,6 +199,7 @@
     const r = worldStore.getRule(id);
     if (r) {
       r.enabled = checked;
+      toast.info(checked ? "Rule Enabled" : "Rule Disabled", `Constraint enforcement ${checked ? "activated" : "paused"} for "${r.name}".`);
     }
   }
 </script>
@@ -294,8 +309,17 @@
         <TableBody class="divide-y divide-border/60">
           {#if filteredRules.length === 0}
             <TableRow>
-              <TableCell colspan={7} class="px-4 py-8 text-center text-muted-foreground font-mono">
-                No invariant rules match your filter criteria.
+              <TableCell colspan={7} class="p-0 border-0">
+                <EmptyState
+                  icon={ShieldCheck}
+                  title={worldStore.rules.length === 0 ? "No Invariant Rules Defined" : "No Matching Invariant Rules"}
+                  description={worldStore.rules.length === 0
+                    ? "Establish deterministic rules, prerequisites, and state guards to prevent plot holes and causal contradictions."
+                    : "No invariant rules match your search query or filter criteria."}
+                  actionText={worldStore.rules.length === 0 ? "+ Define First Invariant Rule" : "Clear Filters"}
+                  onAction={worldStore.rules.length === 0 ? openAddModal : () => { searchQuery = ""; selectedSeverityFilter = "ALL"; selectedTypeFilter = "ALL"; }}
+                  class="border-0 rounded-none bg-transparent py-12"
+                />
               </TableCell>
             </TableRow>
           {/if}
@@ -382,7 +406,7 @@
                   <Button
                     variant="ghost"
                     size="sm"
-                    onclick={() => handleDeleteRule(rule.id)}
+                    onclick={() => handleDeleteRule(rule.id, rule.name)}
                     class="h-7 px-2 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
@@ -395,6 +419,16 @@
       </Table>
     </div>
   </Card>
+
+  <!-- Delete Confirmation Dialog -->
+  <ConfirmDialog
+    open={ruleToDelete !== null}
+    title="Delete Invariant Rule"
+    description={`Are you sure you want to delete "${ruleToDelete?.name}"? This invariant constraint will no longer be checked during narrative continuity audits.`}
+    confirmText="Delete Rule"
+    onConfirm={confirmDeleteRule}
+    onCancel={() => (ruleToDelete = null)}
+  />
 
   <!-- Create / Edit Invariant Rule Modal -->
   {#if isModalOpen}

@@ -7,4 +7,7 @@ export { default as Textarea } from "./textarea.svelte";
 export { default as Card } from "./card.svelte";
 export { default as Breadcrumb } from "./breadcrumb.svelte";
 export { default as ThemeToggle } from "./theme-toggle.svelte";
+export { default as ConfirmDialog } from "./confirm-dialog.svelte";
+export { default as EmptyState } from "./empty-state.svelte";
+export { default as Toaster } from "./toaster.svelte";
 export * from "./radio-group";

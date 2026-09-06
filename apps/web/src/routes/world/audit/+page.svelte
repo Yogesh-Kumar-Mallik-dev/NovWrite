@@ -19,6 +19,8 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { Card } from "$lib/components/ui/card";
+  import { EmptyState } from "$lib/components/ui";
+  import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
     type ContinuityViolationItem,
@@ -65,6 +67,7 @@
     setTimeout(() => {
       worldStore.runContinuityAudit();
       isAuditing = false;
+      toast.success("Audit Complete", "Causal state graph synchronized with manuscript.");
       showNotification("Continuity audit complete. Causal state graph synchronized.");
     }, 600);
   }
@@ -84,6 +87,10 @@
       authorNameInput.trim() || "Lead Author",
     );
 
+    toast.warning(
+      "Invariant Overridden",
+      `Lead Author Override logged for ${activeOverrideViolation.code}.`,
+    );
     showNotification(
       `Lead Author Override logged for ${activeOverrideViolation.code}. Audit entry recorded.`,
     );
@@ -94,14 +101,17 @@
     const success = worldStore.reconcileViolation(viol.id, actionType);
     if (success) {
       if (actionType === "AUTO_LOG_BREAKTHROUGH") {
+        toast.success("Auto-Reconciled", `Breakthrough event injected into timeline for ${viol.entityName}.`);
         showNotification(
           `Auto-reconciled: Breakthrough event injected into timeline for ${viol.entityName}.`,
         );
       } else if (actionType === "AUTO_LINK_RELATIONAL_WEAPON") {
+        toast.success("Auto-Reconciled", `Bound relational weapon link established for ${viol.entityName}.`);
         showNotification(
           `Auto-reconciled: Bound relational weapon link established for ${viol.entityName}.`,
         );
       } else {
+        toast.info("Violation Dismissed", "Continuity violation dismissed.");
         showNotification("Violation dismissed.");
       }
     }
@@ -109,6 +119,7 @@
 
   function handleDismiss(id: string) {
     worldStore.dismissViolation(id);
+    toast.info("Violation Dismissed", "Continuity violation dismissed from active list.");
     showNotification("Continuity violation dismissed.");
   }
 
@@ -227,13 +238,17 @@
   <!-- Violations List -->
   <div class="space-y-4">
     {#if filteredViolations.length === 0}
-      <Card class="border-border bg-card p-8 text-center space-y-2 shadow-xs">
-        <CheckCircle2 class="w-8 h-8 text-emerald-500 mx-auto" />
-        <h3 class="text-sm font-bold text-foreground">No Continuity Violations Detected</h3>
-        <p class="text-xs text-muted-foreground max-w-md mx-auto">
-          All narrative scene state transitions comply with your universe invariant rules and causal delta logs.
-        </p>
-      </Card>
+      <EmptyState
+        icon={ShieldCheck}
+        title={statusFilter === 'ACTIVE' ? "Zero Active Violations" : statusFilter === 'OVERRIDDEN' ? "No Overridden Violations" : "100% Continuity Intact"}
+        description={statusFilter === 'ACTIVE'
+          ? "All active narrative scene state transitions comply with your universe invariant rules and causal delta logs."
+          : statusFilter === 'OVERRIDDEN'
+            ? "No editorial overrides have been recorded for this universe."
+            : "No contradictions or invariant rule violations found across any narrative scenes or causal events."}
+        actionText="Re-Run Continuity Audit"
+        onAction={triggerAuditRun}
+      />
     {/if}
 
     {#each filteredViolations as viol}

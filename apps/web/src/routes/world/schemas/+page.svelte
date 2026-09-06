@@ -12,7 +12,8 @@
     Hash,
     Sparkles,
   } from 'lucide-svelte';
-  import { Button, Input } from '$lib/components/ui';
+  import { Button, Input, ConfirmDialog, EmptyState } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
     CardContent,
@@ -25,6 +26,9 @@
   let searchQuery = $state('');
   let selectedClassFilter = $state<'ALL' | BlueprintClass>('ALL');
   let selectedCategoryFilter = $state<string>('ALL');
+
+  // Deletion Confirmation Dialog State
+  let bpToDelete = $state<{ id: string; name: string } | null>(null);
 
   // Categories list
   const allCategories = $derived(
@@ -48,8 +52,14 @@
   );
 
   function handleDelete(id: string, name: string) {
-    if (confirm(`Are you sure you want to delete the "${name}" blueprint?`)) {
-      worldStore.deleteBlueprint(id);
+    bpToDelete = { id, name };
+  }
+
+  function confirmDeleteBp() {
+    if (bpToDelete) {
+      worldStore.deleteBlueprint(bpToDelete.id);
+      toast.success("Blueprint Deleted", `Blueprint "${bpToDelete.name}" was removed from the universe schema registry.`);
+      bpToDelete = null;
     }
   }
 </script>
@@ -162,15 +172,19 @@
   <!-- Blueprints Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     {#if filteredBlueprints.length === 0}
-      <Card class="col-span-2 border-border bg-card p-12 text-center text-muted-foreground space-y-3">
-        <p class="text-xs">No blueprints match your filter criteria.</p>
-        <a href="/world/schemas/create">
-          <Button variant="outline" size="sm">
-            <Plus class="w-3.5 h-3.5" />
-            <span>Create Blueprint from Scratch</span>
-          </Button>
-        </a>
-      </Card>
+      <div class="col-span-1 md:col-span-2">
+        <EmptyState
+          icon={Boxes}
+          title={worldStore.blueprints.length === 0 ? "No Blueprints Defined" : "No Matching Blueprints"}
+          description={worldStore.blueprints.length === 0
+            ? "Create custom schema blueprints to architect universe archetypes, nested sub-schemas, dynamic enums, and mathematical formula models."
+            : "No blueprints match your active class, category, or search filters."}
+          actionText={worldStore.blueprints.length === 0 ? "+ Create First Blueprint" : "Clear Filters"}
+          actionHref={worldStore.blueprints.length === 0 ? "/world/schemas/create" : undefined}
+          onAction={worldStore.blueprints.length === 0 ? undefined : () => { searchQuery = ''; selectedClassFilter = 'ALL'; selectedCategoryFilter = 'ALL'; }}
+          class="py-14"
+        />
+      </div>
     {:else}
       {#each filteredBlueprints as bp (bp.id)}
         <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between">
@@ -262,5 +276,15 @@
       {/each}
     {/if}
   </div>
+
+  <!-- Delete Blueprint Confirmation Dialog -->
+  <ConfirmDialog
+    open={bpToDelete !== null}
+    title="Delete Blueprint"
+    description={`Are you sure you want to permanently delete the "${bpToDelete?.name}" blueprint? All schema fields, formulas, and references for this blueprint will be removed from the schema registry.`}
+    confirmText="Delete Blueprint"
+    onConfirm={confirmDeleteBp}
+    onCancel={() => (bpToDelete = null)}
+  />
 </div>
 

@@ -22,7 +22,10 @@
     Field,
     Textarea,
     Breadcrumb,
+    ConfirmDialog,
+    EmptyState,
   } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
     CardContent,
@@ -44,6 +47,10 @@
 
   const blueprintId = $derived(page.params.id);
   const blueprint = $derived(worldStore.getBlueprint(blueprintId));
+
+  // Confirmation States
+  let fieldToDelete = $state<{ id: string; name: string } | null>(null);
+  let deleteBpConfirmOpen = $state(false);
 
   let name = $state('');
   let blueprintClass = $state<BlueprintClass>('FIRST_CLASS');
@@ -125,6 +132,7 @@
       description: description.trim(),
     });
 
+    toast.success("Blueprint Saved", `Blueprint "${name.trim()}" overview updated.`);
     saveMessage = 'Blueprint details successfully updated!';
     setTimeout(() => {
       saveMessage = null;
@@ -135,7 +143,7 @@
     if (!blueprint) return;
     const key = (newFieldName.trim() || newFieldLabel.trim().toLowerCase().replace(/\s+/g, '_')).replace(/[^a-zA-Z0-9_\.]/g, '');
     if (!key) {
-      alert('Field Key or Label is required.');
+      toast.error('Validation Error', 'Field Key or Label is required.');
       return;
     }
 
@@ -182,6 +190,7 @@
     }
 
     worldStore.addFieldToBlueprint(blueprint.id, fieldDef);
+    toast.success("Dynamic Field Added", `Field "${fieldDef.label || key}" attached to blueprint.`);
 
     // Reset draft
     newFieldName = '';
@@ -222,6 +231,7 @@
       });
     }
 
+    toast.success("Option Added", `Option "${label}" added to field.`);
     inlineNewOptionLabels[fieldId] = '';
     inlineNewOptionPowers[fieldId] = undefined;
   }
@@ -229,21 +239,28 @@
   function handleRemoveOptionFromExistingField(fieldId: string, optionIndex: number) {
     if (!blueprint) return;
     worldStore.removeOptionFromField(blueprint.id, fieldId, optionIndex);
+    toast.info("Option Removed", "Option deleted from field.");
   }
 
   function handleDeleteField(fieldId: string, fieldName: string) {
-    if (!blueprint) return;
-    if (confirm(`Remove field "${fieldName}" from blueprint "${blueprint.name}"?`)) {
-      worldStore.deleteBlueprintField(blueprint.id, fieldId);
+    fieldToDelete = { id: fieldId, name: fieldName };
+  }
+
+  function confirmDeleteField() {
+    if (blueprint && fieldToDelete) {
+      worldStore.deleteBlueprintField(blueprint.id, fieldToDelete.id);
+      toast.success("Field Deleted", `Field "${fieldToDelete.name}" was removed.`);
+      fieldToDelete = null;
     }
   }
 
-  function handleDeleteBlueprint() {
+  function confirmDeleteBlueprint() {
     if (!blueprint) return;
-    if (confirm(`Are you sure you want to permanently delete blueprint "${blueprint.name}"?`)) {
-      worldStore.deleteBlueprint(blueprint.id);
-      goto('/world/schemas');
-    }
+    const bpName = blueprint.name;
+    worldStore.deleteBlueprint(blueprint.id);
+    toast.success("Blueprint Deleted", `Blueprint "${bpName}" was permanently removed.`);
+    deleteBpConfirmOpen = false;
+    goto('/world/schemas');
   }
 </script>
 
@@ -256,13 +273,13 @@
         { label: 'Blueprint Not Found' },
       ]}
     />
-    <Card class="p-12 text-center space-y-3 border-border bg-card">
-      <Shield class="w-8 h-8 text-muted-foreground mx-auto" />
-      <h2 class="text-base font-bold text-foreground">Blueprint Not Found</h2>
-      <a href="/world/schemas">
-        <Button variant="outline" size="sm">Return to Blueprints Workbench</Button>
-      </a>
-    </Card>
+    <EmptyState
+      icon={Shield}
+      title="Blueprint Not Found"
+      description="The requested blueprint schema does not exist or has been deleted from the universe registry."
+      actionText="Return to Blueprints Workbench"
+      actionHref="/world/schemas"
+    />
   </div>
 {:else}
   <div class="max-w-4xl mx-auto space-y-6 pb-16">
@@ -613,7 +630,17 @@
 
       <!-- Current Blueprint Fields List -->
       <div class="space-y-3">
-        {#each blueprint.fields as field (field.id)}
+        {#if blueprint.fields.length === 0}
+          <EmptyState
+            icon={Boxes}
+            title="No Dynamic Fields Defined"
+            description="Add custom properties, categorical enums, entity relations, or live mathematical formulas to architect this blueprint."
+            actionText="+ Add Dynamic Field"
+            onAction={() => (showNewFieldModal = true)}
+            compact={true}
+          />
+        {:else}
+          {#each blueprint.fields as field (field.id)}
           <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5">
             <div class="flex items-start justify-between">
               <div class="space-y-1">
@@ -801,6 +828,7 @@
             {/if}
           </div>
         {/each}
+        {/if}
       </div>
     </Card>
 
@@ -812,11 +840,32 @@
           Permanently remove this blueprint from the world schema registry.
         </p>
       </div>
-      <Button variant="outline" size="sm" onclick={handleDeleteBlueprint} class="text-destructive hover:bg-destructive/10 hover:border-destructive/30">
+      <Button variant="outline" size="sm" onclick={() => (deleteBpConfirmOpen = true)} class="text-destructive hover:bg-destructive/10 hover:border-destructive/30">
         <Trash2 class="w-3.5 h-3.5" />
         <span>Delete Blueprint</span>
       </Button>
     </Card>
   </div>
 {/if}
+
+<!-- Confirmation Dialogs -->
+<ConfirmDialog
+  open={fieldToDelete !== null}
+  title="Delete Dynamic Field"
+  description={`Are you sure you want to remove the field "${fieldToDelete?.name}"? Any entity instances relying on this field schema may lose data.`}
+  confirmText="Delete Field"
+  variant="destructive"
+  onConfirm={confirmDeleteField}
+  onCancel={() => (fieldToDelete = null)}
+/>
+
+<ConfirmDialog
+  open={deleteBpConfirmOpen}
+  title="Delete Blueprint Schema"
+  description={`Are you sure you want to permanently delete "${blueprint?.name}"? All associated instances will lose their schema validation.`}
+  confirmText="Delete Blueprint"
+  variant="destructive"
+  onConfirm={confirmDeleteBlueprint}
+  onCancel={() => (deleteBpConfirmOpen = false)}
+/>
 
