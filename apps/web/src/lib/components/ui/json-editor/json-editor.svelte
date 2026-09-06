@@ -119,6 +119,7 @@
         basicSetup,
         json(),
         syntaxHighlighting(novwriteHighlightStyle),
+        EditorView.lineWrapping,
         themeConfig.of(getEditorTheme(isDark)),
         readOnlyConfig.of(EditorState.readOnly.of(readonly)),
         updateListener,
