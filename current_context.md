@@ -2,18 +2,13 @@
 
 - **Active Branch:** `world` (World Studio, Dynamic Schemas, Timeline & State Fold Engine).
 - **Execution Constraints:** **Strictly DO NOT push changes to remote git without explicit user permission.** Local signed commits (`git commit -S`) are standard.
-- **Last Completed Task:** **First-Class & Second-Class Blueprint Architecture with Dynamic Enum Categories, Blueprint References, and Mathematical Formula Engine** (`BLOCK_WORLD_CUSTOM_BLUEPRINTS_001`).
-  - **Complete Freedom in Blueprint Creation**: Users can create blueprints from complete scratch, defining custom categories, freeform domain tags, and arbitrary dynamic fields.
-  - **First-Class & Second-Class Blueprint Hierarchy**:
-    - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible entities in the timeline (Characters, Sacred Relics, Realms, Factions) with causal state folds and history logs.
-    - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) that can be referenced as fields in 1st-Class or other 2nd-Class blueprints.
-  - **User-Defined Enum Categories & Options**: Users can define dynamic option tags on enum fields (e.g., `gender` with options `Male`, `Female`, `Dual-Yin-Yang`, `Celestial`).
-  - **Dynamic Blueprint References**: Fields can reference other First-Class or Second-Class blueprints (e.g., `romantic_feelings` referencing `Romantic Affection Scale` and `cultivation` referencing `Cultivation Rank & Mastery`).
-  - **Mathematical & Logical Formula Engine**:
-    - Created safe, sandboxed expression parser and evaluator ([`formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/engine/formulaEngine.ts)).
-    - Supports full arithmetic (`+`, `-`, `*`, `/`, `%`, `^`), parentheses, dot-notation variables (e.g. `cultivation.major_realm`), logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
-    - Successfully evaluated user's exact formula: `(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`.
-    - Live real-time evaluation in entity create/update forms and blueprint test sandboxes.
-  - **Testing & Quality Assurance**: 100% test pass rate (32/32 tests), 0 svelte-check warnings/errors, and complete Zero-Badge UI adherence.
-- **Current State:** First-Class and Second-Class Blueprint system with mathematical formulas and dynamic enums fully implemented and verified.
-- **Next Steps:** Request user confirmation before pushing to remote `origin/world` or proceeding to novel branch / subsequent milestones.
+- **Last Completed Task:** **Documentation & System Specifications Version 2.0 Update** (`BLOCK_DOCS_UPDATE_V2_001`).
+  - **First-Class & Second-Class Blueprint Hierarchy**: Documented the 1st-Class (Primary Entity Archetypes) and 2nd-Class (Sub-Schemas/Value Objects) system in all architectural specifications.
+  - **Dynamic Enum Categories & Option Management**: Documented custom enum tag managers and accessible `Select` bindings.
+  - **Sandboxed Mathematical Formula Engine**: Documented the AST expression parser ([`formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/engine/formulaEngine.ts)) and live evaluation of complex cultivation formulas.
+  - **Dedicated Page-Based Routing Standard**: Codified 3-tier routing (`/`, `/create`, `/[id]`) across all creation domains.
+  - **Zero-Badge Policy**: Codified the strict prohibition of badges and pill tags across the frontend.
+  - **Regenerated Formal Capstone Report**: Regenerated [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx) to **Version 2.0**.
+  - **Synchronized Documents**: Updated [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md), [`docs/MVP_PHASED_PLAN.md`](file:///home/yogesh/Projects/NovWrite/docs/MVP_PHASED_PLAN.md), [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), and [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md).
+- **Current State:** Code and comprehensive documentation are 100% synchronized with the new blueprint and formula direction.
+- **Next Steps:** Request user confirmation before pushing to remote `origin/world` or proceeding to subsequent milestones.

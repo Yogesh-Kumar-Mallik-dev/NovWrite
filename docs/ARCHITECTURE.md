@@ -8,7 +8,7 @@ This document provides a comprehensive technical overview of the subsystems, dom
 
 NovWrite is designed as a **hybrid multi-service architecture** composed of:
 
-1. **Frontend Layer:** SvelteKit + Tailwind CSS + Vite (Web) with future Tauri desktop client support.
+1. **Frontend Layer:** SvelteKit 2 + Svelte 5 (Runes) + Tailwind CSS v4 (Web) with Tauri 2 desktop client and React Native mobile support.
 2. **Go API Backend:** Modular monolith housing HTTP routing, authentication, project isolation, prose management, continuity rules execution, and AI orchestration.
 3. **TypeScript Data Service:** Prisma-backed domain data service communicating with the Go backend via high-performance internal gRPC.
 4. **Storage & Infrastructure:** PostgreSQL 18 with `pgvector`, Redis for queues/caching, S3-compatible Object Storage, and Traefik reverse proxy.
@@ -54,13 +54,22 @@ NovWrite is designed as a **hybrid multi-service architecture** composed of:
 - **Prose Representation:** Structured block-based rich text (TipTap/ProseMirror JSON) + raw markdown export.
 - **Scene Metadata:** Linked timeline position, participating characters, current location, and scene mood/pov.
 
-### 2.3 User-Defined Universe Engine (`universe`)
+### 2.3 User-Defined Universe & Blueprint Engine (`universe`)
 
-- **Entity Types (`EntityType`):** Configurable schemas (e.g. `Character`, `Item`, `Weapon`, `Technique`, `Spell`, `Species`, `Faction`, `Location`, `Artifact`).
-- **Dynamic Property Definitions (`PropertyDefinition`):** Typed schema attributes attached to entity types (e.g., `string`, `number`, `boolean`, `enum`, `entity_reference`, `range`, `jsonb`).
-- **Entities (`Entity`):** Specific instances in the universe (e.g., Character "Li Wei", Item "Azure Dragon Sword") storing dynamic property values in JSONB.
-- **Custom Progression & Power Systems:** Configurable stage hierarchies (e.g., `Body Tempering` $\rightarrow$ `Qi Condensation` $\rightarrow$ `Foundation` $\rightarrow$ `Core Formation` $\rightarrow$ `Nascent Soul`).
-- **Custom Relationship Types:** Directional or bidirectional links between entities with author-configured measurement scales (e.g., Loyalty: $-100$ to $+100$, Affection: $0$ to $1000$).
+NovWrite gives authors total creative freedom to build universes from scratch with a structured blueprint classification:
+
+- **1st-Class Blueprints (Entity Archetypes):**
+  - Concrete universe actors and structures instantiated into the timeline (e.g. `Character / Cultivator`, `Sacred Weapon & Relic`, `Sanctuary & Realm`, `Sect & Faction`).
+  - Maintain unique entity IDs, causal mutation sequences, and point-in-time snapshots.
+- **2nd-Class Blueprints (Sub-Blueprints & Value Objects):**
+  - Reusable nested schemas and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`, `Soul Profile`).
+  - Embedded and referenced as dynamic fields in 1st-Class blueprints or other 2nd-Class blueprints.
+- **Dynamic Field Types & Custom Enum Categories:**
+  - `STRING`, `NUMBER` (with bounds, step, unit), `BOOLEAN`, `ENUM` (user-defined options like `["Male", "Female", "Other"]`), `BLUEPRINT_REF` (target blueprint linking), and `FORMULA` (computed math).
+- **Sandboxed Mathematical & Logical Formula Engine (`formulaEngine.ts`):**
+  - AST-based expression parser evaluating complex formulas:
+    $$\text{Total Combat Power} = (\text{cultivation.major\_realm} \times \text{cultivation.minor\_realm}) \times \text{special\_Physique} + \text{attack} \times \text{attack\_technique\_Mastery} - \text{defence} \times \text{defence\_technique\_mastery}$$
+  - Evaluates arithmetic, dot-notation variables, logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
 
 ### 2.4 Timeline & Event State Engine (`timeline`)
 
@@ -89,115 +98,18 @@ NovWrite is designed as a **hybrid multi-service architecture** composed of:
 
 ---
 
-## 3. Database Schema (Prisma Data Model Outline)
+## 3. Dedicated Page-Based Routing & UI Standards
 
-```prisma
-model Project {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  ownerId     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  novels      Novel[]
-  entityTypes EntityType[]
-  entities    Entity[]
-  events      Event[]
-  rules       Rule[]
-}
+To eliminate modal clutter and enhance focus, every major domain is partitioned into a 3-tier dedicated route structure:
 
-model Novel {
-  id          String    @id @default(uuid())
-  projectId   String
-  title       String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  chapters    Chapter[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+| Workbench Route | Purpose | Key Capabilities |
+| :--- | :--- | :--- |
+| `/world/entities` | Entities Catalog & Inspector | List (`/`), Create (`/create`), Update/Detail (`/[id]`) with live computed formulas |
+| `/world/schemas` | Blueprints Architect | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for 1st & 2nd class blueprints |
+| `/world/systems` | Sub-Systems Workbench | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for Affection Scales & Power Ladders |
+| `/world/rules` | Rules & Invariants | Predicate builder and violation severity configurations |
+| `/world/timeline` | Causal Timeline | Narrative vs Chronological sequence visualization and atomic mutation logs |
+| `/world/audit` | Continuity Health | Universe violation tracker and one-click canon reconciler |
 
-model Chapter {
-  id          String   @id @default(uuid())
-  novelId     String
-  orderIndex  Int
-  title       String
-  novel       Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
-  scenes      Scene[]
-  events      Event[]
-}
-
-model Scene {
-  id          String   @id @default(uuid())
-  chapterId   String
-  orderIndex  Int
-  title       String
-  content     String   // Prose or structured JSON
-  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-}
-
-model EntityType {
-  id          String               @id @default(uuid())
-  projectId   String
-  name        String               // "Character", "Item", "Technique"
-  properties  PropertyDefinition[]
-  entities    Entity[]
-  project     Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-}
-
-model PropertyDefinition {
-  id           String     @id @default(uuid())
-  entityTypeId String
-  name         String     // "Cultivation Realm", "Karma", "Weight"
-  type         String     // "string", "number", "enum", "entity_ref"
-  config       Json?      // Enum choices, valid ranges
-  entityType   EntityType @relation(fields: [entityTypeId], references: [id], onDelete: Cascade)
-}
-
-model Entity {
-  id           String      @id @default(uuid())
-  projectId    String
-  entityTypeId String
-  name         String
-  properties   Json        // Dynamic property values map
-  entityType   EntityType  @relation(fields: [entityTypeId], references: [id])
-  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-}
-
-model Event {
-  id          String        @id @default(uuid())
-  projectId   String
-  chapterId   String?
-  sceneId     String?
-  name        String
-  orderIndex  Int
-  effects     EventEffect[]
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  chapter     Chapter?      @relation(fields: [chapterId], references: [id])
-}
-
-model EventEffect {
-  id          String   @id @default(uuid())
-  eventId     String
-  targetType  String   // "entity_property", "possession", "relationship", "status"
-  targetId    String   // Entity ID or Relationship ID
-  mutation    Json     // Previous value, new value, operation details
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-}
-
-model Rule {
-  id          String   @id @default(uuid())
-  projectId   String
-  name        String
-  ruleType    String   // "POSSESSION", "POWER_TIER", "STATUS", "CUSTOM"
-  definition  Json     // Rule parameters & invariant conditions
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-}
-```
-
----
-
-## 4. Deployment & Infrastructure
-
-- **Traefik Reverse Proxy:** Automatically secures HTTP/HTTPS traffic with Let's Encrypt TLS certificates.
-- **Docker Compose:** Encapsulates Go API, TypeScript Data Service, PostgreSQL with `pgvector`, and Redis.
-- **Monitoring & Health Checks:** Continuous health probing on `/healthz` endpoints for both Go and TypeScript services.
+- **Zero-Badge Policy:** Strict prohibition of badges/pill tags across all views. Replaced with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
+- **Communication Bridge Separation:** `@novwrite/bridge` messaging diagnostics are restricted to `/dev/communication-hub`.

@@ -43,21 +43,24 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
    - Any architectural decision, UI library choice, styling convention, or design preference regarding frontends must be recorded in `frontend_design_descisions.md`.
    - **Mandatory Use of shadcn-svelte Component Library**:
      - `shadcn-svelte` is initialized and configured (`frontend/web/components.json`) as the official UI component library across NovWrite frontends.
-     - Whenever building, modifying, or extending UI elements (buttons, badges, cards, inputs, tabs, dialogs, dropdowns, sheets, popovers, selects, tooltips, scroll-areas, separators), agents **MUST use `shadcn-svelte` components** (located in `$lib/components/ui/` or installed via `pnpm dlx shadcn-svelte add <component>`) instead of designing or inventing ad-hoc components from scratch.
+     - Whenever building, modifying, or extending UI elements (buttons, cards, inputs, tabs, dialogs, dropdowns, sheets, popovers, selects, tooltips, scroll-areas, separators), agents **MUST use `shadcn-svelte` components** (located in `$lib/components/ui/` or installed via `pnpm dlx shadcn-svelte add <component>`) instead of designing or inventing ad-hoc components from scratch.
      - Custom UI primitives are only permitted if no applicable `shadcn-svelte` / `bits-ui` component exists.
    - **Mandatory Hand-in-Hand Responsiveness**: Whenever any frontend component, layout, or feature is built or updated, responsiveness **MUST be implemented hand-in-hand** in the exact same change. Deferring responsive styling is strictly prohibited.
    - **Focus on Awkward Non-Standard Android Widths**: Frontends must be rigorously engineered and tested to handle narrow and non-standard Android viewports (e.g. 280px–360px outer foldable displays, compact Android devices 360px–390px, tall 20:9/21:9 aspect ratios, and virtual keyboard height shifts). Prevent all horizontal overflow, wrap toolbars gracefully, and provide accessible touch targets.
    - **Unified Responsive Parity**: All 3 frontends share identical UI elements (barring platform/OS-specific handling). A minimized or narrow Web or Desktop window must adapt to look and behave like the Mobile client, and Mobile on large viewports must expand into the full multi-pane studio view.
-10. **Strict UI/UX Rules, Zero-Badge Policy & Modern Interaction Primitives**:
+10. **Strict UI/UX Rules, Zero-Badge Policy & Dedicated Page Routes**:
     - **Zero-Badge Policy**: Badges, pill tags, and badge-adjacent colored chips are **strictly prohibited** across the entire frontend. Replace with semantic icons with text dots, interactive action buttons, breadcrumb navigation, and slide-over side drawers/sheets.
+    - **Dedicated Page-Based Routes Architecture**: Every primary creation and editing domain MUST be partitioned into dedicated page routes:
+      - Default List view (`/` with search, filtering, and a `[+ Create]` action button)
+      - Dedicated Creation view (`/create`)
+      - Dedicated Update/Detail view based on ID (`/[id]`)
+      - Never cram complex multi-field schemas, formula editors, or entity forms into popups or single-page tabs.
     - **No Communication Layer in Frontend**: The `@novwrite/bridge` transport and internal diagnostic message hubs belong to backend machinery and must **NOT** be exposed in primary user-facing navigation or UI bars.
     - **Avoid Excessive Gradients & Glows**: Use solid, grounded surfaces (Linear/MongoDB Compass aesthetic). Do not use multi-color rainbow gradients, glossy glassmorphism, or AI glow shimmers.
     - **Mandatory `Select` from `shadcn-svelte` for Dropdowns**: For dropdown option selection, **ALWAYS use `Select` from `shadcn-svelte`** (`$lib/components/ui/select`). Never use unstyled native `<select>` or custom div click hacks.
     - **Breadcrumbs, Icons & Drawers**: Use breadcrumbs for hierarchical context, clean icons for state indicators, and slide-over sheets/drawers for inspection.
-    - **Mandatory Pre-Commit UI/UX Checklist**: Before finalizing any frontend task, agents must verify:
-      1. _Zero Badges_: Ensure no badges or badge-adjacent chip boxes exist in the view.
-      2. _No Card Sprawl_: Group data into dense master-detail tables or clean lists rather than wrapping every tiny field in its own bordered Card.
-      3. _No Modal Soup_: Never open modals inside modals. Use side sheets (`Sheet`) or dedicated `/world/*` workbench routes.
-      4. _Complete States_: Include designed empty states (`Skeleton`, empty illustration/icon + action button) and error recovery messages.
-      5. _Keyboard Navigation_: Ensure `Esc` closes sheets/drawers, `Tab` traverses form inputs, and `Select` works via arrow keys.
-      6. _Verified Contrast_: Ensure text meets WCAG AA 4.5:1 contrast against dark/light surfaces.
+11. **First-Class & Second-Class Blueprint Freedom & Sandboxed Formula Standards**:
+    - **1st-Class Blueprints (Entity Archetypes)**: Primary entities that instantiate into the world timeline with unique IDs, state snapshots, and causal mutations (e.g., Characters, Sacred Relics, Realms, Factions).
+    - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) that are referenced in 1st-Class or other 2nd-Class blueprints.
+    - **Dynamic Enum Categories**: Allow users to configure dynamic options on `ENUM` fields (e.g. `gender` with `["Male", "Female", "Dual-Yin-Yang", "Celestial"]`) and render with `Select`.
+    - **Safe Mathematical Formula Engine**: Any dynamic computed fields must use the safe AST expression parser ([`formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/engine/formulaEngine.ts)). Never use raw `eval()`. Support dot-notation properties (`cultivation.major_realm`), arithmetic, logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).

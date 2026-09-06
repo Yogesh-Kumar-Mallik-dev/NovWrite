@@ -46,11 +46,42 @@ timeline
                : Strict Prohibition of Excessive Gradients & Glow Shimmer
                : Table-First Badge Discipline & shadcn-svelte Select Standard
                : Comprehensive AI UI/UX Anti-Pattern Checklist (agents.md & docs)
+    2026-09-06 : Version 2.0 (First & Second Class Blueprints & Mathematical Formula Engine)
+               : 1st & 2nd Class Blueprint Architecture (Archetypes vs Sub-Schemas)
+               : Dynamic Enum Categories & Custom Option Tag Builders
+               : Sandboxed Mathematical & Logical Formula Engine (formulaEngine.ts)
+               : Dedicated 3-Tier Page-Based Routing Standard (List, Create, Update)
+               : Absolute Zero-Badge Policy Across All UI Screens
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.0] — 2026-09-06
+
+**Scope:** First-Class vs. Second-Class Blueprints, Dynamic Enum Categories, Sandboxed Mathematical Formula Engine, Dedicated 3-Tier Page Routing & Zero-Badge Standards  
+**Target Documents:** [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md), [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md)
+
+#### Added
+
+- **First-Class & Second-Class Blueprint Hierarchy:**
+  - **1st-Class Blueprints (Primary Entity Archetypes)**: Instantiate concrete entities in the universe timeline (Characters, Sacred Relics, Realms, Factions) with full causal mutation history and state snapshots.
+  - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and continuous scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) that are referenced as fields in 1st-Class blueprints.
+- **Dynamic Enum Categories & Option Management:**
+  - Dynamic interactive option tag builder allowing authors to define custom categories on `ENUM` fields (e.g. `gender` with `["Male", "Female", "Dual-Yin-Yang", "Celestial"]`).
+  - Rendered dynamically through accessible `shadcn-svelte` `Select` components.
+- **Sandboxed Mathematical & Logical Formula Engine (`formulaEngine.ts`):**
+  - AST-based mathematical expression parser evaluating complex formulas (arithmetic `+`, `-`, `*`, `/`, `%`, `^`, dot-notation variables, logical conditionals `IF`, and math functions `CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
+  - Live reactive re-computation in entity forms and blueprint test sandboxes (e.g. `Total Combat Power = (cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`).
+- **Dedicated 3-Tier Page-Based Routing:**
+  - Standardized all domains onto dedicated routes: Default List (`/`), Dedicated Create (`/create`), Dedicated Update/Detail (`/[id]`).
+- **Absolute Zero-Badge Policy:**
+  - Complete elimination of badges across the frontend, replacing them with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
+- **Academic Capstone Report Synchronization:**
+  - Regenerated [`Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/Novwrite.docx) to **Version 2.0** with Chapter 5.4.
+
+---
 
 ### [Version 1.9] — 2026-09-06
 
