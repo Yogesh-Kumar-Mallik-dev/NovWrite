@@ -1,94 +1,112 @@
 <script lang="ts">
-  import {
-    Users,
-    Clock,
-    ShieldCheck,
-    AlertOctagon,
-    ArrowRight,
-  } from "lucide-svelte";
+  import { Users, LayoutTemplate, Sliders, Clock, ShieldCheck, AlertOctagon, ArrowRight } from 'lucide-svelte';
 </script>
 
 <div class="max-w-5xl mx-auto space-y-6">
   <div>
-    <h2 class="text-xl font-bold tracking-tight text-zinc-100">
-      World Studio Hub
-    </h2>
+    <h2 class="text-xl font-bold tracking-tight text-zinc-100">World Studio Hub</h2>
     <p class="text-sm text-zinc-400 mt-1">
-      Manage the canonical universe rules, dynamic schemas, timeline causal
-      events, and continuity validation.
+      Manage universe entities, dynamic schema definitions, custom progression ladders, causal timeline events, and invariant continuity rules.
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Entities -->
     <a
-      href="/world/characters"
+      href="/world/entities"
       class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
     >
       <div class="space-y-2">
-        <div
-          class="flex items-center gap-2 text-purple-400 font-semibold text-sm"
-        >
+        <div class="flex items-center gap-2 text-purple-400 font-semibold text-sm">
           <Users class="w-4 h-4" />
-          <span>Entities & Schemas</span>
+          <span>Universe Entities</span>
         </div>
         <p class="text-xs text-zinc-400 leading-relaxed">
-          Define dynamic entity types (Characters, Locations, Artifacts) and
-          inspect real-time property values.
+          Instantiate characters, regions, artifacts, and factions with live schema property inspection.
         </p>
       </div>
-      <div
-        class="mt-4 flex items-center text-xs font-medium text-purple-400 group-hover:translate-x-0.5 transition-transform"
-      >
-        Open Entity Workbench <ArrowRight class="w-3.5 h-3.5 ml-1" />
+      <div class="mt-4 flex items-center text-xs font-medium text-purple-400 group-hover:translate-x-0.5 transition-transform">
+        View Entities <ArrowRight class="w-3.5 h-3.5 ml-1" />
       </div>
     </a>
 
+    <!-- Schemas -->
+    <a
+      href="/world/schemas"
+      class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
+    >
+      <div class="space-y-2">
+        <div class="flex items-center gap-2 text-indigo-400 font-semibold text-sm">
+          <LayoutTemplate class="w-4 h-4" />
+          <span>Entity Schemas</span>
+        </div>
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Define custom entity blueprint types and attach typed dynamic JSONB properties.
+        </p>
+      </div>
+      <div class="mt-4 flex items-center text-xs font-medium text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+        Manage Schemas <ArrowRight class="w-3.5 h-3.5 ml-1" />
+      </div>
+    </a>
+
+    <!-- Custom Properties & Systems -->
+    <a
+      href="/world/systems"
+      class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
+    >
+      <div class="space-y-2">
+        <div class="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+          <Sliders class="w-4 h-4" />
+          <span>Power Ladders & Scales</span>
+        </div>
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Multi-stage progression ladders (cultivation realms) and continuous relationship/affection gauges.
+        </p>
+      </div>
+      <div class="mt-4 flex items-center text-xs font-medium text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+        Custom Systems <ArrowRight class="w-3.5 h-3.5 ml-1" />
+      </div>
+    </a>
+
+    <!-- Causal Timeline -->
     <a
       href="/world/timeline"
       class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
     >
       <div class="space-y-2">
-        <div
-          class="flex items-center gap-2 text-cyan-400 font-semibold text-sm"
-        >
+        <div class="flex items-center gap-2 text-cyan-400 font-semibold text-sm">
           <Clock class="w-4 h-4" />
           <span>Causal Timeline</span>
         </div>
         <p class="text-xs text-zinc-400 leading-relaxed">
-          Dual-index causal event stream: toggle between narrative manuscript
-          sequence and universe chronological order.
+          Dual-index causal delta event stream: narrative reading sequence vs universe chronological order.
         </p>
       </div>
-      <div
-        class="mt-4 flex items-center text-xs font-medium text-cyan-400 group-hover:translate-x-0.5 transition-transform"
-      >
-        Open Timeline Workbench <ArrowRight class="w-3.5 h-3.5 ml-1" />
+      <div class="mt-4 flex items-center text-xs font-medium text-cyan-400 group-hover:translate-x-0.5 transition-transform">
+        Open Timeline <ArrowRight class="w-3.5 h-3.5 ml-1" />
       </div>
     </a>
 
+    <!-- Invariant Rules -->
     <a
       href="/world/rules"
       class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
     >
       <div class="space-y-2">
-        <div
-          class="flex items-center gap-2 text-amber-400 font-semibold text-sm"
-        >
+        <div class="flex items-center gap-2 text-amber-400 font-semibold text-sm">
           <ShieldCheck class="w-4 h-4" />
           <span>Invariant Rules</span>
         </div>
         <p class="text-xs text-zinc-400 leading-relaxed">
-          Author-defined universe boundary rules (numeric bounds, state guard
-          conditions, prerequisites).
+          Author-defined universe boundary laws (numeric bounds, dead entity action restrictions, prerequisites).
         </p>
       </div>
-      <div
-        class="mt-4 flex items-center text-xs font-medium text-amber-400 group-hover:translate-x-0.5 transition-transform"
-      >
-        Open Rules Workbench <ArrowRight class="w-3.5 h-3.5 ml-1" />
+      <div class="mt-4 flex items-center text-xs font-medium text-amber-400 group-hover:translate-x-0.5 transition-transform">
+        Rules Builder <ArrowRight class="w-3.5 h-3.5 ml-1" />
       </div>
     </a>
 
+    <!-- Continuity Audit -->
     <a
       href="/world/audit"
       class="p-5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:border-zinc-700 transition-all flex flex-col justify-between group"
@@ -96,16 +114,13 @@
       <div class="space-y-2">
         <div class="flex items-center gap-2 text-red-400 font-semibold text-sm">
           <AlertOctagon class="w-4 h-4" />
-          <span>Continuity Violation Audit</span>
+          <span>Continuity Audit</span>
         </div>
         <p class="text-xs text-zinc-400 leading-relaxed">
-          Inspect RFC 7807 problem details across draft scenes and execute Lead
-          Author overrides with audit logging.
+          Inspect RFC 7807 problem details across draft scenes and execute Lead Author overrides with audit logging.
         </p>
       </div>
-      <div
-        class="mt-4 flex items-center text-xs font-medium text-red-400 group-hover:translate-x-0.5 transition-transform"
-      >
+      <div class="mt-4 flex items-center text-xs font-medium text-red-400 group-hover:translate-x-0.5 transition-transform">
         Open Audit Console <ArrowRight class="w-3.5 h-3.5 ml-1" />
       </div>
     </a>
