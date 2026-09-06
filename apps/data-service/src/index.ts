@@ -14,4 +14,5 @@ export * from "./world/timelineEngine.js";
 export * from "./world/ruleTypes.js";
 export * from "./world/ruleEvaluator.js";
 export * from "./world/stateFoldEngine.js";
+export * from "./world/formulaEngine.js";
 export * from "./world/worldBridgeServer.js";

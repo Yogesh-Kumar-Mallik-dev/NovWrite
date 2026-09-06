@@ -14,6 +14,8 @@ import {
   validateSceneGroundingRequest,
   validateContinuityAuditRequest,
   validateEntityMentionQuery,
+  DynamicFieldDefSchema,
+  BlueprintDefSchema,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -100,5 +102,30 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
       res.matches[0].currentRealmOrStatus,
       "Foundation Establishment",
     );
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should sanitize field name to lowercase in DynamicFieldDefSchema", () => {
+    const parsed = DynamicFieldDefSchema.parse({
+      id: "f-1",
+      name: "Attack_Power",
+      label: "Attack Power",
+      fieldType: "NUMBER",
+    });
+    assert.strictEqual(parsed.name, "attack_power");
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should reject duplicate field names in BlueprintDefSchema", () => {
+    assert.throws(() => {
+      BlueprintDefSchema.parse({
+        id: "bp-1",
+        name: "Character",
+        blueprintClass: "FIRST_CLASS",
+        category: "Entity",
+        fields: [
+          { id: "f-1", name: "health", label: "Health", fieldType: "NUMBER" },
+          { id: "f-2", name: "Health", label: "Health Duplicate", fieldType: "NUMBER" },
+        ],
+      });
+    }, /Duplicate field machine keys/);
   });
 });

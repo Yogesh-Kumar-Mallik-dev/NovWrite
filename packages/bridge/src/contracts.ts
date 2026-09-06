@@ -22,7 +22,13 @@ export const BlueprintFieldTypeSchema = z.enum([
 
 export const ValueTypeOptionSchema = z.object({
   label: z.string(),
-  value: z.string(),
+  value: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? val.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_")
+        : val,
+    z.string().min(1),
+  ),
   power: z.number().optional(),
 });
 
@@ -30,7 +36,13 @@ export const EnumOptionSchema = ValueTypeOptionSchema;
 
 export const DynamicFieldDefSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.preprocess(
+    (val) =>
+      typeof val === "string"
+        ? val.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "")
+        : val,
+    z.string().min(1),
+  ),
   label: z.string(),
   fieldType: BlueprintFieldTypeSchema,
   options: z.array(z.union([z.string(), EnumOptionSchema])).optional(),
@@ -53,7 +65,15 @@ export const BlueprintDefSchema = z.object({
   category: z.string().min(1),
   description: z.string().optional(),
   iconName: z.string().optional(),
-  fields: z.array(DynamicFieldDefSchema),
+  fields: z.array(DynamicFieldDefSchema).refine(
+    (fields) => {
+      const names = fields.map((f) => f.name.toLowerCase().trim());
+      return new Set(names).size === names.length;
+    },
+    {
+      message: "Duplicate field machine keys are not allowed in a blueprint schema",
+    },
+  ),
   isBuiltIn: z.boolean().optional(),
 });
 

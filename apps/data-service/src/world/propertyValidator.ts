@@ -9,7 +9,14 @@ import {
   DynamicPropertyDef,
   PropertyValidationError,
   ValidationResult,
+  BlueprintDef,
+  BlueprintClass,
+  EntityItem,
 } from "./schemaTypes.js";
+import {
+  evaluateFormula,
+  validateFormulaSyntax,
+} from "./formulaEngine.js";
 
 const UUID_REGEX =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -350,6 +357,7 @@ export function validateSingleProperty(
 
 /**
  * Validates a map of properties against an array of property definitions.
+ * Normalizes all property keys to lowercase.
  * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_001
  */
 export function validateEntityProperties(
@@ -359,34 +367,273 @@ export function validateEntityProperties(
   const errors: PropertyValidationError[] = [];
   const coerced: Record<string, unknown> = {};
 
-  const definedKeys = new Set(definitions.map((d) => d.name));
+  const definedKeys = new Set(definitions.map((d) => d.name.toLowerCase()));
+  const normalizedProps: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(properties || {})) {
+    normalizedProps[k.toLowerCase()] = v;
+  }
 
   // Check for unregistered keys
-  for (const rawKey of Object.keys(properties)) {
+  for (const rawKey of Object.keys(normalizedProps)) {
     if (!definedKeys.has(rawKey)) {
       errors.push({
         propertyKey: rawKey,
         code: "UNDEFINED_PROPERTY_KEY",
         message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Unregistered property '${rawKey}' is not allowed in schema.`,
-        receivedValue: properties[rawKey],
+        receivedValue: normalizedProps[rawKey],
       });
     }
   }
 
   for (const def of definitions) {
-    const rawVal = properties[def.name];
+    const keyLower = def.name.toLowerCase();
+    const rawVal = normalizedProps[keyLower];
     const res = validateSingleProperty(def, rawVal);
 
     if (!res.valid && res.error) {
       errors.push(res.error);
     } else {
-      coerced[def.name] = res.coercedVal;
+      coerced[keyLower] = res.coercedVal;
     }
   }
 
   return {
     valid: errors.length === 0,
     coercedProperties: coerced,
+    errors,
+  };
+}
+
+/**
+ * Validates and sanitizes a Blueprint definition on the backend.
+ * Enforces lowercase machine keys, uniqueness, and slate wipe on field type changes.
+ * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_002
+ */
+export function validateAndSanitizeBlueprint(bp: BlueprintDef): {
+  valid: boolean;
+  sanitizedBlueprint?: BlueprintDef;
+  errors: PropertyValidationError[];
+} {
+  const errors: PropertyValidationError[] = [];
+  const name = (bp.name || "").trim();
+  if (!name) {
+    errors.push({
+      propertyKey: "name",
+      code: "BLUEPRINT_NAME_REQUIRED",
+      message: "BLOCK_WORLD_DYNAMIC_SCHEMA_002: Blueprint name cannot be empty.",
+    });
+  }
+
+  const bpClass: BlueprintClass =
+    bp.blueprintClass === "SECOND_CLASS" ? "SECOND_CLASS" : "FIRST_CLASS";
+  const category = (bp.category || "").trim() || "General";
+
+  const seenKeys = new Set<string>();
+  const sanitizedFields: DynamicFieldDef[] = [];
+
+  for (let idx = 0; idx < (bp.fields || []).length; idx++) {
+    const f = bp.fields[idx];
+    let key = (f.name || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "");
+    if (!key) {
+      key = (f.label || "").trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\.]/g, "");
+    }
+    if (!key) {
+      errors.push({
+        propertyKey: `fields[${idx}].name`,
+        code: "EMPTY_FIELD_KEY",
+        message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Dynamic field at index ${idx} has no valid machine key.`,
+      });
+      continue;
+    }
+
+    if (seenKeys.has(key)) {
+      errors.push({
+        propertyKey: `fields[${idx}].name`,
+        code: "DUPLICATE_FIELD_KEY",
+        message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Duplicate field key '${key}' found in blueprint '${name}'.`,
+        receivedValue: key,
+      });
+      continue;
+    }
+    seenKeys.add(key);
+
+    const label = (f.label || "").trim() || key;
+    const fieldType = f.fieldType || "STRING";
+
+    const cleanField: DynamicFieldDef = {
+      id: f.id || `f-${Date.now()}-${idx}-${key}`,
+      name: key,
+      label,
+      fieldType,
+      isRequired: f.isRequired ?? false,
+      orderIndex: f.orderIndex ?? idx,
+    };
+
+    switch (fieldType) {
+      case "ENUM": {
+        const opts = (f.options || []).map((o: any) => {
+          if (typeof o === "string") {
+            const trimmed = o.trim();
+            return { label: trimmed, value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_") };
+          }
+          const lbl = (o.label || o.value || "").trim();
+          const val = (o.value || o.label || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_");
+          return { label: lbl, value: val };
+        });
+        cleanField.options = opts.length > 0 ? opts : [{ label: "Default", value: "default" }];
+        break;
+      }
+
+      case "VALUE_TYPE": {
+        const opts = (f.options || []).map((o: any) => {
+          if (typeof o === "string") {
+            const trimmed = o.trim();
+            return { label: trimmed, value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_"), power: 0, numericValue: 0 };
+          }
+          const lbl = (o.label || o.value || "").trim();
+          const val = (o.value || o.label || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_");
+          const pwr = typeof o.power === "number" ? o.power : (typeof o.numericValue === "number" ? o.numericValue : 0);
+          return { label: lbl, value: val, power: pwr, numericValue: pwr };
+        });
+        cleanField.options = opts.length > 0 ? opts : [{ label: "Default", value: "default", power: 0, numericValue: 0 }];
+        break;
+      }
+
+      case "NUMBER": {
+        if (f.min !== undefined && f.max !== undefined && f.min > f.max) {
+          errors.push({
+            propertyKey: key,
+            code: "NUMERIC_BOUNDS_INVALID",
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Number field '${key}' min (${f.min}) cannot be greater than max (${f.max}).`,
+          });
+        }
+        cleanField.min = f.min;
+        cleanField.max = f.max;
+        cleanField.step = f.step;
+        cleanField.unit = f.unit ? f.unit.trim() : undefined;
+        break;
+      }
+
+      case "BLUEPRINT_REF":
+      case "ARRAY_REF": {
+        const targetId = (f.targetBlueprintId || "").trim();
+        if (!targetId) {
+          errors.push({
+            propertyKey: key,
+            code: "TARGET_BLUEPRINT_REQUIRED",
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Reference field '${key}' requires targetBlueprintId.`,
+          });
+        }
+        cleanField.targetBlueprintId = targetId;
+        break;
+      }
+
+      case "FORMULA": {
+        const expr = (f.formulaExpression || "").trim();
+        if (!expr) {
+          errors.push({
+            propertyKey: key,
+            code: "FORMULA_EXPRESSION_REQUIRED",
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Formula field '${key}' expression cannot be empty.`,
+          });
+        } else {
+          const valRes = validateFormulaSyntax(expr);
+          if (!valRes.valid) {
+            errors.push({
+              propertyKey: key,
+              code: "FORMULA_SYNTAX_ERROR",
+              message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Formula field '${key}' syntax error: ${valRes.error}`,
+            });
+          }
+          if (valRes.extractedVariables.includes(key)) {
+            errors.push({
+              propertyKey: key,
+              code: "FORMULA_CIRCULAR_DEPENDENCY",
+              message: `BLOCK_WORLD_DYNAMIC_SCHEMA_002: Formula field '${key}' cannot reference its own output variable.`,
+            });
+          }
+        }
+        cleanField.formulaExpression = expr;
+        break;
+      }
+
+      case "ARRAY":
+      case "BOOLEAN":
+      case "STRING":
+      default:
+        break;
+    }
+
+    sanitizedFields.push(cleanField);
+  }
+
+  const sanitizedBlueprint: BlueprintDef = {
+    id: bp.id,
+    projectId: bp.projectId,
+    name,
+    slug: bp.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    blueprintClass: bpClass,
+    category,
+    description: bp.description ? bp.description.trim() : undefined,
+    iconName: bp.iconName || "Sparkles",
+    fields: sanitizedFields,
+    isBuiltIn: bp.isBuiltIn,
+  };
+
+  return {
+    valid: errors.length === 0,
+    sanitizedBlueprint,
+    errors,
+  };
+}
+
+/**
+ * Validates entity attributes against blueprint and deterministically recomputes formulas on backend.
+ * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_002
+ */
+export function validateAndSanitizeEntity(
+  bp: BlueprintDef,
+  entity: EntityItem,
+): {
+  valid: boolean;
+  sanitizedEntity?: EntityItem;
+  errors: PropertyValidationError[];
+} {
+  const errors: PropertyValidationError[] = [];
+  const name = (entity.name || "").trim();
+  if (!name) {
+    errors.push({
+      propertyKey: "name",
+      code: "ENTITY_NAME_REQUIRED",
+      message: "BLOCK_WORLD_DYNAMIC_SCHEMA_002: Entity name is required.",
+    });
+  }
+
+  const valRes = validateEntityProperties(bp.fields, entity.properties || {});
+  if (!valRes.valid) {
+    errors.push(...valRes.errors);
+  }
+
+  // Recompute formulas on backend deterministically
+  const computedFormulas: Record<string, number> = {};
+  for (const f of bp.fields) {
+    if (f.fieldType === "FORMULA" && f.formulaExpression) {
+      const evalRes = evaluateFormula(f.formulaExpression, valRes.coercedProperties);
+      computedFormulas[f.name] =
+        evalRes.success && evalRes.value !== undefined ? evalRes.value : 0;
+    }
+  }
+
+  const sanitizedEntity: EntityItem = {
+    ...entity,
+    name,
+    properties: valRes.coercedProperties,
+    computedFormulas,
+  };
+
+  return {
+    valid: errors.length === 0,
+    sanitizedEntity,
     errors,
   };
 }
