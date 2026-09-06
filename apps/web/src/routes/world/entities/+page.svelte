@@ -400,13 +400,13 @@
   </div>
 
   <!-- Entities Table with Shadcn UI Table -->
-  <Card class="border-border bg-card overflow-hidden">
-    <div class="overflow-x-auto">
-      <Table class="w-full text-left text-xs">
-        <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider">
+  <Card class="border-border bg-card overflow-hidden shadow-xs">
+    <div class="overflow-x-auto w-full">
+      <Table class="w-full text-left text-xs min-w-[800px]">
+        <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
           <TableRow class="hover:bg-transparent border-border">
             {#each visibleColumns as col}
-              <TableHead class="px-4 py-3 text-muted-foreground font-semibold">
+              <TableHead class="px-4 py-3 text-muted-foreground font-semibold whitespace-nowrap">
                 <div class="flex items-center gap-1.5">
                   {#if col.category === 'formula'}
                     <Calculator class="w-3.5 h-3.5 text-amber-500" />
@@ -423,7 +423,7 @@
                 </div>
               </TableHead>
             {/each}
-            <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold">Actions</TableHead>
+            <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold w-[120px] whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -444,24 +444,24 @@
                 {#each visibleColumns as col}
                   {@const cellInfo = formatTableCellValue(col.id, entity, activeBlueprint)}
 
-                  <TableCell class="px-4 py-3.5 align-middle">
+                  <TableCell class="px-4 py-3.5 align-middle whitespace-normal break-words {col.id === 'name' ? 'min-w-[200px] max-w-xs' : col.id === 'description' ? 'min-w-[220px] max-w-sm' : col.id === 'lastMutatedSeqNumber' ? 'min-w-[90px] whitespace-nowrap' : 'min-w-[140px]'}">
                     {#if col.id === 'name'}
                       <!-- Entity Name Cell -->
                       <a href={`/world/entities/${entity.id}`} class="hover:text-primary transition-colors flex items-center gap-2">
                         <IconComp class="w-4 h-4 text-primary shrink-0" />
-                        <div>
-                          <div class="font-bold text-foreground">{entity.name}</div>
+                        <div class="min-w-0 flex-1">
+                          <div class="font-bold text-foreground leading-snug">{entity.name}</div>
                           {#if entity.description}
-                            <div class="text-[10px] text-muted-foreground font-mono line-clamp-1">{entity.description}</div>
+                            <div class="text-[10px] text-muted-foreground font-mono mt-0.5 leading-tight line-clamp-2">{entity.description}</div>
                           {/if}
                         </div>
                       </a>
                     {:else if col.id === 'blueprintName'}
-                      <span class="text-foreground font-mono text-[11px]">{entity.blueprintName}</span>
+                      <span class="text-foreground font-mono text-[11px] font-medium">{entity.blueprintName}</span>
                     {:else if col.id === 'category'}
-                      <span class="text-muted-foreground">{entity.category}</span>
+                      <span class="text-muted-foreground capitalize">{entity.category}</span>
                     {:else if col.id === 'description'}
-                      <span class="text-muted-foreground text-[11px] line-clamp-2 max-w-xs">{entity.description || '—'}</span>
+                      <span class="text-muted-foreground text-[11px] leading-relaxed whitespace-normal break-words">{entity.description || '—'}</span>
                     {:else if col.id === 'lastMutatedSeqNumber'}
                       <span class="text-muted-foreground font-mono text-[11px]">#{entity.lastMutatedSeqNumber}</span>
                     {:else if cellInfo.isFormula}
@@ -485,13 +485,13 @@
                       </div>
                     {:else}
                       <!-- Regular Property Value -->
-                      <span class="text-foreground text-xs">{cellInfo.text}</span>
+                      <span class="text-foreground text-xs leading-relaxed whitespace-normal break-words">{cellInfo.text}</span>
                     {/if}
                   </TableCell>
                 {/each}
 
                 <!-- Actions Column -->
-                <TableCell class="px-4 py-3 text-right align-middle">
+                <TableCell class="px-4 py-3 text-right align-middle w-[120px] whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
                     <a href={`/world/entities/${entity.id}`}>
                       <Button variant="outline" size="sm" class="h-7 text-xs px-2.5">
