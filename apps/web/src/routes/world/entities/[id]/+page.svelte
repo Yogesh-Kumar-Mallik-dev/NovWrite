@@ -57,39 +57,6 @@
     entity ? worldStore.getBlueprint(entity.blueprintId) : undefined
   );
 
-  let deleteConfirmOpen = $state(false);
-  let editorMode = $state<'form' | 'json'>('form');
-
-  // Local Editable State
-  let loadedEntityId = $state<string | null>(null);
-  let name = $state('');
-  let category = $state('');
-  let description = $state('');
-  let properties = $state<Record<string, any>>({});
-  let jsonEditorContent = $state('');
-  let jsonParseError = $state<string | null>(null);
-  let saveMessage = $state<string | null>(null);
-
-  // New Custom Property Drafter (for arbitrary object properties)
-  let showAddCustomPropModal = $state(false);
-  let newPropKey = $state('');
-  let newPropType = $state<'string' | 'number' | 'boolean' | 'json'>('string');
-  let newPropValue = $state('');
-
-  // Synchronize state when entity changes or on load
-  $effect(() => {
-    const ent = entity;
-    if (ent && ent.id !== loadedEntityId) {
-      loadedEntityId = ent.id;
-      name = ent.name;
-      category = ent.category || (blueprint ? blueprint.category : 'General');
-      description = ent.description || '';
-      properties = ensureAllPropertiesExist(ent.properties || {}, blueprint);
-      jsonEditorContent = JSON.stringify(properties, null, 2);
-      jsonParseError = null;
-    }
-  });
-
   function ensureAllPropertiesExist(
     rawProps: Record<string, any>,
     bp?: BlueprintDef
@@ -152,6 +119,67 @@
 
     return result;
   }
+
+  function getInitialEntityState(id?: string) {
+    if (!id) {
+      return {
+        loadedId: null,
+        name: '',
+        category: 'General',
+        description: '',
+        properties: {},
+        jsonContent: '{}',
+      };
+    }
+    const ent = worldStore.getEntity(id);
+    const bp = ent ? worldStore.getBlueprint(ent.blueprintId) : undefined;
+    const initialProps = ent ? ensureAllPropertiesExist(ent.properties || {}, bp) : {};
+    return {
+      loadedId: ent?.id || null,
+      name: ent?.name || '',
+      category: ent?.category || (bp ? bp.category : 'General'),
+      description: ent?.description || '',
+      properties: initialProps,
+      jsonContent: JSON.stringify(initialProps, null, 2),
+    };
+  }
+
+  const initialData = getInitialEntityState(page.params.id);
+
+  let deleteConfirmOpen = $state(false);
+  let editorMode = $state<'form' | 'json'>('form');
+
+  // Local Editable State
+  let loadedEntityId = $state<string | null>(initialData.loadedId);
+  let name = $state(initialData.name);
+  let category = $state(initialData.category);
+  let description = $state(initialData.description);
+  let properties = $state<Record<string, any>>(initialData.properties);
+  let jsonEditorContent = $state(initialData.jsonContent);
+  let jsonParseError = $state<string | null>(null);
+  let saveMessage = $state<string | null>(null);
+
+  // New Custom Property Drafter (for arbitrary object properties)
+  let showAddCustomPropModal = $state(false);
+  let newPropKey = $state('');
+  let newPropType = $state<'string' | 'number' | 'boolean' | 'json'>('string');
+  let newPropValue = $state('');
+
+  // Synchronize state when entity changes or on route param change
+  $effect(() => {
+    const currentId = entityId;
+    const ent = worldStore.getEntity(currentId);
+    const bp = ent ? worldStore.getBlueprint(ent.blueprintId) : undefined;
+    if (ent && ent.id !== loadedEntityId) {
+      loadedEntityId = ent.id;
+      name = ent.name;
+      category = ent.category || (bp ? bp.category : 'General');
+      description = ent.description || '';
+      properties = ensureAllPropertiesExist(ent.properties || {}, bp);
+      jsonEditorContent = JSON.stringify(properties, null, 2);
+      jsonParseError = null;
+    }
+  });
 
   function getArchetypeIcon(bp?: BlueprintDef) {
     if (!bp) return Boxes;

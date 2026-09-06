@@ -738,13 +738,13 @@ const initialEntities: EntityItem[] = [
       character_role: "protagonist",
       elemental_affinity: "thunder",
       cultivation: {
-        realm_name: "Core Formation",
+        realm_name: "core_formation",
         major_realm: 3,
         minor_realm: 5,
         cultivation_method: "Silver Dawn Celestial Scripture",
       },
       romantic_feelings: {
-        relationship_stage: "Romantic Interest",
+        relationship_stage: "romantic_interest",
         affection_level: 450,
         trust_score: 85,
       },
@@ -772,13 +772,13 @@ const initialEntities: EntityItem[] = [
       character_role: "companion",
       elemental_affinity: "void",
       cultivation: {
-        realm_name: "Core Formation",
+        realm_name: "core_formation",
         major_realm: 3,
         minor_realm: 7,
         cultivation_method: "Astral Void Scripture",
       },
       romantic_feelings: {
-        relationship_stage: "Soulmate",
+        relationship_stage: "soulmate",
         affection_level: 820,
         trust_score: 95,
       },
@@ -1376,11 +1376,7 @@ export class WorldStateStore {
 
   getEntity(id?: string): EntityItem | undefined {
     if (!id) return undefined;
-    const ent = this.entities.find((e) => e.id === id);
-    if (ent) {
-      ent.computedFormulas = this.evaluateEntityFormulas(ent);
-    }
-    return ent;
+    return this.entities.find((e) => e.id === id);
   }
 
   addEntity(
