@@ -110,6 +110,22 @@ This document records the design preferences, framework choices, and UI/UX conve
   - NEVER build custom DIY dropdowns with raw `<div>` click listeners.
   - Use `Select` (with `Select.Root`, `Select.Trigger`, `Select.Value`, `Select.Content`, `Select.Item`) to guarantee keyboard navigation, ARIA accessibility, focus ring styling, and theme consistency.
 
+### 4.5. JSON Editor Standard: CodeMirror 6 with Syntax Highlighting & Word Wrapping
+- **Rule**: For all raw JSON editing and diagnostics inspection, embed the official CodeMirror 6 component (`$lib/components/ui/json-editor/json-editor.svelte`).
+- **Features Required**:
+  - Word wrapping (`EditorView.lineWrapping`) enabled by default so text does not clip or cause horizontal overflow.
+  - Consistent token coloring (Cyan keys, Emerald strings, Orange numbers, Rose booleans, Purple null).
+  - Dynamic light/dark theme synchronization via `themeStore.mode`.
+
+### 4.6. Theme Switcher Standard: Sliding Toggle with Single Inactive Icon
+- **Rule**: Theme toggle must be a sliding switch with an animated thumb.
+- **Icon Convention**: Only display the inactive target icon on the exposed slot of the track (Sun icon when in Dark mode; Moon icon when in Light mode).
+
+### 4.7. Error Screens Standard: Full-Screen Isolated Canvases with Generous Whitespace
+- **Rule**: 404 and 500 error pages must be completely isolated full-screen views.
+- **Chrome Removal**: Remove all top development bars, main navigation bars, and studio switchers on error pages.
+- **Spacing**: Ample vertical breathing room (`space-y-10 md:space-y-12`, `py-16 md:py-24`) between badge, hero number, description, buttons, and diagnostic inspector.
+
 ---
 
 ## 5. AI UI/UX Anti-Patterns Checklist
@@ -121,3 +137,6 @@ All AI coding agents must proactively audit against this checklist before submit
 3. **Did you create a modal or nested tab for a major domain?** $\to$ Provide a dedicated page route (`/`, `/create`, `/[id]`).
 4. **Did you expose internal communication layers in main nav?** $\to$ Restrict to `/dev/communication-hub`.
 5. **Did you test live formula reactivity?** $\to$ Ensure dynamic formulas re-evaluate seamlessly on state modifications.
+6. **Did you ensure getters called in `$derived` are side-effect free?** $\to$ Never mutate `$state` inside derivations.
+7. **Did you verify error screens have chrome stripped and word wrapping enabled?** $\to$ Check full isolation on 404/500 routes.
+
