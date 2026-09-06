@@ -1,46 +1,90 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { ArrowLeft, Check, Trash2, User, MapPin, Sparkles, Shield, Clock } from 'lucide-svelte';
+  import {
+    ArrowLeft,
+    Check,
+    Trash2,
+    Boxes,
+    Sparkles,
+    Calculator,
+    Heart,
+    Link2,
+    ListFilter,
+    Shield,
+    Hash,
+    Layers,
+    Clock,
+  } from 'lucide-svelte';
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
-  import { worldStore } from '$lib/stores/worldStore.svelte';
+  import {
+    worldStore,
+    type EntityItem,
+    type BlueprintDef,
+  } from '$lib/stores/worldStore.svelte';
+  import { evaluateFormula } from '$lib/engine/formulaEngine';
 
   const entityId = $derived(page.params.id);
   const entity = $derived(worldStore.getEntity(entityId));
-  const schema = $derived(entity ? worldStore.getSchema(entity.entityTypeId) : undefined);
+  const blueprint = $derived(
+    entity ? worldStore.getBlueprint(entity.blueprintId) : undefined
+  );
 
   let name = $state('');
   let description = $state('');
-  let dynamicValues = $state<Record<string, any>>({});
+  let properties = $state<Record<string, any>>({});
   let saveMessage = $state<string | null>(null);
 
   $effect(() => {
     if (entity) {
       name = entity.name;
       description = entity.description || '';
-      dynamicValues = { ...entity.properties };
+      properties = JSON.parse(JSON.stringify(entity.properties || {}));
     }
   });
 
-  function handleSave() {
+  // Real-time live computed formulas for the entity being inspected
+  let liveComputedFormulas = $derived.by(() => {
+    if (!blueprint) return {};
+    const computed: Record<string, { value: number; formatted: string; expr: string }> = {};
+    const context = { ...properties };
+
+    for (const field of blueprint.fields) {
+      if (field.fieldType === 'FORMULA' && field.formulaExpression) {
+        const evalRes = evaluateFormula(field.formulaExpression, context);
+        if (evalRes.success && evalRes.value !== undefined) {
+          computed[field.name] = {
+            value: evalRes.value,
+            formatted: evalRes.formattedValue || String(evalRes.value),
+            expr: field.formulaExpression,
+          };
+          context[field.name] = evalRes.value;
+        }
+      }
+    }
+
+    return computed;
+  });
+
+  function handleSaveEntity() {
     if (!entity || !name.trim()) return;
 
     worldStore.updateEntity(entity.id, {
       name: name.trim(),
       description: description.trim(),
-      properties: { ...dynamicValues },
+      properties: { ...properties },
     });
 
-    saveMessage = 'Entity properties successfully updated and saved!';
+    saveMessage = 'Entity state & formulas successfully updated!';
     setTimeout(() => {
       saveMessage = null;
     }, 3000);
   }
 
-  function handleDelete() {
+  function handleDeleteEntity() {
     if (!entity) return;
     if (confirm(`Are you sure you want to permanently delete "${entity.name}"?`)) {
       worldStore.deleteEntity(entity.id);
@@ -50,7 +94,7 @@
 </script>
 
 {#if !entity}
-  <div class="max-w-3xl mx-auto space-y-6">
+  <div class="max-w-4xl mx-auto space-y-6">
     <Breadcrumb
       items={[
         { label: 'World Studio', href: '/world' },
@@ -61,44 +105,35 @@
     <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-12 text-center space-y-3">
       <Shield class="w-8 h-8 text-zinc-600 mx-auto" />
       <h2 class="text-base font-bold text-zinc-300">Entity Not Found</h2>
-      <p class="text-xs text-zinc-500 max-w-sm mx-auto">
-        The requested entity with ID <code class="font-mono text-purple-400">{entityId}</code> could not be located.
-      </p>
       <a href="/world/entities">
-        <Button size="sm" variant="outline">Return to Entities List</Button>
+        <Button variant="outline" size="sm">Return to Entities Workbench</Button>
       </a>
     </div>
   </div>
 {:else}
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="max-w-4xl mx-auto space-y-6 pb-16">
     <!-- Breadcrumb -->
     <Breadcrumb
       items={[
         { label: 'World Studio', href: '/world' },
-        { label: 'Entities', href: '/world/entities' },
+        { label: 'Universe Entities', href: '/world/entities' },
         { label: entity.name },
       ]}
     />
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-          {#if entity.category === 'CHARACTER'}
-            <User class="w-5 h-5 text-purple-400" />
-          {:else if entity.category === 'LOCATION'}
-            <MapPin class="w-5 h-5 text-emerald-400" />
-          {:else}
-            <Sparkles class="w-5 h-5 text-amber-400" />
-          {/if}
-        </div>
-        <div>
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <Boxes class="w-5 h-5 text-teal-400" />
           <h2 class="text-xl font-bold tracking-tight text-zinc-100">{entity.name}</h2>
-          <div class="flex items-center gap-3 text-xs text-zinc-400 font-mono mt-0.5">
-            <span>Category: <strong>{entity.category}</strong></span>
-            <span>·</span>
-            <span>Last Mutated: <strong>Seq #{entity.lastMutatedSeqNumber}</strong></span>
-          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-teal-400 font-medium">{entity.blueprintName}</span>
+          <span class="text-zinc-600">·</span>
+          <span class="text-zinc-400">{entity.category}</span>
+          <span class="text-zinc-600">·</span>
+          <span class="text-zinc-500 font-mono">Seq #{entity.lastMutatedSeqNumber}</span>
         </div>
       </div>
 
@@ -106,117 +141,217 @@
         <a href="/world/entities">
           <Button variant="outline" size="sm">
             <ArrowLeft class="w-3.5 h-3.5" />
-            <span>Entities List</span>
+            <span>All Entities</span>
           </Button>
         </a>
-        <Button variant="destructive" size="sm" onclick={handleDelete}>
-          <Trash2 class="w-3.5 h-3.5" />
-          <span>Delete</span>
-        </Button>
       </div>
     </div>
 
+    <!-- Notification Alert -->
     {#if saveMessage}
-      <div class="p-3 rounded-lg bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs flex items-center gap-2 font-medium">
-        <Check class="w-4 h-4" />
-        {saveMessage}
+      <div class="p-3 bg-emerald-950/60 border border-emerald-800 rounded-lg text-xs text-emerald-300 flex items-center gap-2">
+        <Check class="w-4 h-4 text-emerald-400 shrink-0" />
+        <span>{saveMessage}</span>
       </div>
     {/if}
 
-    <!-- Edit Form Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-      <!-- Main Form (2 cols) -->
-      <div class="md:col-span-2 bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
-        <div class="space-y-4">
-          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Entity Details</h3>
-
-          <div>
-            <label for="entity-name-input" class="block text-xs font-medium text-zinc-400 mb-1">Name</label>
-            <Input id="entity-name-input" bind:value={name} class="text-xs" />
-          </div>
-
-          <div>
-            <label for="entity-desc-input" class="block text-xs font-medium text-zinc-400 mb-1">Description</label>
-            <textarea
-              id="entity-desc-input"
-              bind:value={description}
-              rows={3}
-              class="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500"
-            ></textarea>
-          </div>
+    <!-- Live Computed Formulas Banner -->
+    {#if Object.keys(liveComputedFormulas).length > 0}
+      <div class="bg-gradient-to-r from-amber-950/30 to-zinc-900 rounded-lg border border-amber-900/40 p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+            <Calculator class="w-4 h-4 text-amber-400" />
+            <span>Live Evaluated Mathematical Formulas</span>
+          </h3>
+          <span class="text-[10px] text-amber-500/80 font-mono">Auto-evaluates on property changes</span>
         </div>
 
-        <!-- Dynamic Properties Form -->
-        {#if schema}
-          <div class="space-y-4 pt-4 border-t border-zinc-800">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Dynamic Property Values</h3>
-              <span class="text-[11px] text-zinc-400 font-mono">Schema: {schema.name}</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
+            <div class="p-3.5 rounded bg-black/40 border border-amber-900/50 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-zinc-300 capitalize">{fKey.replace(/_/g, ' ')}</span>
+                <span class="text-sm font-bold font-mono text-amber-300">{fData.formatted}</span>
+              </div>
+              <div class="text-[10px] font-mono text-amber-500/70 line-clamp-1">
+                {fData.expr}
+              </div>
             </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {#each schema.properties as prop}
-                <div>
-                  <label for={`edit-prop-${prop.name}`} class="block text-xs font-medium text-zinc-400 mb-1">
-                    {prop.name}
-                    <span class="text-zinc-500 font-mono text-[10px]">({prop.propertyType})</span>
+    <!-- Primary Entity Overview -->
+    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
+      <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+        <Boxes class="w-4 h-4 text-teal-400" />
+        <span>Entity Identity</span>
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="entity-name" class="block text-xs font-medium text-zinc-400 mb-1">Entity Name</label>
+          <Input id="entity-name" bind:value={name} class="w-full text-xs" />
+        </div>
+
+        <div>
+          <label for="entity-bp" class="block text-xs font-medium text-zinc-400 mb-1">Blueprint Archetype</label>
+          <Input id="entity-bp" value={entity.blueprintName} disabled class="w-full text-xs opacity-70" />
+        </div>
+      </div>
+
+      <div>
+        <label for="entity-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore</label>
+        <textarea
+          id="entity-desc"
+          bind:value={description}
+          rows={2}
+          class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-teal-500"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Dynamic Blueprint Properties Workbench -->
+    {#if blueprint}
+      <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
+        <div class="border-b border-zinc-800 pb-3">
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <Sparkles class="w-4 h-4 text-teal-400" />
+            <span>Blueprint Attributes & Dynamic Fields</span>
+          </h3>
+          <p class="text-xs text-zinc-500 mt-0.5">
+            Modify state values to trigger real-time formula updates and causal state folds.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          {#each blueprint.fields as field}
+            <!-- 1. ENUM FIELD (e.g. Gender with Male/Female) -->
+            {#if field.fieldType === 'ENUM'}
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
+                <label class="block text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                  <ListFilter class="w-3.5 h-3.5 text-teal-400" />
+                  <span>{field.label}</span>
+                  <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
+                </label>
+
+                <div class="max-w-md pt-1">
+                  <Select
+                    bind:value={properties[field.name]}
+                    options={(field.options || []).map((opt) => ({ value: opt, label: opt }))}
+                  />
+                </div>
+              </div>
+
+            <!-- 2. BLUEPRINT REFERENCE (Sub-Blueprints e.g. Cultivation or Affection) -->
+            {:else if field.fieldType === 'BLUEPRINT_REF'}
+              {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+              <div class="p-4 rounded-lg border border-cyan-950/80 bg-cyan-950/15 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                    <Link2 class="w-4 h-4 text-cyan-400" />
+                    <span>{field.label}</span>
+                    <span class="text-[11px] font-normal text-zinc-400">
+                      (Sub-Blueprint: {targetBp ? targetBp.name : field.targetBlueprintName})
+                    </span>
+                  </div>
+                </div>
+
+                {#if targetBp && targetBp.blueprintClass === 'SECOND_CLASS' && properties[field.name]}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                    {#each targetBp.fields as subF}
+                      {#if subF.fieldType !== 'FORMULA'}
+                        <div class="space-y-1 p-2.5 rounded bg-zinc-900 border border-zinc-800">
+                          <span class="block text-[11px] font-medium text-zinc-300">
+                            {subF.label}
+                            {#if subF.unit}<span class="text-zinc-500">({subF.unit})</span>{/if}
+                          </span>
+                          {#if subF.fieldType === 'ENUM'}
+                            <Select
+                              bind:value={properties[field.name][subF.name]}
+                              options={(subF.options || []).map((o) => ({ value: o, label: o }))}
+                            />
+                          {:else if subF.fieldType === 'NUMBER'}
+                            <Input
+                              type="number"
+                              min={subF.min}
+                              max={subF.max}
+                              step={subF.step || 1}
+                              bind:value={properties[field.name][subF.name]}
+                              class="text-xs"
+                            />
+                          {:else}
+                            <Input
+                              bind:value={properties[field.name][subF.name]}
+                              class="text-xs"
+                            />
+                          {/if}
+                        </div>
+                      {/if}
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+
+            <!-- 3. FORMULA DISPLAY -->
+            {:else if field.fieldType === 'FORMULA'}
+              <!-- Handled in top live formula banner -->
+
+            <!-- 4. NUMBER FIELD -->
+            {:else if field.fieldType === 'NUMBER'}
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <Hash class="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{field.label}</span>
+                    {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
                   </label>
-
-                  {#if prop.propertyType === 'ENUM_SINGLE' && prop.validation?.allowedValues}
-                    <Select
-                      id={`edit-prop-${prop.name}`}
-                      options={prop.validation.allowedValues.map((v: string) => ({ value: v, label: v }))}
-                      bind:value={dynamicValues[prop.name]}
-                    />
-                  {:else if prop.propertyType === 'NUMBER'}
-                    <Input
-                      id={`edit-prop-${prop.name}`}
-                      type="number"
-                      bind:value={dynamicValues[prop.name]}
-                      class="font-mono text-xs"
-                    />
-                  {:else}
-                    <Input
-                      id={`edit-prop-${prop.name}`}
-                      bind:value={dynamicValues[prop.name]}
-                      class="text-xs"
-                    />
+                  {#if field.min !== undefined && field.max !== undefined}
+                    <span class="text-[10px] font-mono text-zinc-500">Range: [{field.min} to {field.max}]</span>
                   {/if}
                 </div>
-              {/each}
-            </div>
-          </div>
-        {/if}
 
-        <div class="pt-4 border-t border-zinc-800 flex justify-end">
-          <Button size="sm" onclick={handleSave}>
-            <Check class="w-3.5 h-3.5" />
-            <span>Save Changes</span>
-          </Button>
+                <div class="max-w-xs">
+                  <Input
+                    type="number"
+                    min={field.min}
+                    max={field.max}
+                    step={field.step || 1}
+                    bind:value={properties[field.name]}
+                    class="text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+            <!-- 5. STRING / TEXT FIELD -->
+            {:else}
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
+                <span class="block text-xs font-medium text-zinc-300">
+                  {field.label}
+                </span>
+                <Input
+                  bind:value={properties[field.name]}
+                  class="text-xs"
+                />
+              </div>
+            {/if}
+          {/each}
         </div>
       </div>
+    {/if}
 
-      <!-- Side Metadata Card -->
-      <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-5 space-y-4 text-xs font-mono">
-        <h4 class="font-semibold text-zinc-300 uppercase tracking-wider text-[11px]">System Metadata</h4>
-        
-        <div class="space-y-2.5 text-zinc-400">
-          <div>
-            <span class="text-zinc-500 block text-[10px]">ENTITY UUID</span>
-            <span class="text-zinc-200 break-all">{entity.id}</span>
-          </div>
+    <!-- Save Actions -->
+    <div class="flex items-center justify-between pt-4 border-t border-zinc-800">
+      <Button variant="outline" size="sm" onclick={handleDeleteEntity} class="text-red-400 hover:bg-red-950/50">
+        <Trash2 class="w-3.5 h-3.5" />
+        <span>Delete Entity</span>
+      </Button>
 
-          <div>
-            <span class="text-zinc-500 block text-[10px]">SCHEMA BINDING</span>
-            <span class="text-zinc-200">{schema?.name || entity.entityTypeId}</span>
-          </div>
-
-          <div>
-            <span class="text-zinc-500 block text-[10px]">LAST TIMELINE MUTATION</span>
-            <span class="text-purple-400 font-bold">Sequence #{entity.lastMutatedSeqNumber}</span>
-          </div>
-        </div>
-      </div>
+      <Button variant="default" size="sm" onclick={handleSaveEntity}>
+        <Check class="w-3.5 h-3.5" />
+        <span>Save Entity State</span>
+      </Button>
     </div>
   </div>
 {/if}
