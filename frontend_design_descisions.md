@@ -71,16 +71,21 @@ This document records the design preferences, framework choices, and UI/UX conve
 - **Rule**: Avoid multi-color rainbow gradients, glossy glassmorphism, animated glow borders, and heavy drop shadows.
 - **Permitted Usage**: Solid background colors (`zinc-900`, `zinc-950`, `slate-900`), crisp 1px borders (`border-zinc-800` / `border-slate-200`), and subtle monochromatic depth accents. Subtle 2% linear fades are only permitted for scroll fades and backdrop scrims.
 
-### 3.2. Badge Discipline (Restricted Primarily to Data Tables & Status Pills)
+### 3.2. Complete Prohibition of Badges (Zero-Badge Policy) & Clean Modern UI
 
-- **The "Badge Explosion" Anti-Pattern**: Do NOT turn every piece of metadata, entity name, timestamp, or label into a colorful pill badge. Excessive badges create visual clutter and dilute the semantic value of badges.
-- **Where Badges ARE Permitted**:
-  - **Data Tables (`Table` / Data Grids)**: State/status columns (e.g. `ALIVE`, `DEAD`, `DRAFT`, `PUBLISHED`), entity category indicators, and cultivation realm tiers.
-  - **Header Status Indicators**: A single compact status pill in the Prose Studio header (e.g. `[● Canon Verified]`, `[▲ 1 Invariant Warning]`).
-- **Where Badges ARE Prohibited**:
-  - Regular body text, form field labels, sidebar folder trees, breadcrumbs, and arbitrary card headers. Use subtle typography hierarchy (`text-muted-foreground`, `font-mono text-xs`) instead.
+- **Complete Elimination of Badges**: Badges, pill tags, and badge-adjacent colored chips are **strictly prohibited** across the entire frontend.
+- **Modern UI Replacements**:
+  - **Status & Enums**: Use semantic **Icons with subtle text** (e.g. green check/circle dot for `Alive`/`Clean`, red slash/skull dot for `Dead`/`Violation`, amber alert for `Warning`).
+  - **Navigation & Hierarchy**: Use **Breadcrumbs** (e.g. `NovWrite / World Studio / Entities / Eldrin the Spellblade`) for contextual location.
+  - **Inspection & Actions**: Use **Interactive Buttons** and **Slide-Over Drawers / Sheets** for metadata inspection rather than clustering inline badges.
+  - **Typography & Tags**: Use clean, low-contrast monospace typography (`font-mono text-xs text-zinc-400`) and simple text labels without bordered chip backgrounds.
 
-### 3.3. Dropdown Standard: Mandatory `Select` from `shadcn-svelte`
+### 3.3. Communication Layer Separation from Frontend UI
+
+- **Communication Layer Is Internal**: The `@novwrite/bridge` RPC/SSE transport and internal diagnostic message hubs are backend communication machinery and **MUST NOT be exposed as primary UI navigation items** in the main user-facing frontend.
+- **User-Facing Focus**: The frontend must focus exclusively on the core creative authoring workflows (**Prose Studio** and **World Studio**). Internal communication debugging belongs strictly in dev CLI tooling or isolated hidden debug routes.
+
+### 3.4. Dropdown Standard: Mandatory `Select` from `shadcn-svelte`
 
 - **Rule**: For all dropdown menus, category selectors, enum choosers, and option pickers, **ALWAYS use the official `Select` component from `shadcn-svelte`** (`$lib/components/ui/select`) or `React Native Reusables` on mobile.
 - **Prohibitions**:

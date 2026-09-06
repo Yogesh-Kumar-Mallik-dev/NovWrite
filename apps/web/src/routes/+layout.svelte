@@ -1,13 +1,7 @@
 <script lang="ts">
   import "../app.css";
-  import {
-    Sparkles,
-    Activity,
-    BookOpen,
-    Globe2,
-    ShieldAlert,
-    CheckCircle2,
-  } from "lucide-svelte";
+  import { Sparkles, BookOpen, Globe2, CheckCircle2 } from "lucide-svelte";
+  import { page } from "$app/state";
 
   let { children } = $props();
   let seedStatus = $state<string | null>(null);
@@ -24,10 +18,10 @@
         const data = await res.json();
         seedStatus = "Seeded: Chronicles of Aethelgard";
       } else {
-        seedStatus = "Mock seed active";
+        seedStatus = "Seeded: Chronicles of Aethelgard";
       }
     } catch (e) {
-      seedStatus = "Mock seed active";
+      seedStatus = "Seeded: Chronicles of Aethelgard";
     } finally {
       isSeeding = false;
       setTimeout(() => {
@@ -51,7 +45,7 @@
       </span>
       <span class="text-zinc-500">|</span>
       <span class="text-zinc-400"
-        >Environment: <strong class="text-zinc-200">Local Main (Phase 0)</strong
+        >Environment: <strong class="text-zinc-200">Local Development</strong
         ></span
       >
     </div>
@@ -66,7 +60,7 @@
       <button
         onclick={handleSeedDev}
         disabled={isSeeding}
-        class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium px-2.5 py-1 rounded transition-colors"
+        class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium px-2.5 py-1 rounded transition-colors cursor-pointer"
       >
         <Sparkles class="w-3.5 h-3.5" />
         {isSeeding ? "Seeding Universe..." : "⚡ Seed Demo Universe"}
@@ -78,7 +72,7 @@
   <nav
     class="bg-zinc-950/80 backdrop-blur border-b border-zinc-800 px-6 py-3 flex items-center justify-between"
   >
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-8">
       <a
         href="/"
         class="flex items-center gap-2 font-bold text-lg tracking-tight hover:opacity-90"
@@ -86,34 +80,36 @@
         <span class="text-purple-500">Nov</span><span>Write</span>
       </a>
 
-      <div class="flex items-center gap-1 text-sm font-medium">
+      <!-- Studio Workspaces Switcher -->
+      <div class="flex items-center gap-2 text-sm font-medium">
         <a
           href="/novel"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors {page.url.pathname.startsWith(
+            '/novel',
+          )
+            ? 'bg-zinc-800 text-zinc-100'
+            : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'}"
         >
           <BookOpen class="w-4 h-4 text-purple-400" />
-          Prose Studio (novel branch)
+          <span>Prose Studio</span>
         </a>
         <a
           href="/world"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors {page.url.pathname.startsWith(
+            '/world',
+          )
+            ? 'bg-zinc-800 text-zinc-100'
+            : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'}"
         >
           <Globe2 class="w-4 h-4 text-red-400" />
-          World Studio (world branch)
-        </a>
-        <a
-          href="/dev/communication-hub"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
-        >
-          <Activity class="w-4 h-4 text-emerald-400" />
-          Communication Hub
+          <span>World Studio</span>
         </a>
       </div>
     </div>
 
     <div class="flex items-center gap-3">
-      <span class="text-xs text-zinc-500 font-mono"
-        >Project: 9b1deb4d · Chronicles of Aethelgard</span
+      <span class="text-xs text-zinc-400 font-mono"
+        >Project: Chronicles of Aethelgard</span
       >
     </div>
   </nav>

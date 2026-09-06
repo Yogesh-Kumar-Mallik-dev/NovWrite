@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { Users, Clock, ShieldCheck, AlertOctagon } from "lucide-svelte";
+  import Breadcrumb from "$lib/components/ui/breadcrumb.svelte";
 
   let { children } = $props();
 
@@ -10,24 +11,28 @@
     { href: "/world/rules", label: "Invariant Rules", icon: ShieldCheck },
     { href: "/world/audit", label: "Continuity Audit", icon: AlertOctagon },
   ];
+
+  const currentSection = $derived(
+    navItems.find((item) => page.url.pathname.startsWith(item.href))?.label ||
+      "Overview",
+  );
 </script>
 
 <div class="flex-1 flex flex-col bg-zinc-950 text-zinc-100">
-  <!-- World Studio Sub-Header -->
+  <!-- World Studio Sub-Header with Breadcrumb -->
   <div
     class="border-b border-zinc-800 bg-zinc-900/50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3"
   >
-    <div class="flex items-center gap-2">
-      <div class="h-2 w-2 rounded-full bg-red-500"></div>
-      <h1 class="text-sm font-semibold tracking-tight text-zinc-200">
-        World Studio Workbench
-      </h1>
-      <span class="text-xs text-zinc-500 font-mono hidden sm:inline"
-        >| Deterministic Universe State</span
-      >
+    <div class="flex items-center gap-3">
+      <Breadcrumb
+        items={[
+          { label: "World Studio", href: "/world" },
+          { label: currentSection },
+        ]}
+      />
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Sub-Navigation Action Buttons -->
     <nav
       class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 max-w-full"
     >
@@ -43,7 +48,7 @@
           <Icon
             class="w-3.5 h-3.5 {isActive ? 'text-red-400' : 'text-zinc-500'}"
           />
-          {item.label}
+          <span>{item.label}</span>
         </a>
       {/each}
     </nav>
