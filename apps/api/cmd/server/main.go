@@ -48,13 +48,6 @@ func main() {
 		w.Write([]byte(`{"status":"ok","service":"novwrite-api"}`))
 	})
 
-	// Dev Seeder Handlers
-	devHandler := handlers.NewDevSeederHandler(env)
-	r.Route("/api/v1/dev", func(r chi.Router) {
-		r.Post("/seed", devHandler.SeedHandler)
-		r.Post("/reset", devHandler.ResetHandler)
-	})
-
 	// World Bridge Handlers (Demo State Context)
 	bridgeHandler := handlers.NewWorldBridgeHandler(nil, nil, nil)
 	r.Route("/api/v1/bridge", func(r chi.Router) {
