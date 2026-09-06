@@ -18,9 +18,9 @@
   );
 </script>
 
-<div class="flex-1 flex flex-col bg-zinc-950 text-zinc-100">
+<div class="flex-1 flex flex-col bg-background text-foreground transition-colors">
   <!-- World Studio Sub-Header with Breadcrumb -->
-  <div class="border-b border-zinc-800 bg-zinc-900/50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+  <div class="border-b border-border bg-card/70 dark:bg-zinc-900/50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 backdrop-blur">
     <div class="flex items-center gap-3">
       <Breadcrumb
         items={[
@@ -37,9 +37,9 @@
         {@const isActive = page.url.pathname.startsWith(item.href)}
         <a
           href={item.href}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap min-h-[32px] {isActive ? 'bg-zinc-800 text-zinc-100 border border-zinc-700 shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'}"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap min-h-[32px] {isActive ? 'bg-secondary text-secondary-foreground border border-border shadow-xs' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}"
         >
-          <Icon class="w-3.5 h-3.5 {isActive ? 'text-red-400' : 'text-zinc-500'}" />
+          <Icon class="w-3.5 h-3.5 {isActive ? 'text-red-400' : 'text-muted-foreground'}" />
           <span>{item.label}</span>
         </a>
       {/each}
