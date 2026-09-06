@@ -33,7 +33,9 @@ enum BlueprintFieldType {
   BOOLEAN
   ENUM
   VALUE_TYPE
+  ARRAY
   BLUEPRINT_REF
+  ARRAY_REF
   FORMULA
 }
 

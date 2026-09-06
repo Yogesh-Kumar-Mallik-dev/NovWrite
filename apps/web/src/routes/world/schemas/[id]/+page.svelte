@@ -102,7 +102,9 @@
     { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
     { value: 'ENUM', label: 'Enum (Standard String Categories)' },
     { value: 'VALUE_TYPE', label: 'Value Type (Options with Power / Numeric Weights)' },
-    { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
+    { value: 'ARRAY', label: 'Array / Tag List (e.g. Titles, Techniques)' },
+    { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (Single 1st or 2nd Class)' },
+    { value: 'ARRAY_REF', label: 'Array Reference (Multiple Blueprint Refs)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
   ];
 
@@ -182,10 +184,15 @@
       fieldDef.step = newFieldStep;
       fieldDef.unit = newFieldUnit;
       fieldDef.defaultValue = parseFloat(newFieldDefault) || 0;
-    } else if (newFieldType === 'BLUEPRINT_REF') {
+    } else if (newFieldType === 'BLUEPRINT_REF' || newFieldType === 'ARRAY_REF') {
       fieldDef.targetBlueprintId = newFieldTargetBp;
       const targetBp = worldStore.getBlueprint(newFieldTargetBp);
       fieldDef.targetBlueprintName = targetBp?.name;
+      if (newFieldType === 'ARRAY_REF') {
+        fieldDef.referenceCardinality = 'MANY';
+      }
+    } else if (newFieldType === 'ARRAY') {
+      fieldDef.defaultValue = [];
     } else if (newFieldType === 'FORMULA') {
       fieldDef.formulaExpression = newFieldFormula.trim();
       fieldDef.formulaDependencies = extractFormulaVariables(newFieldFormula);
@@ -589,11 +596,27 @@
             </div>
           {/if}
 
-          <!-- Blueprint Ref -->
-          {#if newFieldType === 'BLUEPRINT_REF'}
+          <!-- Array Tag List Info -->
+          {#if newFieldType === 'ARRAY'}
+            <div class="p-3 bg-card rounded border border-border space-y-1.5">
+              <span class="text-xs font-medium text-indigo-500 flex items-center gap-1.5">
+                <ListFilter class="w-3.5 h-3.5" />
+                <span>Array / Tag List Field</span>
+              </span>
+              <p class="text-[11px] text-muted-foreground">
+                Allows entities of this blueprint to hold multiple string tags/items (e.g. Titles, Attack Techniques, Aliases).
+              </p>
+            </div>
+          {/if}
+
+          <!-- Blueprint Ref & Array Ref -->
+          {#if newFieldType === 'BLUEPRINT_REF' || newFieldType === 'ARRAY_REF'}
             <div class="p-3 bg-card rounded border border-border space-y-2">
-              <span class="text-xs font-medium text-cyan-500">Target Blueprint</span>
-              <Select bind:value={newFieldTargetBp} options={availableTargetBlueprints} />
+              <span class="text-xs font-medium text-cyan-500 flex items-center gap-1.5">
+                <Link2 class="w-3.5 h-3.5" />
+                <span>{newFieldType === 'ARRAY_REF' ? 'Target Referenced Blueprint (Multi-Select Reference)' : 'Target Referenced Blueprint'}</span>
+              </span>
+              <Select bind:value={newFieldTargetBp} options={availableTargetBlueprints} placeholder="Select target blueprint..." />
             </div>
           {/if}
 
@@ -653,8 +676,12 @@
                     <ListFilter class="w-4 h-4 text-primary" />
                   {:else if field.fieldType === 'VALUE_TYPE'}
                     <Sparkles class="w-4 h-4 text-primary" />
+                  {:else if field.fieldType === 'ARRAY'}
+                    <ListFilter class="w-4 h-4 text-indigo-500" />
                   {:else if field.fieldType === 'BLUEPRINT_REF'}
                     <Link2 class="w-4 h-4 text-cyan-500" />
+                  {:else if field.fieldType === 'ARRAY_REF'}
+                    <Link2 class="w-4 h-4 text-cyan-400" />
                   {:else if field.fieldType === 'NUMBER'}
                     <Hash class="w-4 h-4 text-emerald-500" />
                   {:else}
@@ -803,11 +830,18 @@
               </div>
             {/if}
 
-            <!-- Blueprint Ref Details -->
-            {#if field.fieldType === 'BLUEPRINT_REF'}
+            <!-- Blueprint Ref & Array Ref Details -->
+            {#if field.fieldType === 'BLUEPRINT_REF' || field.fieldType === 'ARRAY_REF'}
               <div class="flex items-center gap-2 text-xs pt-1 text-cyan-500 font-medium">
                 <Link2 class="w-3.5 h-3.5" />
-                <span>Referenced Blueprint: {field.targetBlueprintName || field.targetBlueprintId}</span>
+                <span>{field.fieldType === 'ARRAY_REF' ? 'Multi-Referenced Blueprint' : 'Referenced Blueprint'}: {field.targetBlueprintName || field.targetBlueprintId}</span>
+              </div>
+            {/if}
+
+            {#if field.fieldType === 'ARRAY'}
+              <div class="flex items-center gap-2 text-xs pt-1 text-indigo-500 font-medium">
+                <ListFilter class="w-3.5 h-3.5" />
+                <span>Array / Tag List Container (e.g. Titles, Techniques)</span>
               </div>
             {/if}
 

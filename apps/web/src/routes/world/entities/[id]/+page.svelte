@@ -384,7 +384,9 @@
     blueprint
       ? blueprint.fields.filter(
           (f: DynamicFieldDef) =>
-            f.fieldType !== 'BLUEPRINT_REF' && f.fieldType !== 'FORMULA'
+            f.fieldType !== 'BLUEPRINT_REF' &&
+            f.fieldType !== 'ARRAY_REF' &&
+            f.fieldType !== 'FORMULA'
         )
       : []
   );
@@ -406,6 +408,12 @@
           const target = worldStore.getBlueprint(f.targetBlueprintId);
           return !target || target.blueprintClass === 'FIRST_CLASS';
         })
+      : []
+  );
+
+  const arrayRefFields = $derived(
+    blueprint
+      ? blueprint.fields.filter((f: DynamicFieldDef) => f.fieldType === 'ARRAY_REF')
       : []
   );
 
@@ -1001,6 +1009,107 @@
                   />
                 </div>
 
+                <!-- ARRAY FIELD (e.g. Titles, Attack Techniques, Aliases) -->
+              {:else if field.fieldType === 'ARRAY'}
+                <div
+                  class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2"
+                >
+                  <div class="flex items-center justify-between">
+                    <Label
+                      class="text-xs font-medium text-foreground flex items-center gap-1.5"
+                    >
+                      <ListFilter class="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{field.label}</span>
+                      <span class="text-[10px] font-mono text-muted-foreground"
+                        >({field.name})</span
+                      >
+                    </Label>
+                    <span class="text-[10px] font-mono text-muted-foreground">
+                      {(properties[field.name] || []).length} items
+                    </span>
+                  </div>
+
+                  {#if field.description}
+                    <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                  {/if}
+
+                  <!-- Tag list / chip display -->
+                  <div class="space-y-2">
+                    <div
+                      class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input"
+                    >
+                      {#if !properties[field.name] || properties[field.name].length === 0}
+                        <span class="text-xs text-muted-foreground italic"
+                          >No items added yet. Type below and press Enter or click Add.</span
+                        >
+                      {:else}
+                        {#each properties[field.name] as item, itemIdx}
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 font-medium"
+                          >
+                            <span>{item}</span>
+                            <button
+                              type="button"
+                              onclick={() => {
+                                properties[field.name] = properties[field.name].filter(
+                                  (_: string, idx: number) => idx !== itemIdx
+                                );
+                              }}
+                              class="hover:text-destructive cursor-pointer"
+                            >
+                              <X class="w-3 h-3" />
+                            </button>
+                          </span>
+                        {/each}
+                      {/if}
+                    </div>
+
+                    <!-- Input to add item -->
+                    <div class="flex items-center gap-2 max-w-md">
+                      <Input
+                        id={`edit-array-input-${field.name}`}
+                        type="text"
+                        placeholder="Type title, technique, or tag name..."
+                        class="h-8 text-xs"
+                        onkeydown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = e.currentTarget.value.trim();
+                            if (val) {
+                              properties[field.name] = [
+                                ...(properties[field.name] || []),
+                                val,
+                              ];
+                              e.currentTarget.value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        class="h-8 text-xs shrink-0"
+                        onclick={() => {
+                          const input = document.getElementById(
+                            `edit-array-input-${field.name}`
+                          ) as HTMLInputElement;
+                          if (input && input.value.trim()) {
+                            properties[field.name] = [
+                              ...(properties[field.name] || []),
+                              input.value.trim(),
+                            ];
+                            input.value = '';
+                          }
+                        }}
+                      >
+                        <Plus class="w-3 h-3" />
+                        <span>Add</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- BOOLEAN FIELD -->
               {:else if field.fieldType === 'BOOLEAN'}
                 <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
@@ -1217,8 +1326,8 @@
         </div>
       {/if}
 
-      <!-- 1st-Class Relational Entity Links -->
-      {#if relationalEntityRefFields.length > 0}
+      <!-- SECTION 4: 1st-Class Relational Entity Links & Multi-References -->
+      {#if relationalEntityRefFields.length > 0 || arrayRefFields.length > 0}
         <Card class="p-6 space-y-4 border-border bg-card">
           <div class="flex items-center justify-between border-b border-border pb-3">
             <div>
@@ -1226,17 +1335,17 @@
                 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
               >
                 <Link2 class="w-4 h-4 text-primary" />
-                <span>1st-Class Relational Entity Connections</span>
+                <span>1st-Class Relational Entity Connections & Multi-References</span>
               </h3>
               <p class="text-xs text-muted-foreground mt-0.5">
-                Connect this entity to other 1st-class entity objects (e.g. character owning a
-                weapon, belonging to a faction).
+                Connect this entity to other 1st-class entity objects (e.g. character owning weapons, learned martial techniques, belonging to factions).
               </p>
             </div>
-            <span class="text-[11px] text-primary font-mono">1st-Class Links</span>
+            <span class="text-[11px] text-primary font-mono">Entity Graph Links</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Single Entity Reference Fields -->
             {#each relationalEntityRefFields as field}
               {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
               {@const candidateEntities = targetBp
@@ -1305,6 +1414,82 @@
                         </button>
                       {/each}
                     </div>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+
+            <!-- Multi-Reference Entity Fields (ARRAY_REF) -->
+            {#each arrayRefFields as field}
+              {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+              {@const candidateEntities = targetBp
+                ? worldStore.entities.filter(
+                    (e: any) => e.blueprintId === targetBp.id && e.id !== entity.id
+                  )
+                : worldStore.entities.filter((e: any) => e.id !== entity.id)}
+              {@const selectedIds = properties[field.name] || []}
+              {@const unselectedCandidates = candidateEntities.filter((e: any) => !selectedIds.includes(e.id))}
+              <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-3 col-span-1 md:col-span-2">
+                <div class="flex items-center justify-between">
+                  <Label class="text-xs font-medium text-foreground flex items-center gap-1.5">
+                    <Link2 class="w-3.5 h-3.5 text-cyan-500" />
+                    <span>{field.label}</span>
+                    <span class="text-[10px] font-mono text-muted-foreground">({field.name})</span>
+                  </Label>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+                    Multi-Ref: {targetBp ? targetBp.name : '1st-Class Entity'} ({selectedIds.length} linked)
+                  </span>
+                </div>
+
+                {#if field.description}
+                  <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                {/if}
+
+                <!-- Selected linked entities chips -->
+                <div class="space-y-2">
+                  <div class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input">
+                    {#if selectedIds.length === 0}
+                      <span class="text-xs text-muted-foreground italic">No linked entities attached. Select from the dropdown below to add.</span>
+                    {:else}
+                      {#each selectedIds as linkedId}
+                        {@const linkedEnt = worldStore.entities.find((e: any) => e.id === linkedId)}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-700 dark:text-cyan-300 font-medium">
+                          <span>{linkedEnt ? linkedEnt.name : linkedId}</span>
+                          <button
+                            type="button"
+                            onclick={() => {
+                              properties[field.name] = properties[field.name].filter((id: string) => id !== linkedId);
+                            }}
+                            class="hover:text-destructive cursor-pointer"
+                          >
+                            <X class="w-3 h-3" />
+                          </button>
+                        </span>
+                      {/each}
+                    {/if}
+                  </div>
+
+                  <!-- Selector to attach more entities -->
+                  {#if unselectedCandidates.length > 0}
+                    <div class="max-w-md">
+                      <Select
+                        value=""
+                        placeholder="Attach an entity reference..."
+                        options={unselectedCandidates.map((e: any) => ({
+                          value: e.id,
+                          label: `${e.name} (${e.category})`,
+                        }))}
+                        onchange={(val) => {
+                          if (val && !selectedIds.includes(val)) {
+                            properties[field.name] = [...selectedIds, val];
+                          }
+                        }}
+                      />
+                    </div>
+                  {:else if candidateEntities.length === 0}
+                    <p class="text-[11px] text-muted-foreground italic">
+                      No {targetBp ? targetBp.name : 'matching'} entities available in the universe.
+                    </p>
                   {/if}
                 </div>
               </div>

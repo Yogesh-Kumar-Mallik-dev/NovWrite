@@ -27,14 +27,18 @@ const (
 	TypeBoolean      PropertyType = "BOOLEAN"
 	TypeEnum         PropertyType = "ENUM"
 	TypeValueType    PropertyType = "VALUE_TYPE"
+	TypeArray        PropertyType = "ARRAY"
 	TypeBlueprintRef PropertyType = "BLUEPRINT_REF"
+	TypeArrayRef     PropertyType = "ARRAY_REF"
 	TypeFormula      PropertyType = "FORMULA"
 
 	// Legacy aliases
-	TypeEnumSingle PropertyType = "ENUM_SINGLE"
-	TypeEnumMulti  PropertyType = "ENUM_MULTI"
-	TypeEntityRef  PropertyType = "ENTITY_REF"
-	TypeLadderTier PropertyType = "LADDER_TIER"
+	TypeEnumSingle        PropertyType = "ENUM_SINGLE"
+	TypeEnumMulti         PropertyType = "ENUM_MULTI"
+	TypeEntityRef         PropertyType = "ENTITY_REF"
+	TypeLadderTier        PropertyType = "LADDER_TIER"
+	TypeArrayString       PropertyType = "ARRAY_STRING"
+	TypeBlueprintRefArray PropertyType = "BLUEPRINT_REF_ARRAY"
 )
 
 // ValueTypeOption bridges qualitative category choices with quantitative power weights for formulas.
@@ -278,6 +282,35 @@ func ValidateSingleProperty(def DynamicPropertyDef, val interface{}) (interface{
 		}
 		return str, nil
 
+	case TypeArray, TypeArrayString:
+		switch v := val.(type) {
+		case []string:
+			return v, nil
+		case []interface{}:
+			res := make([]string, 0, len(v))
+			for _, item := range v {
+				if item != nil {
+					res = append(res, strings.TrimSpace(fmt.Sprintf("%v", item)))
+				}
+			}
+			return res, nil
+		case string:
+			if strings.TrimSpace(v) == "" {
+				return []string{}, nil
+			}
+			parts := strings.Split(v, ",")
+			res := make([]string, 0, len(parts))
+			for _, p := range parts {
+				trimmed := strings.TrimSpace(p)
+				if trimmed != "" {
+					res = append(res, trimmed)
+				}
+			}
+			return res, nil
+		default:
+			return []string{}, nil
+		}
+
 	case TypeBlueprintRef, TypeEntityRef:
 		str, ok := val.(string)
 		if !ok || (!uuidRegex.MatchString(str) && !strings.HasPrefix(str, "e") && !strings.HasPrefix(str, "bp")) {
@@ -289,6 +322,39 @@ func ValidateSingleProperty(def DynamicPropertyDef, val interface{}) (interface{
 			}
 		}
 		return str, nil
+
+	case TypeArrayRef, TypeBlueprintRefArray:
+		switch v := val.(type) {
+		case []string:
+			return v, nil
+		case []interface{}:
+			res := make([]string, 0, len(v))
+			for _, item := range v {
+				if item != nil {
+					if m, ok := item.(map[string]interface{}); ok && m["id"] != nil {
+						res = append(res, fmt.Sprintf("%v", m["id"]))
+					} else {
+						res = append(res, strings.TrimSpace(fmt.Sprintf("%v", item)))
+					}
+				}
+			}
+			return res, nil
+		case string:
+			if strings.TrimSpace(v) == "" {
+				return []string{}, nil
+			}
+			parts := strings.Split(v, ",")
+			res := make([]string, 0, len(parts))
+			for _, p := range parts {
+				trimmed := strings.TrimSpace(p)
+				if trimmed != "" {
+					res = append(res, trimmed)
+				}
+			}
+			return res, nil
+		default:
+			return []string{}, nil
+		}
 
 	case TypeFormula:
 		return val, nil

@@ -222,12 +222,16 @@ export class DynamicSchemaEngine {
   ): Promise<DynamicPropertyDef> {
     let fieldType: BlueprintFieldType = "STRING";
     const pt = property.propertyType || property.fieldType;
-    if (pt === "NUMBER" || pt === "BOOLEAN" || pt === "ENUM" || pt === "VALUE_TYPE" || pt === "BLUEPRINT_REF" || pt === "FORMULA") {
+    if (pt === "NUMBER" || pt === "BOOLEAN" || pt === "ENUM" || pt === "VALUE_TYPE" || pt === "ARRAY" || pt === "BLUEPRINT_REF" || pt === "ARRAY_REF" || pt === "FORMULA") {
       fieldType = pt;
     } else if (pt === "ENUM_SINGLE" || pt === "ENUM_MULTI") {
       fieldType = "ENUM";
     } else if (pt === "ENTITY_REF") {
       fieldType = "BLUEPRINT_REF";
+    } else if (pt === "ARRAY_STRING" as any) {
+      fieldType = "ARRAY";
+    } else if (pt === "BLUEPRINT_REF_ARRAY" as any || pt === "ENTITY_REF_ARRAY" as any) {
+      fieldType = "ARRAY_REF";
     }
 
     const res = await this.addFieldToBlueprint(projectId, entityTypeId, {

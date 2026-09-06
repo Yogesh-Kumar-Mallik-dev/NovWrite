@@ -17,7 +17,9 @@ export type BlueprintFieldType =
   | "BOOLEAN"
   | "ENUM"
   | "VALUE_TYPE"
+  | "ARRAY"
   | "BLUEPRINT_REF"
+  | "ARRAY_REF"
   | "FORMULA";
 
 export interface ValueTypeOptionItem {
@@ -482,6 +484,25 @@ export class WorldStateStore {
               };
             }
           }
+        }
+      } else if (field.fieldType === "ARRAY") {
+        const arr = entity.properties[field.name];
+        if (Array.isArray(arr)) {
+          context[field.name] = arr;
+          context[`${field.name}_count`] = arr.length;
+        } else {
+          context[field.name] = [];
+          context[`${field.name}_count`] = 0;
+        }
+      } else if (field.fieldType === "ARRAY_REF") {
+        const arr = entity.properties[field.name];
+        if (Array.isArray(arr)) {
+          const resolved = arr.map((id) => this.entities.find((e) => e.id === id)).filter(Boolean);
+          context[field.name] = resolved;
+          context[`${field.name}_count`] = resolved.length;
+        } else {
+          context[field.name] = [];
+          context[`${field.name}_count`] = 0;
         }
       }
     }

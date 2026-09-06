@@ -17,6 +17,7 @@
     Sword,
     MapPin,
     Eye,
+    Tag,
   } from 'lucide-svelte';
   import { Button, Input, Select, ConfirmDialog, EmptyState } from '$lib/components/ui';
   import { toast } from '$lib/stores/toastStore.svelte';
@@ -424,6 +425,10 @@
                     <Sparkles class="w-3.5 h-3.5 text-primary" />
                   {:else if col.fieldType === 'BLUEPRINT_REF'}
                     <Link2 class="w-3.5 h-3.5 text-cyan-500" />
+                  {:else if col.fieldType === 'ARRAY_REF'}
+                    <Link2 class="w-3.5 h-3.5 text-purple-400" />
+                  {:else if col.fieldType === 'ARRAY'}
+                    <Tag class="w-3.5 h-3.5 text-indigo-400" />
                   {:else if col.fieldType === 'NUMBER'}
                     <Hash class="w-3.5 h-3.5 text-emerald-500" />
                   {/if}
@@ -488,6 +493,56 @@
                         </div>
                       {:else}
                         <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                      {/if}
+                    {:else if col.fieldType === 'ARRAY_REF' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
+                      {@const refIds = entity.properties[col.id.replace('prop:', '')] || []}
+                      {#if refIds.length === 0}
+                        <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                      {:else}
+                        <div class="flex flex-wrap gap-1 items-center">
+                          {#each refIds as refId}
+                            {@const refEntity = worldStore.getEntity(refId)}
+                            {#if refEntity}
+                              <a
+                                href={`/world/entities/${refEntity.id}`}
+                                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-[11px] font-medium hover:bg-purple-500/20 transition-colors"
+                              >
+                                <Link2 class="w-2.5 h-2.5 text-purple-500" />
+                                <span>{refEntity.name}</span>
+                              </a>
+                            {:else}
+                              <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-mono">
+                                {refId.slice(0, 8)}...
+                              </span>
+                            {/if}
+                          {/each}
+                        </div>
+                      {/if}
+                    {:else if col.fieldType === 'ARRAY' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
+                      {@const tags = entity.properties[col.id.replace('prop:', '')] || []}
+                      {#if tags.length === 0}
+                        <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                      {:else}
+                        <div class="flex flex-wrap gap-1 items-center">
+                          {#each tags as tag}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium">
+                              {tag}
+                            </span>
+                          {/each}
+                        </div>
+                      {/if}
+                    {:else if col.fieldType === 'BLUEPRINT_REF' && typeof entity.properties?.[col.id.replace('prop:', '')] === 'string' && entity.properties[col.id.replace('prop:', '')]}
+                      {@const refEntity = worldStore.getEntity(entity.properties[col.id.replace('prop:', '')])}
+                      {#if refEntity}
+                        <a
+                          href={`/world/entities/${refEntity.id}`}
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors"
+                        >
+                          <Link2 class="w-3 h-3 text-cyan-500" />
+                          <span>{refEntity.name}</span>
+                        </a>
+                      {:else}
+                        <span class="text-foreground text-xs leading-relaxed whitespace-normal break-words">{cellInfo.text}</span>
                       {/if}
                     {:else if cellInfo.subValues}
                       <!-- Sub-blueprint structured values (e.g. cultivation or affection) -->
