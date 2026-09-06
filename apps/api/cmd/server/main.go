@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/handlers"
 	"github.com/go-chi/chi/v5"
@@ -56,8 +61,38 @@ func main() {
 	})
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("[NovWrite API] Server starting on %s (Environment: %s)", addr, env)
-	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatalf("[NovWrite API] Server failed: %v", err)
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	serverErrors := make(chan error, 1)
+
+	go func() {
+		log.Printf("[NovWrite API] Server starting on %s (Environment: %s)", addr, env)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrors <- err
+		}
+	}()
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrors:
+		log.Fatalf("[NovWrite API] Server error: %v", err)
+	case sig := <-shutdown:
+		log.Printf("[NovWrite API] Signal received (%v). Initiating graceful shutdown...", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("[NovWrite API] Graceful shutdown failed, forcing close: %v", err)
+			_ = server.Close()
+		}
+		log.Println("[NovWrite API] Server stopped gracefully.")
 	}
 }
