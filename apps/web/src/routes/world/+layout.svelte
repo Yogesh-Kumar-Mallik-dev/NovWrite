@@ -1,14 +1,13 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { Users, LayoutTemplate, Sliders, Clock, ShieldCheck, AlertOctagon } from 'lucide-svelte';
+  import { Users, LayoutTemplate, Clock, ShieldCheck, AlertOctagon } from 'lucide-svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
 
   let { children } = $props();
 
   const navItems = [
     { href: '/world/entities', label: 'Entities', icon: Users },
-    { href: '/world/schemas', label: 'Entity Schemas', icon: LayoutTemplate },
-    { href: '/world/systems', label: 'Custom Properties & Systems', icon: Sliders },
+    { href: '/world/schemas', label: 'Blueprints & Schemas', icon: LayoutTemplate },
     { href: '/world/timeline', label: 'Causal Timeline', icon: Clock },
     { href: '/world/rules', label: 'Invariant Rules', icon: ShieldCheck },
     { href: '/world/audit', label: 'Continuity Audit', icon: AlertOctagon },

@@ -104,11 +104,10 @@ To eliminate modal clutter and enhance focus, every major domain is partitioned 
 
 | Workbench Route | Purpose | Key Capabilities |
 | :--- | :--- | :--- |
-| `/world/entities` | Entities Catalog & Inspector | List (`/`), Create (`/create`), Update/Detail (`/[id]`) with live computed formulas |
-| `/world/schemas` | Blueprints Architect | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for 1st & 2nd class blueprints |
-| `/world/systems` | Sub-Systems Workbench | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for Affection Scales & Power Ladders |
-| `/world/rules` | Rules & Invariants | Predicate builder and violation severity configurations |
+| `/world/entities` | Entities Catalog & Inspector | List (`/`) with per-blueprint customizable columns, Create (`/create`), Update/Detail (`/[id]`) with live computed formulas |
+| `/world/schemas` | Blueprints & Schemas Architect | List (`/`), Create (`/create`), Update/Detail (`/[id]`) for 1st-Class Archetypes & 2nd-Class Sub-Schemas (Progression Ladders, Affection Gauges, Formulas) |
 | `/world/timeline` | Causal Timeline | Narrative vs Chronological sequence visualization and atomic mutation logs |
+| `/world/rules` | Rules & Invariants | Predicate builder and violation severity configurations |
 | `/world/audit` | Continuity Health | Universe violation tracker and one-click canon reconciler |
 
 - **Zero-Badge Policy:** Strict prohibition of badges/pill tags across all views. Replaced with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
