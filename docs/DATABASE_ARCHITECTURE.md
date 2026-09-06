@@ -11,7 +11,7 @@
 1. **Canon Over AI Memory:** Canonical world state is stored exclusively in PostgreSQL relational tables and dynamic JSONB attributes. AI models never act as the system of record.
 2. **Relational Backbone with Dynamic Blueprint Schemas:** Rigid relational models govern structural hierarchies (Projects, Novels, Chapters, Scenes, Events, Rules), while user-defined entities (Characters, Items, Locations, Factions) instantiate 1st-Class Blueprints with JSONB columns validated against `blueprint_fields` schemas.
 3. **Class vs. Object Paradigm in Storage:**
-   - `blueprints` & `blueprint_fields`: Defines classes/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas), dynamic validation rules, dual-valued enums (`{ label, value, power }`), and AST formula expressions.
+   - `blueprints` & `blueprint_fields`: Defines classes/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas), dynamic validation rules, pure categorical enums (`ENUM`: string arrays), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), and AST formula expressions.
    - `entities`: Stores concrete instantiated objects with author values in `properties` JSONB and cached math outcomes in `computed_formulas` JSONB.
 4. **Event-Sourced State Transitions:** Historical truth is never overwritten. Changes to entity attributes over narrative time are recorded as immutable `event_effects` rows attached to sequential `events` records.
 5. **Strict Project Isolation (Multi-Tenancy):** Every database query and index is partitioned by `project_id` to guarantee tenant isolation and performance predictability.
@@ -208,8 +208,8 @@ CREATE TABLE blueprint_fields (
     name VARCHAR(100) NOT NULL,
     key VARCHAR(100) NOT NULL,
     label VARCHAR(150) NOT NULL,
-    field_type VARCHAR(50) NOT NULL, -- STRING, NUMBER, BOOLEAN, ENUM, BLUEPRINT_REF, FORMULA
-    options JSONB NOT NULL DEFAULT '[]'::jsonb, -- e.g. [{"label": "Divine", "value": "divine", "power": 1000}]
+    field_type VARCHAR(50) NOT NULL, -- STRING, NUMBER, BOOLEAN, ENUM, VALUE_TYPE, BLUEPRINT_REF, FORMULA
+    options JSONB NOT NULL DEFAULT '[]'::jsonb, -- e.g. ["Sword", "Saber"] for ENUM, or [{"label": "Divine", "value": "divine", "power": 1000}] for VALUE_TYPE
     target_blueprint_id UUID REFERENCES blueprints(id) ON DELETE SET NULL,
     min_val DOUBLE PRECISION,
     max_val DOUBLE PRECISION,

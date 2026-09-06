@@ -17,6 +17,7 @@ describe('BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine', () =
     category: 'Characters',
     fields: [
       { id: 'f1', name: 'gender', label: 'Gender', fieldType: 'ENUM' },
+      { id: 'f1_vt', name: 'rarity', label: 'Rarity Tier', fieldType: 'VALUE_TYPE' },
       { id: 'f2', name: 'attack', label: 'Base Attack', fieldType: 'NUMBER', unit: 'pts' },
       { id: 'f3', name: 'combat_power', label: 'Combat Power', fieldType: 'FORMULA' },
       { id: 'f4', name: 'cultivation', label: 'Cultivation Realm', fieldType: 'BLUEPRINT_REF' },
@@ -33,6 +34,7 @@ describe('BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine', () =
     lastMutatedSeqNumber: 5,
     properties: {
       gender: 'Male',
+      rarity: 'Divine',
       attack: 1500,
       cultivation: { major_realm: 'Foundation', minor_level: 3 },
     },
@@ -46,8 +48,9 @@ describe('BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine', () =
     assert.equal(globalCols.length, CORE_TABLE_COLUMNS.length + 1); // core + computed_formulas
 
     const charCols = getAvailableColumnsForBlueprint(mockCharacterBlueprint);
-    assert.equal(charCols.length, CORE_TABLE_COLUMNS.length + 4);
+    assert.equal(charCols.length, CORE_TABLE_COLUMNS.length + 5);
     assert.ok(charCols.some((c) => c.id === 'prop:gender' && c.category === 'dynamic'));
+    assert.ok(charCols.some((c) => c.id === 'prop:rarity' && c.fieldType === 'VALUE_TYPE'));
     assert.ok(charCols.some((c) => c.id === 'prop:attack' && c.unit === 'pts'));
     assert.ok(charCols.some((c) => c.id === 'formula:combat_power' && c.category === 'formula'));
   });
@@ -60,6 +63,7 @@ describe('BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine', () =
     assert.ok(charDefaults.includes('name'));
     assert.ok(charDefaults.includes('category'));
     assert.ok(charDefaults.includes('prop:gender'));
+    assert.ok(charDefaults.includes('prop:rarity'));
     assert.ok(charDefaults.includes('formula:combat_power'));
   });
 
@@ -76,6 +80,10 @@ describe('BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine', () =
     // Dynamic enum/string
     const genderCell = formatTableCellValue('prop:gender', mockEntity, mockCharacterBlueprint);
     assert.equal(genderCell.text, 'Male');
+
+    // Dynamic value type
+    const rarityCell = formatTableCellValue('prop:rarity', mockEntity, mockCharacterBlueprint);
+    assert.equal(rarityCell.text, 'Divine');
 
     // Formula cell
     const powerCell = formatTableCellValue('formula:combat_power', mockEntity, mockCharacterBlueprint);

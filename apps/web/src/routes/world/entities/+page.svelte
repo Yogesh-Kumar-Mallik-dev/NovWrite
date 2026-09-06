@@ -401,6 +401,8 @@
                     <Calculator class="w-3.5 h-3.5 text-amber-400" />
                   {:else if col.fieldType === 'ENUM'}
                     <ListFilter class="w-3.5 h-3.5 text-teal-400" />
+                  {:else if col.fieldType === 'VALUE_TYPE'}
+                    <Sparkles class="w-3.5 h-3.5 text-indigo-400" />
                   {:else if col.fieldType === 'BLUEPRINT_REF'}
                     <Link2 class="w-3.5 h-3.5 text-cyan-400" />
                   {:else if col.fieldType === 'NUMBER'}

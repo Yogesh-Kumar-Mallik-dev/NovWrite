@@ -192,6 +192,37 @@ export function validateSingleProperty(
       return { valid: true, coercedVal: val };
     }
 
+    case "VALUE_TYPE": {
+      const allowed = def.options || legacyDef.validation?.allowedValues || [];
+      const strVal = String(val);
+
+      const matched = allowed.find((opt) => {
+        if (typeof opt === "string") {
+          return opt.toLowerCase() === strVal.toLowerCase() || opt === val;
+        }
+        return (
+          opt.value.toLowerCase() === strVal.toLowerCase() ||
+          opt.label.toLowerCase() === strVal.toLowerCase() ||
+          opt.value === val ||
+          opt.label === val
+        );
+      });
+
+      if (!matched && allowed.length > 0) {
+        const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
+        return {
+          valid: false,
+          error: {
+            propertyKey: name,
+            code: "VALUE_TYPE_INVALID_OPTION",
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Value option '${strVal}' is not valid for value_type field '${name}'. Allowed: [${allowedLabels.join(", ")}]`,
+            receivedValue: val,
+          },
+        };
+      }
+      return { valid: true, coercedVal: val };
+    }
+
     case "ENUM_MULTI" as any: {
       const allowed = def.options || legacyDef.validation?.allowedValues || [];
       const listVal = Array.isArray(val) ? val : [val];

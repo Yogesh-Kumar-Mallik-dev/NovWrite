@@ -13,15 +13,18 @@ export const BlueprintFieldTypeSchema = z.enum([
   "NUMBER",
   "BOOLEAN",
   "ENUM",
+  "VALUE_TYPE",
   "BLUEPRINT_REF",
   "FORMULA",
 ]);
 
-export const EnumOptionSchema = z.object({
+export const ValueTypeOptionSchema = z.object({
   label: z.string(),
   value: z.string(),
   power: z.number().optional(),
 });
+
+export const EnumOptionSchema = ValueTypeOptionSchema;
 
 export const DynamicFieldDefSchema = z.object({
   id: z.string(),

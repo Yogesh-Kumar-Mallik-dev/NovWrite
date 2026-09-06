@@ -26,6 +26,7 @@ const (
 	TypeNumber       PropertyType = "NUMBER"
 	TypeBoolean      PropertyType = "BOOLEAN"
 	TypeEnum         PropertyType = "ENUM"
+	TypeValueType    PropertyType = "VALUE_TYPE"
 	TypeBlueprintRef PropertyType = "BLUEPRINT_REF"
 	TypeFormula      PropertyType = "FORMULA"
 
@@ -36,12 +37,15 @@ const (
 	TypeLadderTier PropertyType = "LADDER_TIER"
 )
 
-// EnumOption bridges qualitative category choices with quantitative power weights for formulas.
-type EnumOption struct {
+// ValueTypeOption bridges qualitative category choices with quantitative power weights for formulas.
+type ValueTypeOption struct {
 	Label string   `json:"label"`
 	Value string   `json:"value"`
 	Power *float64 `json:"power,omitempty"`
 }
+
+// EnumOption alias for ValueTypeOption
+type EnumOption = ValueTypeOption
 
 // PropertyValidationRules defines legacy constraints for dynamic properties.
 type PropertyValidationRules struct {
@@ -234,7 +238,7 @@ func ValidateSingleProperty(def DynamicPropertyDef, val interface{}) (interface{
 			Value:       val,
 		}
 
-	case TypeEnum, TypeEnumSingle, TypeLadderTier:
+	case TypeEnum, TypeValueType, TypeEnumSingle, TypeLadderTier:
 		str, ok := val.(string)
 		if !ok {
 			return nil, &PropertyValidationError{

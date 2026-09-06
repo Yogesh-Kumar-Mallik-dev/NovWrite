@@ -83,10 +83,11 @@
   const fieldTypeOptions = [
     { value: 'STRING', label: 'Text (String)' },
     { value: 'NUMBER', label: 'Number (Numeric with bounds)' },
-    { value: 'ENUM', label: 'Enum / Custom Categories (Options with Power/Value)' },
+    { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
+    { value: 'ENUM', label: 'Enum (Standard String Categories)' },
+    { value: 'VALUE_TYPE', label: 'Value Type (Options with Power / Numeric Weights)' },
     { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
-    { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
   ];
 
   let availableTargetBlueprints = $derived(
@@ -141,9 +142,20 @@
 
     if (newFieldType === 'ENUM') {
       fieldDef.options = newFieldOptions.length > 0
-        ? newFieldOptions.map((o) => ({ ...o }))
-        : [{ label: 'Default', value: 'default', power: 0, numericValue: 0 }];
+        ? newFieldOptions.map((o: any) => (typeof o === 'string' ? o : o.label || o.value))
+        : ['Default'];
       fieldDef.defaultValue = newFieldDefault || (typeof fieldDef.options[0] === 'object' ? fieldDef.options[0].value : fieldDef.options[0]);
+    } else if (newFieldType === 'VALUE_TYPE') {
+      fieldDef.options = newFieldOptions.length > 0
+        ? newFieldOptions.map((o: any) => ({
+            label: typeof o === 'string' ? o : o.label,
+            value: typeof o === 'string' ? o.toLowerCase().replace(/\s+/g, '_') : (o.value || (o.label ? o.label.toLowerCase().replace(/\s+/g, '_') : '')),
+            power: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
+            numericValue: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
+          }))
+        : [{ label: 'Default', value: 'default', power: 0, numericValue: 0 }];
+      const first = fieldDef.options[0];
+      fieldDef.defaultValue = newFieldDefault || (typeof first === 'object' ? first.value : first);
     } else if (newFieldType === 'NUMBER') {
       fieldDef.min = newFieldMin;
       fieldDef.max = newFieldMax;
@@ -174,6 +186,7 @@
       { label: 'Option A', value: 'option_a', power: 100, numericValue: 100 },
       { label: 'Option B', value: 'option_b', power: 500, numericValue: 500 },
     ];
+    newFieldDefault = '';
     newOptionLabelDraft = '';
     newOptionPowerDraft = undefined;
     showNewFieldModal = false;
@@ -186,17 +199,22 @@
 
   function handleAddOptionToExistingField(fieldId: string) {
     if (!blueprint) return;
+    const targetField = blueprint.fields.find((f) => f.id === fieldId || f.name === fieldId);
     const label = (inlineNewOptionLabels[fieldId] || '').trim();
     if (!label) return;
     const power = inlineNewOptionPowers[fieldId];
     const value = label.toLowerCase().replace(/\s+/g, '_');
 
-    worldStore.addOptionToField(blueprint.id, fieldId, {
-      label,
-      value,
-      power: power !== undefined ? Number(power) : 0,
-      numericValue: power !== undefined ? Number(power) : 0,
-    });
+    if (targetField?.fieldType === 'ENUM') {
+      worldStore.addOptionToField(blueprint.id, fieldId, label);
+    } else {
+      worldStore.addOptionToField(blueprint.id, fieldId, {
+        label,
+        value,
+        power: power !== undefined ? Number(power) : 0,
+        numericValue: power !== undefined ? Number(power) : 0,
+      });
+    }
 
     inlineNewOptionLabels[fieldId] = '';
     inlineNewOptionPowers[fieldId] = undefined;
@@ -398,16 +416,87 @@
           {#if newFieldType === 'ENUM'}
             <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-teal-400">Enum Options & Dual-Valued Power Metrics</span>
+                <span class="text-xs font-semibold text-teal-400">Enum Options (Standard Categorical String Choices)</span>
+                <span class="text-[10px] text-zinc-500">e.g. ["Sword", "Saber", "Spear"]</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                {#each newFieldOptions as opt, optIdx}
+                  {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+                    <span>{optLabel}</span>
+                    <button
+                      type="button"
+                      onclick={() => newFieldOptions.splice(optIdx, 1)}
+                      class="text-zinc-400 hover:text-red-400 ml-0.5"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                {/each}
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                <Input
+                  bind:value={newOptionLabelDraft}
+                  placeholder="Option Label (e.g. Sword, Saber)"
+                  class="text-xs sm:col-span-2"
+                  onkeydown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newOptionLabelDraft.trim()) {
+                        const lbl = newOptionLabelDraft.trim();
+                        newFieldOptions.push({
+                          label: lbl,
+                          value: lbl.toLowerCase().replace(/\s+/g, '_'),
+                          power: 0,
+                          numericValue: 0,
+                        });
+                        newOptionLabelDraft = '';
+                        newOptionPowerDraft = undefined;
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  class="sm:col-span-1"
+                  onclick={() => {
+                    if (newOptionLabelDraft.trim()) {
+                      const lbl = newOptionLabelDraft.trim();
+                      newFieldOptions.push({
+                        label: lbl,
+                        value: lbl.toLowerCase().replace(/\s+/g, '_'),
+                        power: 0,
+                        numericValue: 0,
+                      });
+                      newOptionLabelDraft = '';
+                      newOptionPowerDraft = undefined;
+                    }
+                  }}
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>Add Option</span>
+                </Button>
+              </div>
+            </div>
+          {/if}
+
+          <!-- VALUE_TYPE options builder -->
+          {#if newFieldType === 'VALUE_TYPE'}
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-indigo-400">Value Type Options (With Power / Numeric Weights)</span>
                 <span class="text-[10px] text-zinc-500">Attach numeric values for mathematical formulas</span>
               </div>
               <div class="flex flex-wrap gap-1.5">
                 {#each newFieldOptions as opt, optIdx}
+                  {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                  {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
-                    <span>{opt.label}</span>
-                    {#if opt.power !== undefined || opt.numericValue !== undefined}
-                      <span class="px-1 py-0.2 rounded bg-teal-950 text-teal-300 font-mono text-[10px]">
-                        Power: {opt.power ?? opt.numericValue}
+                    <span>{optLabel}</span>
+                    {#if optPower !== undefined}
+                      <span class="px-1 py-0.2 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px]">
+                        Power: {optPower}
                       </span>
                     {/if}
                     <button
@@ -527,6 +616,8 @@
                     <Calculator class="w-4 h-4 text-amber-400" />
                   {:else if field.fieldType === 'ENUM'}
                     <ListFilter class="w-4 h-4 text-teal-400" />
+                  {:else if field.fieldType === 'VALUE_TYPE'}
+                    <Sparkles class="w-4 h-4 text-indigo-400" />
                   {:else if field.fieldType === 'BLUEPRINT_REF'}
                     <Link2 class="w-4 h-4 text-cyan-400" />
                   {:else if field.fieldType === 'NUMBER'}
@@ -557,11 +648,62 @@
               </div>
             </div>
 
-            <!-- Enum Details & Options Management -->
+            <!-- Enum Details & Options Management (Pure Categorical Strings) -->
             {#if field.fieldType === 'ENUM' && field.options}
               <div class="space-y-2 pt-2 border-t border-zinc-900">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-zinc-400 font-medium">Enum Options & Formula Power Values:</span>
+                  <span class="text-teal-400 font-medium">Enum Categorical Options:</span>
+                  <span class="text-[10px] text-zinc-500 font-mono">{field.options.length} options</span>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5">
+                  {#each field.options as opt, optIdx}
+                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
+                      <span>{optLabel}</span>
+                      <button
+                        type="button"
+                        onclick={() => handleRemoveOptionFromExistingField(field.id, optIdx)}
+                        class="text-zinc-500 hover:text-red-400 transition ml-0.5"
+                        title="Delete Option"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  {/each}
+                </div>
+
+                <!-- Inline Enum Option Adder -->
+                <div class="flex items-center gap-2 max-w-md pt-1">
+                  <Input
+                    bind:value={inlineNewOptionLabels[field.id]}
+                    placeholder="New Option (e.g. Demonic Path)"
+                    class="text-xs h-7 flex-1"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOptionToExistingField(field.id);
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    class="h-7 px-2.5 text-xs shrink-0"
+                    onclick={() => handleAddOptionToExistingField(field.id)}
+                  >
+                    <Plus class="w-3 h-3" />
+                    <span>Add</span>
+                  </Button>
+                </div>
+              </div>
+            {/if}
+
+            <!-- Value Type Details & Options Management (With Numeric Weights / Power) -->
+            {#if field.fieldType === 'VALUE_TYPE' && field.options}
+              <div class="space-y-2 pt-2 border-t border-zinc-900">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-indigo-400 font-medium">Value Type Options & Formula Power Values:</span>
                   <span class="text-[10px] text-zinc-500 font-mono">{field.options.length} options defined</span>
                 </div>
 
@@ -572,7 +714,7 @@
                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
                       <span>{optLabel}</span>
                       {#if optPower !== undefined}
-                        <span class="px-1 py-0.2 rounded bg-teal-950/80 text-teal-300 font-mono text-[10px]">
+                        <span class="px-1 py-0.2 rounded bg-indigo-950/80 text-indigo-300 font-mono text-[10px]">
                           Power: {optPower}
                         </span>
                       {/if}
@@ -588,7 +730,7 @@
                   {/each}
                 </div>
 
-                <!-- Inline Option Adder -->
+                <!-- Inline Value Type Option Adder -->
                 <div class="flex items-center gap-2 max-w-md pt-1">
                   <Input
                     bind:value={inlineNewOptionLabels[field.id]}

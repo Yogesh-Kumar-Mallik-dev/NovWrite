@@ -15,7 +15,7 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 2. **Explicit State Over Implicit Assumptions:** Character attributes, locations, items, affiliations, and relationships are stored as structured state.
 3. **Events as State Transitions:** World mutations occur exclusively through recorded events (e.g. `Battle of Xian`, `Artifact Transfer`, `Breakthrough`).
 4. **Blueprint (Class) vs. Entity (Object) Paradigm:** Clear separation between structural blueprints/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas) and concrete instantiated universe objects.
-5. **Dual-Valued Enums & AST Mathematical Formulas:** Qualitative options (`{ label, value, power }`) feed directly into safe AST formula parsers for live combat power and stat calculations.
+5. **Pure Categorical ENUM, Weighted VALUE_TYPE & AST Mathematical Formulas:** Pure string categorical choices (`ENUM`) alongside dual-valued weighted options (`VALUE_TYPE`: `{ label, value, power }`) feed directly into safe AST formula parsers for live combat power and stat calculations.
 6. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
 7. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
 8. **Dedicated Page-Based Routing & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`) with clean modern visual design without badge clutter, featuring Archetype Carousels and customizable columns.

@@ -32,6 +32,7 @@ enum BlueprintFieldType {
   NUMBER
   BOOLEAN
   ENUM
+  VALUE_TYPE
   BLUEPRINT_REF
   FORMULA
 }
