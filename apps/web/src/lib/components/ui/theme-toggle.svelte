@@ -40,15 +40,20 @@
     className
   )}
 >
-  <!-- Background icon hints -->
-  <span class="absolute left-1.5 flex items-center justify-center text-amber-500 opacity-80 pointer-events-none">
-    <Sun class={cn(size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
-  </span>
-  <span class="absolute right-1.5 flex items-center justify-center text-primary opacity-80 pointer-events-none">
-    <Moon class={cn(size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
-  </span>
+  <!-- Inactive icon in track: only the non-active target icon is visible -->
+  {#if isDark}
+    <!-- Dark is active: only the inactive Sun icon is visible -->
+    <span class="absolute left-1.5 flex items-center justify-center text-amber-500 transition-opacity duration-200 pointer-events-none">
+      <Sun class={cn(size === "sm" ? "size-3.5" : size === "md" ? "size-4" : "size-4.5")} />
+    </span>
+  {:else}
+    <!-- Light is active: only the inactive Moon icon is visible -->
+    <span class="absolute right-1.5 flex items-center justify-center text-primary transition-opacity duration-200 pointer-events-none">
+      <Moon class={cn(size === "sm" ? "size-3.5" : size === "md" ? "size-4" : "size-4.5")} />
+    </span>
+  {/if}
 
-  <!-- Sliding Thumb with Active Icon -->
+  <!-- Sliding Thumb -->
   <span
     class={cn(
       "relative z-10 flex items-center justify-center rounded-full bg-background border border-border shadow-xs text-foreground transition-transform duration-200 ease-in-out",
@@ -63,13 +68,7 @@
             : "translate-x-7"
         : "translate-x-0"
     )}
-  >
-    {#if isDark}
-      <Moon class={cn("text-primary", size === "sm" ? "size-3" : "size-3.5")} />
-    {:else}
-      <Sun class={cn("text-amber-500", size === "sm" ? "size-3" : "size-3.5")} />
-    {/if}
-  </span>
+  ></span>
 </button>
 
 
