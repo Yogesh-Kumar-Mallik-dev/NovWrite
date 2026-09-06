@@ -278,17 +278,17 @@
 
   <!-- Rules Table -->
   <Card class="border-border bg-card overflow-hidden shadow-xs">
-    <div class="overflow-x-auto">
-      <Table>
+    <div class="overflow-x-auto w-full">
+      <Table class="w-full text-left text-xs min-w-[900px]">
         <TableHeader class="bg-muted/50 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
           <TableRow>
-            <TableHead class="px-4 py-3">Rule Definition</TableHead>
-            <TableHead class="px-4 py-3">Type</TableHead>
-            <TableHead class="px-4 py-3">Severity</TableHead>
-            <TableHead class="px-4 py-3">Predicate Condition</TableHead>
-            <TableHead class="px-4 py-3">Scope / Target</TableHead>
-            <TableHead class="px-4 py-3 text-center">Status</TableHead>
-            <TableHead class="px-4 py-3 text-right">Actions</TableHead>
+            <TableHead class="px-4 py-3 min-w-[280px]">Rule Definition</TableHead>
+            <TableHead class="px-4 py-3 min-w-[130px]">Type</TableHead>
+            <TableHead class="px-4 py-3 min-w-[120px]">Severity</TableHead>
+            <TableHead class="px-4 py-3 min-w-[240px]">Predicate Condition</TableHead>
+            <TableHead class="px-4 py-3 min-w-[140px]">Scope / Target</TableHead>
+            <TableHead class="px-4 py-3 text-center w-[80px]">Status</TableHead>
+            <TableHead class="px-4 py-3 text-right w-[90px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody class="divide-y divide-border/60">
@@ -303,16 +303,16 @@
           {#each filteredRules as rule}
             <TableRow class="hover:bg-accent/40 transition-colors {rule.enabled ? '' : 'opacity-50'}">
               <!-- Rule Definition -->
-              <TableCell class="px-4 py-3.5 font-medium text-foreground max-w-xs">
+              <TableCell class="px-4 py-3.5 font-medium text-foreground min-w-[280px] max-w-sm whitespace-normal break-words">
                 <div class="flex items-start gap-2.5">
                   <ShieldCheck class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-                  <div>
-                    <span class="font-bold text-foreground">{rule.name}</span>
-                    <p class="text-[11px] text-muted-foreground font-sans mt-0.5 leading-relaxed">
+                  <div class="min-w-0 flex-1">
+                    <span class="font-bold text-foreground block leading-snug">{rule.name}</span>
+                    <p class="text-[11px] text-muted-foreground font-sans mt-0.5 leading-relaxed whitespace-normal break-words">
                       {rule.description}
                     </p>
                     {#if rule.suggestedResolution}
-                      <p class="text-[10px] text-muted-foreground/80 font-sans mt-1">
+                      <p class="text-[10px] text-muted-foreground/80 font-sans mt-1.5 leading-relaxed whitespace-normal break-words">
                         <strong class="text-foreground/80">Resolution Hint:</strong> {rule.suggestedResolution}
                       </p>
                     {/if}
@@ -321,46 +321,46 @@
               </TableCell>
 
               <!-- Rule Type -->
-              <TableCell class="px-4 py-3 font-mono text-[11px]">
-                <span class="text-primary font-medium px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
+              <TableCell class="px-4 py-3 font-mono text-[11px] min-w-[130px] whitespace-nowrap align-top">
+                <span class="text-primary font-medium px-2 py-0.5 rounded bg-primary/10 border border-primary/20 inline-block">
                   {rule.type}
                 </span>
               </TableCell>
 
               <!-- Severity Indicator -->
-              <TableCell class="px-4 py-3 font-mono text-[11px]">
+              <TableCell class="px-4 py-3 font-mono text-[11px] min-w-[120px] whitespace-nowrap align-top">
                 {#if rule.severity === "BLOCKING_ERROR"}
                   <span class="inline-flex items-center gap-1.5 text-destructive font-semibold">
-                    <ShieldAlert class="w-3.5 h-3.5 text-destructive" />
+                    <ShieldAlert class="w-3.5 h-3.5 text-destructive shrink-0" />
                     BLOCKING
                   </span>
                 {:else if rule.severity === "WARNING"}
                   <span class="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
-                    <AlertTriangle class="w-3.5 h-3.5 text-amber-500" />
+                    <AlertTriangle class="w-3.5 h-3.5 text-amber-500 shrink-0" />
                     WARNING
                   </span>
                 {:else}
                   <span class="inline-flex items-center gap-1.5 text-muted-foreground font-semibold">
-                    <Info class="w-3.5 h-3.5 text-muted-foreground" />
+                    <Info class="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                     ADVISORY
                   </span>
                 {/if}
               </TableCell>
 
               <!-- Predicate Condition -->
-              <TableCell class="px-4 py-3 font-mono text-foreground text-[11px] max-w-xs">
-                <code class="text-amber-600 dark:text-amber-300 bg-muted/80 px-2 py-1 rounded border border-border block truncate">
+              <TableCell class="px-4 py-3 font-mono text-foreground text-[11px] min-w-[240px] max-w-md whitespace-normal break-words align-top">
+                <code class="text-amber-600 dark:text-amber-300 bg-muted/80 px-2.5 py-1.5 rounded border border-border block text-[11px] leading-relaxed whitespace-normal break-words font-mono">
                   {rule.predicateSummary || rule.predicateExpression}
                 </code>
               </TableCell>
 
               <!-- Scope / Target -->
-              <TableCell class="px-4 py-3 font-mono text-muted-foreground text-[11px]">
+              <TableCell class="px-4 py-3 font-mono text-muted-foreground text-[11px] min-w-[140px] whitespace-normal break-words align-top">
                 <span class="text-foreground">{rule.targetBlueprintName || rule.targetCategory || "Universal"}</span>
               </TableCell>
 
               <!-- Active Toggle -->
-              <TableCell class="px-4 py-3 text-center">
+              <TableCell class="px-4 py-3 text-center w-[80px] align-top">
                 <Switch
                   checked={rule.enabled}
                   onCheckedChange={(checked: boolean) => handleToggleRule(rule.id, checked)}
@@ -369,7 +369,7 @@
               </TableCell>
 
               <!-- Actions -->
-              <TableCell class="px-4 py-3 text-right">
+              <TableCell class="px-4 py-3 text-right w-[90px] align-top">
                 <div class="flex items-center justify-end gap-1">
                   <Button
                     variant="ghost"
