@@ -20,7 +20,7 @@
 
 <div class="flex-1 flex flex-col bg-background text-foreground transition-colors">
   <!-- World Studio Sub-Header with Breadcrumb -->
-  <div class="border-b border-border bg-card/70 dark:bg-zinc-900/50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 backdrop-blur">
+  <div class="border-b border-border bg-card/70 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 backdrop-blur">
     <div class="flex items-center gap-3">
       <Breadcrumb
         items={[

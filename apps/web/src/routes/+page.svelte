@@ -6,26 +6,34 @@
     ShieldCheck,
     Database,
     Layers,
+    Sparkles,
   } from "lucide-svelte";
-  import Button from "$lib/components/ui/button.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+  } from "$lib/components/ui/card";
 </script>
 
-<div class="flex-1 p-8 max-w-5xl mx-auto w-full flex flex-col justify-center">
+<div class="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
   <div class="mb-10 text-center space-y-3">
     <div
-      class="flex items-center justify-center gap-2 text-purple-400 text-xs font-mono font-medium"
+      class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono font-medium mx-auto"
     >
       <ShieldCheck class="w-4 h-4" />
       <span>Canon Over AI Memory · Isolated Two-Front Architecture</span>
     </div>
     <h1
-      class="text-4xl font-extrabold tracking-tight sm:text-5xl text-zinc-100"
+      class="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground"
     >
       NovWrite Authoring Workspace
     </h1>
-    <p class="text-zinc-400 text-base max-w-2xl mx-auto">
-      Professional multi-user novel writing platform powered by the
-      deterministic universe state engine.
+    <p class="text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed">
+      Professional fictional universe design studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing.
     </p>
   </div>
 
@@ -33,82 +41,74 @@
     <!-- Prose Studio Card -->
     <a
       href="/novel"
-      class="group p-6 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-purple-600/60 transition-all flex flex-col justify-between"
+      class="group block transition-transform hover:-translate-y-0.5"
     >
-      <div>
-        <div
-          class="w-10 h-10 rounded-lg bg-purple-950/60 border border-purple-800 flex items-center justify-center text-purple-400 mb-4"
-        >
-          <BookOpen class="w-5 h-5" />
-        </div>
-        <h3
-          class="text-xl font-bold mb-2 group-hover:text-purple-400 transition-colors text-zinc-100"
-        >
-          Prose Studio
-        </h3>
-        <p class="text-sm text-zinc-400 mb-4 leading-relaxed">
-          Dedicated novel writing canvas, rich text editor, manuscript hierarchy
-          tree, lore lookup drawer, and collaborative scene leases.
-        </p>
-      </div>
-      <div
-        class="flex items-center justify-between pt-4 border-t border-zinc-800/80 text-xs font-mono text-zinc-500"
-      >
-        <span>Branch: novel</span>
-        <span
-          class="text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
-        >
-          Open Studio <ArrowRight class="w-3.5 h-3.5" />
-        </span>
-      </div>
+      <Card class="h-full border-border bg-card hover:border-primary/60 transition-colors flex flex-col justify-between shadow-xs">
+        <CardHeader class="pb-3">
+          <div
+            class="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3 transition-colors group-hover:bg-primary/20"
+          >
+            <BookOpen class="w-5 h-5" />
+          </div>
+          <CardTitle class="text-xl font-bold group-hover:text-primary transition-colors text-foreground">
+            Prose Studio
+          </CardTitle>
+          <CardDescription class="text-sm text-muted-foreground leading-relaxed">
+            Dedicated novel writing canvas, rich text editor, manuscript hierarchy tree, lore lookup drawer, and collaborative scene leases.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter class="pt-4 border-t border-border/80 flex items-center justify-between text-xs font-mono text-muted-foreground">
+          <span>Branch: novel</span>
+          <span
+            class="text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
+          >
+            Open Studio <ArrowRight class="w-3.5 h-3.5" />
+          </span>
+        </CardFooter>
+      </Card>
     </a>
 
     <!-- World Studio Card -->
     <a
       href="/world"
-      class="group p-6 rounded-xl bg-zinc-900/60 border border-zinc-800 hover:border-red-600/60 transition-all flex flex-col justify-between"
+      class="group block transition-transform hover:-translate-y-0.5"
     >
-      <div>
-        <div
-          class="w-10 h-10 rounded-lg bg-red-950/60 border border-red-800 flex items-center justify-center text-red-400 mb-4"
-        >
-          <Globe2 class="w-5 h-5" />
-        </div>
-        <h3
-          class="text-xl font-bold mb-2 group-hover:text-red-400 transition-colors text-zinc-100"
-        >
-          World Studio
-        </h3>
-        <p class="text-sm text-zinc-400 mb-4 leading-relaxed">
-          Universe entity workbench, dynamic property schemas, dual-index causal
-          timeline, invariant rules, and continuity audit console.
-        </p>
-      </div>
-      <div
-        class="flex items-center justify-between pt-4 border-t border-zinc-800/80 text-xs font-mono text-zinc-500"
-      >
-        <span>Branch: world</span>
-        <span
-          class="text-red-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
-        >
-          Open Studio <ArrowRight class="w-3.5 h-3.5" />
-        </span>
-      </div>
+      <Card class="h-full border-border bg-card hover:border-destructive/60 transition-colors flex flex-col justify-between shadow-xs">
+        <CardHeader class="pb-3">
+          <div
+            class="w-10 h-10 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center justify-center text-destructive mb-3 transition-colors group-hover:bg-destructive/20"
+          >
+            <Globe2 class="w-5 h-5" />
+          </div>
+          <CardTitle class="text-xl font-bold group-hover:text-destructive transition-colors text-foreground">
+            World Studio
+          </CardTitle>
+          <CardDescription class="text-sm text-muted-foreground leading-relaxed">
+            1st-Class Blueprint Archetypes, 2nd-Class Sub-Schemas, AST Math Formulas, Causal Timeline, Invariant Rules, and Continuity Violation Audit.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter class="pt-4 border-t border-border/80 flex items-center justify-between text-xs font-mono text-muted-foreground">
+          <span>Branch: world</span>
+          <span
+            class="text-destructive flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
+          >
+            Open Studio <ArrowRight class="w-3.5 h-3.5" />
+          </span>
+        </CardFooter>
+      </Card>
     </a>
   </div>
 
   <!-- Workspace Status Footer -->
-  <div
-    class="p-4 rounded-lg bg-zinc-950 border border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400 font-mono"
-  >
+  <Card class="p-4 border-border bg-card/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground font-mono">
     <div class="flex items-center gap-4">
-      <span class="flex items-center gap-1.5 text-zinc-300">
-        <Database class="w-4 h-4 text-purple-400" /> PostgreSQL 18
+      <span class="flex items-center gap-1.5 text-foreground font-medium">
+        <Database class="w-4 h-4 text-primary" /> PostgreSQL 18
       </span>
-      <span class="flex items-center gap-1.5 text-zinc-300">
-        <Layers class="w-4 h-4 text-red-400" /> Redis 7
+      <span class="flex items-center gap-1.5 text-foreground font-medium">
+        <Layers class="w-4 h-4 text-destructive" /> Redis 7
       </span>
     </div>
-    <span class="text-zinc-500">NovWrite v1.0 MVP</span>
-  </div>
+    <span class="text-muted-foreground">NovWrite v2.0 Architecture</span>
+  </Card>
 </div>

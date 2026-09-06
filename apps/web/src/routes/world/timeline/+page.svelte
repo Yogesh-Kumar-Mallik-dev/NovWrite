@@ -3,29 +3,36 @@
     Plus,
     Clock,
     BookOpen,
-    Layers,
-    ArrowUpDown,
-    Tag,
     Edit3,
     Trash2,
-    ArrowRight,
-    Play,
     Sliders,
     History,
     Sparkles,
     Eye,
-    Shield,
-    Activity,
-    Check,
     X,
     Cpu,
     Workflow,
   } from "lucide-svelte";
-  import Button from "$lib/components/ui/button.svelte";
-  import Input from "$lib/components/ui/input.svelte";
-  import Field from "$lib/components/ui/field.svelte";
-  import Select from "$lib/components/ui/select.svelte";
-  import Textarea from "$lib/components/ui/textarea.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import { Label } from "$lib/components/ui/label";
+  import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+  } from "$lib/components/ui/card";
+  import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+  } from "$lib/components/ui/dialog";
   import {
     worldStore,
     type TimelineEventItem,
@@ -223,22 +230,22 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 transition-colors">
   <!-- Header & Mode Switcher -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h2 class="text-lg font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-        <Clock class="w-5 h-5 text-purple-400" />
+      <h2 class="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+        <Clock class="w-5 h-5 text-primary" />
         <span>Causal Timeline & Delta Event Log</span>
       </h2>
-      <p class="text-xs text-zinc-400 mt-0.5">
+      <p class="text-xs text-muted-foreground mt-0.5">
         Dual-indexed event sourcing stream powering time-travel state reconstruction across 1st-Class Entities & Sub-Schemas.
       </p>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
       <!-- Dual Index Mode Switcher Button Group -->
-      <div class="inline-flex rounded-lg bg-zinc-900 p-1 border border-zinc-800 text-xs">
+      <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs">
         <Button
           variant={viewMode === "narrative" ? "default" : "ghost"}
           size="sm"
@@ -266,8 +273,8 @@
         onclick={() => (isTimeTravelOpen = !isTimeTravelOpen)}
         class="h-8 text-xs flex items-center gap-1.5"
       >
-        <History class="w-3.5 h-3.5 text-cyan-400" />
-        <span>{isTimeTravelOpen ? "Hide State Scrubber" : "Time-Travel Scrubber"}</span>
+        <History class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+        <span>{isTimeTravelOpen ? "Hide Scrubber" : "Time-Travel Scrubber"}</span>
       </Button>
 
       <!-- Log Event Button -->
@@ -280,28 +287,28 @@
 
   <!-- Interactive Time-Travel Sequence Scrubber & State Snapshot Inspector -->
   {#if isTimeTravelOpen}
-    <div class="bg-gradient-to-br from-zinc-900/95 to-zinc-950/90 rounded-xl border border-cyan-950/80 p-5 space-y-4 shadow-xl">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
+    <Card class="border-border bg-card p-5 space-y-4 shadow-sm transition-colors">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-cyan-950/60 border border-cyan-700/50 flex items-center justify-center text-cyan-400">
+          <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
             <Sliders class="w-4 h-4" />
           </div>
           <div>
-            <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+            <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
               <span>Deterministic Time-Travel State Fold Engine</span>
-              <span class="text-[11px] font-mono font-normal text-cyan-400">
+              <span class="text-[11px] font-mono font-normal text-primary">
                 ({appliedEventsCount} causal events folded)
               </span>
             </h3>
-            <p class="text-xs text-zinc-400">
+            <p class="text-xs text-muted-foreground">
               Scrub sequence point to fold all entity mutations and evaluate AST formulas in real-time.
             </p>
           </div>
         </div>
 
         <div class="flex items-center gap-2 font-mono text-xs">
-          <span class="text-zinc-400">Target Index:</span>
-          <span class="px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300 font-bold">
+          <span class="text-muted-foreground">Target Index:</span>
+          <span class="px-2.5 py-1 rounded bg-secondary text-secondary-foreground border border-border font-bold">
             {viewMode === "narrative" ? `Sequence #${scrubSequence}` : `Year #${scrubSequence}`}
           </span>
         </div>
@@ -310,25 +317,25 @@
       <!-- Scrubber Slider & Quick Sequence Jumpers -->
       <div class="space-y-2">
         <div class="flex items-center gap-4">
-          <span class="text-[11px] font-mono text-zinc-500">0</span>
+          <span class="text-[11px] font-mono text-muted-foreground">0</span>
           <input
             type="range"
             min="0"
             max={activeMaxSeq}
             step="5"
             bind:value={scrubSequence}
-            class="w-full accent-cyan-400 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+            class="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
           />
-          <span class="text-[11px] font-mono text-zinc-500">{activeMaxSeq}</span>
+          <span class="text-[11px] font-mono text-muted-foreground">{activeMaxSeq}</span>
         </div>
 
         <!-- Quick Jump Sequence Chips -->
         <div class="flex flex-wrap items-center gap-1.5 pt-1">
-          <span class="text-[11px] font-mono text-zinc-500 mr-1">Quick Points:</span>
+          <span class="text-[11px] font-mono text-muted-foreground mr-1">Quick Points:</span>
           <button
             type="button"
             onclick={() => (scrubSequence = 0)}
-            class="px-2 py-0.5 rounded text-[11px] font-mono border transition-colors {scrubSequence === 0 ? 'bg-cyan-900/60 border-cyan-600 text-cyan-200 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'}"
+            class="px-2 py-0.5 rounded text-[11px] font-mono border transition-colors {scrubSequence === 0 ? 'bg-primary text-primary-foreground border-primary font-bold' : 'bg-secondary text-secondary-foreground border-border hover:bg-accent'}"
           >
             Seq #0 (Base)
           </button>
@@ -337,7 +344,7 @@
             <button
               type="button"
               onclick={() => (scrubSequence = val)}
-              class="px-2 py-0.5 rounded text-[11px] font-mono border transition-colors {scrubSequence === val ? 'bg-cyan-900/60 border-cyan-600 text-cyan-200 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'}"
+              class="px-2 py-0.5 rounded text-[11px] font-mono border transition-colors {scrubSequence === val ? 'bg-primary text-primary-foreground border-primary font-bold' : 'bg-secondary text-secondary-foreground border-border hover:bg-accent'}"
             >
               {viewMode === "narrative" ? `#${ev.narrativeSequenceNumber}` : `Y${ev.chronologicalOrder}`} · {ev.title.slice(0, 18)}...
             </button>
@@ -347,22 +354,22 @@
 
       <!-- Point-in-Time Folded Entities Preview Grid -->
       <div class="pt-3">
-        <h4 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 font-mono">
-          <Cpu class="w-3.5 h-3.5 text-cyan-400" />
+        <h4 class="text-xs font-semibold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5 font-mono">
+          <Cpu class="w-3.5 h-3.5 text-primary" />
           <span>Folded Universe State at Point (Entities & Formulas)</span>
         </h4>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {#each foldedEntities as entity}
-            <div class="bg-zinc-950/80 rounded-lg border border-zinc-800/80 p-3.5 space-y-2.5 hover:border-zinc-700 transition-colors">
-              <div class="flex items-start justify-between gap-2 border-b border-zinc-800/60 pb-2">
+            <Card class="border-border bg-card/70 p-3.5 space-y-2.5 hover:border-primary/50 transition-colors shadow-xs">
+              <div class="flex items-start justify-between gap-2 border-b border-border pb-2">
                 <div>
-                  <h5 class="text-xs font-bold text-zinc-100">{entity.name}</h5>
-                  <span class="text-[10px] font-mono text-purple-400">{entity.blueprintName}</span>
+                  <h5 class="text-xs font-bold text-foreground">{entity.name}</h5>
+                  <span class="text-[10px] font-mono text-primary">{entity.blueprintName}</span>
                 </div>
                 <div class="text-right">
-                  <span class="text-[10px] font-mono text-zinc-400">
-                    Last Mutated: <strong class="text-cyan-300">Seq #{entity.lastMutatedSeqNumber}</strong>
+                  <span class="text-[10px] font-mono text-muted-foreground">
+                    Last Mutated: <strong class="text-foreground">Seq #{entity.lastMutatedSeqNumber}</strong>
                   </span>
                 </div>
               </div>
@@ -371,8 +378,8 @@
               <div class="space-y-1 text-xs font-mono">
                 {#if entity.properties.cultivation}
                   <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-zinc-400">Cultivation Realm:</span>
-                    <span class="text-amber-300 font-semibold">
+                    <span class="text-muted-foreground">Cultivation Realm:</span>
+                    <span class="text-amber-600 dark:text-amber-400 font-semibold">
                       {entity.properties.cultivation.realm_name || `Stage ${entity.properties.cultivation.major_realm}.${entity.properties.cultivation.minor_realm}`}
                     </span>
                   </div>
@@ -380,8 +387,8 @@
 
                 {#if entity.properties.romantic_feelings}
                   <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-zinc-400">Affection Level:</span>
-                    <span class="text-pink-300 font-semibold">
+                    <span class="text-muted-foreground">Affection Level:</span>
+                    <span class="text-pink-600 dark:text-pink-400 font-semibold">
                       {entity.properties.romantic_feelings.affection_level} / 1000
                     </span>
                   </div>
@@ -389,69 +396,69 @@
 
                 {#if entity.properties.attack !== undefined}
                   <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-zinc-400">Attack:</span>
-                    <span class="text-zinc-200 font-semibold">{entity.properties.attack}</span>
+                    <span class="text-muted-foreground">Attack:</span>
+                    <span class="text-foreground font-semibold">{entity.properties.attack}</span>
                   </div>
                 {/if}
 
                 {#if entity.properties.bound_weapon}
                   <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-zinc-400">Bound Weapon:</span>
-                    <span class="text-purple-300 truncate max-w-[140px]">{entity.properties.bound_weapon}</span>
+                    <span class="text-muted-foreground">Bound Weapon:</span>
+                    <span class="text-primary truncate max-w-[140px]">{entity.properties.bound_weapon}</span>
                   </div>
                 {/if}
 
                 {#if entity.properties.current_wielder}
                   <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-zinc-400">Current Wielder:</span>
-                    <span class="text-purple-300 truncate max-w-[140px]">{entity.properties.current_wielder}</span>
+                    <span class="text-muted-foreground">Current Wielder:</span>
+                    <span class="text-primary truncate max-w-[140px]">{entity.properties.current_wielder}</span>
                   </div>
                 {/if}
               </div>
 
               <!-- Live Recomputed Formulas at Point-in-Time -->
               {#if entity.computedFormulas && Object.keys(entity.computedFormulas).length > 0}
-                <div class="pt-2 border-t border-zinc-800/60 space-y-1">
-                  <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1">
+                <div class="pt-2 border-t border-border space-y-1">
+                  <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                     <Sparkles class="w-3 h-3" />
                     <span>Live AST Formulas</span>
                   </span>
                   {#each Object.entries(entity.computedFormulas) as [fKey, fVal]}
-                    <div class="flex items-center justify-between text-[11px] font-mono bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/40">
-                      <span class="text-emerald-300/80 text-[10px]">{fKey}</span>
-                      <span class="text-emerald-300 font-bold">{fVal}</span>
+                    <div class="flex items-center justify-between text-[11px] font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      <span class="text-emerald-700 dark:text-emerald-300 text-[10px]">{fKey}</span>
+                      <span class="text-emerald-700 dark:text-emerald-300 font-bold">{fVal}</span>
                     </div>
                   {/each}
                 </div>
               {/if}
-            </div>
+            </Card>
           {/each}
         </div>
       </div>
-    </div>
+    </Card>
   {/if}
 
   <!-- Timeline Event Stream Cards -->
   <div class="space-y-3.5">
-    <div class="flex items-center justify-between text-xs text-zinc-400 px-1 font-mono">
+    <div class="flex items-center justify-between text-xs text-muted-foreground px-1 font-mono">
       <span>Causal Delta Stream ({sortedEvents.length} events logged)</span>
       <span>Sorted by {viewMode === "narrative" ? "Narrative Sequence" : "Chronological Order"}</span>
     </div>
 
     {#each sortedEvents as event}
-      <div class="bg-zinc-900/80 rounded-xl border border-zinc-800 p-4 space-y-3 hover:border-zinc-700 transition-all shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/80 pb-3">
+      <Card class="border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
           <div class="flex items-center gap-3">
-            <span class="font-mono text-xs font-bold text-purple-300 px-2.5 py-1 rounded bg-purple-950/60 border border-purple-800/60">
+            <span class="font-mono text-xs font-bold text-primary px-2.5 py-1 rounded bg-primary/10 border border-primary/20">
               {viewMode === "narrative"
                 ? `Sequence #${event.narrativeSequenceNumber}`
                 : `Year #${event.chronologicalOrder}`}
             </span>
             <div>
-              <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+              <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
                 <span>{event.title}</span>
                 {#if event.anchorChapterTitle || event.anchorSceneTitle}
-                  <span class="text-xs font-normal text-zinc-400 font-sans">
+                  <span class="text-xs font-normal text-muted-foreground font-sans">
                     · {event.anchorChapterTitle || ""} {event.anchorSceneTitle ? `(${event.anchorSceneTitle})` : ""}
                   </span>
                 {/if}
@@ -461,10 +468,10 @@
 
           <!-- Dual Index Tags & Actions -->
           <div class="flex items-center gap-2">
-            <div class="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-2.5 py-1 rounded border border-zinc-800">
-              <span>Seq: <strong class="text-zinc-200">#{event.narrativeSequenceNumber}</strong></span>
-              <span class="text-zinc-600">|</span>
-              <span>Year: <strong class="text-zinc-200">Y{event.chronologicalOrder}</strong></span>
+            <div class="flex items-center gap-2 text-xs text-muted-foreground font-mono bg-muted px-2.5 py-1 rounded border border-border">
+              <span>Seq: <strong class="text-foreground">#{event.narrativeSequenceNumber}</strong></span>
+              <span class="text-muted-foreground/60">|</span>
+              <span>Year: <strong class="text-foreground">Y{event.chronologicalOrder}</strong></span>
             </div>
 
             <Button
@@ -472,7 +479,7 @@
               size="sm"
               onclick={() => inspectEventSequence(event.narrativeSequenceNumber)}
               title="Inspect state at this sequence"
-              class="h-7 px-2 text-cyan-400 hover:text-cyan-300"
+              class="h-7 px-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-500"
             >
               <Eye class="w-3.5 h-3.5" />
             </Button>
@@ -481,7 +488,7 @@
               variant="ghost"
               size="sm"
               onclick={() => openEditModal(event)}
-              class="h-7 px-2 text-zinc-400 hover:text-zinc-200"
+              class="h-7 px-2 text-muted-foreground hover:text-foreground"
             >
               <Edit3 class="w-3.5 h-3.5" />
             </Button>
@@ -490,51 +497,51 @@
               variant="ghost"
               size="sm"
               onclick={() => handleDeleteEvent(event.id)}
-              class="h-7 px-2 text-zinc-400 hover:text-red-400"
+              class="h-7 px-2 text-muted-foreground hover:text-destructive"
             >
               <Trash2 class="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
 
-        <p class="text-xs text-zinc-300 leading-relaxed font-sans">{event.description}</p>
+        <p class="text-xs text-foreground/90 leading-relaxed font-sans">{event.description}</p>
 
         <!-- Attached Effect Mutations with semantic styling -->
         <div class="pt-2 flex flex-wrap items-center gap-2 text-xs font-mono">
-          <span class="text-zinc-500 font-medium text-[11px] uppercase tracking-wider flex items-center gap-1">
-            <Workflow class="w-3 h-3 text-purple-400" />
+          <span class="text-muted-foreground font-medium text-[11px] uppercase tracking-wider flex items-center gap-1">
+            <Workflow class="w-3 h-3 text-primary" />
             <span>Atomic Effects:</span>
           </span>
 
           {#each event.effects as eff}
-            <div class="flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300">
-              <span class="text-purple-300 font-semibold">{eff.entityName || eff.targetEntityId}</span>
-              <span class="text-zinc-600">.</span>
-              <span class="text-cyan-300">{eff.propertyKey}</span>
-              <span class="text-zinc-400 font-bold text-[10px] px-1 py-0.2 bg-zinc-800 rounded">{eff.operation}</span>
-              <span class="text-amber-300 font-bold">{JSON.stringify(eff.value)}</span>
+            <div class="flex items-center gap-1.5 bg-muted/60 px-2.5 py-1 rounded-md border border-border text-foreground">
+              <span class="text-primary font-semibold">{eff.entityName || eff.targetEntityId}</span>
+              <span class="text-muted-foreground">.</span>
+              <span class="text-cyan-600 dark:text-cyan-400">{eff.propertyKey}</span>
+              <span class="text-muted-foreground font-bold text-[10px] px-1 py-0.2 bg-background rounded border border-border">{eff.operation}</span>
+              <span class="text-amber-600 dark:text-amber-400 font-bold">{JSON.stringify(eff.value)}</span>
             </div>
           {/each}
         </div>
-      </div>
+      </Card>
     {/each}
   </div>
 
   <!-- Log / Edit Timeline Event Modal -->
   {#if isModalOpen}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-2xl w-full p-6 space-y-5 shadow-2xl my-8">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div class="flex items-center gap-2 text-purple-400">
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <Card class="border-border bg-card max-w-2xl w-full p-6 space-y-5 shadow-2xl my-8">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center gap-2 text-primary">
             <Clock class="w-5 h-5" />
-            <h3 class="text-base font-bold text-zinc-100">
+            <h3 class="text-base font-bold text-foreground">
               {modalMode === "add" ? "Log Causal Timeline Event" : "Edit Timeline Event"}
             </h3>
           </div>
           <button
             type="button"
             onclick={() => (isModalOpen = false)}
-            class="text-zinc-400 hover:text-zinc-200"
+            class="text-muted-foreground hover:text-foreground"
           >
             <X class="w-4 h-4" />
           </button>
@@ -542,18 +549,20 @@
 
         <div class="space-y-4">
           <!-- Title -->
-          <Field id="event-title" label="Event Title" required>
+          <div class="space-y-1.5">
+            <Label for="event-title">Event Title <span class="text-destructive">*</span></Label>
             <Input
               id="event-title"
               bind:value={formTitle}
               placeholder="e.g., Breakthrough at Dragon Peak, Duel at Crimson Ridge..."
               class="text-xs"
             />
-          </Field>
+          </div>
 
           <!-- Dual Index Coordinates -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field id="narrative-seq" label="Narrative Sequence Number (#)" required>
+            <div class="space-y-1.5">
+              <Label for="narrative-seq">Narrative Sequence Number (#) <span class="text-destructive">*</span></Label>
               <Input
                 id="narrative-seq"
                 type="number"
@@ -561,9 +570,10 @@
                 placeholder="e.g. 100"
                 class="text-xs"
               />
-            </Field>
+            </div>
 
-            <Field id="chrono-order" label="Chronological Order (Year / Timeline Order)" required>
+            <div class="space-y-1.5">
+              <Label for="chrono-order">Chronological Order (Year / Timeline Order) <span class="text-destructive">*</span></Label>
               <Input
                 id="chrono-order"
                 type="number"
@@ -571,32 +581,35 @@
                 placeholder="e.g. 150"
                 class="text-xs"
               />
-            </Field>
+            </div>
           </div>
 
           <!-- Anchor Scene & Chapter -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field id="anchor-chapter" label="Anchor Chapter (Optional)">
+            <div class="space-y-1.5">
+              <Label for="anchor-chapter">Anchor Chapter (Optional)</Label>
               <Input
                 id="anchor-chapter"
                 bind:value={formAnchorChapter}
                 placeholder="e.g. Chapter 4: The Golden Core"
                 class="text-xs"
               />
-            </Field>
+            </div>
 
-            <Field id="anchor-scene" label="Anchor Scene (Optional)">
+            <div class="space-y-1.5">
+              <Label for="anchor-scene">Anchor Scene (Optional)</Label>
               <Input
                 id="anchor-scene"
                 bind:value={formAnchorScene}
                 placeholder="e.g. Scene 2: The Breakthrough"
                 class="text-xs"
               />
-            </Field>
+            </div>
           </div>
 
           <!-- Description -->
-          <Field id="event-desc" label="Event Description">
+          <div class="space-y-1.5">
+            <Label for="event-desc">Event Description</Label>
             <Textarea
               id="event-desc"
               bind:value={formDescription}
@@ -604,15 +617,15 @@
               placeholder="Describe the narrative occurrence, causal consequences, and state shifts..."
               class="text-xs"
             />
-          </Field>
+          </div>
 
           <!-- Atomic Effects Builder -->
-          <div class="space-y-3 pt-2 border-t border-zinc-800">
+          <div class="space-y-3 pt-2 border-t border-border">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-semibold text-zinc-200 flex items-center gap-1.5 font-mono" for="atomic-effects-list">
-                <Workflow class="w-3.5 h-3.5 text-purple-400" />
+              <Label class="text-xs font-semibold text-foreground flex items-center gap-1.5 font-mono" for="atomic-effects-list">
+                <Workflow class="w-3.5 h-3.5 text-primary" />
                 <span>Atomic Delta Effects ({formEffects.length})</span>
-              </label>
+              </Label>
               <Button size="sm" variant="outline" onclick={addEffectRow} class="h-7 text-xs flex items-center gap-1">
                 <Plus class="w-3 h-3" />
                 <span>Add Effect</span>
@@ -621,20 +634,20 @@
 
             <div id="atomic-effects-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
               {#if formEffects.length === 0}
-                <div class="p-3 rounded bg-zinc-950 border border-zinc-800 text-center text-xs text-zinc-500 font-mono">
+                <div class="p-3 rounded bg-muted/40 border border-border text-center text-xs text-muted-foreground font-mono">
                   No effects attached yet. Click "Add Effect" to mutate universe entities.
                 </div>
               {/if}
 
               {#each formEffects as eff, idx}
-                <div class="p-3 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2.5">
+                <div class="p-3 rounded-lg bg-muted/40 border border-border space-y-2.5">
                   <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <!-- Target Entity -->
                     <div class="sm:col-span-1">
-                      <label class="block text-[10px] font-mono text-zinc-400 mb-1" for={`eff-target-${idx}`}>Target Entity</label>
+                      <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-target-${idx}`}>Target Entity</Label>
                       <select
                         id={`eff-target-${idx}`}
-                        class="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-200"
+                        class="w-full bg-background border border-input rounded-md px-2 py-1 text-xs text-foreground"
                         value={eff.targetEntityId}
                         onchange={(e) => handleTargetEntityChange(idx, e.currentTarget.value)}
                       >
@@ -646,11 +659,11 @@
 
                     <!-- Property Key -->
                     <div class="sm:col-span-1">
-                      <label class="block text-[10px] font-mono text-zinc-400 mb-1" for={`eff-key-${idx}`}>Property Key</label>
-                      <input
+                      <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-key-${idx}`}>Property Key</Label>
+                      <Input
                         id={`eff-key-${idx}`}
                         type="text"
-                        class="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-200 font-mono"
+                        class="h-8 text-xs font-mono"
                         placeholder="e.g. cultivation.major_realm"
                         bind:value={eff.propertyKey}
                       />
@@ -658,10 +671,10 @@
 
                     <!-- Operation -->
                     <div class="sm:col-span-1">
-                      <label class="block text-[10px] font-mono text-zinc-400 mb-1" for={`eff-op-${idx}`}>Operation</label>
+                      <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-op-${idx}`}>Operation</Label>
                       <select
                         id={`eff-op-${idx}`}
-                        class="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-200 font-mono"
+                        class="w-full bg-background border border-input rounded-md px-2 py-1 text-xs text-foreground font-mono"
                         bind:value={eff.operation}
                       >
                         {#each operationOptions as op}
@@ -673,11 +686,11 @@
                     <!-- Value & Delete -->
                     <div class="sm:col-span-1 flex items-end gap-1">
                       <div class="flex-1">
-                        <label class="block text-[10px] font-mono text-zinc-400 mb-1" for={`eff-val-${idx}`}>Value</label>
-                        <input
+                        <Label class="block text-[10px] font-mono text-muted-foreground mb-1" for={`eff-val-${idx}`}>Value</Label>
+                        <Input
                           id={`eff-val-${idx}`}
                           type="text"
-                          class="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-200 font-mono"
+                          class="h-8 text-xs font-mono"
                           placeholder="e.g. 3 or Core Formation"
                           bind:value={eff.value}
                         />
@@ -686,7 +699,7 @@
                         variant="ghost"
                         size="sm"
                         onclick={() => removeEffectRow(idx)}
-                        class="h-7 px-2 text-zinc-500 hover:text-red-400"
+                        class="h-8 px-2 text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 class="w-3.5 h-3.5" />
                       </Button>
@@ -698,13 +711,13 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
           <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>Cancel</Button>
           <Button size="sm" disabled={!formTitle.trim()} onclick={handleSaveEvent}>
             {modalMode === "add" ? "Log Event to Stream" : "Save Changes"}
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   {/if}
 </div>
