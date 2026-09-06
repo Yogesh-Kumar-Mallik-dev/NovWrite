@@ -523,7 +523,7 @@
   }
 
   function handleAddCustomProperty() {
-    const key = newPropKey.trim().replace(/[^a-zA-Z0-9_]/g, '');
+    const key = newPropKey.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, '');
     if (!key) {
       toast.error('Validation Error', 'Property key is required.');
       return;
@@ -1678,6 +1678,7 @@
             <Input
               id="custom-prop-key"
               bind:value={newPropKey}
+              oninput={(e) => (newPropKey = e.currentTarget.value.toLowerCase())}
               placeholder="e.g. soul_mark, aura_level, elemental_mastery"
               class="font-mono text-xs"
             />

@@ -121,6 +121,21 @@
     fields.splice(index, 1);
   }
 
+  function handleFieldTypeChange(fieldIndex: number, newType: BlueprintFieldType) {
+    fields[fieldIndex].fieldType = newType;
+    // Wipe slate clean on field type change!
+    fields[fieldIndex].options = [];
+    fields[fieldIndex].newOptionLabel = '';
+    fields[fieldIndex].newOptionPower = undefined;
+    fields[fieldIndex].targetBlueprintId = (newType === 'BLUEPRINT_REF' || newType === 'ARRAY_REF') ? (availableTargetBlueprints[0]?.value || '') : '';
+    fields[fieldIndex].min = 0;
+    fields[fieldIndex].max = 100000;
+    fields[fieldIndex].step = 1;
+    fields[fieldIndex].unit = '';
+    fields[fieldIndex].defaultValue = newType === 'BOOLEAN' ? 'false' : (newType === 'ARRAY' || newType === 'ARRAY_REF' ? '' : '');
+    fields[fieldIndex].formulaExpression = '';
+  }
+
   function addOptionToField(fieldIndex: number) {
     const label = fields[fieldIndex].newOptionLabel.trim();
     if (!label) return;
@@ -167,7 +182,7 @@
     const validFields: DynamicFieldDef[] = fields
       .filter((f) => f.name.trim() !== '' || f.label.trim() !== '')
       .map((f, idx) => {
-        const fieldKey = (f.name.trim() || f.label.trim().toLowerCase().replace(/\s+/g, '_')).replace(/[^a-zA-Z0-9_\.]/g, '');
+        const fieldKey = (f.name.trim().toLowerCase() || f.label.trim().toLowerCase().replace(/\s+/g, '_')).replace(/[^a-z0-9_\.]/g, '');
         const def: DynamicFieldDef = {
           id: `f-${Date.now()}-${idx}`,
           name: fieldKey,
@@ -402,6 +417,7 @@
                 <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Key (Machine Name)</span>
                 <Input
                   bind:value={field.name}
+                  oninput={(e) => (field.name = e.currentTarget.value.toLowerCase())}
                   placeholder="e.g. gender, attack, total_power"
                   class="font-mono text-xs w-full"
                 />
@@ -422,6 +438,7 @@
                 <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Type</span>
                 <Select
                   bind:value={field.fieldType}
+                  onchange={(val) => handleFieldTypeChange(index, val as BlueprintFieldType)}
                   options={fieldTypeOptions}
                 />
               </div>
