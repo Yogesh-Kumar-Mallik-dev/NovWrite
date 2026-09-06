@@ -668,32 +668,83 @@
     <!-- 1st-Class Relational Entity Links -->
     {#if relationalEntityRefFields.length > 0}
       <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <Link2 class="w-4 h-4 text-teal-400" />
-          <span>1st-Class Relational Entity Connections</span>
-        </h3>
-
-        {#each relationalEntityRefFields as field}
-          {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-          {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id) : worldStore.entities.filter((e) => e.id !== entity.id)}
-          <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-2">
-            <Label class="text-xs font-medium text-zinc-200">
-              {field.label} ({targetBp ? targetBp.name : 'Entity'})
-            </Label>
-            <div class="max-w-md">
-              <Select
-                bind:value={properties[field.name]}
-                options={[
-                  { value: '', label: 'None (Unassigned)' },
-                  ...candidateEntities.map((e) => ({
-                    value: e.id,
-                    label: `${e.name} (${e.category})`,
-                  })),
-                ]}
-              />
-            </div>
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <div>
+            <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <Link2 class="w-4 h-4 text-purple-400" />
+              <span>1st-Class Relational Entity Connections</span>
+            </h3>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              Connect this entity to other 1st-class entity objects (e.g. character owning a weapon, belonging to a faction).
+            </p>
           </div>
-        {/each}
+          <span class="text-[11px] text-purple-400/80 font-mono">1st-Class Links</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {#each relationalEntityRefFields as field}
+            {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+            {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id) : worldStore.entities.filter((e) => e.id !== entity.id)}
+            <div class="p-4 rounded-lg border border-purple-950/70 bg-purple-950/15 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <Label class="text-xs font-medium text-purple-200 flex items-center gap-1.5">
+                  <Link2 class="w-3.5 h-3.5 text-purple-400" />
+                  <span>{field.label}</span>
+                </Label>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/80 border border-purple-800 text-purple-300">
+                  Target: {targetBp ? targetBp.name : '1st-Class Entity'}
+                </span>
+              </div>
+
+              {#if field.description}
+                <p class="text-[11px] text-zinc-400">{field.description}</p>
+              {/if}
+
+              <div class="space-y-2">
+                <Select
+                  bind:value={properties[field.name]}
+                  options={[
+                    { value: '', label: 'None (Unassigned)' },
+                    ...candidateEntities.map((e) => ({
+                      value: e.id,
+                      label: `${e.name} (${e.category})`,
+                    })),
+                  ]}
+                />
+
+                {#if candidateEntities.length > 0}
+                  <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span class="text-[10px] text-zinc-500 mr-1">Quick Link:</span>
+                    <button
+                      type="button"
+                      onclick={() => (properties[field.name] = '')}
+                      class={`px-2 py-0.5 rounded text-[10px] transition ${
+                        !properties[field.name]
+                          ? 'bg-zinc-800 text-zinc-200 font-bold border border-zinc-700'
+                          : 'bg-zinc-950 text-zinc-500 border border-zinc-850 hover:text-zinc-300'
+                      }`}
+                    >
+                      None
+                    </button>
+                    {#each candidateEntities as cand}
+                      <button
+                        type="button"
+                        onclick={() => (properties[field.name] = cand.id)}
+                        class={`px-2 py-0.5 rounded text-[10px] font-medium transition flex items-center gap-1 ${
+                          properties[field.name] === cand.id
+                            ? 'bg-purple-950 text-purple-200 border border-purple-600 ring-1 ring-purple-500/50'
+                            : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                        }`}
+                      >
+                        <span>{cand.name}</span>
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/each}
+        </div>
       </div>
     {/if}
 
