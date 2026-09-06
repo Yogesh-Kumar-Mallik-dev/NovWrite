@@ -48,6 +48,26 @@
   let description = $state('');
   let properties = $state<Record<string, any>>({});
 
+  function formatEnumOptions(options?: Array<string | { label: string; value: string; power?: number; numericValue?: number }>) {
+    if (!options) return [];
+    return options.map((opt) => {
+      if (typeof opt === 'string') {
+        return { value: opt, label: opt };
+      }
+      const power = opt.power ?? opt.numericValue;
+      return {
+        value: opt.value,
+        label: power !== undefined ? `${opt.label} (Power: ${power})` : opt.label,
+      };
+    });
+  }
+
+  function getDefaultOptionValue(options?: Array<string | { label: string; value: string; power?: number; numericValue?: number }>): string {
+    if (!options || options.length === 0) return '';
+    const first = options[0];
+    return typeof first === 'object' ? first.value : first;
+  }
+
   // Initialize properties based on active blueprint fields
   $effect(() => {
     if (selectedBlueprint) {
@@ -65,7 +85,7 @@
               } else if (subF.fieldType === 'NUMBER') {
                 subProps[subF.name] = subF.min || 0;
               } else if (subF.fieldType === 'ENUM' && subF.options) {
-                subProps[subF.name] = subF.options[0] || '';
+                subProps[subF.name] = getDefaultOptionValue(subF.options);
               } else {
                 subProps[subF.name] = '';
               }
@@ -79,7 +99,7 @@
         } else if (field.fieldType === 'NUMBER') {
           initialProps[field.name] = field.min || 0;
         } else if (field.fieldType === 'ENUM' && field.options) {
-          initialProps[field.name] = field.options[0] || '';
+          initialProps[field.name] = getDefaultOptionValue(field.options);
         } else {
           initialProps[field.name] = '';
         }
@@ -92,20 +112,26 @@
   // Real-time live computed formulas for the entity being created
   let liveComputedFormulas = $derived.by(() => {
     if (!selectedBlueprint) return {};
+    const dummyEntity = {
+      id: 'preview',
+      name: name || 'Draft Entity',
+      blueprintId: selectedBlueprint.id,
+      blueprintName: selectedBlueprint.name,
+      category: selectedBlueprint.category,
+      properties: $state.snapshot(properties),
+      lastMutatedSeqNumber: 0,
+    };
+    const results = worldStore.evaluateEntityFormulas(dummyEntity, selectedBlueprint);
     const computed: Record<string, { value: number; formatted: string; expr: string }> = {};
-    const context = { ...properties };
 
     for (const field of selectedBlueprint.fields) {
       if (field.fieldType === 'FORMULA' && field.formulaExpression) {
-        const evalRes = evaluateFormula(field.formulaExpression, context);
-        if (evalRes.success && evalRes.value !== undefined) {
-          computed[field.name] = {
-            value: evalRes.value,
-            formatted: evalRes.formattedValue || String(evalRes.value),
-            expr: field.formulaExpression,
-          };
-          context[field.name] = evalRes.value;
-        }
+        const val = results[field.name] ?? 0;
+        computed[field.name] = {
+          value: val,
+          formatted: String(val),
+          expr: field.formulaExpression,
+        };
       }
     }
 
@@ -258,7 +284,7 @@
               <div class="max-w-md pt-1">
                 <Select
                   bind:value={properties[field.name]}
-                  options={(field.options || []).map((opt) => ({ value: opt, label: opt }))}
+                  options={formatEnumOptions(field.options)}
                 />
               </div>
             </div>
@@ -290,7 +316,7 @@
                         {#if subF.fieldType === 'ENUM'}
                           <Select
                             bind:value={properties[field.name][subF.name]}
-                            options={(subF.options || []).map((o) => ({ value: o, label: o }))}
+                            options={formatEnumOptions(subF.options)}
                           />
                         {:else if subF.fieldType === 'NUMBER'}
                           <Input

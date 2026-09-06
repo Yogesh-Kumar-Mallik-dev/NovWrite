@@ -14,6 +14,14 @@ export type BlueprintClass = "FIRST_CLASS" | "SECOND_CLASS";
 export type BlueprintFieldType =
   "STRING" | "NUMBER" | "BOOLEAN" | "ENUM" | "BLUEPRINT_REF" | "FORMULA";
 
+export interface EnumOptionItem {
+  label: string; // Display Name (e.g. "Qi Refining")
+  value: string; // Storage key / code (e.g. "qi_refining")
+  numericValue?: number; // Numeric Power / Score (e.g. 100)
+  power?: number; // Alias for numeric power
+  description?: string;
+}
+
 export interface DynamicFieldDef {
   id: string;
   name: string; // Machine key e.g. "gender", "romantic_feelings", "total_combat_power"
@@ -23,8 +31,8 @@ export interface DynamicFieldDef {
   required?: boolean;
   defaultValue?: any;
 
-  // For ENUM:
-  options?: string[]; // e.g. ["Male", "Female"]
+  // For ENUM (supporting both simple strings and dual-valued {name, power} items):
+  options?: (string | EnumOptionItem)[];
 
   // For BLUEPRINT_REF:
   targetBlueprintId?: string; // ID of referenced blueprint (1st or 2nd class)
@@ -82,28 +90,28 @@ const initialBlueprints: BlueprintDef[] = [
         label: "Relationship Stage",
         fieldType: "ENUM",
         options: [
-          "Stranger",
-          "Acquaintance",
-          "Friend",
-          "Confidant",
-          "Romantic Interest",
-          "Soulmate",
-          "Nemesis",
+          { label: "Stranger", value: "stranger", power: 0, numericValue: 0 },
+          { label: "Acquaintance", value: "acquaintance", power: 50, numericValue: 50 },
+          { label: "Friend", value: "friend", power: 150, numericValue: 150 },
+          { label: "Confidant", value: "confidant", power: 350, numericValue: 350 },
+          { label: "Romantic Interest", value: "romantic_interest", power: 650, numericValue: 650 },
+          { label: "Soulmate", value: "soulmate", power: 1000, numericValue: 1000 },
+          { label: "Nemesis", value: "nemesis", power: -500, numericValue: -500 },
         ],
-        defaultValue: "Acquaintance",
-        description: "Categorical stage of interpersonal dynamic",
+        defaultValue: "acquaintance",
+        description: "Categorical stage of interpersonal dynamic with power weights",
       },
       {
         id: "f-aff-level",
         name: "affection_level",
         label: "Affection Points",
         fieldType: "NUMBER",
-        min: -100,
+        min: -1000,
         max: 1000,
-        step: 5,
-        unit: "pts",
-        defaultValue: 0,
-        description: "Numerical bond gauge (-100 to +1000)",
+        step: 10,
+        unit: "Pts",
+        defaultValue: 150,
+        description: "Continuous affection score",
       },
       {
         id: "f-aff-trust",
@@ -114,28 +122,29 @@ const initialBlueprints: BlueprintDef[] = [
         max: 100,
         step: 1,
         unit: "%",
-        defaultValue: 50,
-        description: "Mutual trust confidence percentage",
+        defaultValue: 60,
+        description: "Mutual reliance quotient",
       },
       {
-        id: "f-aff-buff",
-        name: "bond_buff_multiplier",
-        label: "Bond Buff Multiplier",
+        id: "f-aff-multiplier",
+        name: "bond_power_buff",
+        label: "Bond Power Multiplier",
         fieldType: "FORMULA",
-        formulaExpression: "1 + (affection_level / 1000) * 0.5",
-        description: "Synergy buff derived from emotional resonance",
+        formulaExpression:
+          "1.0 + (affection_level / 1000.0) * 0.5 + (trust_score / 100.0) * 0.2",
+        description: "Calculated combat buff multiplier from bond depth",
       },
     ],
   },
 
-  // 2. Second-Class Blueprint: Cultivation Rank & Realms
+  // 2. Second-Class Blueprint: Cultivation Rank & Mastery
   {
     id: "bp-sec-cultivation",
     name: "Cultivation Rank & Mastery",
     blueprintClass: "SECOND_CLASS",
     category: "Power Systems",
     description:
-      "Cultivation realm stages, minor sub-grades, and spiritual density metrics.",
+      "Dao realms, spiritual grades, major breakthrough ranks, and technique mastery.",
     isSystemDefault: true,
     fields: [
       {
@@ -144,16 +153,16 @@ const initialBlueprints: BlueprintDef[] = [
         label: "Realm Name",
         fieldType: "ENUM",
         options: [
-          "Qi Condensation",
-          "Foundation Establishment",
-          "Core Formation",
-          "Nascent Soul",
-          "Soul Transformation",
-          "Void Refinement",
-          "Ascension",
+          { label: "Qi Condensation", value: "qi_condensation", power: 100, numericValue: 100 },
+          { label: "Foundation Establishment", value: "foundation_establishment", power: 500, numericValue: 500 },
+          { label: "Core Formation", value: "core_formation", power: 2500, numericValue: 2500 },
+          { label: "Nascent Soul", value: "nascent_soul", power: 10000, numericValue: 10000 },
+          { label: "Soul Transformation", value: "soul_transformation", power: 50000, numericValue: 50000 },
+          { label: "Void Refinement", value: "void_refinement", power: 250000, numericValue: 250000 },
+          { label: "Ascension", value: "ascension", power: 1000000, numericValue: 1000000 },
         ],
-        defaultValue: "Foundation Establishment",
-        description: "Major Dao stage",
+        defaultValue: "foundation_establishment",
+        description: "Major Dao stage with inherent power rating",
       },
       {
         id: "f-cul-major",
@@ -651,6 +660,54 @@ export class WorldStateStore {
   }
 
   // =====================================
+  // Dynamic Option CRUD Methods
+  // =====================================
+
+  addOptionToField(
+    blueprintId: string,
+    fieldId: string,
+    option: EnumOptionItem | string,
+  ): boolean {
+    const bp = this.getBlueprint(blueprintId);
+    if (!bp) return false;
+    const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
+    if (!field || field.fieldType !== "ENUM") return false;
+    if (!field.options) field.options = [];
+    field.options.push(option);
+    this.recomputeAllEntityFormulas();
+    return true;
+  }
+
+  updateOptionInField(
+    blueprintId: string,
+    fieldId: string,
+    optionIndex: number,
+    updatedOption: EnumOptionItem | string,
+  ): boolean {
+    const bp = this.getBlueprint(blueprintId);
+    if (!bp) return false;
+    const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
+    if (!field || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    field.options[optionIndex] = updatedOption;
+    this.recomputeAllEntityFormulas();
+    return true;
+  }
+
+  removeOptionFromField(
+    blueprintId: string,
+    fieldId: string,
+    optionIndex: number,
+  ): boolean {
+    const bp = this.getBlueprint(blueprintId);
+    if (!bp) return false;
+    const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
+    if (!field || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    field.options.splice(optionIndex, 1);
+    this.recomputeAllEntityFormulas();
+    return true;
+  }
+
+  // =====================================
   // Entity CRUD & Reactive Formula Evaluation
   // =====================================
 
@@ -716,14 +773,68 @@ export class WorldStateStore {
   // =====================================
 
   evaluateEntityFormulas(
-    entity: EntityItem,
+    entity: { properties: Record<string, any>; blueprintId: string },
     bp?: BlueprintDef,
   ): Record<string, number> {
     const blueprint = bp || this.getBlueprint(entity.blueprintId);
     if (!blueprint) return {};
 
     const computed: Record<string, number> = {};
-    const context = { ...entity.properties };
+    const context: Record<string, any> = { ...entity.properties };
+
+    // Enrich context with dual-valued enum options (e.g. cultivation_realm = { name, power: 100 })
+    for (const field of blueprint.fields) {
+      if (field.fieldType === "ENUM" && field.options) {
+        const rawVal = entity.properties[field.name];
+        if (rawVal !== undefined && rawVal !== null) {
+          const matchingOpt = field.options.find((opt) => {
+            if (typeof opt === "string") return opt === rawVal;
+            return opt.value === rawVal || opt.label === rawVal;
+          });
+
+          if (matchingOpt && typeof matchingOpt === "object") {
+            const numVal = matchingOpt.numericValue ?? matchingOpt.power ?? 0;
+            context[field.name] = {
+              label: matchingOpt.label,
+              value: matchingOpt.value,
+              name: matchingOpt.label,
+              numericValue: numVal,
+              power: numVal,
+            };
+          }
+        }
+      } else if (field.fieldType === "BLUEPRINT_REF" && field.targetBlueprintId) {
+        const targetBp = this.getBlueprint(field.targetBlueprintId);
+        if (targetBp && targetBp.blueprintClass === "SECOND_CLASS") {
+          const subProps = entity.properties[field.name];
+          if (subProps && typeof subProps === "object") {
+            const enrichedSub: Record<string, any> = { ...subProps };
+            for (const subF of targetBp.fields) {
+              if (subF.fieldType === "ENUM" && subF.options) {
+                const subRawVal = subProps[subF.name];
+                if (subRawVal !== undefined && subRawVal !== null) {
+                  const subMatchingOpt = subF.options.find((opt) => {
+                    if (typeof opt === "string") return opt === subRawVal;
+                    return opt.value === subRawVal || opt.label === subRawVal;
+                  });
+                  if (subMatchingOpt && typeof subMatchingOpt === "object") {
+                    const numVal = subMatchingOpt.numericValue ?? subMatchingOpt.power ?? 0;
+                    enrichedSub[subF.name] = {
+                      label: subMatchingOpt.label,
+                      value: subMatchingOpt.value,
+                      name: subMatchingOpt.label,
+                      numericValue: numVal,
+                      power: numVal,
+                    };
+                  }
+                }
+              }
+            }
+            context[field.name] = enrichedSub;
+          }
+        }
+      }
+    }
 
     // Find all formula fields in the blueprint
     for (const field of blueprint.fields) {

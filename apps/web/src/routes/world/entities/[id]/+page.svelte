@@ -49,23 +49,38 @@
     }
   });
 
+  function formatEnumOptions(options?: Array<string | { label: string; value: string; power?: number; numericValue?: number }>) {
+    if (!options) return [];
+    return options.map((opt) => {
+      if (typeof opt === 'string') {
+        return { value: opt, label: opt };
+      }
+      const power = opt.power ?? opt.numericValue;
+      return {
+        value: opt.value,
+        label: power !== undefined ? `${opt.label} (Power: ${power})` : opt.label,
+      };
+    });
+  }
+
   // Real-time live computed formulas for the entity being inspected
   let liveComputedFormulas = $derived.by(() => {
-    if (!blueprint) return {};
+    if (!blueprint || !entity) return {};
+    const dummyEntity = {
+      ...entity,
+      properties: $state.snapshot(properties),
+    };
+    const results = worldStore.evaluateEntityFormulas(dummyEntity, blueprint);
     const computed: Record<string, { value: number; formatted: string; expr: string }> = {};
-    const context = { ...properties };
 
     for (const field of blueprint.fields) {
       if (field.fieldType === 'FORMULA' && field.formulaExpression) {
-        const evalRes = evaluateFormula(field.formulaExpression, context);
-        if (evalRes.success && evalRes.value !== undefined) {
-          computed[field.name] = {
-            value: evalRes.value,
-            formatted: evalRes.formattedValue || String(evalRes.value),
-            expr: field.formulaExpression,
-          };
-          context[field.name] = evalRes.value;
-        }
+        const val = results[field.name] ?? 0;
+        computed[field.name] = {
+          value: val,
+          formatted: String(val),
+          expr: field.formulaExpression,
+        };
       }
     }
 
@@ -239,7 +254,7 @@
                 <div class="max-w-md pt-1">
                   <Select
                     bind:value={properties[field.name]}
-                    options={(field.options || []).map((opt) => ({ value: opt, label: opt }))}
+                    options={formatEnumOptions(field.options)}
                   />
                 </div>
               </div>
@@ -270,7 +285,7 @@
                           {#if subF.fieldType === 'ENUM'}
                             <Select
                               bind:value={properties[field.name][subF.name]}
-                              options={(subF.options || []).map((o) => ({ value: o, label: o }))}
+                              options={formatEnumOptions(subF.options)}
                             />
                           {:else if subF.fieldType === 'NUMBER'}
                             <Input

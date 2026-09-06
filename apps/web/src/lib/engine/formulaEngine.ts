@@ -239,8 +239,19 @@ export function resolveContextValue(
       return isNaN(parsed) ? 0 : parsed;
     }
     if (typeof direct === "boolean") return direct ? 1 : 0;
-    if (direct && typeof direct === "object" && "value" in direct) {
-      return resolveContextValue(direct, "value");
+    if (direct && typeof direct === "object") {
+      if ("numericValue" in direct && typeof direct.numericValue === "number") {
+        return direct.numericValue;
+      }
+      if ("power" in direct && typeof direct.power === "number") {
+        return direct.power;
+      }
+      if ("numeric_value" in direct && typeof direct.numeric_value === "number") {
+        return direct.numeric_value;
+      }
+      if ("value" in direct) {
+        return resolveContextValue(direct, "value");
+      }
     }
   }
 
@@ -258,6 +269,20 @@ export function resolveContextValue(
     return isNaN(parsed) ? 0 : parsed;
   }
   if (typeof current === "boolean") return current ? 1 : 0;
+  if (current && typeof current === "object") {
+    if ("numericValue" in current && typeof current.numericValue === "number") {
+      return current.numericValue;
+    }
+    if ("power" in current && typeof current.power === "number") {
+      return current.power;
+    }
+    if ("numeric_value" in current && typeof current.numeric_value === "number") {
+      return current.numeric_value;
+    }
+    if ("value" in current) {
+      return resolveContextValue(current, "value");
+    }
+  }
 
   // Case-insensitive fallback match
   const lowerPath = path.toLowerCase();
@@ -268,6 +293,14 @@ export function resolveContextValue(
       if (typeof val === "string") {
         const parsed = parseFloat(val);
         return isNaN(parsed) ? 0 : parsed;
+      }
+      if (val && typeof val === "object") {
+        if ("numericValue" in val && typeof val.numericValue === "number") {
+          return val.numericValue;
+        }
+        if ("power" in val && typeof val.power === "number") {
+          return val.power;
+        }
       }
     }
   }

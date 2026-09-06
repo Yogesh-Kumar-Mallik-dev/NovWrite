@@ -96,6 +96,34 @@ describe("BLOCK_WORLD_FORMULA_ENGINE_001: Formula Parsing & Math Evaluator", () 
     assert.strictEqual(resIfFalse.value, 200);
   });
 
+  it("should evaluate formulas with dual-valued enum properties ({name: power}) like qi_refining: 100", () => {
+    const formula = "cultivation_realm * special_Physique + attack";
+
+    // Direct object with power/numericValue
+    const context = {
+      cultivation_realm: {
+        name: "Qi Refining",
+        label: "Qi Refining",
+        value: "qi_refining",
+        power: 100,
+        numericValue: 100,
+      },
+      special_Physique: 2.5,
+      attack: 250,
+    };
+
+    const res = evaluateFormula(formula, context);
+    assert.strictEqual(res.success, true);
+    // 100 * 2.5 + 250 = 250 + 250 = 500
+    assert.strictEqual(res.value, 500);
+
+    // Dot notation property access e.g. cultivation_realm.power
+    const formulaWithDot = "cultivation_realm.power * special_Physique + attack";
+    const resDot = evaluateFormula(formulaWithDot, context);
+    assert.strictEqual(resDot.success, true);
+    assert.strictEqual(resDot.value, 500);
+  });
+
   it("should validate syntax and catch division by zero or unbalanced parentheses", () => {
     const validRes = validateFormulaSyntax("attack * 2 + 10");
     assert.strictEqual(validRes.valid, true);
