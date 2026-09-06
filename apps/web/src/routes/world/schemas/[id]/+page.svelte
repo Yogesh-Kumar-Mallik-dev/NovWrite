@@ -61,16 +61,24 @@
   let description = $state(initialBp?.description || '');
   let saveMessage = $state<string | null>(null);
 
+  // Sync state if blueprint changes or loads from localStorage on refresh
+  $effect(() => {
+    if (blueprint && blueprint.id !== loadedBpId) {
+      loadedBpId = blueprint.id;
+      name = blueprint.name;
+      blueprintClass = blueprint.blueprintClass;
+      category = blueprint.category;
+      description = blueprint.description;
+    }
+  });
+
   // New field draft state
   let showNewFieldModal = $state(false);
   let newFieldName = $state('');
   let newFieldLabel = $state('');
   let newFieldType = $state<BlueprintFieldType>('STRING');
   let newFieldDesc = $state('');
-  let newFieldOptions = $state<Array<{ label: string; value: string; power?: number; numericValue?: number }>>([
-    { label: 'Option A', value: 'option_a', power: 100, numericValue: 100 },
-    { label: 'Option B', value: 'option_b', power: 500, numericValue: 500 },
-  ]);
+  let newFieldOptions = $state<Array<{ label: string; value: string; power?: number; numericValue?: number }>>([]);
   let newOptionLabelDraft = $state('');
   let newOptionPowerDraft = $state<number | undefined>(undefined);
   let newFieldTargetBp = $state('');
@@ -210,10 +218,7 @@
     newFieldLabel = '';
     newFieldDesc = '';
     newFieldFormula = '';
-    newFieldOptions = [
-      { label: 'Option A', value: 'option_a', power: 100, numericValue: 100 },
-      { label: 'Option B', value: 'option_b', power: 500, numericValue: 500 },
-    ];
+    newFieldOptions = [];
     newFieldDefault = '';
     newOptionLabelDraft = '';
     newOptionPowerDraft = undefined;

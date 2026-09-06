@@ -45,10 +45,10 @@
 
   let name = $state('');
   let blueprintClass = $state<BlueprintClass>('FIRST_CLASS');
-  let category = $state('Characters');
+  let category = $state('');
   let description = $state('');
 
-  // Draft fields list
+  // Draft fields list - completely empty when creating from scratch
   let fields = $state<Array<{
     id: string;
     name: string;
@@ -65,30 +65,7 @@
     unit: string;
     defaultValue: string;
     formulaExpression: string;
-  }>>([
-    {
-      id: 'f-1',
-      name: 'gender',
-      label: 'Gender Identity',
-      fieldType: 'ENUM',
-      description: 'Biological / spiritual gender category',
-      options: [
-        { label: 'Male', value: 'Male' },
-        { label: 'Female', value: 'Female' },
-        { label: 'Dual-Yin-Yang', value: 'Dual-Yin-Yang' },
-        { label: 'Celestial / Genderless', value: 'Celestial / Genderless' },
-      ],
-      newOptionLabel: '',
-      newOptionPower: undefined,
-      targetBlueprintId: '',
-      min: 0,
-      max: 100,
-      step: 1,
-      unit: '',
-      defaultValue: 'Male',
-      formulaExpression: '',
-    },
-  ]);
+  }>>([]);
 
   // Quick categories
   const suggestedCategories = [
@@ -202,8 +179,8 @@
         if (f.fieldType === 'ENUM') {
           def.options = f.options.length > 0
             ? f.options.map((o: any) => (typeof o === 'string' ? o : o.label || o.value))
-            : ['Default'];
-          def.defaultValue = f.defaultValue || def.options[0];
+            : [];
+          def.defaultValue = f.defaultValue || (def.options[0] || '');
         } else if (f.fieldType === 'VALUE_TYPE') {
           def.options = f.options.length > 0
             ? f.options.map((o: any) => ({
@@ -212,9 +189,9 @@
                 power: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
                 numericValue: typeof o === 'string' ? 0 : (o.power !== undefined ? Number(o.power) : (o.numericValue !== undefined ? Number(o.numericValue) : 0)),
               }))
-            : [{ label: 'Default', value: 'default', power: 0, numericValue: 0 }];
+            : [];
           const first = def.options[0];
-          def.defaultValue = f.defaultValue || (typeof first === 'object' ? first.value : first);
+          def.defaultValue = f.defaultValue || (first ? (typeof first === 'object' ? first.value : first) : '');
         } else if (f.fieldType === 'NUMBER') {
           def.min = f.min;
           def.max = f.max;
