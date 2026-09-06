@@ -11,3 +11,6 @@ export * from "./world/schemaEngine.js";
 export * from "./world/timelineTypes.js";
 export * from "./world/effectApplier.js";
 export * from "./world/timelineEngine.js";
+export * from "./world/ruleTypes.js";
+export * from "./world/ruleEvaluator.js";
+export * from "./world/stateFoldEngine.js";
