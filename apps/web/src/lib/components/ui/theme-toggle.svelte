@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Sun, Moon } from "lucide-svelte";
-  import { RadioGroup, RadioGroupItem } from "$lib/components/ui/radio-group";
   import { themeStore, type ThemeMode } from "$lib/stores/themeStore.svelte";
   import { cn } from "$lib/utils";
 
@@ -12,67 +11,81 @@
 
   let { size = "sm", showLabels = true, class: className = "" }: Props = $props();
 
-  function handleValueChange(val: string) {
-    if (val === "light" || val === "dark") {
-      themeStore.setTheme(val);
-    }
+  function handleChange(val: ThemeMode) {
+    themeStore.setTheme(val);
   }
 </script>
 
-<RadioGroup
-  value={themeStore.mode}
-  onValueChange={handleValueChange}
+<fieldset
   class={cn(
-    "flex items-center gap-1 p-1 rounded-lg border border-border bg-muted/50 text-foreground transition-colors",
+    "inline-flex items-center gap-1 p-0.5 rounded-lg border border-border bg-muted/50 text-foreground transition-colors",
     className
   )}
+  role="radiogroup"
   aria-label="Theme mode selection"
 >
-  <!-- Light Mode Radio Button -->
+  <!-- Light Mode Tile Radio -->
   <label
-    for="theme-light-radio"
+    for="theme-tile-radio-light"
     class={cn(
-      "flex items-center gap-1.5 rounded-md cursor-pointer transition-all duration-150 select-none font-medium",
-      size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm",
+      "group relative flex items-center gap-1.5 rounded-md cursor-pointer transition-all duration-150 select-none font-medium border",
+      size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm",
       themeStore.mode === "light"
-        ? "bg-background text-foreground shadow-xs border border-border/80"
-        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+        ? "bg-card text-foreground shadow-xs border-border/90"
+        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
     )}
   >
-    <RadioGroupItem
-      id="theme-light-radio"
+    <input
+      type="radio"
+      id="theme-tile-radio-light"
+      name="novwrite-theme-selection"
       value="light"
+      checked={themeStore.mode === "light"}
+      onchange={() => handleChange("light")}
+      class="size-3.5 accent-primary cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+      aria-label="Light mode"
+    />
+    <Sun
       class={cn(
-        "size-3.5 border-muted-foreground/60 transition-colors data-[state=checked]:border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:text-white focus-visible:ring-ring"
+        "size-3.5 transition-colors shrink-0",
+        themeStore.mode === "light" ? "text-amber-500" : "text-muted-foreground group-hover:text-foreground"
       )}
     />
-    <Sun class={cn("size-3.5 transition-colors", themeStore.mode === "light" ? "text-amber-500" : "text-muted-foreground")} />
     {#if showLabels}
       <span class="font-mono text-[11px] leading-none">Light</span>
     {/if}
   </label>
 
-  <!-- Dark Mode Radio Button -->
+  <!-- Dark Mode Tile Radio -->
   <label
-    for="theme-dark-radio"
+    for="theme-tile-radio-dark"
     class={cn(
-      "flex items-center gap-1.5 rounded-md cursor-pointer transition-all duration-150 select-none font-medium",
-      size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm",
+      "group relative flex items-center gap-1.5 rounded-md cursor-pointer transition-all duration-150 select-none font-medium border",
+      size === "sm" ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm",
       themeStore.mode === "dark"
-        ? "bg-background text-foreground shadow-xs border border-border/80"
-        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+        ? "bg-card text-foreground shadow-xs border-border/90"
+        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60"
     )}
   >
-    <RadioGroupItem
-      id="theme-dark-radio"
+    <input
+      type="radio"
+      id="theme-tile-radio-dark"
+      name="novwrite-theme-selection"
       value="dark"
+      checked={themeStore.mode === "dark"}
+      onchange={() => handleChange("dark")}
+      class="size-3.5 accent-primary cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+      aria-label="Dark mode"
+    />
+    <Moon
       class={cn(
-        "size-3.5 border-muted-foreground/60 transition-colors data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:ring-ring"
+        "size-3.5 transition-colors shrink-0",
+        themeStore.mode === "dark" ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
       )}
     />
-    <Moon class={cn("size-3.5 transition-colors", themeStore.mode === "dark" ? "text-primary" : "text-muted-foreground")} />
     {#if showLabels}
       <span class="font-mono text-[11px] leading-none">Dark</span>
     {/if}
   </label>
-</RadioGroup>
+</fieldset>
+
