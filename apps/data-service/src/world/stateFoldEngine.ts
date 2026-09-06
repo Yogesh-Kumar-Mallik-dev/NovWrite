@@ -90,7 +90,7 @@ export class StateFoldEngine {
     for (const event of events) {
       const seqNum = event.narrativeSequenceNumber;
       for (const eff of event.effects || []) {
-        const entityId = eff.targetEntity;
+        const entityId = eff.targetEntityId || eff.targetEntity;
         let entityState = stateMap.get(entityId);
         if (!entityState) {
           // If entity was not in base list, dynamically initialize it
@@ -107,7 +107,7 @@ export class StateFoldEngine {
         const effectPayload: EventEffectPayload = {
           id: eff.id,
           eventId: eff.eventId,
-          targetEntity: eff.targetEntity,
+          targetEntity: entityId,
           propertyKey: eff.propertyKey,
           operation: eff.operation,
           value: eff.value,

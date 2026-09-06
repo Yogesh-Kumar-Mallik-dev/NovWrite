@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-// Block Standard: BLOCK_TEST_WORLD_DYNAMIC_SCHEMA_001
+// Block Standard: BLOCK_TEST_WORLD_DYNAMIC_SCHEMA_002
 func TestValidateSingleProperty_NumberBounds(t *testing.T) {
 	minVal := 0.0
 	maxVal := 1000.0
@@ -89,5 +89,48 @@ func TestValidateSingleProperty_EntityRef(t *testing.T) {
 	_, err = ValidateSingleProperty(def, "not-a-valid-uuid")
 	if err == nil || err.Code != "INVALID_ENTITY_UUID" {
 		t.Errorf("expected INVALID_ENTITY_UUID error, got %v", err)
+	}
+}
+
+func TestValidateEntityAttributes_Blueprint(t *testing.T) {
+	powerMultiplier := 2.5
+	bp := BlueprintDef{
+		ID:             "bp-cultivator-01",
+		Name:           "Cultivator / Protagonist",
+		BlueprintClass: ClassFirstClass,
+		Category:       "Characters",
+		Fields: []DynamicFieldDef{
+			{
+				ID:        "f-gender",
+				Name:      "gender",
+				Label:     "Gender & Constitution",
+				FieldType: TypeEnum,
+				Options: []EnumOption{
+					{Label: "Male", Value: "male"},
+					{Label: "Female", Value: "female"},
+					{Label: "Dual-Yin-Yang", Value: "dual_yin_yang", Power: &powerMultiplier},
+				},
+				IsRequired: true,
+			},
+			{
+				ID:                "f-total-power",
+				Name:              "total_combat_power",
+				Label:             "Total Combat Power",
+				FieldType:         TypeFormula,
+				FormulaExpression: "attack * 1.5",
+			},
+		},
+	}
+
+	props := map[string]interface{}{
+		"gender": "Dual-Yin-Yang",
+	}
+
+	coerced, errs := ValidateEntityAttributes(bp, props)
+	if len(errs) > 0 {
+		t.Fatalf("unexpected validation errors: %v", errs[0].Message)
+	}
+	if coerced["gender"] != "Dual-Yin-Yang" {
+		t.Errorf("expected gender Dual-Yin-Yang, got %v", coerced["gender"])
 	}
 }

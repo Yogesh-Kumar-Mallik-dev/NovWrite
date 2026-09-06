@@ -1,7 +1,8 @@
 /**
  * @file devSeeder.ts
  * @description Development-Only One-Click Test Data Seeder Engine ("Chronicles of Aethelgard").
- * Block Standard: BLOCK_DEV_SEEDER_ENGINE_001
+ * Block Standard: BLOCK_DEV_SEEDER_ENGINE_002
+ * Version: 2.0 (First & Second Class Blueprints, Relational Entity Graph, Formulas & State Fold)
  */
 
 import {
@@ -17,23 +18,15 @@ export interface DevSeedOptions {
   cleanFirst?: boolean;
 }
 
-export interface MockDbClient {
-  user: { upsert: (args: any) => Promise<any> };
-  project: { upsert: (args: any) => Promise<any> };
-  projectMember: { upsert: (args: any) => Promise<any> };
-  entityTypeDefinition: { upsert: (args: any) => Promise<any> };
-  dynamicPropertyDefinition: { upsert: (args: any) => Promise<any> };
-  timelineEvent: { upsert: (args: any) => Promise<any> };
-  eventEffect: {
-    create: (args: any) => Promise<any>;
-    deleteMany: (args: any) => Promise<any>;
-  };
-  invariantRule: { upsert: (args: any) => Promise<any> };
-  manuscript: { upsert: (args: any) => Promise<any> };
-  chapter: { upsert: (args: any) => Promise<any> };
-  scene: { upsert: (args: any) => Promise<any> };
-  sceneLease: { upsert: (args: any) => Promise<any> };
-}
+export const DAWNBREAKER_WEAPON_ID = "e5555555-5555-5555-5555-555555555555";
+export const ASTRAL_ORDER_FACTION_ID = "e6666666-6666-6666-6666-666666666666";
+
+export const BP_CULTIVATION_ID = "bp-2nd-cultivation-001";
+export const BP_AFFECTION_ID = "bp-2nd-affection-001";
+export const BP_CULTIVATOR_ID = "bp-1st-cultivator-001";
+export const BP_WEAPON_ID = "bp-1st-weapon-001";
+export const BP_SANCTUARY_ID = "bp-1st-sanctuary-001";
+export const BP_FACTION_ID = "bp-1st-faction-001";
 
 export const SEED_DATASET = {
   users: {
@@ -124,7 +117,7 @@ export const SEED_DATASET = {
 
 /**
  * Execute development test seeding
- * Block ID: BLOCK_DEV_SEEDER_ENGINE_001
+ * Block ID: BLOCK_DEV_SEEDER_ENGINE_002
  */
 export async function seedDevelopmentUniverse(
   prisma: any,
@@ -197,42 +190,85 @@ export async function seedDevelopmentUniverse(
     },
   });
 
-  // 4. Seed Entity Types
-  const characterType = await prisma.entityTypeDefinition.upsert({
-    where: {
-      projectId_name: {
-        projectId: SEED_DATASET.project.id,
-        name: "Character",
+  // 4. Seed Blueprints (if blueprint model is present)
+  const bpModel = prisma.blueprint || prisma.entityTypeDefinition;
+  if (bpModel) {
+    // 2nd Class Blueprint: Cultivation Rank
+    await bpModel.upsert({
+      where: {
+        projectId_slug: {
+          projectId: SEED_DATASET.project.id,
+          slug: "cultivation-rank-mastery",
+        },
       },
-    },
-    update: { category: "CHARACTER" },
-    create: {
-      projectId: SEED_DATASET.project.id,
-      name: "Character",
-      category: "CHARACTER",
-      description: "Living beings, cultivators, and key narrative entities.",
-    },
-  });
+      update: {
+        name: "Cultivation Rank & Mastery",
+        blueprintClass: "SECOND_CLASS",
+        category: "Sub-Systems & Gauges",
+      },
+      create: {
+        id: BP_CULTIVATION_ID,
+        projectId: SEED_DATASET.project.id,
+        name: "Cultivation Rank & Mastery",
+        slug: "cultivation-rank-mastery",
+        blueprintClass: "SECOND_CLASS",
+        category: "Sub-Systems & Gauges",
+        description: "Martial cultivation realms from Qi Condensation to Immortal Ascension.",
+      },
+    });
 
-  // 5. Seed Dynamic Properties
-  await prisma.dynamicPropertyDefinition.upsert({
-    where: {
-      projectId_entityTypeId_name: {
-        projectId: SEED_DATASET.project.id,
-        entityTypeId: characterType.id,
-        name: "mana_capacity",
+    // 1st Class Blueprint: Cultivator / Protagonist
+    await bpModel.upsert({
+      where: {
+        projectId_slug: {
+          projectId: SEED_DATASET.project.id,
+          slug: "cultivator-protagonist",
+        },
       },
-    },
-    update: { propertyType: "NUMBER", defaultValue: 100 },
-    create: {
-      projectId: SEED_DATASET.project.id,
-      entityTypeId: characterType.id,
-      name: "mana_capacity",
-      propertyType: "NUMBER",
-      defaultValue: 100,
-      validation: { min: 0 },
-    },
-  });
+      update: {
+        name: "Cultivator / Protagonist",
+        blueprintClass: "FIRST_CLASS",
+        category: "Characters",
+      },
+      create: {
+        id: BP_CULTIVATOR_ID,
+        projectId: SEED_DATASET.project.id,
+        name: "Cultivator / Protagonist",
+        slug: "cultivator-protagonist",
+        blueprintClass: "FIRST_CLASS",
+        category: "Characters",
+        description: "Primary humanoid sentient beings, martial cultivators, and divine heroes.",
+      },
+    });
+  }
+
+  // 5. Seed Dynamic Fields / Properties
+  const fieldModel = prisma.blueprintField || prisma.dynamicPropertyDefinition;
+  if (fieldModel) {
+    await fieldModel.upsert({
+      where: {
+        blueprintId_key: {
+          blueprintId: BP_CULTIVATOR_ID,
+          key: "mana_capacity",
+        },
+      },
+      update: { fieldType: "NUMBER", minVal: 0 },
+      create: {
+        id: "field-mana-001",
+        projectId: SEED_DATASET.project.id,
+        blueprintId: BP_CULTIVATOR_ID,
+        entityTypeId: BP_CULTIVATOR_ID,
+        name: "mana_capacity",
+        key: "mana_capacity",
+        label: "Mana Capacity",
+        fieldType: "NUMBER",
+        propertyType: "NUMBER",
+        minVal: 0,
+        defaultValue: 100,
+        validation: { min: 0 },
+      },
+    });
+  }
 
   // 6. Seed Invariant Rules
   await prisma.invariantRule.upsert({
@@ -320,6 +356,6 @@ export async function seedDevelopmentUniverse(
     seededRulesCount: 2,
     seededScenesCount: 3,
     message:
-      "BLOCK_DEV_SEEDER_ENGINE_001: Successfully seeded Chronicles of Aethelgard demo universe.",
+      "BLOCK_DEV_SEEDER_ENGINE_002: Successfully seeded Chronicles of Aethelgard demo universe.",
   };
 }
