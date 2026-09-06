@@ -20,6 +20,9 @@
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
+  import Label from '$lib/components/ui/label.svelte';
+  import Field from '$lib/components/ui/field.svelte';
+  import Textarea from '$lib/components/ui/textarea.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import {
     worldStore,
@@ -292,18 +295,16 @@
 
     <!-- Name & Freeform Category -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label for="bp-name" class="block text-xs font-medium text-zinc-400 mb-1">Blueprint Name (Required)</label>
+      <Field id="bp-name" label="Blueprint Name" required>
         <Input
           id="bp-name"
           bind:value={name}
           placeholder="e.g. Divine Beast, Sect Patriarch, Romantic Affection Scale"
           class="w-full"
         />
-      </div>
+      </Field>
 
-      <div>
-        <label for="bp-cat" class="block text-xs font-medium text-zinc-400 mb-1">Category / Domain (Free-form)</label>
+      <Field id="bp-cat" label="Category / Domain (Free-form)">
         <Input
           id="bp-cat"
           bind:value={category}
@@ -322,19 +323,18 @@
             </button>
           {/each}
         </div>
-      </div>
+      </Field>
     </div>
 
-    <div>
-      <label for="bp-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore Scope</label>
-      <textarea
+    <Field id="bp-desc" label="Description & Lore Scope">
+      <Textarea
         id="bp-desc"
         bind:value={description}
         rows={2}
         placeholder="Describe the archetypal purpose and mechanics governed by this blueprint..."
-        class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-teal-500"
-      ></textarea>
-    </div>
+        class="w-full text-xs"
+      />
+    </Field>
   </div>
 
   <!-- Dynamic Field Builder -->

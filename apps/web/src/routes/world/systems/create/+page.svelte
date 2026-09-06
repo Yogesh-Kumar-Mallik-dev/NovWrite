@@ -4,6 +4,9 @@
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
+  import Label from '$lib/components/ui/label.svelte';
+  import Field from '$lib/components/ui/field.svelte';
+  import Textarea from '$lib/components/ui/textarea.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import { worldStore, type DynamicFieldDef } from '$lib/stores/worldStore.svelte';
 
@@ -166,13 +169,11 @@
     <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">System Archetype Configuration</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label for="system-name" class="block text-xs font-medium text-zinc-400 mb-1">System / Scale Name (Required)</label>
+      <Field id="system-name" label="System / Scale Name" required>
         <Input id="system-name" bind:value={name} placeholder="e.g. Soul Resonance Scale, Martial Stages..." class="w-full text-xs" />
-      </div>
+      </Field>
 
-      <div>
-        <label for="system-type" class="block text-xs font-medium text-zinc-400 mb-1">System Category</label>
+      <Field id="system-type" label="System Category">
         <Select
           id="system-type"
           bind:value={systemType}
@@ -182,24 +183,22 @@
             { value: 'MATRIX', label: 'Continuous Numeric Alignment / Gauge' },
           ]}
         />
-      </div>
+      </Field>
     </div>
 
-    <div>
-      <label for="system-cat" class="block text-xs font-medium text-zinc-400 mb-1">Category Tag</label>
+    <Field id="system-cat" label="Category Tag">
       <Input id="system-cat" bind:value={category} placeholder="e.g. Systems & Affection, Power Systems" class="w-full text-xs" />
-    </div>
+    </Field>
 
-    <div>
-      <label for="system-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore Mechanics</label>
-      <textarea
+    <Field id="system-desc" label="Description & Lore Mechanics">
+      <Textarea
         id="system-desc"
         bind:value={description}
         rows={2}
         placeholder="Lore description of how this system measures entity progression or interpersonal dynamics..."
-        class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-      ></textarea>
-    </div>
+        class="w-full text-xs"
+      />
+    </Field>
 
     {#if systemType === 'LADDER'}
       <!-- Ladder Stages Editor -->
@@ -233,18 +232,15 @@
     {:else}
       <!-- Scale Range bounds -->
       <div class="grid grid-cols-3 gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-950/60">
-        <div>
-          <label for="min-val" class="block text-xs font-medium text-zinc-400 mb-1">Min Value</label>
+        <Field id="min-val" label="Min Value">
           <Input id="min-val" type="number" bind:value={minVal} class="text-xs" />
-        </div>
-        <div>
-          <label for="max-val" class="block text-xs font-medium text-zinc-400 mb-1">Max Value</label>
+        </Field>
+        <Field id="max-val" label="Max Value">
           <Input id="max-val" type="number" bind:value={maxVal} class="text-xs" />
-        </div>
-        <div>
-          <label for="unit-val" class="block text-xs font-medium text-zinc-400 mb-1">Metric Unit</label>
+        </Field>
+        <Field id="unit-val" label="Metric Unit">
           <Input id="unit-val" bind:value={metricUnit} class="text-xs" />
-        </div>
+        </Field>
       </div>
     {/if}
   </div>

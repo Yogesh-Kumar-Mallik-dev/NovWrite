@@ -4,6 +4,8 @@
   import { ArrowLeft, Check, Plus, Trash2, Layers, Shield, Edit3 } from 'lucide-svelte';
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
+  import Field from '$lib/components/ui/field.svelte';
+  import Textarea from '$lib/components/ui/textarea.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import { worldStore } from '$lib/stores/worldStore.svelte';
 
@@ -116,25 +118,22 @@
       <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Sub-Blueprint Identity</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="sys-name" class="block text-xs font-medium text-zinc-400 mb-1">Name</label>
+        <Field id="sys-name" label="Name">
           <Input id="sys-name" bind:value={name} class="w-full text-xs" />
-        </div>
-        <div>
-          <label for="sys-cat" class="block text-xs font-medium text-zinc-400 mb-1">Category</label>
+        </Field>
+        <Field id="sys-cat" label="Category">
           <Input id="sys-cat" bind:value={category} class="w-full text-xs" />
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label for="sys-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore Mechanics</label>
-        <textarea
+      <Field id="sys-desc" label="Description & Lore Mechanics">
+        <Textarea
           id="sys-desc"
           bind:value={description}
           rows={3}
-          class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-        ></textarea>
-      </div>
+          class="w-full text-xs"
+        />
+      </Field>
 
       <!-- Attributes list -->
       <div class="pt-3 border-t border-zinc-800 space-y-2">

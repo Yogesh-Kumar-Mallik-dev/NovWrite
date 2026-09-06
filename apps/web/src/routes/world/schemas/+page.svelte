@@ -170,7 +170,7 @@
       {#each filteredBlueprints as bp (bp.id)}
         <div class="bg-zinc-900/70 rounded-lg border border-zinc-800 p-5 space-y-4 hover:border-zinc-700 transition flex flex-col justify-between">
           <div class="space-y-3">
-            <!-- Header with Class Badge & Category -->
+            <!-- Header with Class Indicator & Category -->
             <div class="flex items-start justify-between gap-2">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">

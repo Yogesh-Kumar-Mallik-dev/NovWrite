@@ -20,6 +20,9 @@
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
+  import Label from '$lib/components/ui/label.svelte';
+  import Field from '$lib/components/ui/field.svelte';
+  import Textarea from '$lib/components/ui/textarea.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import {
     worldStore,
@@ -264,37 +267,34 @@
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label for="bp-name" class="block text-xs font-medium text-zinc-400 mb-1">Blueprint Name</label>
+        <Field id="bp-name" label="Blueprint Name">
           <Input id="bp-name" bind:value={name} class="w-full text-xs" />
-        </div>
+        </Field>
 
-        <div>
-          <label for="bp-cat" class="block text-xs font-medium text-zinc-400 mb-1">Category</label>
+        <Field id="bp-cat" label="Category">
           <Input id="bp-cat" bind:value={category} class="w-full text-xs" />
-        </div>
+        </Field>
 
-        <div>
-          <span class="block text-xs font-medium text-zinc-400 mb-1">Blueprint Tier</span>
+        <Field id="bp-tier" label="Blueprint Tier">
           <Select
+            id="bp-tier"
             bind:value={blueprintClass}
             options={[
               { value: 'FIRST_CLASS', label: '1st-Class Archetype' },
               { value: 'SECOND_CLASS', label: '2nd-Class Sub-Schema' },
             ]}
           />
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label for="bp-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description</label>
-        <textarea
+      <Field id="bp-desc" label="Description">
+        <Textarea
           id="bp-desc"
           bind:value={description}
           rows={2}
-          class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        ></textarea>
-      </div>
+          class="w-full text-xs"
+        />
+      </Field>
 
       <div class="flex justify-end pt-2">
         <Button variant="default" size="sm" onclick={handleSaveBlueprintOverview}>
