@@ -86,3 +86,21 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* ==========================================================================
+   Global Scrollbar Suppression (Retains 100% Native Scrolling Everywhere)
+   ========================================================================== */
+html,
+body,
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important; /* WebKit/Blink (Chrome, Safari, Edge, Electron, Tauri) */
+  width: 0 !important;
+  height: 0 !important;
+}
+
