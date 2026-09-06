@@ -77,9 +77,9 @@ cleanup() {
     kill -15 "$API_PID" 2>/dev/null || true
   fi
 
-  # 3. Wait up to 5 seconds for processes to cleanly exit
+  # 3. Wait up to 3 seconds for processes to cleanly exit
   local wait_count=0
-  while [ "$wait_count" -lt 10 ]; do
+  while [ "$wait_count" -lt 6 ]; do
     local still_running=0
     if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
       still_running=1
@@ -114,11 +114,14 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM SIGHUP EXIT
 
-# 1. Start Go API Server in background
-echo "📦 [1/2] Starting Go API Server on http://${API_HOST}:${API_PORT}..."
+# 1. Build & Start Go API Server in background
+echo "📦 [1/2] Preparing Go API Server on http://${API_HOST}:${API_PORT}..."
+mkdir -p "$ROOT_DIR/bin"
+(cd "$ROOT_DIR/apps/api" && go build -o "$ROOT_DIR/bin/api-server" ./cmd/server/main.go)
+
 (
-  cd apps/api
-  PORT="$API_PORT" ENVIRONMENT=development exec go run ./cmd/server/main.go
+  cd "$ROOT_DIR/apps/api"
+  PORT="$API_PORT" ENVIRONMENT=development exec "$ROOT_DIR/bin/api-server"
 ) &
 API_PID=$!
 
@@ -146,7 +149,8 @@ fi
 # 2. Start SvelteKit Web Workbench in background
 echo "🌐 [2/2] Starting SvelteKit Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
 (
-  exec pnpm --filter @novwrite/web dev -- --host "$WEB_HOST" --port "$WEB_PORT"
+  cd "$ROOT_DIR/apps/web"
+  exec pnpm exec vite dev --host "$WEB_HOST" --port "$WEB_PORT"
 ) &
 WEB_PID=$!
 
@@ -192,5 +196,6 @@ while true; do
     cleanup
     break
   fi
-  sleep 1
+  sleep 1 &
+  wait $! 2>/dev/null || true
 done
