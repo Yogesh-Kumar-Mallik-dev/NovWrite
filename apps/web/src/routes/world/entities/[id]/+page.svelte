@@ -36,6 +36,7 @@
     Breadcrumb,
     ConfirmDialog,
     EmptyState,
+    JsonEditor,
   } from '$lib/components/ui';
   import { toast } from '$lib/stores/toastStore.svelte';
   import {
@@ -803,15 +804,11 @@
           </div>
         {/if}
 
-        <textarea
-          class="w-full h-[520px] font-mono text-xs p-4 rounded-lg bg-muted/40 border {jsonParseError
-            ? 'border-destructive'
-            : 'border-border'} text-foreground focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed resize-y"
-          value={jsonEditorContent}
-          oninput={(e) => handleJsonTextareaChange(e.currentTarget.value)}
-          placeholder="Enter valid JSON object..."
-          spellcheck="false"
-        ></textarea>
+        <JsonEditor
+          bind:value={jsonEditorContent}
+          onchange={handleJsonTextareaChange}
+          height="520px"
+        />
       </Card>
     {:else}
       <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
