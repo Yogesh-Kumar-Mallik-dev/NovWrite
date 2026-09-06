@@ -25,7 +25,9 @@ export type BlueprintFieldType =
   | "BOOLEAN"
   | "ENUM"
   | "VALUE_TYPE"
+  | "ARRAY"
   | "BLUEPRINT_REF"
+  | "ARRAY_REF"
   | "FORMULA";
 
 export interface ValueTypeOption {

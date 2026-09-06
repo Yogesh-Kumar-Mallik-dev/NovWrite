@@ -14,7 +14,9 @@ export const BlueprintFieldTypeSchema = z.enum([
   "BOOLEAN",
   "ENUM",
   "VALUE_TYPE",
+  "ARRAY",
   "BLUEPRINT_REF",
+  "ARRAY_REF",
   "FORMULA",
 ]);
 

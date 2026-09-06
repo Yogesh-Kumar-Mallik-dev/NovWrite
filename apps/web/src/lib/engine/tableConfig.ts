@@ -107,7 +107,7 @@ export function formatTableCellValue(
   columnId: string,
   entity: TableEntityItem,
   blueprint?: TableBlueprintDef,
-): { text: string; isFormula?: boolean; subValues?: Array<{ label: string; value: any }> } {
+): { text: string; isFormula?: boolean; subValues?: Array<{ label: string; value: any }>; arrayValues?: string[] } {
   if (columnId === 'name') {
     return { text: entity.name };
   }
@@ -157,6 +157,16 @@ export function formatTableCellValue(
     if (typeof rawVal === 'number') {
       const field = blueprint?.fields.find((f) => f.name === pKey);
       return { text: field?.unit ? `${rawVal} ${field.unit}` : String(rawVal) };
+    }
+
+    if (Array.isArray(rawVal)) {
+      if (rawVal.length === 0) {
+        return { text: '—', arrayValues: [] };
+      }
+      return {
+        text: rawVal.map(String).join(', '),
+        arrayValues: rawVal.map(String),
+      };
     }
 
     if (typeof rawVal === 'object') {

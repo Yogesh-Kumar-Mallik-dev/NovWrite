@@ -106,7 +106,9 @@
     { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
     { value: 'ENUM', label: 'Enum (Standard String Categories)' },
     { value: 'VALUE_TYPE', label: 'Value Type (Options with Power / Numeric Weights)' },
-    { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
+    { value: 'ARRAY', label: 'Array / Tag List (e.g. Titles, Techniques)' },
+    { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (Single 1st or 2nd Class)' },
+    { value: 'ARRAY_REF', label: 'Array Reference (Multiple Blueprint Refs)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
   ];
 
@@ -219,10 +221,15 @@
           def.step = f.step;
           def.unit = f.unit;
           def.defaultValue = parseFloat(f.defaultValue) || 0;
-        } else if (f.fieldType === 'BLUEPRINT_REF') {
+        } else if (f.fieldType === 'BLUEPRINT_REF' || f.fieldType === 'ARRAY_REF') {
           def.targetBlueprintId = f.targetBlueprintId;
           const targetBp = worldStore.getBlueprint(f.targetBlueprintId);
           def.targetBlueprintName = targetBp?.name;
+          if (f.fieldType === 'ARRAY_REF') {
+            def.referenceCardinality = 'MANY';
+          }
+        } else if (f.fieldType === 'ARRAY') {
+          def.defaultValue = Array.isArray(f.defaultValue) ? f.defaultValue : [];
         } else if (f.fieldType === 'FORMULA') {
           def.formulaExpression = f.formulaExpression.trim();
           def.formulaDependencies = extractFormulaVariables(f.formulaExpression);
@@ -596,20 +603,36 @@
             </div>
           {/if}
 
-          <!-- 2. BLUEPRINT REFERENCE BUILDER -->
-          {#if field.fieldType === 'BLUEPRINT_REF'}
+          <!-- ARRAY / TAG LIST INFO -->
+          {#if field.fieldType === 'ARRAY'}
+            <div class="p-3 bg-card rounded border border-border space-y-2">
+              <div class="flex items-center gap-1.5 text-xs text-indigo-500 font-medium">
+                <ListFilter class="w-3.5 h-3.5" />
+                <span>Array / Tag List Configuration</span>
+              </div>
+              <p class="text-[11px] text-muted-foreground">
+                Allows this entity to store an ordered list of string tags or names (e.g. honorary titles, martial attack techniques, notable achievements).
+              </p>
+            </div>
+          {/if}
+
+          <!-- 2. BLUEPRINT REFERENCE & ARRAY REFERENCE BUILDER -->
+          {#if field.fieldType === 'BLUEPRINT_REF' || field.fieldType === 'ARRAY_REF'}
             <div class="p-3 bg-card rounded border border-border space-y-2.5">
               <div class="flex items-center gap-1.5 text-xs text-cyan-500 font-medium">
                 <Link2 class="w-3.5 h-3.5" />
-                <span>Target Referenced Blueprint (1st-Class or 2nd-Class)</span>
+                <span>{field.fieldType === 'ARRAY_REF' ? 'Target Referenced Blueprint for Multi-Selection' : 'Target Referenced Blueprint (1st-Class or 2nd-Class)'}</span>
               </div>
               <p class="text-[11px] text-muted-foreground">
-                Allows this field to embed or reference properties from another blueprint (e.g. "Romantic Affection Scale" or "Cultivation Rank").
+                {field.fieldType === 'ARRAY_REF'
+                  ? 'Allows this entity to link to multiple instances of another blueprint (e.g. multiple equipped Relics, learned Martial Skills, or allied Sects).'
+                  : 'Allows this field to embed or reference properties from another blueprint (e.g. "Romantic Affection Scale" or "Cultivation Rank").'}
               </p>
               <div class="max-w-md">
                 <Select
                   bind:value={field.targetBlueprintId}
                   options={availableTargetBlueprints}
+                  placeholder="Select target blueprint..."
                 />
               </div>
             </div>

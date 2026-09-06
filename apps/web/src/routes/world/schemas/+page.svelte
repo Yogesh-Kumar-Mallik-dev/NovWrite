@@ -229,8 +229,12 @@
                       <ListFilter class="w-3 h-3 text-primary" />
                     {:else if field.fieldType === 'VALUE_TYPE'}
                       <Sparkles class="w-3 h-3 text-primary" />
+                    {:else if field.fieldType === 'ARRAY'}
+                      <ListFilter class="w-3 h-3 text-indigo-500" />
                     {:else if field.fieldType === 'BLUEPRINT_REF'}
                       <Link2 class="w-3 h-3 text-cyan-500" />
+                    {:else if field.fieldType === 'ARRAY_REF'}
+                      <Link2 class="w-3 h-3 text-cyan-400" />
                     {:else if field.fieldType === 'NUMBER'}
                       <Hash class="w-3 h-3 text-emerald-500" />
                     {/if}

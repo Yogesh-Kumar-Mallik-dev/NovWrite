@@ -257,9 +257,31 @@ export function validateSingleProperty(
       return { valid: true, coercedVal: coerced };
     }
 
+    case "ARRAY":
+    case "ARRAY_STRING" as any: {
+      if (Array.isArray(val)) {
+        const coerced = val.map((item) => String(item).trim()).filter(Boolean);
+        return { valid: true, coercedVal: coerced };
+      }
+      if (typeof val === "string") {
+        if (val.trim() === "") {
+          return { valid: true, coercedVal: [] };
+        }
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            return { valid: true, coercedVal: parsed.map((item) => String(item).trim()).filter(Boolean) };
+          }
+        } catch {}
+        const coerced = val.split(",").map((s) => s.trim()).filter(Boolean);
+        return { valid: true, coercedVal: coerced };
+      }
+      return { valid: true, coercedVal: [] };
+    }
+
     case "BLUEPRINT_REF":
     case "ENTITY_REF" as any: {
-      if (typeof val === "string" && UUID_REGEX.test(val)) {
+      if (typeof val === "string" && (UUID_REGEX.test(val) || val.startsWith("e-") || val.startsWith("bp-") || val.startsWith("ent-"))) {
         return { valid: true, coercedVal: val };
       }
       if (typeof val === "object" && val !== null) {
@@ -274,6 +296,44 @@ export function validateSingleProperty(
           receivedValue: val,
         },
       };
+    }
+
+    case "ARRAY_REF":
+    case "BLUEPRINT_REF_ARRAY" as any:
+    case "ENTITY_REF_ARRAY" as any: {
+      let listVal: any[] = [];
+      if (Array.isArray(val)) {
+        listVal = val;
+      } else if (typeof val === "string") {
+        if (val.trim() === "") {
+          return { valid: true, coercedVal: [] };
+        }
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) {
+            listVal = parsed;
+          } else {
+            listVal = val.split(",").map((s) => s.trim()).filter(Boolean);
+          }
+        } catch {
+          listVal = val.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+      } else if (val) {
+        listVal = [val];
+      }
+
+      const coerced: string[] = [];
+      for (const item of listVal) {
+        if (!item) continue;
+        if (typeof item === "string") {
+          coerced.push(item.trim());
+        } else if (typeof item === "object" && item !== null && (item as any).id) {
+          coerced.push((item as any).id);
+        } else {
+          coerced.push(String(item));
+        }
+      }
+      return { valid: true, coercedVal: coerced };
     }
 
     case "FORMULA": {

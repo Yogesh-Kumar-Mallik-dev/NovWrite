@@ -228,4 +228,57 @@ describe("Dynamic Entity Schema & Property Validation Engine", () => {
     assert.strictEqual(valRes.valid, true);
     assert.strictEqual(valRes.coercedProperties["mana_capacity"], 350);
   });
+
+  it("BLOCK_TEST_DYNAMIC_SCHEMA_001: should validate and coerce ARRAY field type (e.g. titles, attack techniques)", () => {
+    const titlesProp: DynamicPropertyDef = {
+      id: "prop-titles",
+      projectId: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      entityTypeId: "et-character",
+      name: "titles",
+      propertyType: "ARRAY" as any,
+    };
+
+    // Array input
+    const resArr = validateSingleProperty(titlesProp, ["Dragon Slayer", "Sword Saint", "Grand Elder"]);
+    assert.strictEqual(resArr.valid, true);
+    assert.deepStrictEqual(resArr.coercedVal, ["Dragon Slayer", "Sword Saint", "Grand Elder"]);
+
+    // Comma-separated string input
+    const resStr = validateSingleProperty(titlesProp, "Void Walker, Flame Sovereign, Star Monarch");
+    assert.strictEqual(resStr.valid, true);
+    assert.deepStrictEqual(resStr.coercedVal, ["Void Walker", "Flame Sovereign", "Star Monarch"]);
+
+    // Empty input fallback
+    const resEmpty = validateSingleProperty(titlesProp, "");
+    assert.strictEqual(resEmpty.valid, true);
+    assert.deepStrictEqual(resEmpty.coercedVal, []);
+  });
+
+  it("BLOCK_TEST_DYNAMIC_SCHEMA_001: should validate and coerce ARRAY_REF field type (multiple blueprint references)", () => {
+    const techniquesRefProp: DynamicPropertyDef = {
+      id: "prop-tech-refs",
+      projectId: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      entityTypeId: "et-character",
+      name: "equipped_techniques",
+      propertyType: "ARRAY_REF" as any,
+    };
+
+    const targetIds = [
+      "d1111111-1111-1111-1111-111111111111",
+      "d2222222-2222-2222-2222-222222222222",
+    ];
+
+    // Array of UUIDs
+    const resIds = validateSingleProperty(techniquesRefProp, targetIds);
+    assert.strictEqual(resIds.valid, true);
+    assert.deepStrictEqual(resIds.coercedVal, targetIds);
+
+    // Array of objects with id property
+    const resObjs = validateSingleProperty(techniquesRefProp, [
+      { id: "d1111111-1111-1111-1111-111111111111", name: "Void Siphon" },
+      { id: "d2222222-2222-2222-2222-222222222222", name: "Star Palm" },
+    ]);
+    assert.strictEqual(resObjs.valid, true);
+    assert.deepStrictEqual(resObjs.coercedVal, targetIds);
+  });
 });
