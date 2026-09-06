@@ -1,28 +1,27 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { ArrowLeft, Check, Plus, Trash2, TrendingUp, HeartHandshake } from 'lucide-svelte';
+  import { ArrowLeft, Check, Plus, Trash2, Layers, Heart, TrendingUp } from 'lucide-svelte';
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
-  import { worldStore } from '$lib/stores/worldStore.svelte';
+  import { worldStore, type DynamicFieldDef } from '$lib/stores/worldStore.svelte';
 
   let name = $state('');
-  let type = $state<'PROGRESSION_LADDER' | 'RELATIONSHIP_SCALE' | 'ALIGNMENT_MATRIX'>('PROGRESSION_LADDER');
+  let systemType = $state<'AFFINITY' | 'LADDER' | 'MATRIX'>('AFFINITY');
+  let category = $state('Systems & Affection');
   let description = $state('');
-  let metricName = $state('Stage');
-  let stages = $state<string[]>(['Mortal Apprentice', 'Adept', 'Grandmaster', 'Ascendant']);
-  let minValue = $state<number>(-100);
-  let maxValue = $state<number>(100);
-
-  const typeOptions = [
-    { value: 'PROGRESSION_LADDER', label: 'Power / Realm Progression Ladder' },
-    { value: 'RELATIONSHIP_SCALE', label: 'Relationship / Affection Scale' },
-    { value: 'ALIGNMENT_MATRIX', label: 'Moral / Faction Alignment Matrix' },
-  ];
+  let stages = $state<string[]>(['Mortal', 'Adept', 'Grandmaster', 'Ascendant']);
+  let newStageDraft = $state('');
+  let minVal = $state(-100);
+  let maxVal = $state(1000);
+  let metricUnit = $state('pts');
 
   function addStage() {
-    stages.push(`Stage ${stages.length + 1}`);
+    if (newStageDraft.trim()) {
+      stages.push(newStageDraft.trim());
+      newStageDraft = '';
+    }
   }
 
   function removeStage(idx: number) {
@@ -35,38 +34,123 @@
       return;
     }
 
-    worldStore.addSystem({
+    const fields: DynamicFieldDef[] = [];
+
+    if (systemType === 'AFFINITY') {
+      fields.push(
+        {
+          id: `f-stage-${Date.now()}`,
+          name: 'relationship_stage',
+          label: 'Relationship Stage',
+          fieldType: 'ENUM',
+          options: ['Stranger', 'Acquaintance', 'Friend', 'Confidant', 'Romantic Interest', 'Soulmate', 'Nemesis'],
+          defaultValue: 'Acquaintance',
+        },
+        {
+          id: `f-aff-${Date.now()}`,
+          name: 'affection_level',
+          label: 'Affection Points',
+          fieldType: 'NUMBER',
+          min: minVal,
+          max: maxVal,
+          unit: metricUnit,
+          defaultValue: 0,
+        },
+        {
+          id: `f-trust-${Date.now()}`,
+          name: 'trust_score',
+          label: 'Trust Score',
+          fieldType: 'NUMBER',
+          min: 0,
+          max: 100,
+          unit: '%',
+          defaultValue: 50,
+        },
+        {
+          id: `f-buff-${Date.now()}`,
+          name: 'bond_buff_multiplier',
+          label: 'Bond Buff Multiplier',
+          fieldType: 'FORMULA',
+          formulaExpression: `1 + (affection_level / ${maxVal || 1000}) * 0.5`,
+        }
+      );
+    } else if (systemType === 'LADDER') {
+      fields.push(
+        {
+          id: `f-realm-${Date.now()}`,
+          name: 'realm_name',
+          label: 'Realm Name',
+          fieldType: 'ENUM',
+          options: stages.length > 0 ? [...stages] : ['Stage 1', 'Stage 2'],
+          defaultValue: stages[0] || 'Stage 1',
+        },
+        {
+          id: `f-major-${Date.now()}`,
+          name: 'major_realm',
+          label: 'Major Realm Tier',
+          fieldType: 'NUMBER',
+          min: 1,
+          max: stages.length || 9,
+          unit: 'Tier',
+          defaultValue: 1,
+        },
+        {
+          id: `f-minor-${Date.now()}`,
+          name: 'minor_realm',
+          label: 'Minor Sub-Realm Grade',
+          fieldType: 'NUMBER',
+          min: 1,
+          max: 9,
+          unit: 'Stage',
+          defaultValue: 1,
+        }
+      );
+    } else {
+      fields.push(
+        {
+          id: `f-score-${Date.now()}`,
+          name: 'metric_score',
+          label: 'Metric Score',
+          fieldType: 'NUMBER',
+          min: minVal,
+          max: maxVal,
+          unit: metricUnit,
+          defaultValue: 0,
+        }
+      );
+    }
+
+    worldStore.addBlueprint({
       name: name.trim(),
-      type,
+      blueprintClass: 'SECOND_CLASS',
+      category: category.trim() || 'Systems',
       description: description.trim(),
-      tiersOrScale: {
-        stages: type === 'PROGRESSION_LADDER' ? stages.filter((s) => s.trim() !== '') : undefined,
-        minValue: type === 'RELATIONSHIP_SCALE' ? Number(minValue) : undefined,
-        maxValue: type === 'RELATIONSHIP_SCALE' ? Number(maxValue) : undefined,
-        metricName: metricName.trim(),
-      },
+      fields,
     });
 
     goto('/world/systems');
   }
 </script>
 
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="max-w-3xl mx-auto space-y-6 pb-16">
   <!-- Breadcrumb -->
   <Breadcrumb
     items={[
       { label: 'World Studio', href: '/world' },
       { label: 'Custom Properties & Systems', href: '/world/systems' },
-      { label: 'Define New System' },
+      { label: 'Define New 2nd-Class System' },
     ]}
   />
 
   <!-- Header -->
   <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
     <div>
-      <h2 class="text-xl font-bold tracking-tight text-zinc-100">Define Custom Progression System</h2>
+      <h2 class="text-xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
+        <Layers class="w-5 h-5 text-cyan-400" />
+        <span>Define 2nd-Class Sub-Blueprint & System</span>
+      </h2>
       <p class="text-xs text-zinc-400 mt-1">
-        Configure stage ladders or continuous relationship/affection measurement gauges.
+        Configure reusable multi-tier progression ladders or continuous relationship/affection measurement gauges.
       </p>
     </div>
     <a href="/world/systems">
@@ -78,96 +162,101 @@
   </div>
 
   <!-- Form -->
-  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
-    <div class="space-y-4">
-      <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">System Specification</h3>
+  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
+    <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">System Archetype Configuration</h3>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label for="system-name" class="block text-xs font-medium text-zinc-400 mb-1">System / Scale Name (Required)</label>
-        <Input id="system-name" bind:value={name} placeholder="e.g. Magic Circle Ranks, Trust Matrix, Soul Resonance..." />
+        <Input id="system-name" bind:value={name} placeholder="e.g. Soul Resonance Scale, Martial Stages..." class="w-full text-xs" />
       </div>
 
       <div>
-        <label for="system-type" class="block text-xs font-medium text-zinc-400 mb-1">System Type</label>
-        <Select id="system-type" options={typeOptions} bind:value={type} />
-      </div>
-
-      <div>
-        <label for="system-metric" class="block text-xs font-medium text-zinc-400 mb-1">Metric Unit / Label</label>
-        <Input id="system-metric" bind:value={metricName} placeholder="e.g. Realm, Affection Points, Rank..." />
-      </div>
-
-      <div>
-        <label for="system-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description</label>
-        <textarea
-          id="system-desc"
-          bind:value={description}
-          rows={2}
-          placeholder="How this system governs character progression or character relationships..."
-          class="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500"
-        ></textarea>
+        <label for="system-type" class="block text-xs font-medium text-zinc-400 mb-1">System Category</label>
+        <Select
+          id="system-type"
+          bind:value={systemType}
+          options={[
+            { value: 'AFFINITY', label: 'Interpersonal / Romantic Affection Scale' },
+            { value: 'LADDER', label: 'Multi-Stage Progression Ladder (Realms)' },
+            { value: 'MATRIX', label: 'Continuous Numeric Alignment / Gauge' },
+          ]}
+        />
       </div>
     </div>
 
-    <!-- Dynamic Stages Builder for Progression Ladder -->
-    {#if type === 'PROGRESSION_LADDER'}
-      <div class="space-y-4 pt-4 border-t border-zinc-800">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Advancement Stages (Ordered Ascending)</h3>
-            <p class="text-[11px] text-zinc-500">Tier 1 is the entry stage, progressing sequentially upward.</p>
-          </div>
-          <Button size="sm" variant="outline" onclick={addStage}>
-            <Plus class="w-3.5 h-3.5" />
-            <span>Add Stage</span>
-          </Button>
-        </div>
+    <div>
+      <label for="system-cat" class="block text-xs font-medium text-zinc-400 mb-1">Category Tag</label>
+      <Input id="system-cat" bind:value={category} placeholder="e.g. Systems & Affection, Power Systems" class="w-full text-xs" />
+    </div>
 
-        <div class="space-y-2">
-          {#each stages as stage, idx}
-            <div class="flex items-center gap-2 bg-zinc-950 p-2 rounded border border-zinc-800">
-              <span class="w-8 text-center text-xs font-mono font-bold text-purple-400">#{idx + 1}</span>
-              <Input bind:value={stages[idx]} placeholder="Stage Name..." class="h-8 text-xs flex-1" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onclick={() => removeStage(idx)}
-                disabled={stages.length <= 1}
-                class="h-8 px-2 text-zinc-500 hover:text-red-400"
-              >
-                <Trash2 class="w-3.5 h-3.5" />
-              </Button>
-            </div>
+    <div>
+      <label for="system-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore Mechanics</label>
+      <textarea
+        id="system-desc"
+        bind:value={description}
+        rows={2}
+        placeholder="Lore description of how this system measures entity progression or interpersonal dynamics..."
+        class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+      ></textarea>
+    </div>
+
+    {#if systemType === 'LADDER'}
+      <!-- Ladder Stages Editor -->
+      <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-3">
+        <span class="text-xs font-semibold text-zinc-200 block">Progression Stages</span>
+        <div class="flex flex-wrap gap-2">
+          {#each stages as stage, sIdx}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+              <span class="text-cyan-400 font-bold">{sIdx + 1}.</span> {stage}
+              <button type="button" onclick={() => removeStage(sIdx)} class="text-zinc-400 hover:text-red-400 ml-1">
+                &times;
+              </button>
+            </span>
           {/each}
+        </div>
+        <div class="flex items-center gap-2 max-w-sm">
+          <Input
+            bind:value={newStageDraft}
+            placeholder="Type new realm/stage and click Add"
+            class="text-xs"
+            onkeydown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addStage();
+              }
+            }}
+          />
+          <Button variant="secondary" size="sm" onclick={addStage}>Add</Button>
         </div>
       </div>
     {:else}
-      <!-- Min / Max Gauge for Relationship Scales -->
-      <div class="space-y-4 pt-4 border-t border-zinc-800">
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Gauge Numerical Bounds</h3>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label for="scale-min" class="block text-xs font-medium text-zinc-400 mb-1">Minimum Value</label>
-            <Input id="scale-min" type="number" bind:value={minValue} class="font-mono text-xs" />
-          </div>
-          <div>
-            <label for="scale-max" class="block text-xs font-medium text-zinc-400 mb-1">Maximum Value</label>
-            <Input id="scale-max" type="number" bind:value={maxValue} class="font-mono text-xs" />
-          </div>
+      <!-- Scale Range bounds -->
+      <div class="grid grid-cols-3 gap-3 p-4 rounded-lg border border-zinc-800 bg-zinc-950/60">
+        <div>
+          <label for="min-val" class="block text-xs font-medium text-zinc-400 mb-1">Min Value</label>
+          <Input id="min-val" type="number" bind:value={minVal} class="text-xs" />
+        </div>
+        <div>
+          <label for="max-val" class="block text-xs font-medium text-zinc-400 mb-1">Max Value</label>
+          <Input id="max-val" type="number" bind:value={maxVal} class="text-xs" />
+        </div>
+        <div>
+          <label for="unit-val" class="block text-xs font-medium text-zinc-400 mb-1">Metric Unit</label>
+          <Input id="unit-val" bind:value={metricUnit} class="text-xs" />
         </div>
       </div>
     {/if}
+  </div>
 
-    <!-- Actions -->
-    <div class="pt-6 border-t border-zinc-800 flex items-center justify-end gap-3">
-      <a href="/world/systems">
-        <Button variant="outline" size="sm">Cancel</Button>
-      </a>
-      <Button size="sm" onclick={handleCreateSystem}>
-        <Check class="w-3.5 h-3.5" />
-        <span>Save Custom System</span>
-      </Button>
-    </div>
+  <!-- Actions -->
+  <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
+    <a href="/world/systems">
+      <Button variant="outline" size="sm">Cancel</Button>
+    </a>
+    <Button variant="default" size="sm" onclick={handleCreateSystem}>
+      <Check class="w-3.5 h-3.5" />
+      <span>Create 2nd-Class System</span>
+    </Button>
   </div>
 </div>

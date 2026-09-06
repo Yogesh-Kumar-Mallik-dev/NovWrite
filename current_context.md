@@ -2,13 +2,18 @@
 
 - **Active Branch:** `world` (World Studio, Dynamic Schemas, Timeline & State Fold Engine).
 - **Execution Constraints:** **Strictly DO NOT push changes to remote git without explicit user permission.** Local signed commits (`git commit -S`) are standard.
-- **Last Completed Task:** **Page-Based Routing for Entities, Schemas, & Custom Properties/Systems** (`BLOCK_WORLD_PAGE_ROUTING_001`).
-  - Separated Entities, Schemas, and Custom Properties (Power Levels, Ladders, Affection Scales) into dedicated page routes:
-    - Default List view with `[+ Create]` button (`/world/entities`, `/world/schemas`, `/world/systems`).
-    - Dedicated Creation view (`/world/entities/create`, `/world/schemas/create`, `/world/systems/create`).
-    - Dedicated Update/Detail view based on ID (`/world/entities/[id]`, `/world/schemas/[id]`, `/world/systems/[id]`).
-  - Built unified Svelte 5 Runes reactive store [`worldStore.svelte.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/stores/worldStore.svelte.ts) for continuous reactivity and state persistence across page transitions.
-  - Enforced Zero-Badge design policy across all newly partitioned pages (using accessible Breadcrumbs, action buttons, slide drawers, and semantic status indicators).
-  - Maintained 0 svelte-check diagnostics, successful production builds, and 100% test pass rate.
-- **Current State:** Dedicated route architecture fully verified and tested on `world` branch.
-- **Next Steps:** Request user confirmation before pushing to remote `origin/world` or proceeding to next phase / novel branch.
+- **Last Completed Task:** **First-Class & Second-Class Blueprint Architecture with Dynamic Enum Categories, Blueprint References, and Mathematical Formula Engine** (`BLOCK_WORLD_CUSTOM_BLUEPRINTS_001`).
+  - **Complete Freedom in Blueprint Creation**: Users can create blueprints from complete scratch, defining custom categories, freeform domain tags, and arbitrary dynamic fields.
+  - **First-Class & Second-Class Blueprint Hierarchy**:
+    - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible entities in the timeline (Characters, Sacred Relics, Realms, Factions) with causal state folds and history logs.
+    - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) that can be referenced as fields in 1st-Class or other 2nd-Class blueprints.
+  - **User-Defined Enum Categories & Options**: Users can define dynamic option tags on enum fields (e.g., `gender` with options `Male`, `Female`, `Dual-Yin-Yang`, `Celestial`).
+  - **Dynamic Blueprint References**: Fields can reference other First-Class or Second-Class blueprints (e.g., `romantic_feelings` referencing `Romantic Affection Scale` and `cultivation` referencing `Cultivation Rank & Mastery`).
+  - **Mathematical & Logical Formula Engine**:
+    - Created safe, sandboxed expression parser and evaluator ([`formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/engine/formulaEngine.ts)).
+    - Supports full arithmetic (`+`, `-`, `*`, `/`, `%`, `^`), parentheses, dot-notation variables (e.g. `cultivation.major_realm`), logical conditionals (`IF`), and math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`).
+    - Successfully evaluated user's exact formula: `(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`.
+    - Live real-time evaluation in entity create/update forms and blueprint test sandboxes.
+  - **Testing & Quality Assurance**: 100% test pass rate (32/32 tests), 0 svelte-check warnings/errors, and complete Zero-Badge UI adherence.
+- **Current State:** First-Class and Second-Class Blueprint system with mathematical formulas and dynamic enums fully implemented and verified.
+- **Next Steps:** Request user confirmation before pushing to remote `origin/world` or proceeding to novel branch / subsequent milestones.
