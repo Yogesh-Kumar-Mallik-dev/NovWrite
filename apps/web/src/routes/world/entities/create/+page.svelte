@@ -20,7 +20,10 @@
     Zap,
     Scale,
     Info,
+    ChevronLeft,
     ChevronRight,
+    Search,
+    Plus,
     Flame,
     Activity,
   } from 'lucide-svelte';
@@ -40,6 +43,35 @@
 
   const firstClassBlueprints = $derived(worldStore.getFirstClassBlueprints());
   const initialBpId = page.url.searchParams.get('blueprintId') || '';
+
+  let carouselEl = $state<HTMLDivElement | null>(null);
+  let searchArchetypeQuery = $state('');
+  let selectedCategoryFilter = $state('ALL');
+
+  function scrollCarousel(direction: 'left' | 'right') {
+    if (!carouselEl) return;
+    const amount = direction === 'left' ? -340 : 340;
+    carouselEl.scrollBy({ left: amount, behavior: 'smooth' });
+  }
+
+  const allCategories = $derived([
+    'ALL',
+    ...Array.from(new Set(firstClassBlueprints.map((b) => b.category))),
+  ]);
+
+  const filteredBlueprints = $derived(
+    firstClassBlueprints.filter((bp) => {
+      const matchesCategory =
+        selectedCategoryFilter === 'ALL' || bp.category === selectedCategoryFilter;
+      const q = searchArchetypeQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        bp.name.toLowerCase().includes(q) ||
+        bp.category.toLowerCase().includes(q) ||
+        (bp.description && bp.description.toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    })
+  );
 
   function getDefaultOptionValue(
     options?: Array<
@@ -75,7 +107,8 @@
           }
           initialProps[field.name] = subProps;
         } else {
-          initialProps[field.name] = '';
+          // 1st-class relational reference (e.g. bound entity ID)
+          initialProps[field.name] = field.defaultValue || '';
         }
       } else if (field.defaultValue !== undefined) {
         initialProps[field.name] = field.defaultValue;
@@ -150,6 +183,17 @@
     ) {
       return MapPin;
     }
+    if (
+      cat.includes('fac') ||
+      cat.includes('sect') ||
+      cat.includes('clan') ||
+      nm.includes('faction') ||
+      nm.includes('sect') ||
+      nm.includes('clan') ||
+      nm.includes('dynasty')
+    ) {
+      return Shield;
+    }
     return Boxes;
   }
 
@@ -158,7 +202,7 @@
       return {
         archetypeLabel: 'Universe Entity',
         nameLabel: 'Entity Name',
-        namePlaceholder: 'e.g. Lin Fan, Heavensbane Spear, Azure Cloud Peak',
+        namePlaceholder: 'e.g. Lin Fan, Heavensbane Spear, Azure Cloud Peak, Azure Cloud Sword Sect',
         domainLabel: 'Domain / Category',
         loreLabel: 'Lore Background & Narrative Role',
         lorePlaceholder:
@@ -225,6 +269,27 @@
         loreLabel: 'Geographical Lore, Qi Formations & Regional Sects',
         lorePlaceholder:
           'Geographical terrain, spiritual Qi density, ancient protective formations, indigenous sects, and regional significance...',
+      };
+    }
+
+    if (
+      catLower.includes('fac') ||
+      catLower.includes('sect') ||
+      catLower.includes('clan') ||
+      nameLower.includes('faction') ||
+      nameLower.includes('sect') ||
+      nameLower.includes('clan') ||
+      nameLower.includes('dynasty')
+    ) {
+      return {
+        archetypeLabel: 'Faction & Sect',
+        nameLabel: 'Faction / Sect Name',
+        namePlaceholder:
+          'e.g. Azure Cloud Sword Sect, Void Immortal Palace, Heavenly Demon Sect, Solar Imperial Dynasty',
+        domainLabel: 'Organizational Alignment',
+        loreLabel: 'Sect History, Ancestral Lineage & Daoist Creed',
+        lorePlaceholder:
+          'Founding patriarch lore, ancestral spirit veins, internal division politics, and standing in the cultivation world...',
       };
     }
 
@@ -344,12 +409,6 @@
       : []
   );
 
-  const formulaFields = $derived(
-    selectedBlueprint
-      ? selectedBlueprint.fields.filter((f) => f.fieldType === 'FORMULA')
-      : []
-  );
-
   function handleCreateEntity() {
     if (!name.trim()) {
       alert(`${archetypeContext.nameLabel} is required.`);
@@ -391,7 +450,7 @@
         <span>Instantiate Universe Entity</span>
       </h2>
       <p class="text-xs text-zinc-400 mt-1">
-        Instantiate concrete entity objects bound to 1st-Class Blueprints with interactive option pickers, sub-systems, and live evaluated formulas.
+        Instantiate concrete entity objects from 1st-Class Blueprints with interactive option pickers, sub-blueprint systems, and relational entity graph connections.
       </p>
     </div>
     <a href="/world/entities">
@@ -402,66 +461,169 @@
     </a>
   </div>
 
-  <!-- SECTION 1: Blueprint Archetype & Identity -->
-  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
-    <!-- Archetype Selector -->
-    <div class="space-y-3">
-      <div class="flex items-center justify-between">
+  <!-- SECTION 1: Carousel of 1st-Class Blueprint Archetype Cards -->
+  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
+    <!-- Carousel Controls Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
         <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
           <Boxes class="w-4 h-4 text-teal-400" />
           <span>Select 1st-Class Blueprint Archetype</span>
         </h3>
-        <span class="text-[11px] text-zinc-500 font-mono">1st-Class Schemas</span>
+        <p class="text-[11px] text-zinc-500 mt-0.5">
+          1st-Class Blueprints instantiate concrete standalone universe entity objects.
+        </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {#each firstClassBlueprints as bp}
-          {@const Icon = getArchetypeIcon(bp)}
-          {@const isSelected = selectedBlueprintId === bp.id}
-          {@const formulaCount = bp.fields.filter((f) => f.fieldType === 'FORMULA').length}
-          {@const refCount = bp.fields.filter((f) => f.fieldType === 'BLUEPRINT_REF').length}
-          <button
-            type="button"
-            onclick={() => handleSelectBlueprint(bp.id)}
-            class={`p-4 rounded-lg border text-left transition relative flex flex-col justify-between ${
-              isSelected
-                ? 'border-teal-500 bg-teal-950/30 ring-1 ring-teal-500/60 shadow-sm shadow-teal-950/50'
-                : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 hover:bg-zinc-900/50'
-            }`}
+      <!-- Navigation Arrows & Counter -->
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <span class="text-[10px] text-zinc-400 font-mono">
+          {filteredBlueprints.length} Archetypes
+        </span>
+        <div class="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            class="h-7 w-7 p-0"
+            onclick={() => scrollCarousel('left')}
+            title="Scroll Left"
           >
-            <div>
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <div class={`p-1.5 rounded ${isSelected ? 'bg-teal-900/50 text-teal-300' : 'bg-zinc-800 text-zinc-400'}`}>
-                    <Icon class="w-4 h-4" />
-                  </div>
-                  <div class="font-bold text-xs text-zinc-100">{bp.name}</div>
-                </div>
-                {#if isSelected}
-                  <span class="w-2 h-2 rounded-full bg-teal-400"></span>
-                {/if}
-              </div>
-              <div class="text-[11px] text-zinc-400 mt-2 line-clamp-1">{bp.category}</div>
-              <p class="text-[10px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
-                {bp.description}
-              </p>
-            </div>
-
-            <div class="flex items-center gap-2 pt-3 mt-3 border-t border-zinc-800/80 text-[10px] font-mono">
-              <span class="text-teal-400">{bp.fields.length} dynamic fields</span>
-              {#if formulaCount > 0}
-                <span class="text-amber-400">· {formulaCount} math formulas</span>
-              {/if}
-              {#if refCount > 0}
-                <span class="text-cyan-400">· {refCount} sub-systems</span>
-              {/if}
-            </div>
-          </button>
-        {/each}
+            <ChevronLeft class="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            class="h-7 w-7 p-0"
+            onclick={() => scrollCarousel('right')}
+            title="Scroll Right"
+          >
+            <ChevronRight class="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
 
-    <!-- Identity & Lore Fields -->
+    <!-- Category Filter Tabs & Search -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {#each allCategories as cat}
+          <button
+            type="button"
+            onclick={() => (selectedCategoryFilter = cat)}
+            class={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
+              selectedCategoryFilter === cat
+                ? 'bg-teal-950 text-teal-300 border border-teal-700'
+                : 'bg-zinc-950/70 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+            }`}
+          >
+            {cat === 'ALL' ? 'All Archetypes' : cat}
+          </button>
+        {/each}
+      </div>
+
+      <div class="relative w-full sm:w-56 shrink-0">
+        <Search class="w-3.5 h-3.5 absolute left-2.5 top-2 text-zinc-500" />
+        <Input
+          bind:value={searchArchetypeQuery}
+          placeholder="Filter archetypes..."
+          class="pl-8 h-7 text-[11px] w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Horizontal Scrollable Carousel Track -->
+    <div
+      bind:this={carouselEl}
+      class="flex items-stretch gap-3.5 overflow-x-auto pb-3 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent"
+    >
+      {#each filteredBlueprints as bp}
+        {@const Icon = getArchetypeIcon(bp)}
+        {@const isSelected = selectedBlueprintId === bp.id}
+        {@const formulaCount = bp.fields.filter((f) => f.fieldType === 'FORMULA').length}
+        {@const subSystemCount = bp.fields.filter((f) => {
+          if (f.fieldType !== 'BLUEPRINT_REF') return false;
+          const target = worldStore.getBlueprint(f.targetBlueprintId);
+          return target && target.blueprintClass === 'SECOND_CLASS';
+        }).length}
+        {@const relationalLinkCount = bp.fields.filter((f) => {
+          if (f.fieldType !== 'BLUEPRINT_REF') return false;
+          const target = worldStore.getBlueprint(f.targetBlueprintId);
+          return !target || target.blueprintClass === 'FIRST_CLASS';
+        }).length}
+
+        <button
+          type="button"
+          onclick={() => handleSelectBlueprint(bp.id)}
+          class={`w-[280px] sm:w-[310px] shrink-0 snap-start p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
+            isSelected
+              ? 'border-teal-500 bg-gradient-to-b from-teal-950/40 via-zinc-900 to-zinc-900 ring-1 ring-teal-500/60 shadow-md shadow-teal-950/50'
+              : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-900/60'
+          }`}
+        >
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class={`p-1.5 rounded-lg ${isSelected ? 'bg-teal-900/60 text-teal-300 border border-teal-700' : 'bg-zinc-800/80 text-zinc-400'}`}>
+                  <Icon class="w-4 h-4" />
+                </div>
+                <div>
+                  <div class="font-bold text-xs text-zinc-100">{bp.name}</div>
+                  <span class="text-[10px] text-zinc-400 font-medium">{bp.category}</span>
+                </div>
+              </div>
+              {#if isSelected}
+                <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700">
+                  <Check class="w-3 h-3" />
+                  <span>Selected</span>
+                </span>
+              {/if}
+            </div>
+
+            <p class="text-[11px] text-zinc-400 mt-2.5 line-clamp-2 leading-relaxed">
+              {bp.description}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-zinc-800/80 text-[10px] font-mono">
+            <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-teal-400">
+              {bp.fields.length} dynamic fields
+            </span>
+            {#if formulaCount > 0}
+              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">
+                {formulaCount} formulas
+              </span>
+            {/if}
+            {#if subSystemCount > 0}
+              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-cyan-400">
+                {subSystemCount} sub-systems
+              </span>
+            {/if}
+            {#if relationalLinkCount > 0}
+              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-purple-400">
+                {relationalLinkCount} 1st-class links
+              </span>
+            {/if}
+          </div>
+        </button>
+      {/each}
+
+      <!-- Create New Blueprint Card -->
+      <a
+        href="/world/schemas/create?blueprintClass=FIRST_CLASS"
+        target="_blank"
+        class="w-[240px] shrink-0 snap-start p-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 hover:border-teal-500 hover:bg-teal-950/10 transition flex flex-col justify-center items-center text-center space-y-2 text-zinc-400 hover:text-teal-300"
+      >
+        <div class="p-2 rounded-full bg-zinc-900 border border-zinc-800">
+          <Plus class="w-4 h-4 text-teal-400" />
+        </div>
+        <div class="font-bold text-xs">Create 1st-Class Blueprint</div>
+        <p class="text-[10px] text-zinc-500 max-w-[180px]">
+          Define new fields, categories, formulas, and relational schemas.
+        </p>
+      </a>
+    </div>
+
+    <!-- Identity & Lore Inputs -->
     <div class="border-t border-zinc-800 pt-5 space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
@@ -470,7 +632,7 @@
         </h3>
         {#if selectedBlueprint}
           <span class="text-[11px] text-teal-400 font-medium px-2.5 py-0.5 rounded bg-teal-950/70 border border-teal-800/60">
-            Bound to Blueprint: {selectedBlueprint.name}
+            Bound Archetype: {selectedBlueprint.name}
           </span>
         {/if}
       </div>
@@ -757,7 +919,6 @@
                 {/each}
               </div>
 
-              <!-- If Sub-Blueprint has its own formula (e.g. bond_power_buff) -->
               {#if subFormula}
                 <div class="p-2.5 rounded bg-cyan-950/40 border border-cyan-900/50 flex items-center justify-between text-xs">
                   <span class="text-cyan-300 font-medium">{subFormula.label}:</span>
@@ -774,35 +935,86 @@
     </div>
   {/if}
 
-  <!-- SECTION 4: 1st-Class Relational Entity Links -->
+  <!-- SECTION 4: 1st-Class Relational Entity Links (Entity Graph Connections) -->
   {#if relationalEntityRefFields.length > 0}
     <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
-      <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-        <Link2 class="w-4 h-4 text-teal-400" />
-        <span>1st-Class Relational Entity Connections</span>
-      </h3>
-
-      {#each relationalEntityRefFields as field}
-        {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-        {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id) : worldStore.entities}
-        <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-2">
-          <Label class="text-xs font-medium text-zinc-200">
-            {field.label} ({targetBp ? targetBp.name : 'Entity'})
-          </Label>
-          <div class="max-w-md">
-            <Select
-              bind:value={properties[field.name]}
-              options={[
-                { value: '', label: 'None (Unassigned)' },
-                ...candidateEntities.map((e) => ({
-                  value: e.id,
-                  label: `${e.name} (${e.category})`,
-                })),
-              ]}
-            />
-          </div>
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div>
+          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <Link2 class="w-4 h-4 text-purple-400" />
+            <span>1st-Class Relational Entity Connections</span>
+          </h3>
+          <p class="text-xs text-zinc-500 mt-0.5">
+            Connect this entity to other 1st-class entity objects (e.g. character owning a weapon, belonging to a faction).
+          </p>
         </div>
-      {/each}
+        <span class="text-[11px] text-purple-400/80 font-mono">1st-Class Links</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {#each relationalEntityRefFields as field}
+          {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
+          {@const candidateEntities = targetBp ? worldStore.entities.filter((e) => e.blueprintId === targetBp.id) : worldStore.entities}
+          <div class="p-4 rounded-lg border border-purple-950/70 bg-purple-950/15 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <Label class="text-xs font-medium text-purple-200 flex items-center gap-1.5">
+                <Link2 class="w-3.5 h-3.5 text-purple-400" />
+                <span>{field.label}</span>
+              </Label>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/80 border border-purple-800 text-purple-300">
+                Target: {targetBp ? targetBp.name : '1st-Class Entity'}
+              </span>
+            </div>
+
+            {#if field.description}
+              <p class="text-[11px] text-zinc-400">{field.description}</p>
+            {/if}
+
+            <div class="space-y-2">
+              <Select
+                bind:value={properties[field.name]}
+                options={[
+                  { value: '', label: 'None (Unassigned)' },
+                  ...candidateEntities.map((e) => ({
+                    value: e.id,
+                    label: `${e.name} (${e.category})`,
+                  })),
+                ]}
+              />
+
+              {#if candidateEntities.length > 0}
+                <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span class="text-[10px] text-zinc-500 mr-1">Quick Link:</span>
+                  <button
+                    type="button"
+                    onclick={() => (properties[field.name] = '')}
+                    class={`px-2 py-0.5 rounded text-[10px] transition ${
+                      !properties[field.name]
+                        ? 'bg-zinc-800 text-zinc-200 font-bold border border-zinc-700'
+                        : 'bg-zinc-950 text-zinc-500 border border-zinc-850 hover:text-zinc-300'
+                    }`}
+                  >
+                    None
+                  </button>
+                  {#each candidateEntities as cand}
+                    <button
+                      type="button"
+                      onclick={() => (properties[field.name] = cand.id)}
+                      class={`px-2 py-0.5 rounded text-[10px] font-medium transition flex items-center gap-1 ${
+                        properties[field.name] === cand.id
+                          ? 'bg-purple-950 text-purple-200 border border-purple-600 ring-1 ring-purple-500/50'
+                          : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                      }`}
+                    >
+                      <span>{cand.name}</span>
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 

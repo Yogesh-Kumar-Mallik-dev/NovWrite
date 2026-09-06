@@ -54,7 +54,7 @@ export interface BlueprintDef {
   id: string;
   name: string;
   blueprintClass: BlueprintClass; // FIRST_CLASS (Entities) | SECOND_CLASS (Sub-Schemas/Value Objects)
-  category: string; // Freeform category tag e.g. "Characters", "Relics", "Systems & Affection"
+  category: string; // Freeform category tag e.g. "Characters", "Relics", "Systems & Affection", "Factions & Sects"
   description: string;
   fields: DynamicFieldDef[];
   isSystemDefault?: boolean;
@@ -260,7 +260,7 @@ const initialBlueprints: BlueprintDef[] = [
         fieldType: "BLUEPRINT_REF",
         targetBlueprintId: "bp-sec-cultivation",
         targetBlueprintName: "Cultivation Rank & Mastery",
-        description: "Nested cultivation rank sub-blueprint",
+        description: "Nested cultivation rank 2nd-class sub-blueprint",
       },
       {
         id: "f-char-affection",
@@ -269,7 +269,34 @@ const initialBlueprints: BlueprintDef[] = [
         fieldType: "BLUEPRINT_REF",
         targetBlueprintId: "bp-sec-affection",
         targetBlueprintName: "Romantic Affection Scale",
-        description: "Interpersonal affection sub-blueprint reference",
+        description: "Interpersonal affection 2nd-class sub-blueprint reference",
+      },
+      {
+        id: "f-char-weapon-ref",
+        name: "bound_weapon",
+        label: "Bound Sacred Relic / Weapon",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-artifact",
+        targetBlueprintName: "Sacred Weapon & Relic",
+        description: "1st-Class Relational Reference: Bound soul weapon entity instance",
+      },
+      {
+        id: "f-char-faction-ref",
+        name: "sect_allegiance",
+        label: "Sect / Clan Allegiance",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-faction",
+        targetBlueprintName: "Ancient Faction & Sect",
+        description: "1st-Class Relational Reference: Sect or faction entity instance",
+      },
+      {
+        id: "f-char-sanctuary-ref",
+        name: "residence_realm",
+        label: "Cultivation Sanctuary / Domain",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-location",
+        targetBlueprintName: "Sanctuary & Spiritual Realm",
+        description: "1st-Class Relational Reference: Home spiritual sanctuary instance",
       },
       {
         id: "f-char-physique",
@@ -344,7 +371,7 @@ const initialBlueprints: BlueprintDef[] = [
     ],
   },
 
-  // 4. First-Class Blueprint: Sacred Weapon / Relic
+  // 4. First-Class Blueprint: Sacred Weapon & Relic
   {
     id: "bp-first-artifact",
     name: "Sacred Weapon & Relic",
@@ -405,6 +432,24 @@ const initialBlueprints: BlueprintDef[] = [
         defaultValue: 0.8,
       },
       {
+        id: "f-art-wielder",
+        name: "current_wielder",
+        label: "Current Master / Wielder",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-character",
+        targetBlueprintName: "Cultivator / Protagonist",
+        description: "1st-Class Relational Reference: Master entity instance",
+      },
+      {
+        id: "f-art-origin-loc",
+        name: "forging_sanctuary",
+        label: "Forging Sanctuary / Origin",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-location",
+        targetBlueprintName: "Sanctuary & Spiritual Realm",
+        description: "1st-Class Relational Reference: Realm where weapon was forged",
+      },
+      {
         id: "f-art-effective",
         name: "effective_artifact_power",
         label: "Effective Artifact Power",
@@ -459,12 +504,120 @@ const initialBlueprints: BlueprintDef[] = [
         defaultValue: 0.95,
       },
       {
+        id: "f-loc-faction",
+        name: "controlling_faction",
+        label: "Controlling Faction / Sect",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-faction",
+        targetBlueprintName: "Ancient Faction & Sect",
+        description: "1st-Class Relational Reference: Faction occupying this sanctuary",
+      },
+      {
+        id: "f-loc-guardian",
+        name: "guardian_elder",
+        label: "Sanctuary Guardian / Elder",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-character",
+        targetBlueprintName: "Cultivator / Protagonist",
+        description: "1st-Class Relational Reference: Guardian character instance",
+      },
+      {
         id: "f-loc-accel",
         name: "cultivation_acceleration",
         label: "Cultivation Acceleration Rate",
         fieldType: "FORMULA",
         formulaExpression: "ambient_mana_density * spatial_stability * 1.5",
         description: "Formula: ambient_mana_density * spatial_stability * 1.5",
+      },
+    ],
+  },
+
+  // 6. First-Class Blueprint: Ancient Faction & Sect
+  {
+    id: "bp-first-faction",
+    name: "Ancient Faction & Sect",
+    blueprintClass: "FIRST_CLASS",
+    category: "Factions & Sects",
+    description:
+      "Cultivation sects, grand imperial dynasties, alchemy guilds, and ancient clans.",
+    isSystemDefault: true,
+    fields: [
+      {
+        id: "f-fac-type",
+        name: "sect_type",
+        label: "Faction Classification",
+        fieldType: "ENUM",
+        options: [
+          { label: "Immortal Orthodox Sect", value: "orthodox_sect", power: 1000 },
+          { label: "Demonic Blood Cult", value: "demonic_cult", power: 1200 },
+          { label: "Ancient Imperial Dynasty", value: "imperial_dynasty", power: 2500 },
+          { label: "Merchant Guild Alliance", value: "merchant_guild", power: 800 },
+          { label: "Hidden Hermit Clan", value: "hermit_clan", power: 1800 },
+        ],
+        defaultValue: "orthodox_sect",
+        description: "Organizational alignment and prestige power weight",
+      },
+      {
+        id: "f-fac-leader",
+        name: "sect_master",
+        label: "Sect Master / Grand Patriarch",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-character",
+        targetBlueprintName: "Cultivator / Protagonist",
+        description: "1st-Class Relational Reference: Leading sovereign character instance",
+      },
+      {
+        id: "f-fac-domain",
+        name: "headquarters_sanctuary",
+        label: "Headquarters Sanctuary Domain",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-location",
+        targetBlueprintName: "Sanctuary & Spiritual Realm",
+        description: "1st-Class Relational Reference: Main spiritual sanctuary instance",
+      },
+      {
+        id: "f-fac-relic",
+        name: "sacred_guardian_relic",
+        label: "Sacred Guardian Weapon / Relic",
+        fieldType: "BLUEPRINT_REF",
+        targetBlueprintId: "bp-first-artifact",
+        targetBlueprintName: "Sacred Weapon & Relic",
+        description: "1st-Class Relational Reference: Sect-protecting artifact instance",
+      },
+      {
+        id: "f-fac-disciples",
+        name: "disciple_count",
+        label: "Total Registered Disciples",
+        fieldType: "NUMBER",
+        min: 10,
+        max: 1000000,
+        step: 50,
+        unit: "Disciples",
+        defaultValue: 5000,
+        description: "Active sworn cultivators in the sect",
+      },
+      {
+        id: "f-fac-vein",
+        name: "qi_vein_grade",
+        label: "Ancestral Qi Vein Tier",
+        fieldType: "ENUM",
+        options: [
+          { label: "Tier 1 Spirit Vein", value: "tier_1", power: 100 },
+          { label: "Tier 2 Spirit Vein", value: "tier_2", power: 300 },
+          { label: "Tier 3 Earth Vein", value: "tier_3", power: 800 },
+          { label: "Tier 4 Heaven Vein", value: "tier_4", power: 2000 },
+          { label: "Tier 5 Dragon Vein", value: "tier_5", power: 5000 },
+        ],
+        defaultValue: "tier_3",
+        description: "Ancestral underground Qi formation rating",
+      },
+      {
+        id: "f-fac-influence",
+        name: "total_sect_influence",
+        label: "Total Sect Influence Rating",
+        fieldType: "FORMULA",
+        formulaExpression: "disciple_count * 0.1 + qi_vein_grade.power * 2.5",
+        description: "Formula: disciple_count * 0.1 + qi_vein_grade.power * 2.5",
       },
     ],
   },
@@ -495,6 +648,9 @@ const initialEntities: EntityItem[] = [
         affection_level: 450,
         trust_score: 85,
       },
+      bound_weapon: "c3333333-3333-4333-a333-333333333333",
+      sect_allegiance: "e5555555-5555-4555-a555-555555555555",
+      residence_realm: "d4444444-4444-4444-a444-444444444444",
       special_Physique: 2.0,
       attack: 1200,
       attack_technique_Mastery: 1.8,
@@ -526,6 +682,9 @@ const initialEntities: EntityItem[] = [
         affection_level: 820,
         trust_score: 95,
       },
+      bound_weapon: "",
+      sect_allegiance: "e5555555-5555-4555-a555-555555555555",
+      residence_realm: "d4444444-4444-4444-a444-444444444444",
       special_Physique: 2.5,
       attack: 1450,
       attack_technique_Mastery: 2.1,
@@ -547,6 +706,8 @@ const initialEntities: EntityItem[] = [
       grade: "Divine Grade",
       base_damage: 2400,
       soul_sync_ratio: 0.9,
+      current_wielder: "a1111111-1111-4111-a111-111111111111",
+      forging_sanctuary: "d4444444-4444-4444-a444-444444444444",
     },
     lastMutatedSeqNumber: 15,
   },
@@ -562,8 +723,28 @@ const initialEntities: EntityItem[] = [
       domain_type: "Floating Citadel",
       ambient_mana_density: 35.0,
       spatial_stability: 0.98,
+      controlling_faction: "e5555555-5555-4555-a555-555555555555",
+      guardian_elder: "a1111111-1111-4111-a111-111111111111",
     },
     lastMutatedSeqNumber: 20,
+  },
+  {
+    id: "e5555555-5555-4555-a555-555555555555",
+    name: "Azure Cloud Sword Sect",
+    blueprintId: "bp-first-faction",
+    blueprintName: "Ancient Faction & Sect",
+    category: "Factions & Sects",
+    description:
+      "Prominent immortal sword cultivation sect nestled atop the celestial jade peaks.",
+    properties: {
+      sect_type: "orthodox_sect",
+      sect_master: "a1111111-1111-4111-a111-111111111111",
+      headquarters_sanctuary: "d4444444-4444-4444-a444-444444444444",
+      sacred_guardian_relic: "c3333333-3333-4333-a333-333333333333",
+      disciple_count: 8500,
+      qi_vein_grade: "tier_4",
+    },
+    lastMutatedSeqNumber: 10,
   },
 ];
 
@@ -598,14 +779,13 @@ export class WorldStateStore {
   }
 
   addBlueprint(data: Omit<BlueprintDef, "id">): BlueprintDef {
-    const prefix =
-      data.blueprintClass === "FIRST_CLASS" ? "bp-first" : "bp-sec";
-    const newBp: BlueprintDef = {
+    const newBlueprint: BlueprintDef = {
       ...data,
-      id: `${prefix}-${Date.now().toString(16)}`,
+      id: `bp-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
+      fields: data.fields || [],
     };
-    this.blueprints.push(newBp);
-    return newBp;
+    this.blueprints.push(newBlueprint);
+    return newBlueprint;
   }
 
   updateBlueprint(
@@ -619,9 +799,9 @@ export class WorldStateStore {
     this.blueprints[idx] = {
       ...this.blueprints[idx],
       ...updates,
+      fields: updates.fields || this.blueprints[idx].fields,
     };
 
-    // Recompute entity formulas that use this blueprint
     this.recomputeAllEntityFormulas();
     return this.blueprints[idx];
   }
@@ -631,8 +811,13 @@ export class WorldStateStore {
     const idx = this.blueprints.findIndex((b) => b.id === id);
     if (idx === -1) return false;
     this.blueprints.splice(idx, 1);
+    this.recomputeAllEntityFormulas();
     return true;
   }
+
+  // =====================================
+  // Dynamic Field CRUD Methods
+  // =====================================
 
   addFieldToBlueprint(
     blueprintId: string,
@@ -646,21 +831,15 @@ export class WorldStateStore {
       id: `f-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
     };
 
-    if (newField.fieldType === "FORMULA" && newField.formulaExpression) {
-      newField.formulaDependencies = extractFormulaVariables(
-        newField.formulaExpression,
-      );
-    }
-
     bp.fields.push(newField);
     this.recomputeAllEntityFormulas();
     return newField;
   }
 
-  updateBlueprintField(
+  updateFieldInBlueprint(
     blueprintId: string,
     fieldId: string,
-    updates: Partial<Omit<DynamicFieldDef, "id">>,
+    updates: Partial<DynamicFieldDef>,
   ): DynamicFieldDef | undefined {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return undefined;
@@ -673,20 +852,11 @@ export class WorldStateStore {
       ...updates,
     };
 
-    if (
-      bp.fields[fIdx].fieldType === "FORMULA" &&
-      bp.fields[fIdx].formulaExpression
-    ) {
-      bp.fields[fIdx].formulaDependencies = extractFormulaVariables(
-        bp.fields[fIdx].formulaExpression!,
-      );
-    }
-
     this.recomputeAllEntityFormulas();
     return bp.fields[fIdx];
   }
 
-  deleteBlueprintField(blueprintId: string, fieldId: string): boolean {
+  removeFieldFromBlueprint(blueprintId: string, fieldId: string): boolean {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
 
@@ -696,6 +866,10 @@ export class WorldStateStore {
     bp.fields.splice(fIdx, 1);
     this.recomputeAllEntityFormulas();
     return true;
+  }
+
+  deleteBlueprintField(blueprintId: string, fieldId: string): boolean {
+    return this.removeFieldFromBlueprint(blueprintId, fieldId);
   }
 
   // =====================================
@@ -821,7 +995,7 @@ export class WorldStateStore {
     const computed: Record<string, number> = {};
     const context: Record<string, any> = { ...entity.properties };
 
-    // Enrich context with dual-valued enum options (e.g. cultivation_realm = { name, power: 100 })
+    // Enrich context with dual-valued enum options and resolved references
     for (const field of blueprint.fields) {
       if (field.fieldType === "ENUM" && field.options) {
         const rawVal = entity.properties[field.name];
@@ -871,6 +1045,20 @@ export class WorldStateStore {
             }
             context[field.name] = enrichedSub;
           }
+        } else if (targetBp && targetBp.blueprintClass === "FIRST_CLASS") {
+          const targetEntityId = entity.properties[field.name];
+          if (targetEntityId && typeof targetEntityId === "string") {
+            const linkedEntity = this.entities.find((e) => e.id === targetEntityId);
+            if (linkedEntity) {
+              context[field.name] = {
+                ...linkedEntity.properties,
+                id: linkedEntity.id,
+                name: linkedEntity.name,
+                category: linkedEntity.category,
+                ...(linkedEntity.computedFormulas || {}),
+              };
+            }
+          }
         }
       }
     }
@@ -889,9 +1077,9 @@ export class WorldStateStore {
     return computed;
   }
 
-  recomputeAllEntityFormulas() {
-    for (const ent of this.entities) {
-      ent.computedFormulas = this.evaluateEntityFormulas(ent);
+  recomputeAllEntityFormulas(): void {
+    for (const entity of this.entities) {
+      entity.computedFormulas = this.evaluateEntityFormulas(entity);
     }
   }
 }
