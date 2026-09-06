@@ -7,6 +7,6 @@
   });
 </script>
 
-<div class="p-8 text-center text-xs text-zinc-500 font-mono">
+<div class="p-8 text-center text-xs text-muted-foreground font-mono">
   Redirecting to Entities workbench...
 </div>

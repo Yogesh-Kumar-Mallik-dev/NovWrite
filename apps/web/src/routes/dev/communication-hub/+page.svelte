@@ -8,7 +8,6 @@
   import {
     Activity,
     Play,
-    RefreshCw,
     AlertTriangle,
     CheckCircle,
     Terminal,
@@ -16,6 +15,13 @@
   } from "lucide-svelte";
 
   import Button from "$lib/components/ui/button.svelte";
+  import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+  } from "$lib/components/ui/card";
 
   const bridge = new MockBridgeService();
 
@@ -126,29 +132,29 @@
 
 <div class="flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full gap-6">
   <!-- Header -->
-  <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
     <div>
       <div class="flex items-center gap-2">
-        <Activity class="w-5 h-5 text-emerald-400" />
-        <h1 class="text-2xl font-bold tracking-tight">
+        <Activity class="w-5 h-5 text-emerald-500" />
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">
           Communication Bridge Diagnostics Hub
         </h1>
       </div>
-      <p class="text-sm text-zinc-400 mt-1">
+      <p class="text-sm text-muted-foreground mt-1">
         Centralized console to inspect cross-domain RPC contracts, simulate
         payloads, and diagnose continuity violations in one page.
       </p>
     </div>
 
     <!-- Quick Action Triggers -->
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <Button
         variant="destructive"
         size="sm"
         onclick={runTestViolation}
         disabled={isExecuting}
       >
-        <Play class="w-3.5 h-3.5" />
+        <Play class="w-3.5 h-3.5 mr-1" />
         <span>Test Invariant Violation</span>
       </Button>
       <Button
@@ -157,7 +163,7 @@
         onclick={runTestGrounding}
         disabled={isExecuting}
       >
-        <Play class="w-3.5 h-3.5" />
+        <Play class="w-3.5 h-3.5 mr-1" />
         <span>Test Grounding</span>
       </Button>
       <Button
@@ -166,8 +172,8 @@
         onclick={runTestMentions}
         disabled={isExecuting}
       >
-        <Play class="w-3.5 h-3.5" />
-        <span>Test Mentions Autocomplete</span>
+        <Play class="w-3.5 h-3.5 mr-1" />
+        <span>Test Mentions</span>
       </Button>
     </div>
   </div>
@@ -175,22 +181,20 @@
   <!-- Main Grid: Traffic Inspector & Detail Inspector -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
     <!-- Left: Traffic Table -->
-    <div
-      class="lg:col-span-5 flex flex-col bg-zinc-900/60 border border-zinc-800 rounded-lg overflow-hidden"
-    >
+    <Card class="lg:col-span-5 flex flex-col overflow-hidden bg-card border-border shadow-xs">
       <div
-        class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between text-xs font-semibold text-zinc-300"
+        class="bg-muted/60 px-4 py-2.5 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground"
       >
         <span class="flex items-center gap-1.5">
-          <Terminal class="w-3.5 h-3.5 text-zinc-400" />
+          <Terminal class="w-3.5 h-3.5 text-muted-foreground" />
           Cross-Space RPC Stream ({requestLog.length})
         </span>
-        <span class="text-zinc-500 font-mono">Channel: @novwrite/bridge</span>
+        <span class="text-muted-foreground font-mono text-[11px]">Channel: @novwrite/bridge</span>
       </div>
 
-      <div class="flex-1 overflow-y-auto divide-y divide-zinc-800/60">
+      <div class="flex-1 overflow-y-auto divide-y divide-border">
         {#if requestLog.length === 0}
-          <div class="p-8 text-center text-zinc-500 text-xs">
+          <div class="p-8 text-center text-muted-foreground text-xs">
             No cross-space requests captured yet.
           </div>
         {:else}
@@ -199,26 +203,26 @@
               onclick={() => {
                 selectedLog = log;
               }}
-              class="w-full text-left p-3 hover:bg-zinc-800/50 transition-colors flex items-start justify-between gap-3 text-xs {selectedLog?.id ===
+              class="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-start justify-between gap-3 text-xs {selectedLog?.id ===
               log.id
-                ? 'bg-zinc-800/80 border-l-2 border-purple-500'
+                ? 'bg-muted border-l-2 border-primary'
                 : ''}"
             >
               <div>
-                <div class="font-mono font-medium text-zinc-200">
+                <div class="font-mono font-medium text-foreground">
                   {log.type}
                 </div>
-                <div class="text-[10px] text-zinc-500 font-mono mt-0.5">
+                <div class="text-[10px] text-muted-foreground font-mono mt-0.5">
                   {log.timestamp} · ID: {log.id.slice(0, 8)}
                 </div>
               </div>
 
               {#if log.status === "VIOLATION_DETECTED"}
-                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-red-400">
+                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-destructive">
                   <AlertTriangle class="w-3.5 h-3.5" /> VIOLATION
                 </span>
               {:else}
-                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-400">
+                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
                   <CheckCircle class="w-3.5 h-3.5" /> OK
                 </span>
               {/if}
@@ -226,21 +230,19 @@
           {/each}
         {/if}
       </div>
-    </div>
+    </Card>
 
     <!-- Right: Payload & RFC 7807 Detail Inspector -->
-    <div
-      class="lg:col-span-7 flex flex-col bg-zinc-900/60 border border-zinc-800 rounded-lg overflow-hidden"
-    >
+    <Card class="lg:col-span-7 flex flex-col overflow-hidden bg-card border-border shadow-xs">
       <div
-        class="bg-zinc-950 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between text-xs font-semibold text-zinc-300"
+        class="bg-muted/60 px-4 py-2.5 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground"
       >
         <span class="flex items-center gap-1.5">
-          <Cpu class="w-3.5 h-3.5 text-purple-400" />
+          <Cpu class="w-3.5 h-3.5 text-primary" />
           Contract Payload Inspector
         </span>
         {#if selectedLog}
-          <span class="font-mono text-zinc-400 text-[11px]"
+          <span class="font-mono text-muted-foreground text-[11px]"
             >{selectedLog.type}</span
           >
         {/if}
@@ -248,26 +250,26 @@
 
       <div class="flex-1 p-4 overflow-y-auto font-mono text-xs space-y-4">
         {#if !selectedLog}
-          <div class="text-zinc-500 text-center py-12">
+          <div class="text-muted-foreground text-center py-12">
             Select a request from the stream to inspect payload details.
           </div>
         {:else}
           <!-- Violation Banner if detected -->
           {#if selectedLog.response?.violations && selectedLog.response.violations.length > 0}
             <div
-              class="p-3.5 rounded bg-red-950/40 border border-red-900 text-red-200 text-xs"
+              class="p-3.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs"
             >
               <div
-                class="flex items-center gap-1.5 font-bold text-red-400 mb-1"
+                class="flex items-center gap-1.5 font-bold mb-1"
               >
                 <AlertTriangle class="w-4 h-4" />
                 RFC 7807 Invariant Violation Detected: {selectedLog.response
                   .violations[0].code}
               </div>
-              <p class="text-zinc-300">
+              <p class="text-foreground/90 font-sans text-xs">
                 {selectedLog.response.violations[0].message}
               </p>
-              <div class="mt-2 text-[10px] text-red-400/80">
+              <div class="mt-2 text-[10px] text-destructive/80 font-mono">
                 Rule: {selectedLog.response.violations[0].ruleName} · Spec URI: {selectedLog
                   .response.violations[0].rfc7807Uri}
               </div>
@@ -276,11 +278,11 @@
 
           <!-- Request Payload -->
           <div>
-            <div class="text-zinc-400 text-[11px] font-semibold mb-1">
+            <div class="text-muted-foreground text-[11px] font-semibold mb-1 font-sans">
               Request Payload (from Novel Space):
             </div>
             <pre
-              class="p-3 bg-zinc-950 rounded border border-zinc-800 text-zinc-300 overflow-x-auto text-[11px]">{JSON.stringify(
+              class="p-3 bg-muted/40 rounded-lg border border-border text-foreground overflow-x-auto text-[11px] font-mono">{JSON.stringify(
                 selectedLog.payload,
                 null,
                 2,
@@ -289,11 +291,11 @@
 
           <!-- Response Payload -->
           <div>
-            <div class="text-zinc-400 text-[11px] font-semibold mb-1">
+            <div class="text-muted-foreground text-[11px] font-semibold mb-1 font-sans">
               Response Payload (from World Engine):
             </div>
             <pre
-              class="p-3 bg-zinc-950 rounded border border-zinc-800 text-purple-300 overflow-x-auto text-[11px]">{JSON.stringify(
+              class="p-3 bg-muted/40 rounded-lg border border-border text-primary overflow-x-auto text-[11px] font-mono">{JSON.stringify(
                 selectedLog.response,
                 null,
                 2,
@@ -301,6 +303,6 @@
           </div>
         {/if}
       </div>
-    </div>
+    </Card>
   </div>
 </div>

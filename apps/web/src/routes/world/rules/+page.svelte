@@ -8,22 +8,24 @@
     AlertTriangle,
     Info,
     Search,
-    Filter,
     Check,
     X,
-    Sliders,
-    Layers,
-    Shield,
-    Sparkles,
     CheckCircle,
-    ToggleLeft,
-    ToggleRight,
   } from "lucide-svelte";
-  import Button from "$lib/components/ui/button.svelte";
-  import Input from "$lib/components/ui/input.svelte";
-  import Field from "$lib/components/ui/field.svelte";
-  import Select from "$lib/components/ui/select.svelte";
-  import Textarea from "$lib/components/ui/textarea.svelte";
+  import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import { Label } from "$lib/components/ui/label";
+  import { Card } from "$lib/components/ui/card";
+  import {
+    Table,
+    TableHeader,
+    TableBody,
+    TableHead,
+    TableRow,
+    TableCell,
+  } from "$lib/components/ui/table";
+  import { Switch } from "$lib/components/ui/switch";
   import {
     worldStore,
     type InvariantRuleItem,
@@ -179,20 +181,23 @@
     }
   }
 
-  function handleToggleRule(id: string) {
-    worldStore.toggleRule(id);
+  function handleToggleRule(id: string, checked: boolean) {
+    const r = worldStore.getRule(id);
+    if (r) {
+      r.enabled = checked;
+    }
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 transition-colors">
   <!-- Header & Primary Action -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h2 class="text-lg font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-        <ShieldCheck class="w-5 h-5 text-amber-400" />
+      <h2 class="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+        <ShieldCheck class="w-5 h-5 text-amber-500" />
         <span>Universe Invariant Rules & Causal Boundaries</span>
       </h2>
-      <p class="text-xs text-zinc-400 mt-0.5">
+      <p class="text-xs text-muted-foreground mt-0.5">
         Define continuity laws, forbidden states, and relational constraints verified by the state fold engine.
       </p>
     </div>
@@ -205,42 +210,42 @@
 
   <!-- Summary Metric Strip -->
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="bg-zinc-900/90 rounded-lg border border-zinc-800 p-3.5 space-y-1">
-      <span class="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">Total Rules</span>
-      <p class="text-xl font-bold text-zinc-100">{totalRulesCount}</p>
-    </div>
-    <div class="bg-zinc-900/90 rounded-lg border border-red-950/60 p-3.5 space-y-1">
-      <span class="text-[10px] font-mono text-red-400 uppercase tracking-wider flex items-center gap-1">
-        <ShieldAlert class="w-3 h-3 text-red-500" />
+    <Card class="p-3.5 space-y-1 bg-card border-border shadow-xs">
+      <span class="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Total Rules</span>
+      <p class="text-xl font-bold text-foreground">{totalRulesCount}</p>
+    </Card>
+    <Card class="p-3.5 space-y-1 bg-destructive/5 border-destructive/20 shadow-xs">
+      <span class="text-[10px] font-mono text-destructive uppercase tracking-wider flex items-center gap-1">
+        <ShieldAlert class="w-3 h-3" />
         <span>Blocking Invariants</span>
       </span>
-      <p class="text-xl font-bold text-red-300">{blockingCount}</p>
-    </div>
-    <div class="bg-zinc-900/90 rounded-lg border border-amber-950/60 p-3.5 space-y-1">
-      <span class="text-[10px] font-mono text-amber-400 uppercase tracking-wider flex items-center gap-1">
+      <p class="text-xl font-bold text-destructive">{blockingCount}</p>
+    </Card>
+    <Card class="p-3.5 space-y-1 bg-amber-500/5 border-amber-500/20 shadow-xs">
+      <span class="text-[10px] font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
         <AlertTriangle class="w-3 h-3 text-amber-500" />
         <span>Warnings / Advisory</span>
       </span>
-      <p class="text-xl font-bold text-amber-300">{warningCount}</p>
-    </div>
-    <div class="bg-zinc-900/90 rounded-lg border border-emerald-950/60 p-3.5 space-y-1">
-      <span class="text-[10px] font-mono text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+      <p class="text-xl font-bold text-amber-600 dark:text-amber-400">{warningCount}</p>
+    </Card>
+    <Card class="p-3.5 space-y-1 bg-emerald-500/5 border-emerald-500/20 shadow-xs">
+      <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
         <CheckCircle class="w-3 h-3 text-emerald-500" />
         <span>Active Rules</span>
       </span>
-      <p class="text-xl font-bold text-emerald-300">{activeCount}</p>
-    </div>
+      <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{activeCount}</p>
+    </Card>
   </div>
 
   <!-- Filters & Search Toolbar -->
-  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-900/60 p-3 rounded-lg border border-zinc-800">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-muted/40 p-3 rounded-lg border border-border">
     <div class="relative flex-1 max-w-sm">
-      <Search class="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-      <input
+      <Search class="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+      <Input
         type="text"
         placeholder="Filter by rule name, predicate, or target scope..."
         bind:value={searchQuery}
-        class="w-full bg-zinc-950 border border-zinc-800 rounded-md pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-700"
+        class="h-8 pl-9 text-xs"
       />
     </div>
 
@@ -248,7 +253,7 @@
       <!-- Severity Filter -->
       <select
         bind:value={selectedSeverityFilter}
-        class="bg-zinc-950 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+        class="bg-background border border-input rounded-md px-2.5 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring h-8"
       >
         <option value="ALL">All Severities</option>
         <option value="BLOCKING_ERROR">Blocking Only</option>
@@ -259,7 +264,7 @@
       <!-- Type Filter -->
       <select
         bind:value={selectedTypeFilter}
-        class="bg-zinc-950 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+        class="bg-background border border-input rounded-md px-2.5 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring h-8"
       >
         <option value="ALL">All Rule Types</option>
         <option value="STATE_GUARD">State Guard</option>
@@ -272,112 +277,105 @@
   </div>
 
   <!-- Rules Table -->
-  <div class="bg-zinc-900/80 rounded-xl border border-zinc-800 overflow-hidden shadow-sm">
+  <Card class="border-border bg-card overflow-hidden shadow-xs">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-zinc-900 border-b border-zinc-800 text-zinc-400 font-mono uppercase tracking-wider text-[11px]">
-          <tr>
-            <th class="px-4 py-3">Rule Definition</th>
-            <th class="px-4 py-3">Type</th>
-            <th class="px-4 py-3">Severity</th>
-            <th class="px-4 py-3">Predicate Condition</th>
-            <th class="px-4 py-3">Scope / Target</th>
-            <th class="px-4 py-3 text-center">Status</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-800/60">
+      <Table>
+        <TableHeader class="bg-muted/50 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
+          <TableRow>
+            <TableHead class="px-4 py-3">Rule Definition</TableHead>
+            <TableHead class="px-4 py-3">Type</TableHead>
+            <TableHead class="px-4 py-3">Severity</TableHead>
+            <TableHead class="px-4 py-3">Predicate Condition</TableHead>
+            <TableHead class="px-4 py-3">Scope / Target</TableHead>
+            <TableHead class="px-4 py-3 text-center">Status</TableHead>
+            <TableHead class="px-4 py-3 text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody class="divide-y divide-border/60">
           {#if filteredRules.length === 0}
-            <tr>
-              <td colspan="7" class="px-4 py-8 text-center text-zinc-500 font-mono">
+            <TableRow>
+              <TableCell colspan={7} class="px-4 py-8 text-center text-muted-foreground font-mono">
                 No invariant rules match your filter criteria.
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           {/if}
 
           {#each filteredRules as rule}
-            <tr class="hover:bg-zinc-850/60 transition-colors {rule.enabled ? '' : 'opacity-50'}">
+            <TableRow class="hover:bg-accent/40 transition-colors {rule.enabled ? '' : 'opacity-50'}">
               <!-- Rule Definition -->
-              <td class="px-4 py-3.5 font-medium text-zinc-200 max-w-xs">
+              <TableCell class="px-4 py-3.5 font-medium text-foreground max-w-xs">
                 <div class="flex items-start gap-2.5">
-                  <ShieldCheck class="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                  <ShieldCheck class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                   <div>
-                    <span class="font-bold text-zinc-100">{rule.name}</span>
-                    <p class="text-[11px] text-zinc-400 font-sans mt-0.5 leading-relaxed">
+                    <span class="font-bold text-foreground">{rule.name}</span>
+                    <p class="text-[11px] text-muted-foreground font-sans mt-0.5 leading-relaxed">
                       {rule.description}
                     </p>
                     {#if rule.suggestedResolution}
-                      <p class="text-[10px] text-zinc-500 font-sans mt-1">
-                        <strong class="text-zinc-400">Resolution Hint:</strong> {rule.suggestedResolution}
+                      <p class="text-[10px] text-muted-foreground/80 font-sans mt-1">
+                        <strong class="text-foreground/80">Resolution Hint:</strong> {rule.suggestedResolution}
                       </p>
                     {/if}
                   </div>
                 </div>
-              </td>
+              </TableCell>
 
               <!-- Rule Type -->
-              <td class="px-4 py-3 font-mono text-[11px]">
-                <span class="text-purple-300 font-medium px-2 py-0.5 rounded bg-purple-950/40 border border-purple-800/40">
+              <TableCell class="px-4 py-3 font-mono text-[11px]">
+                <span class="text-primary font-medium px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
                   {rule.type}
                 </span>
-              </td>
+              </TableCell>
 
               <!-- Severity Indicator -->
-              <td class="px-4 py-3 font-mono text-[11px]">
+              <TableCell class="px-4 py-3 font-mono text-[11px]">
                 {#if rule.severity === "BLOCKING_ERROR"}
-                  <span class="inline-flex items-center gap-1.5 text-red-400 font-semibold">
-                    <ShieldAlert class="w-3.5 h-3.5 text-red-500" />
+                  <span class="inline-flex items-center gap-1.5 text-destructive font-semibold">
+                    <ShieldAlert class="w-3.5 h-3.5 text-destructive" />
                     BLOCKING
                   </span>
                 {:else if rule.severity === "WARNING"}
-                  <span class="inline-flex items-center gap-1.5 text-amber-400 font-semibold">
+                  <span class="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
                     <AlertTriangle class="w-3.5 h-3.5 text-amber-500" />
                     WARNING
                   </span>
                 {:else}
-                  <span class="inline-flex items-center gap-1.5 text-zinc-400 font-semibold">
-                    <Info class="w-3.5 h-3.5 text-zinc-500" />
+                  <span class="inline-flex items-center gap-1.5 text-muted-foreground font-semibold">
+                    <Info class="w-3.5 h-3.5 text-muted-foreground" />
                     ADVISORY
                   </span>
                 {/if}
-              </td>
+              </TableCell>
 
               <!-- Predicate Condition -->
-              <td class="px-4 py-3 font-mono text-zinc-300 text-[11px] max-w-xs">
-                <code class="text-amber-200 bg-zinc-950 px-2 py-1 rounded border border-zinc-800 block truncate">
+              <TableCell class="px-4 py-3 font-mono text-foreground text-[11px] max-w-xs">
+                <code class="text-amber-600 dark:text-amber-300 bg-muted/80 px-2 py-1 rounded border border-border block truncate">
                   {rule.predicateSummary || rule.predicateExpression}
                 </code>
-              </td>
+              </TableCell>
 
               <!-- Scope / Target -->
-              <td class="px-4 py-3 font-mono text-zinc-400 text-[11px]">
-                <span class="text-zinc-300">{rule.targetBlueprintName || rule.targetCategory || "Universal"}</span>
-              </td>
+              <TableCell class="px-4 py-3 font-mono text-muted-foreground text-[11px]">
+                <span class="text-foreground">{rule.targetBlueprintName || rule.targetCategory || "Universal"}</span>
+              </TableCell>
 
               <!-- Active Toggle -->
-              <td class="px-4 py-3 text-center">
-                <button
-                  type="button"
-                  onclick={() => handleToggleRule(rule.id)}
-                  class="text-xs font-mono inline-flex items-center gap-1 transition-colors {rule.enabled ? 'text-emerald-400 hover:text-emerald-300' : 'text-zinc-600 hover:text-zinc-400'}"
-                  title={rule.enabled ? "Disable Rule" : "Enable Rule"}
-                >
-                  {#if rule.enabled}
-                    <ToggleRight class="w-5 h-5 text-emerald-400" />
-                  {:else}
-                    <ToggleLeft class="w-5 h-5 text-zinc-600" />
-                  {/if}
-                </button>
-              </td>
+              <TableCell class="px-4 py-3 text-center">
+                <Switch
+                  checked={rule.enabled}
+                  onCheckedChange={(checked: boolean) => handleToggleRule(rule.id, checked)}
+                  aria-label="Toggle rule active state"
+                />
+              </TableCell>
 
               <!-- Actions -->
-              <td class="px-4 py-3 text-right">
+              <TableCell class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onclick={() => openEditModal(rule)}
-                    class="h-7 px-2 text-zinc-400 hover:text-zinc-200"
+                    class="h-7 px-2 text-muted-foreground hover:text-foreground"
                   >
                     <Edit3 class="w-3.5 h-3.5" />
                   </Button>
@@ -385,34 +383,34 @@
                     variant="ghost"
                     size="sm"
                     onclick={() => handleDeleteRule(rule.id)}
-                    class="h-7 px-2 text-zinc-400 hover:text-red-400"
+                    class="h-7 px-2 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </Button>
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           {/each}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
-  </div>
+  </Card>
 
   <!-- Create / Edit Invariant Rule Modal -->
   {#if isModalOpen}
-    <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-xl w-full p-6 space-y-5 shadow-2xl my-8">
-        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div class="flex items-center gap-2 text-amber-400">
+    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <Card class="border-border bg-card max-w-xl w-full p-6 space-y-5 shadow-2xl my-8">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center gap-2 text-amber-500">
             <ShieldCheck class="w-5 h-5" />
-            <h3 class="text-base font-bold text-zinc-100">
+            <h3 class="text-base font-bold text-foreground">
               {modalMode === "add" ? "Create Invariant Rule" : "Edit Invariant Rule"}
             </h3>
           </div>
           <button
             type="button"
             onclick={() => (isModalOpen = false)}
-            class="text-zinc-400 hover:text-zinc-200"
+            class="text-muted-foreground hover:text-foreground"
           >
             <X class="w-4 h-4" />
           </button>
@@ -420,22 +418,23 @@
 
         <div class="space-y-4">
           <!-- Rule Name -->
-          <Field id="rule-name" label="Rule Name" required>
+          <div class="space-y-1.5">
+            <Label for="rule-name">Rule Name <span class="text-destructive">*</span></Label>
             <Input
               id="rule-name"
               bind:value={formName}
               placeholder="e.g. Non-Negative Mana Invariant, Relic Ownership Integrity..."
               class="text-xs"
             />
-          </Field>
+          </div>
 
           <!-- Severity & Type Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-zinc-300 mb-1.5" for="rule-severity">Severity Level</label>
+            <div class="space-y-1.5">
+              <Label for="rule-severity">Severity Level</Label>
               <select
                 id="rule-severity"
-                class="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-200"
+                class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
                 bind:value={formSeverity}
               >
                 {#each severityOptions as opt}
@@ -444,11 +443,11 @@
               </select>
             </div>
 
-            <div>
-              <label class="block text-xs font-medium text-zinc-300 mb-1.5" for="rule-type">Rule Type</label>
+            <div class="space-y-1.5">
+              <Label for="rule-type">Rule Type</Label>
               <select
                 id="rule-type"
-                class="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-200"
+                class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
                 bind:value={formType}
               >
                 {#each typeOptions as opt}
@@ -459,11 +458,11 @@
           </div>
 
           <!-- Target Blueprint / Scope -->
-          <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1.5" for="rule-target-bp">Target Blueprint Scope</label>
+          <div class="space-y-1.5">
+            <Label for="rule-target-bp">Target Blueprint Scope</Label>
             <select
               id="rule-target-bp"
-              class="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-xs text-zinc-200"
+              class="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground h-9"
               bind:value={formTargetBlueprintId}
             >
               <option value="">Universal (All Blueprints & Entities)</option>
@@ -474,26 +473,29 @@
           </div>
 
           <!-- Predicate Condition & Summary -->
-          <Field id="rule-predicate" label="Predicate Condition (AST Logic)" required>
+          <div class="space-y-1.5">
+            <Label for="rule-predicate">Predicate Condition (AST Logic) <span class="text-destructive">*</span></Label>
             <Input
               id="rule-predicate"
               bind:value={formPredicateExpression}
               placeholder="e.g. cultivation.major_realm >= 3 or mana_capacity >= 0"
-              class="text-xs font-mono text-amber-200"
+              class="text-xs font-mono text-amber-600 dark:text-amber-300"
             />
-          </Field>
+          </div>
 
-          <Field id="rule-pred-summary" label="Predicate Human Summary">
+          <div class="space-y-1.5">
+            <Label for="rule-pred-summary">Predicate Human Summary</Label>
             <Input
               id="rule-pred-summary"
               bind:value={formPredicateSummary}
               placeholder="e.g. REQUIRES cultivation.major_realm >= 3 (Core Formation)"
               class="text-xs font-mono"
             />
-          </Field>
+          </div>
 
           <!-- Description -->
-          <Field id="rule-desc" label="Rule Rationale & Description">
+          <div class="space-y-1.5">
+            <Label for="rule-desc">Rule Rationale & Description</Label>
             <Textarea
               id="rule-desc"
               bind:value={formDescription}
@@ -501,39 +503,39 @@
               placeholder="Explain why this universe law must remain invariant..."
               class="text-xs"
             />
-          </Field>
+          </div>
 
           <!-- Suggested Resolution -->
-          <Field id="rule-resolution" label="Suggested Editorial Resolution">
+          <div class="space-y-1.5">
+            <Label for="rule-resolution">Suggested Editorial Resolution</Label>
             <Input
               id="rule-resolution"
               bind:value={formSuggestedResolution}
               placeholder="e.g. Auto-log breakthrough event or link valid sacred weapon wielder..."
               class="text-xs"
             />
-          </Field>
+          </div>
 
           <!-- Active Toggle Switch -->
           <div class="flex items-center gap-2 pt-1">
-            <input
-              type="checkbox"
+            <Switch
               id="rule-enabled"
-              bind:checked={formEnabled}
-              class="w-4 h-4 rounded border-zinc-800 bg-zinc-950 accent-amber-400"
+              checked={formEnabled}
+              onCheckedChange={(c: boolean) => (formEnabled = c)}
             />
-            <label for="rule-enabled" class="text-xs font-medium text-zinc-300 cursor-pointer">
+            <Label for="rule-enabled" class="text-xs font-medium text-foreground cursor-pointer">
               Enforce rule actively in real-time continuity audit checks
-            </label>
+            </Label>
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
           <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>Cancel</Button>
           <Button size="sm" disabled={!formName.trim()} onclick={handleSaveRule}>
             {modalMode === "add" ? "Create Rule" : "Save Changes"}
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   {/if}
 </div>

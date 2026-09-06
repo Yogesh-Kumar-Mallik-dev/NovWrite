@@ -11,27 +11,32 @@
     Link2,
     ListFilter,
     Hash,
-    Type,
-    ToggleLeft,
     Sparkles,
     AlertCircle,
-    Info,
   } from 'lucide-svelte';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Select from '$lib/components/ui/select.svelte';
-  import Label from '$lib/components/ui/label.svelte';
-  import Field from '$lib/components/ui/field.svelte';
-  import Textarea from '$lib/components/ui/textarea.svelte';
-  import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
+  import {
+    Button,
+    Input,
+    Select,
+    Field,
+    Textarea,
+    Breadcrumb,
+  } from '$lib/components/ui';
+  import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+  } from '$lib/components/ui/card';
   import {
     worldStore,
     type BlueprintClass,
     type BlueprintFieldType,
     type DynamicFieldDef,
+    type BlueprintDef,
   } from '$lib/stores/worldStore.svelte';
   import {
-    evaluateFormula,
     extractFormulaVariables,
     validateFormulaSyntax,
   } from '$lib/engine/formulaEngine';
@@ -41,7 +46,6 @@
   let category = $state('Characters');
   let description = $state('');
 
-  // Draft fields list
   // Draft fields list
   let fields = $state<Array<{
     id: string;
@@ -103,8 +107,6 @@
     { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
   ];
-
-  import type { BlueprintDef } from '$lib/stores/worldStore.svelte';
 
   // Available blueprints for referencing
   let availableTargetBlueprints = $derived(
@@ -254,13 +256,13 @@
   />
 
   <!-- Header -->
-  <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+  <div class="flex items-center justify-between border-b border-border pb-4">
     <div>
-      <h2 class="text-xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-        <Boxes class="w-5 h-5 text-teal-400" />
+      <h2 class="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+        <Boxes class="w-5 h-5 text-primary" />
         <span>Create Blueprint from Scratch</span>
       </h2>
-      <p class="text-xs text-zinc-400 mt-1">
+      <p class="text-xs text-muted-foreground mt-1">
         Define custom 1st-Class Entity archetypes or 2nd-Class sub-blueprints with dynamic enums, blueprint references, and mathematical formulas.
       </p>
     </div>
@@ -273,56 +275,56 @@
   </div>
 
   <!-- Blueprint Meta Config -->
-  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
-    <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-      <Layers class="w-4 h-4 text-teal-400" />
+  <Card class="p-6 space-y-5 border-border bg-card">
+    <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+      <Layers class="w-4 h-4 text-primary" />
       <span>Blueprint Classification & Category</span>
     </h3>
 
     <!-- Blueprint Class Selector -->
     <div>
-      <span class="block text-xs font-medium text-zinc-400 mb-2">Blueprint Tier / Class</span>
+      <span class="block text-xs font-medium text-muted-foreground mb-2">Blueprint Tier / Class</span>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <button
           type="button"
           onclick={() => (blueprintClass = 'FIRST_CLASS')}
-          class={`p-4 rounded-lg border text-left transition flex flex-col justify-between ${
+          class={`p-4 rounded-lg border text-left transition cursor-pointer flex flex-col justify-between ${
             blueprintClass === 'FIRST_CLASS'
-              ? 'border-teal-500 bg-teal-950/30 ring-1 ring-teal-500/50'
-              : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-700'
+              ? 'border-primary bg-secondary/80 ring-1 ring-ring shadow-xs'
+              : 'border-border bg-card/60 hover:border-border/80 hover:bg-muted/50'
           }`}
         >
           <div>
-            <div class="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-              <Boxes class="w-4 h-4 text-teal-400" />
+            <div class="flex items-center gap-2 text-foreground font-semibold text-sm">
+              <Boxes class="w-4 h-4 text-primary" />
               <span>1st-Class Blueprint (Primary Entity Archetype)</span>
             </div>
-            <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+            <p class="text-xs text-muted-foreground mt-1.5 leading-relaxed">
               Instantiates tangible universe entities (e.g. Cultivator Characters, Divine Relics, Factions, Sects, Realms) with timeline lifecycles and causal mutations.
             </p>
           </div>
-          <div class="mt-3 text-[11px] text-teal-400 font-medium">Instantiable in Universe Timeline</div>
+          <div class="mt-3 text-[11px] text-primary font-medium">Instantiable in Universe Timeline</div>
         </button>
 
         <button
           type="button"
           onclick={() => (blueprintClass = 'SECOND_CLASS')}
-          class={`p-4 rounded-lg border text-left transition flex flex-col justify-between ${
+          class={`p-4 rounded-lg border text-left transition cursor-pointer flex flex-col justify-between ${
             blueprintClass === 'SECOND_CLASS'
-              ? 'border-cyan-500 bg-cyan-950/30 ring-1 ring-cyan-500/50'
-              : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-700'
+              ? 'border-cyan-500 bg-cyan-500/10 ring-1 ring-cyan-500/30 shadow-xs'
+              : 'border-border bg-card/60 hover:border-border/80 hover:bg-muted/50'
           }`}
         >
           <div>
-            <div class="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-              <Layers class="w-4 h-4 text-cyan-400" />
+            <div class="flex items-center gap-2 text-foreground font-semibold text-sm">
+              <Layers class="w-4 h-4 text-cyan-500" />
               <span>2nd-Class Blueprint (Sub-Schema & Value Object)</span>
             </div>
-            <p class="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+            <p class="text-xs text-muted-foreground mt-1.5 leading-relaxed">
               Reusable nested sub-schemas, gauges, or matrices (e.g. Romantic Affection Scale, Cultivation Mastery Matrix, Elemental Roots) referenced inside 1st-Class blueprints.
             </p>
           </div>
-          <div class="mt-3 text-[11px] text-cyan-400 font-medium">Embeddable & Referenceable Schema</div>
+          <div class="mt-3 text-[11px] text-cyan-500 font-medium">Embeddable & Referenceable Schema</div>
         </button>
       </div>
     </div>
@@ -351,7 +353,7 @@
             <button
               type="button"
               onclick={() => (category = sug)}
-              class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition"
+              class="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition cursor-pointer"
             >
               {sug}
             </button>
@@ -369,17 +371,17 @@
         class="w-full text-xs"
       />
     </Field>
-  </div>
+  </Card>
 
   <!-- Dynamic Field Builder -->
-  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
-    <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+  <Card class="p-6 space-y-6 border-border bg-card">
+    <div class="flex items-center justify-between border-b border-border pb-3">
       <div>
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <Sparkles class="w-4 h-4 text-teal-400" />
+        <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+          <Sparkles class="w-4 h-4 text-primary" />
           <span>Dynamic Fields & Mathematical Formulas</span>
         </h3>
-        <p class="text-xs text-zinc-500 mt-0.5">
+        <p class="text-xs text-muted-foreground mt-0.5">
           Build fields with user-defined enum categories, blueprint references, and multi-variable mathematical formulas.
         </p>
       </div>
@@ -393,8 +395,8 @@
     <!-- Fields List -->
     <div class="space-y-4">
       {#if fields.length === 0}
-        <div class="text-center py-8 border border-dashed border-zinc-800 rounded-lg">
-          <p class="text-xs text-zinc-500">No fields defined yet. Click below to add your first field.</p>
+        <div class="text-center py-8 border border-dashed border-border rounded-lg">
+          <p class="text-xs text-muted-foreground">No fields defined yet. Click below to add your first field.</p>
           <Button variant="outline" size="sm" class="mt-3" onclick={addField}>
             <Plus class="w-3.5 h-3.5" />
             <span>Add Field</span>
@@ -403,13 +405,13 @@
       {/if}
 
       {#each fields as field, index (field.id)}
-        <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-4 relative group">
+        <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-4 relative group">
           <!-- Field Header & Primary Definition -->
           <div class="flex items-start justify-between gap-3">
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 flex-1">
               <!-- Field Machine Name / Key -->
               <div class="sm:col-span-4">
-                <span class="block text-[11px] font-medium text-zinc-400 mb-1">Field Key (Machine Name)</span>
+                <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Key (Machine Name)</span>
                 <Input
                   bind:value={field.name}
                   placeholder="e.g. gender, attack, total_power"
@@ -419,7 +421,7 @@
 
               <!-- Field Display Label -->
               <div class="sm:col-span-4">
-                <span class="block text-[11px] font-medium text-zinc-400 mb-1">Display Label</span>
+                <span class="block text-[11px] font-medium text-muted-foreground mb-1">Display Label</span>
                 <Input
                   bind:value={field.label}
                   placeholder="e.g. Gender, Base Attack, Combat Power"
@@ -429,7 +431,7 @@
 
               <!-- Field Type Selector -->
               <div class="sm:col-span-4">
-                <span class="block text-[11px] font-medium text-zinc-400 mb-1">Field Type</span>
+                <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Type</span>
                 <Select
                   bind:value={field.fieldType}
                   options={fieldTypeOptions}
@@ -442,7 +444,7 @@
               type="button"
               onclick={() => removeField(index)}
               title="Delete Field"
-              class="text-zinc-600 hover:text-red-400 p-1.5 rounded transition mt-5"
+              class="text-muted-foreground hover:text-destructive p-1.5 rounded transition mt-5 cursor-pointer"
             >
               <Trash2 class="w-4 h-4" />
             </button>
@@ -452,30 +454,30 @@
 
           <!-- 1. ENUM BUILDER (PURE STRING CHOICES) -->
           {#if field.fieldType === 'ENUM'}
-            <div class="p-3.5 bg-zinc-900 rounded-lg border border-zinc-800 space-y-3">
+            <div class="p-3.5 bg-card rounded-lg border border-border space-y-3">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 text-xs text-teal-400 font-medium">
+                <div class="flex items-center gap-1.5 text-xs text-primary font-medium">
                   <ListFilter class="w-3.5 h-3.5" />
                   <span>Enum Options (Standard Categorical String Choices)</span>
                 </div>
-                <span class="text-[10px] text-zinc-500 font-mono">e.g. ["Sword", "Saber", "Spear"]</span>
+                <span class="text-[10px] text-muted-foreground font-mono">e.g. ["Sword", "Saber", "Spear"]</span>
               </div>
 
               <!-- Options Tags -->
               <div class="space-y-2">
                 {#if field.options.length === 0}
-                  <p class="text-xs text-zinc-500 italic">No enum options defined yet. Add option labels below.</p>
+                  <p class="text-xs text-muted-foreground italic">No enum options defined yet. Add option labels below.</p>
                 {/if}
 
                 <div class="flex flex-wrap gap-2">
                   {#each field.options as opt, optIdx}
                     {@const optLabel = typeof opt === 'string' ? opt : opt.label}
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800/90 border border-zinc-700 text-xs text-zinc-200">
-                      <span class="font-medium text-zinc-100">{optLabel}</span>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted border border-border text-xs text-foreground">
+                      <span class="font-medium">{optLabel}</span>
                       <button
                         type="button"
                         onclick={() => removeOptionFromField(index, optIdx)}
-                        class="text-zinc-400 hover:text-red-400 transition ml-1"
+                        class="text-muted-foreground hover:text-destructive transition ml-1 cursor-pointer"
                         title="Remove Option"
                       >
                         &times;
@@ -512,36 +514,36 @@
 
           <!-- 2. VALUE_TYPE BUILDER (OPTIONS WITH POWER / NUMERIC WEIGHTS) -->
           {#if field.fieldType === 'VALUE_TYPE'}
-            <div class="p-3.5 bg-zinc-900 rounded-lg border border-zinc-800 space-y-3">
+            <div class="p-3.5 bg-card rounded-lg border border-border space-y-3">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 text-xs text-indigo-400 font-medium">
+                <div class="flex items-center gap-1.5 text-xs text-primary font-medium">
                   <Sparkles class="w-3.5 h-3.5" />
                   <span>Value Type Categories (Options with Power / Numeric Weights for Formulas)</span>
                 </div>
-                <span class="text-[10px] text-zinc-500 font-mono">e.g. &#123; divine : 1000 &#125;</span>
+                <span class="text-[10px] text-muted-foreground font-mono">e.g. &#123; divine : 1000 &#125;</span>
               </div>
 
               <!-- Options Tags -->
               <div class="space-y-2">
                 {#if field.options.length === 0}
-                  <p class="text-xs text-zinc-500 italic">No value types defined yet. Add an option label and numeric power below.</p>
+                  <p class="text-xs text-muted-foreground italic">No value types defined yet. Add an option label and numeric power below.</p>
                 {/if}
 
                 <div class="flex flex-wrap gap-2">
                   {#each field.options as opt, optIdx}
                     {@const optLabel = typeof opt === 'string' ? opt : opt.label}
                     {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800/90 border border-zinc-700 text-xs text-zinc-200">
-                      <span class="font-medium text-zinc-100">{optLabel}</span>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted border border-border text-xs text-foreground">
+                      <span class="font-medium">{optLabel}</span>
                       {#if optPower !== undefined}
-                        <span class="text-[11px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/60">
+                        <span class="text-[11px] font-mono text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
                           Power: {optPower}
                         </span>
                       {/if}
                       <button
                         type="button"
                         onclick={() => removeOptionFromField(index, optIdx)}
-                        class="text-zinc-400 hover:text-red-400 transition ml-1"
+                        class="text-muted-foreground hover:text-destructive transition ml-1 cursor-pointer"
                         title="Remove Option"
                       >
                         &times;
@@ -592,12 +594,12 @@
 
           <!-- 2. BLUEPRINT REFERENCE BUILDER -->
           {#if field.fieldType === 'BLUEPRINT_REF'}
-            <div class="p-3 bg-zinc-900/90 rounded border border-zinc-800/80 space-y-2.5">
-              <div class="flex items-center gap-1.5 text-xs text-cyan-400 font-medium">
+            <div class="p-3 bg-card rounded border border-border space-y-2.5">
+              <div class="flex items-center gap-1.5 text-xs text-cyan-500 font-medium">
                 <Link2 class="w-3.5 h-3.5" />
                 <span>Target Referenced Blueprint (1st-Class or 2nd-Class)</span>
               </div>
-              <p class="text-[11px] text-zinc-400">
+              <p class="text-[11px] text-muted-foreground">
                 Allows this field to embed or reference properties from another blueprint (e.g. "Romantic Affection Scale" or "Cultivation Rank").
               </p>
               <div class="max-w-md">
@@ -611,21 +613,21 @@
 
           <!-- 3. MATHEMATICAL & LOGICAL FORMULA BUILDER -->
           {#if field.fieldType === 'FORMULA'}
-            <div class="p-3.5 bg-zinc-900 rounded border border-amber-900/40 space-y-3">
+            <div class="p-3.5 bg-card rounded border border-amber-500/40 space-y-3">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
+                <div class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-semibold">
                   <Calculator class="w-4 h-4" />
                   <span>Logical & Mathematical Formula Expression</span>
                 </div>
                 {#if field.formulaExpression}
                   {@const validation = getFormulaValidation(field.formulaExpression)}
                   {#if validation.valid}
-                    <div class="inline-flex items-center gap-1 text-[11px] text-emerald-400">
+                    <div class="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                       <Check class="w-3.5 h-3.5" />
                       <span>Valid Syntax</span>
                     </div>
                   {:else}
-                    <div class="inline-flex items-center gap-1 text-[11px] text-red-400">
+                    <div class="inline-flex items-center gap-1 text-[11px] text-destructive">
                       <AlertCircle class="w-3.5 h-3.5" />
                       <span>{validation.error}</span>
                     </div>
@@ -638,7 +640,7 @@
                 <Input
                   bind:value={field.formulaExpression}
                   placeholder="(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery"
-                  class="font-mono text-xs w-full bg-black/60 border-amber-900/60 focus:ring-amber-500"
+                  class="font-mono text-xs w-full bg-muted/40 border-amber-500/40"
                 />
               </div>
 
@@ -646,12 +648,12 @@
               <div class="space-y-2 pt-1">
                 <!-- Available Sibling Fields to Insert -->
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <span class="text-[11px] text-zinc-500 mr-1">Insert Field:</span>
+                  <span class="text-[11px] text-muted-foreground mr-1">Insert Field:</span>
                   {#each fields.filter((f) => f.name && f.id !== field.id) as sibling}
                     <button
                       type="button"
                       onclick={() => insertTokenIntoFormula(index, sibling.name)}
-                      class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-amber-300 hover:bg-zinc-700 hover:text-amber-200 border border-zinc-700 transition"
+                      class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-amber-600 dark:text-amber-300 hover:bg-muted/80 border border-border transition cursor-pointer"
                     >
                       {sibling.name}
                     </button>
@@ -661,14 +663,14 @@
                   <button
                     type="button"
                     onclick={() => insertTokenIntoFormula(index, 'cultivation.major_realm')}
-                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-teal-300 hover:bg-zinc-700 border border-zinc-700 transition"
+                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-primary hover:bg-muted/80 border border-border transition cursor-pointer"
                   >
                     cultivation.major_realm
                   </button>
                   <button
                     type="button"
                     onclick={() => insertTokenIntoFormula(index, 'cultivation.minor_realm')}
-                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-teal-300 hover:bg-zinc-700 border border-zinc-700 transition"
+                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-primary hover:bg-muted/80 border border-border transition cursor-pointer"
                   >
                     cultivation.minor_realm
                   </button>
@@ -676,12 +678,12 @@
 
                 <!-- Math Operators Bar -->
                 <div class="flex flex-wrap items-center gap-1">
-                  <span class="text-[11px] text-zinc-500 mr-1">Operators:</span>
+                  <span class="text-[11px] text-muted-foreground mr-1">Operators:</span>
                   {#each ['+', '-', '*', '/', '^', '%', '(', ')', 'IF(', 'CLAMP(', 'MIN(', 'MAX(', 'SQRT('] as op}
                     <button
                       type="button"
                       onclick={() => insertTokenIntoFormula(index, op)}
-                      class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-950 text-zinc-300 hover:bg-zinc-800 border border-zinc-800 transition"
+                      class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted border border-border text-foreground hover:bg-muted/80 transition cursor-pointer"
                     >
                       {op}
                     </button>
@@ -693,21 +695,21 @@
 
           <!-- 4. NUMBER BOUNDS & UNIT -->
           {#if field.fieldType === 'NUMBER'}
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-zinc-900/80 rounded border border-zinc-800">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-card rounded border border-border">
               <div>
-                <span class="block text-[10px] text-zinc-400 mb-1">Min Value</span>
+                <span class="block text-[10px] text-muted-foreground mb-1">Min Value</span>
                 <Input type="number" bind:value={field.min} class="text-xs" />
               </div>
               <div>
-                <span class="block text-[10px] text-zinc-400 mb-1">Max Value</span>
+                <span class="block text-[10px] text-muted-foreground mb-1">Max Value</span>
                 <Input type="number" bind:value={field.max} class="text-xs" />
               </div>
               <div>
-                <span class="block text-[10px] text-zinc-400 mb-1">Step</span>
+                <span class="block text-[10px] text-muted-foreground mb-1">Step</span>
                 <Input type="number" bind:value={field.step} class="text-xs" />
               </div>
               <div>
-                <span class="block text-[10px] text-zinc-400 mb-1">Metric Unit (e.g. Pts, Atk)</span>
+                <span class="block text-[10px] text-muted-foreground mb-1">Metric Unit (e.g. Pts, Atk)</span>
                 <Input bind:value={field.unit} placeholder="e.g. Pts" class="text-xs" />
               </div>
             </div>
@@ -715,10 +717,10 @@
         </div>
       {/each}
     </div>
-  </div>
+  </Card>
 
   <!-- Actions -->
-  <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
+  <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
     <a href="/world/schemas">
       <Button variant="outline" size="sm">Cancel</Button>
     </a>
@@ -728,3 +730,4 @@
     </Button>
   </div>
 </div>
+

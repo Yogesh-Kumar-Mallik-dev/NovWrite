@@ -13,17 +13,23 @@
     ListFilter,
     Hash,
     Sparkles,
-    AlertCircle,
-    Play,
     Shield,
   } from 'lucide-svelte';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Select from '$lib/components/ui/select.svelte';
-  import Label from '$lib/components/ui/label.svelte';
-  import Field from '$lib/components/ui/field.svelte';
-  import Textarea from '$lib/components/ui/textarea.svelte';
-  import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
+  import {
+    Button,
+    Input,
+    Select,
+    Field,
+    Textarea,
+    Breadcrumb,
+  } from '$lib/components/ui';
+  import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+  } from '$lib/components/ui/card';
   import {
     worldStore,
     type BlueprintClass,
@@ -34,7 +40,6 @@
   import {
     evaluateFormula,
     extractFormulaVariables,
-    validateFormulaSyntax,
   } from '$lib/engine/formulaEngine';
 
   const blueprintId = $derived(page.params.id);
@@ -251,13 +256,13 @@
         { label: 'Blueprint Not Found' },
       ]}
     />
-    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-12 text-center space-y-3">
-      <Shield class="w-8 h-8 text-zinc-600 mx-auto" />
-      <h2 class="text-base font-bold text-zinc-300">Blueprint Not Found</h2>
+    <Card class="p-12 text-center space-y-3 border-border bg-card">
+      <Shield class="w-8 h-8 text-muted-foreground mx-auto" />
+      <h2 class="text-base font-bold text-foreground">Blueprint Not Found</h2>
       <a href="/world/schemas">
         <Button variant="outline" size="sm">Return to Blueprints Workbench</Button>
       </a>
-    </div>
+    </Card>
   </div>
 {:else}
   <div class="max-w-4xl mx-auto space-y-6 pb-16">
@@ -271,22 +276,22 @@
     />
 
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           {#if blueprint.blueprintClass === 'FIRST_CLASS'}
-            <Boxes class="w-5 h-5 text-teal-400" />
+            <Boxes class="w-5 h-5 text-primary" />
           {:else}
-            <Layers class="w-5 h-5 text-cyan-400" />
+            <Layers class="w-5 h-5 text-cyan-500" />
           {/if}
-          <h2 class="text-xl font-bold tracking-tight text-zinc-100">{blueprint.name}</h2>
+          <h2 class="text-xl font-bold tracking-tight text-foreground">{blueprint.name}</h2>
         </div>
         <div class="flex items-center gap-2 text-xs">
-          <span class={`font-medium ${blueprint.blueprintClass === 'FIRST_CLASS' ? 'text-teal-400' : 'text-cyan-400'}`}>
+          <span class={`font-medium ${blueprint.blueprintClass === 'FIRST_CLASS' ? 'text-primary' : 'text-cyan-500'}`}>
             {blueprint.blueprintClass === 'FIRST_CLASS' ? '1st-Class Entity Archetype' : '2nd-Class Sub-Schema'}
           </span>
-          <span class="text-zinc-600">·</span>
-          <span class="text-zinc-400 font-mono">{blueprint.id}</span>
+          <span class="text-muted-foreground/60">·</span>
+          <span class="text-muted-foreground font-mono">{blueprint.id}</span>
         </div>
       </div>
 
@@ -310,16 +315,16 @@
 
     <!-- Notification Alert -->
     {#if saveMessage}
-      <div class="p-3 bg-emerald-950/60 border border-emerald-800 rounded-lg text-xs text-emerald-300 flex items-center gap-2">
-        <Check class="w-4 h-4 text-emerald-400 shrink-0" />
+      <div class="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+        <Check class="w-4 h-4 text-emerald-500 shrink-0" />
         <span>{saveMessage}</span>
       </div>
     {/if}
 
     <!-- Meta Details Card -->
-    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
-      <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-        <Boxes class="w-4 h-4 text-teal-400" />
+    <Card class="p-6 space-y-4 border-border bg-card">
+      <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+        <Boxes class="w-4 h-4 text-primary" />
         <span>Blueprint Identity & Metadata</span>
       </h3>
 
@@ -359,17 +364,17 @@
           <span>Save Changes</span>
         </Button>
       </div>
-    </div>
+    </Card>
 
     <!-- Fields & Mathematical Formulas Workbench -->
-    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-6">
-      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+    <Card class="p-6 space-y-6 border-border bg-card">
+      <div class="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles class="w-4 h-4 text-teal-400" />
+          <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <Sparkles class="w-4 h-4 text-primary" />
             <span>Defined Fields & Mathematical Formulas ({blueprint.fields.length})</span>
           </h3>
-          <p class="text-xs text-zinc-500 mt-0.5">
+          <p class="text-xs text-muted-foreground mt-0.5">
             Manage custom field schemas, enum options, target blueprint references, and computed formulas.
           </p>
         </div>
@@ -382,15 +387,15 @@
 
       <!-- Add New Field Form Drawer -->
       {#if showNewFieldModal}
-        <div class="p-5 rounded-lg border border-teal-800/60 bg-teal-950/20 space-y-4">
-          <div class="flex items-center gap-2 text-xs font-semibold text-teal-300">
-            <Plus class="w-4 h-4 text-teal-400" />
+        <div class="p-5 rounded-lg border border-border bg-muted/40 space-y-4">
+          <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Plus class="w-4 h-4 text-primary" />
             <span>Add New Dynamic Field to Blueprint</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <span class="block text-[11px] font-medium text-zinc-400 mb-1">Field Machine Key</span>
+              <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Machine Key</span>
               <Input
                 bind:value={newFieldName}
                 placeholder="e.g. gender, attack, total_power"
@@ -399,7 +404,7 @@
             </div>
 
             <div>
-              <span class="block text-[11px] font-medium text-zinc-400 mb-1">Display Label</span>
+              <span class="block text-[11px] font-medium text-muted-foreground mb-1">Display Label</span>
               <Input
                 bind:value={newFieldLabel}
                 placeholder="e.g. Gender, Attack Power"
@@ -408,27 +413,27 @@
             </div>
 
             <div>
-              <span class="block text-[11px] font-medium text-zinc-400 mb-1">Field Type</span>
+              <span class="block text-[11px] font-medium text-muted-foreground mb-1">Field Type</span>
               <Select bind:value={newFieldType} options={fieldTypeOptions} />
             </div>
           </div>
 
           <!-- ENUM options builder -->
           {#if newFieldType === 'ENUM'}
-            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-3">
+            <div class="p-3 bg-card rounded border border-border space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-teal-400">Enum Options (Standard Categorical String Choices)</span>
-                <span class="text-[10px] text-zinc-500">e.g. ["Sword", "Saber", "Spear"]</span>
+                <span class="text-xs font-semibold text-primary">Enum Options (Standard Categorical String Choices)</span>
+                <span class="text-[10px] text-muted-foreground">e.g. ["Sword", "Saber", "Spear"]</span>
               </div>
               <div class="flex flex-wrap gap-1.5">
                 {#each newFieldOptions as opt, optIdx}
                   {@const optLabel = typeof opt === 'string' ? opt : opt.label}
-                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted border border-border text-xs text-foreground">
                     <span>{optLabel}</span>
                     <button
                       type="button"
                       onclick={() => newFieldOptions.splice(optIdx, 1)}
-                      class="text-zinc-400 hover:text-red-400 ml-0.5"
+                      class="text-muted-foreground hover:text-destructive ml-0.5 cursor-pointer"
                     >
                       &times;
                     </button>
@@ -484,26 +489,26 @@
 
           <!-- VALUE_TYPE options builder -->
           {#if newFieldType === 'VALUE_TYPE'}
-            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-3">
+            <div class="p-3 bg-card rounded border border-border space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-indigo-400">Value Type Options (With Power / Numeric Weights)</span>
-                <span class="text-[10px] text-zinc-500">Attach numeric values for mathematical formulas</span>
+                <span class="text-xs font-semibold text-primary">Value Type Options (With Power / Numeric Weights)</span>
+                <span class="text-[10px] text-muted-foreground">Attach numeric values for mathematical formulas</span>
               </div>
               <div class="flex flex-wrap gap-1.5">
                 {#each newFieldOptions as opt, optIdx}
                   {@const optLabel = typeof opt === 'string' ? opt : opt.label}
                   {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
-                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted border border-border text-xs text-foreground">
                     <span>{optLabel}</span>
                     {#if optPower !== undefined}
-                      <span class="px-1 py-0.2 rounded bg-indigo-950 text-indigo-300 font-mono text-[10px]">
+                      <span class="px-1 py-0.2 rounded bg-primary/20 text-primary font-mono text-[10px]">
                         Power: {optPower}
                       </span>
                     {/if}
                     <button
                       type="button"
                       onclick={() => newFieldOptions.splice(optIdx, 1)}
-                      class="text-zinc-400 hover:text-red-400 ml-0.5"
+                      class="text-muted-foreground hover:text-destructive ml-0.5 cursor-pointer"
                     >
                       &times;
                     </button>
@@ -567,27 +572,27 @@
 
           <!-- Blueprint Ref -->
           {#if newFieldType === 'BLUEPRINT_REF'}
-            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-2">
-              <span class="text-xs font-medium text-cyan-400">Target Blueprint</span>
+            <div class="p-3 bg-card rounded border border-border space-y-2">
+              <span class="text-xs font-medium text-cyan-500">Target Blueprint</span>
               <Select bind:value={newFieldTargetBp} options={availableTargetBlueprints} />
             </div>
           {/if}
 
           <!-- Formula -->
           {#if newFieldType === 'FORMULA'}
-            <div class="p-3.5 bg-zinc-900 rounded border border-amber-900/50 space-y-2">
-              <span class="text-xs font-medium text-amber-400">Mathematical Formula Expression</span>
+            <div class="p-3.5 bg-card rounded border border-amber-500/40 space-y-2">
+              <span class="text-xs font-medium text-amber-600 dark:text-amber-400">Mathematical Formula Expression</span>
               <Input
                 bind:value={newFieldFormula}
                 placeholder="(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery"
-                class="font-mono text-xs w-full bg-black/60 border-amber-900/60"
+                class="font-mono text-xs w-full bg-muted/40 border-amber-500/40"
               />
               <div class="flex flex-wrap gap-1">
                 {#each blueprint.fields.map((f: DynamicFieldDef) => f.name) as fKey}
                   <button
                     type="button"
                     onclick={() => (newFieldFormula = newFieldFormula ? `${newFieldFormula} ${fKey}` : fKey)}
-                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-amber-300 hover:bg-zinc-700 transition"
+                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-amber-600 dark:text-amber-300 hover:bg-muted/80 transition cursor-pointer"
                   >
                     {fKey}
                   </button>
@@ -609,39 +614,39 @@
       <!-- Current Blueprint Fields List -->
       <div class="space-y-3">
         {#each blueprint.fields as field (field.id)}
-          <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/50 space-y-2.5">
+          <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5">
             <div class="flex items-start justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   {#if field.fieldType === 'FORMULA'}
-                    <Calculator class="w-4 h-4 text-amber-400" />
+                    <Calculator class="w-4 h-4 text-amber-500" />
                   {:else if field.fieldType === 'ENUM'}
-                    <ListFilter class="w-4 h-4 text-teal-400" />
+                    <ListFilter class="w-4 h-4 text-primary" />
                   {:else if field.fieldType === 'VALUE_TYPE'}
-                    <Sparkles class="w-4 h-4 text-indigo-400" />
+                    <Sparkles class="w-4 h-4 text-primary" />
                   {:else if field.fieldType === 'BLUEPRINT_REF'}
-                    <Link2 class="w-4 h-4 text-cyan-400" />
+                    <Link2 class="w-4 h-4 text-cyan-500" />
                   {:else if field.fieldType === 'NUMBER'}
-                    <Hash class="w-4 h-4 text-emerald-400" />
+                    <Hash class="w-4 h-4 text-emerald-500" />
                   {:else}
-                    <Boxes class="w-4 h-4 text-zinc-400" />
+                    <Boxes class="w-4 h-4 text-muted-foreground" />
                   {/if}
-                  <span class="text-sm font-semibold text-zinc-100">{field.label}</span>
-                  <span class="text-xs font-mono text-zinc-500">({field.name})</span>
+                  <span class="text-sm font-semibold text-foreground">{field.label}</span>
+                  <span class="text-xs font-mono text-muted-foreground">({field.name})</span>
                 </div>
                 {#if field.description}
-                  <p class="text-xs text-zinc-400">{field.description}</p>
+                  <p class="text-xs text-muted-foreground">{field.description}</p>
                 {/if}
               </div>
 
               <div class="flex items-center gap-3">
-                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-muted border border-border text-foreground">
                   {field.fieldType}
                 </span>
                 <button
                   type="button"
                   onclick={() => handleDeleteField(field.id, field.name)}
-                  class="text-zinc-600 hover:text-red-400 p-1 transition"
+                  class="text-muted-foreground hover:text-destructive p-1 transition cursor-pointer"
                   title="Remove Field"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
@@ -651,21 +656,21 @@
 
             <!-- Enum Details & Options Management (Pure Categorical Strings) -->
             {#if field.fieldType === 'ENUM' && field.options}
-              <div class="space-y-2 pt-2 border-t border-zinc-900">
+              <div class="space-y-2 pt-2 border-t border-border">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-teal-400 font-medium">Enum Categorical Options:</span>
-                  <span class="text-[10px] text-zinc-500 font-mono">{field.options.length} options</span>
+                  <span class="text-primary font-medium">Enum Categorical Options:</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">{field.options.length} options</span>
                 </div>
 
                 <div class="flex flex-wrap gap-1.5">
                   {#each field.options as opt, optIdx}
                     {@const optLabel = typeof opt === 'string' ? opt : opt.label}
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted border border-border text-[11px] text-foreground">
                       <span>{optLabel}</span>
                       <button
                         type="button"
                         onclick={() => handleRemoveOptionFromExistingField(field.id, optIdx)}
-                        class="text-zinc-500 hover:text-red-400 transition ml-0.5"
+                        class="text-muted-foreground hover:text-destructive transition ml-0.5 cursor-pointer"
                         title="Delete Option"
                       >
                         &times;
@@ -702,27 +707,27 @@
 
             <!-- Value Type Details & Options Management (With Numeric Weights / Power) -->
             {#if field.fieldType === 'VALUE_TYPE' && field.options}
-              <div class="space-y-2 pt-2 border-t border-zinc-900">
+              <div class="space-y-2 pt-2 border-t border-border">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="text-indigo-400 font-medium">Value Type Options & Formula Power Values:</span>
-                  <span class="text-[10px] text-zinc-500 font-mono">{field.options.length} options defined</span>
+                  <span class="text-primary font-medium">Value Type Options & Formula Power Values:</span>
+                  <span class="text-[10px] text-muted-foreground font-mono">{field.options.length} options defined</span>
                 </div>
 
                 <div class="flex flex-wrap gap-1.5">
                   {#each field.options as opt, optIdx}
                     {@const optLabel = typeof opt === 'string' ? opt : opt.label}
                     {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted border border-border text-[11px] text-foreground">
                       <span>{optLabel}</span>
                       {#if optPower !== undefined}
-                        <span class="px-1 py-0.2 rounded bg-indigo-950/80 text-indigo-300 font-mono text-[10px]">
+                        <span class="px-1 py-0.2 rounded bg-primary/20 text-primary font-mono text-[10px]">
                           Power: {optPower}
                         </span>
                       {/if}
                       <button
                         type="button"
                         onclick={() => handleRemoveOptionFromExistingField(field.id, optIdx)}
-                        class="text-zinc-500 hover:text-red-400 transition ml-0.5"
+                        class="text-muted-foreground hover:text-destructive transition ml-0.5 cursor-pointer"
                         title="Delete Option"
                       >
                         &times;
@@ -771,7 +776,7 @@
 
             <!-- Blueprint Ref Details -->
             {#if field.fieldType === 'BLUEPRINT_REF'}
-              <div class="flex items-center gap-2 text-xs pt-1 text-cyan-400 font-medium">
+              <div class="flex items-center gap-2 text-xs pt-1 text-cyan-500 font-medium">
                 <Link2 class="w-3.5 h-3.5" />
                 <span>Referenced Blueprint: {field.targetBlueprintName || field.targetBlueprintId}</span>
               </div>
@@ -780,14 +785,14 @@
             <!-- Formula Details & Live Evaluation preview -->
             {#if field.fieldType === 'FORMULA' && field.formulaExpression}
               {@const evalRes = evaluateFormula(field.formulaExpression, testSandboxContext)}
-              <div class="p-3 bg-zinc-900 rounded border border-amber-950/60 space-y-2 mt-2">
+              <div class="p-3 bg-card rounded border border-amber-500/30 space-y-2 mt-2">
                 <div class="flex items-center justify-between text-xs">
-                  <div class="flex items-center gap-1.5 text-amber-400 font-mono">
+                  <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-mono">
                     <Calculator class="w-3.5 h-3.5" />
                     <span>Formula: {field.formulaExpression}</span>
                   </div>
                   {#if evalRes.success}
-                    <div class="inline-flex items-center gap-1 text-emerald-400 font-bold font-mono">
+                    <div class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold font-mono">
                       <span>Evaluated Result: {evalRes.formattedValue}</span>
                     </div>
                   {/if}
@@ -797,20 +802,21 @@
           </div>
         {/each}
       </div>
-    </div>
+    </Card>
 
     <!-- Danger Zone -->
-    <div class="bg-zinc-900 rounded-lg border border-red-950/40 p-5 flex items-center justify-between">
+    <Card class="border-destructive/30 bg-destructive/5 p-5 flex items-center justify-between">
       <div>
-        <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider">Delete Blueprint</h4>
-        <p class="text-xs text-zinc-500 mt-0.5">
+        <h4 class="text-xs font-bold text-destructive uppercase tracking-wider">Delete Blueprint</h4>
+        <p class="text-xs text-muted-foreground mt-0.5">
           Permanently remove this blueprint from the world schema registry.
         </p>
       </div>
-      <Button variant="outline" size="sm" onclick={handleDeleteBlueprint} class="text-red-400 hover:bg-red-950/50 hover:border-red-800">
+      <Button variant="outline" size="sm" onclick={handleDeleteBlueprint} class="text-destructive hover:bg-destructive/10 hover:border-destructive/30">
         <Trash2 class="w-3.5 h-3.5" />
         <span>Delete Blueprint</span>
       </Button>
-    </div>
+    </Card>
   </div>
 {/if}
+

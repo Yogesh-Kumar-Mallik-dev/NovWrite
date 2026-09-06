@@ -6,15 +6,20 @@
     Trash2,
     Boxes,
     Layers,
-    ArrowRight,
     Calculator,
     Link2,
     ListFilter,
     Hash,
     Sparkles,
   } from 'lucide-svelte';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
+  import { Button, Input } from '$lib/components/ui';
+  import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+  } from '$lib/components/ui/card';
   import { worldStore, type BlueprintClass, type BlueprintDef, type DynamicFieldDef } from '$lib/stores/worldStore.svelte';
 
   let searchQuery = $state('');
@@ -53,11 +58,11 @@
   <!-- Header & Actions -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h2 class="text-lg font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-        <Boxes class="w-5 h-5 text-teal-400" />
+      <h2 class="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
+        <Boxes class="w-5 h-5 text-primary" />
         <span>Blueprints & Schemas Workbench</span>
       </h2>
-      <p class="text-xs text-zinc-400 mt-0.5">
+      <p class="text-xs text-muted-foreground mt-0.5">
         Architect 1st-Class universe archetypes and 2nd-Class sub-blueprints with dynamic enums, references, and mathematical formulas.
       </p>
     </div>
@@ -72,11 +77,11 @@
   </div>
 
   <!-- Filters Bar -->
-  <div class="bg-zinc-900/80 p-3 rounded-lg border border-zinc-800 space-y-3">
+  <Card class="p-3.5 border-border bg-card/75 space-y-3">
     <div class="flex flex-col md:flex-row items-center gap-3">
       <!-- Search Input -->
       <div class="relative flex-1 w-full">
-        <Search class="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
+        <Search class="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
         <Input
           bind:value={searchQuery}
           placeholder="Filter blueprints by name, category, or field name..."
@@ -85,14 +90,14 @@
       </div>
 
       <!-- Class Segmented Control -->
-      <div class="inline-flex rounded-md border border-zinc-800 bg-zinc-950 p-0.5 w-full md:w-auto">
+      <div class="inline-flex rounded-lg border border-border bg-muted/60 p-0.5 w-full md:w-auto">
         <button
           type="button"
           onclick={() => (selectedClassFilter = 'ALL')}
-          class={`px-3 py-1.5 text-xs font-medium rounded transition ${
+          class={`px-3 py-1.5 text-xs font-medium rounded-md transition cursor-pointer ${
             selectedClassFilter === 'ALL'
-              ? 'bg-zinc-800 text-zinc-100'
-              : 'text-zinc-400 hover:text-zinc-200'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           All ({worldStore.blueprints.length})
@@ -100,25 +105,25 @@
         <button
           type="button"
           onclick={() => (selectedClassFilter = 'FIRST_CLASS')}
-          class={`px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5 ${
+          class={`px-3 py-1.5 text-xs font-medium rounded-md transition cursor-pointer flex items-center gap-1.5 ${
             selectedClassFilter === 'FIRST_CLASS'
-              ? 'bg-teal-950 text-teal-300 border border-teal-800/60'
-              : 'text-zinc-400 hover:text-zinc-200'
+              ? 'bg-secondary text-secondary-foreground border border-border font-semibold shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Boxes class="w-3.5 h-3.5 text-teal-400" />
+          <Boxes class="w-3.5 h-3.5 text-primary" />
           <span>1st-Class ({worldStore.getFirstClassBlueprints().length})</span>
         </button>
         <button
           type="button"
           onclick={() => (selectedClassFilter = 'SECOND_CLASS')}
-          class={`px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5 ${
+          class={`px-3 py-1.5 text-xs font-medium rounded-md transition cursor-pointer flex items-center gap-1.5 ${
             selectedClassFilter === 'SECOND_CLASS'
-              ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/60'
-              : 'text-zinc-400 hover:text-zinc-200'
+              ? 'bg-secondary text-secondary-foreground border border-border font-semibold shadow-xs'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Layers class="w-3.5 h-3.5 text-cyan-400" />
+          <Layers class="w-3.5 h-3.5 text-cyan-500" />
           <span>2nd-Class ({worldStore.getSecondClassBlueprints().length})</span>
         </button>
       </div>
@@ -126,14 +131,14 @@
 
     <!-- Category Pills Filter -->
     <div class="flex flex-wrap items-center gap-1.5 pt-1">
-      <span class="text-[11px] text-zinc-500 mr-1">Category:</span>
+      <span class="text-[11px] text-muted-foreground mr-1">Category:</span>
       <button
         type="button"
         onclick={() => (selectedCategoryFilter = 'ALL')}
-        class={`text-xs px-2.5 py-0.5 rounded transition ${
+        class={`text-xs px-2.5 py-0.5 rounded-md transition cursor-pointer ${
           selectedCategoryFilter === 'ALL'
-            ? 'bg-zinc-700 text-zinc-100 font-semibold'
-            : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+            ? 'bg-secondary text-secondary-foreground font-semibold border border-border'
+            : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted'
         }`}
       >
         All
@@ -142,22 +147,22 @@
         <button
           type="button"
           onclick={() => (selectedCategoryFilter = cat)}
-          class={`text-xs px-2.5 py-0.5 rounded transition ${
+          class={`text-xs px-2.5 py-0.5 rounded-md transition cursor-pointer ${
             selectedCategoryFilter === cat
-              ? 'bg-zinc-700 text-zinc-100 font-semibold'
-              : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+              ? 'bg-secondary text-secondary-foreground font-semibold border border-border'
+              : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
         >
           {cat}
         </button>
       {/each}
     </div>
-  </div>
+  </Card>
 
   <!-- Blueprints Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     {#if filteredBlueprints.length === 0}
-      <div class="col-span-2 bg-zinc-900/60 rounded-lg border border-zinc-800 p-12 text-center text-zinc-500 space-y-3">
+      <Card class="col-span-2 border-border bg-card p-12 text-center text-muted-foreground space-y-3">
         <p class="text-xs">No blueprints match your filter criteria.</p>
         <a href="/world/schemas/create">
           <Button variant="outline" size="sm">
@@ -165,57 +170,57 @@
             <span>Create Blueprint from Scratch</span>
           </Button>
         </a>
-      </div>
+      </Card>
     {:else}
       {#each filteredBlueprints as bp (bp.id)}
-        <div class="bg-zinc-900/70 rounded-lg border border-zinc-800 p-5 space-y-4 hover:border-zinc-700 transition flex flex-col justify-between">
+        <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between">
           <div class="space-y-3">
             <!-- Header with Class Indicator & Category -->
             <div class="flex items-start justify-between gap-2">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   {#if bp.blueprintClass === 'FIRST_CLASS'}
-                    <Boxes class="w-4 h-4 text-teal-400" />
+                    <Boxes class="w-4 h-4 text-primary" />
                   {:else}
-                    <Layers class="w-4 h-4 text-cyan-400" />
+                    <Layers class="w-4 h-4 text-cyan-500" />
                   {/if}
-                  <h3 class="text-sm font-bold text-zinc-100">{bp.name}</h3>
+                  <h3 class="text-sm font-bold text-foreground">{bp.name}</h3>
                 </div>
                 <div class="flex items-center gap-2 text-[11px]">
-                  <span class={`font-medium ${bp.blueprintClass === 'FIRST_CLASS' ? 'text-teal-400' : 'text-cyan-400'}`}>
+                  <span class={`font-medium ${bp.blueprintClass === 'FIRST_CLASS' ? 'text-primary' : 'text-cyan-500'}`}>
                     {bp.blueprintClass === 'FIRST_CLASS' ? '1st-Class Archetype' : '2nd-Class Sub-Schema'}
                   </span>
-                  <span class="text-zinc-600">·</span>
-                  <span class="text-zinc-400">{bp.category}</span>
+                  <span class="text-muted-foreground/60">·</span>
+                  <span class="text-muted-foreground">{bp.category}</span>
                 </div>
               </div>
 
               {#if bp.isSystemDefault}
-                <span class="text-[10px] text-zinc-500 font-mono">System Default</span>
+                <span class="text-[10px] text-muted-foreground font-mono">System Default</span>
               {/if}
             </div>
 
-            <p class="text-xs text-zinc-400 leading-relaxed line-clamp-2">{bp.description}</p>
+            <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">{bp.description}</p>
 
             <!-- Dynamic Fields Summary -->
-            <div class="pt-2 border-t border-zinc-800/80 space-y-2">
-              <div class="flex items-center justify-between text-[11px] text-zinc-400 font-medium">
+            <div class="pt-2 border-t border-border space-y-2">
+              <div class="flex items-center justify-between text-[11px] text-muted-foreground font-medium">
                 <span>Dynamic Fields ({bp.fields.length})</span>
               </div>
 
               <div class="flex flex-wrap gap-1.5">
                 {#each bp.fields as field}
-                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300">
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted/60 border border-border text-[11px] font-mono text-foreground">
                     {#if field.fieldType === 'FORMULA'}
-                      <Calculator class="w-3 h-3 text-amber-400" />
+                      <Calculator class="w-3 h-3 text-amber-500" />
                     {:else if field.fieldType === 'ENUM'}
-                      <ListFilter class="w-3 h-3 text-teal-400" />
+                      <ListFilter class="w-3 h-3 text-primary" />
                     {:else if field.fieldType === 'VALUE_TYPE'}
-                      <Sparkles class="w-3 h-3 text-indigo-400" />
+                      <Sparkles class="w-3 h-3 text-primary" />
                     {:else if field.fieldType === 'BLUEPRINT_REF'}
-                      <Link2 class="w-3 h-3 text-cyan-400" />
+                      <Link2 class="w-3 h-3 text-cyan-500" />
                     {:else if field.fieldType === 'NUMBER'}
-                      <Hash class="w-3 h-3 text-emerald-400" />
+                      <Hash class="w-3 h-3 text-emerald-500" />
                     {/if}
                     <span>{field.name}</span>
                   </div>
@@ -225,12 +230,12 @@
           </div>
 
           <!-- Card Footer Actions -->
-          <div class="pt-3 border-t border-zinc-800 flex items-center justify-between">
+          <div class="pt-3 border-t border-border flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onclick={() => handleDelete(bp.id, bp.name)}
-              class="text-zinc-500 hover:text-red-400 px-2 h-7"
+              class="text-muted-foreground hover:text-destructive px-2 h-7"
             >
               <Trash2 class="w-3.5 h-3.5" />
             </Button>
@@ -253,8 +258,9 @@
               </a>
             </div>
           </div>
-        </div>
+        </Card>
       {/each}
     {/if}
   </div>
 </div>
+

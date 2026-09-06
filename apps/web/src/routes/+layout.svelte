@@ -35,18 +35,18 @@
 <div class="min-h-screen flex flex-col bg-background text-foreground font-sans">
   <!-- Development Bar (Non-Production Helper) -->
   <header
-    class="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-1.5 flex items-center justify-between text-xs transition-colors"
+    class="bg-muted/70 border-b border-border px-4 py-1.5 flex items-center justify-between text-xs transition-colors"
   >
     <div class="flex items-center gap-3">
       <span
-        class="flex items-center gap-1.5 font-mono font-semibold text-purple-600 dark:text-purple-400"
+        class="flex items-center gap-1.5 font-mono font-semibold text-primary"
       >
-        <span class="h-2 w-2 rounded-full bg-purple-500 animate-pulse"></span>
+        <span class="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
         NovWrite DevCore v1.9
       </span>
-      <span class="text-zinc-400 dark:text-zinc-600">|</span>
-      <span class="text-zinc-600 dark:text-zinc-400"
-        >Environment: <strong class="text-zinc-800 dark:text-zinc-200">Local Development</strong
+      <span class="text-border">|</span>
+      <span class="text-muted-foreground"
+        >Environment: <strong class="text-foreground">Local Development</strong
         ></span
       >
     </div>
@@ -61,7 +61,7 @@
       <button
         onclick={handleSeedDev}
         disabled={isSeeding}
-        class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium px-2.5 py-1 rounded transition-colors cursor-pointer text-xs"
+        class="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 font-medium px-2.5 py-1 rounded transition-colors cursor-pointer text-xs"
       >
         <Sparkles class="w-3.5 h-3.5" />
         {isSeeding ? "Seeding Universe..." : "⚡ Seed Demo Universe"}
@@ -78,7 +78,7 @@
         href="/"
         class="flex items-center gap-2 font-bold text-lg tracking-tight hover:opacity-90"
       >
-        <span class="text-purple-600 dark:text-purple-500">Nov</span><span>Write</span>
+        <span class="text-primary">Nov</span><span>Write</span>
       </a>
 
       <!-- Studio Workspaces Switcher -->
@@ -91,7 +91,7 @@
             ? 'bg-secondary text-secondary-foreground font-semibold shadow-xs'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'}"
         >
-          <BookOpen class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <BookOpen class="w-4 h-4 text-primary" />
           <span>Prose Studio</span>
         </a>
         <a
@@ -102,14 +102,14 @@
             ? 'bg-secondary text-secondary-foreground font-semibold shadow-xs'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'}"
         >
-          <Globe2 class="w-4 h-4 text-red-600 dark:text-red-400" />
+          <Globe2 class="w-4 h-4 text-primary" />
           <span>World Studio</span>
         </a>
       </div>
     </div>
 
     <div class="flex items-center gap-4">
-      <span class="text-xs text-zinc-400 font-mono hidden md:inline"
+      <span class="text-xs text-muted-foreground font-mono hidden md:inline"
         >Project: Chronicles of Aethelgard</span
       >
       <ThemeToggle size="sm" />

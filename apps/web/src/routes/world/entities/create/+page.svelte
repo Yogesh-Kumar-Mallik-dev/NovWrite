@@ -7,7 +7,6 @@
     Boxes,
     Sparkles,
     Calculator,
-    Heart,
     Link2,
     ListFilter,
     Shield,
@@ -17,28 +16,31 @@
     User,
     Sword,
     MapPin,
-    Zap,
-    Scale,
-    Info,
     ChevronLeft,
     ChevronRight,
     Search,
     Plus,
-    Flame,
-    Activity,
   } from 'lucide-svelte';
-  import Button from '$lib/components/ui/button.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Select from '$lib/components/ui/select.svelte';
-  import Label from '$lib/components/ui/label.svelte';
-  import Field from '$lib/components/ui/field.svelte';
-  import Textarea from '$lib/components/ui/textarea.svelte';
-  import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
+  import {
+    Button,
+    Input,
+    Select,
+    Label,
+    Field,
+    Textarea,
+    Breadcrumb,
+  } from '$lib/components/ui';
+  import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+  } from '$lib/components/ui/card';
   import {
     worldStore,
     type BlueprintDef,
     type DynamicFieldDef,
-    type EntityItem,
   } from '$lib/stores/worldStore.svelte';
   import { evaluateFormula } from '$lib/engine/formulaEngine';
 
@@ -476,13 +478,13 @@
   />
 
   <!-- Header -->
-  <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+  <div class="flex items-center justify-between border-b border-border pb-4">
     <div>
-      <h2 class="text-xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-        <Boxes class="w-5 h-5 text-teal-400" />
+      <h2 class="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+        <Boxes class="w-5 h-5 text-primary" />
         <span>Instantiate Universe Entity</span>
       </h2>
-      <p class="text-xs text-zinc-400 mt-1">
+      <p class="text-xs text-muted-foreground mt-1">
         Instantiate concrete entity objects from 1st-Class Blueprints with interactive option pickers, sub-blueprint systems, and relational entity graph connections.
       </p>
     </div>
@@ -495,21 +497,21 @@
   </div>
 
   <!-- SECTION 1: Carousel of 1st-Class Blueprint Archetype Cards -->
-  <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
+  <Card class="p-6 space-y-5 border-border bg-card">
     <!-- Carousel Header & Category Tabs -->
     <div class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-            <Boxes class="w-4 h-4 text-teal-400" />
+          <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <Boxes class="w-4 h-4 text-primary" />
             <span>Select 1st-Class Blueprint Archetype</span>
           </h3>
-          <p class="text-[11px] text-zinc-500 mt-0.5">
+          <p class="text-[11px] text-muted-foreground mt-0.5">
             1st-Class Blueprints instantiate standalone universe entity objects. Use the carousel below to select an archetype.
           </p>
         </div>
 
-        <span class="text-[10px] text-zinc-400 font-mono self-start sm:self-auto">
+        <span class="text-[10px] text-muted-foreground font-mono self-start sm:self-auto">
           {filteredBlueprints.length} Archetypes Available
         </span>
       </div>
@@ -521,10 +523,10 @@
             <button
               type="button"
               onclick={() => (selectedCategoryFilter = cat)}
-              class={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
+              class={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer shrink-0 ${
                 selectedCategoryFilter === cat
-                  ? 'bg-teal-950 text-teal-300 border border-teal-700'
-                  : 'bg-zinc-950/70 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                  ? 'bg-secondary text-secondary-foreground border border-border font-semibold shadow-xs'
+                  : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               {cat === 'ALL' ? 'All Archetypes' : cat}
@@ -533,7 +535,7 @@
         </div>
 
         <div class="relative w-full sm:w-52 shrink-0">
-          <Search class="w-3.5 h-3.5 absolute left-2.5 top-2 text-zinc-500" />
+          <Search class="w-3.5 h-3.5 absolute left-2.5 top-2 text-muted-foreground" />
           <Input
             bind:value={searchArchetypeQuery}
             placeholder="Filter archetypes..."
@@ -551,7 +553,7 @@
         onclick={() => scrollCarousel('left')}
         disabled={!canScrollLeft}
         aria-label="Previous Archetype"
-        class="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 text-teal-400 flex items-center justify-center shadow-lg shadow-black/80 transition-all duration-150 cursor-pointer hover:bg-zinc-800 hover:border-teal-400 hover:text-teal-300 hover:scale-105 active:scale-95 active:bg-teal-950 active:border-teal-500 active:text-teal-200 disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-zinc-950 disabled:border-zinc-850 disabled:text-zinc-600 disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 disabled:hover:border-zinc-850 disabled:hover:bg-zinc-950 disabled:hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+        class="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-card border border-border text-primary flex items-center justify-center shadow-lg transition-all duration-150 cursor-pointer hover:bg-secondary hover:border-primary hover:scale-105 active:scale-95 active:bg-secondary active:border-primary disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:border-border/60 disabled:text-muted-foreground disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ChevronLeft class="w-4 h-4" />
       </button>
@@ -562,7 +564,7 @@
         onclick={() => scrollCarousel('right')}
         disabled={!canScrollRight}
         aria-label="Next Archetype"
-        class="absolute -right-3 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 text-teal-400 flex items-center justify-center shadow-lg shadow-black/80 transition-all duration-150 cursor-pointer hover:bg-zinc-800 hover:border-teal-400 hover:text-teal-300 hover:scale-105 active:scale-95 active:bg-teal-950 active:border-teal-500 active:text-teal-200 disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-zinc-950 disabled:border-zinc-850 disabled:text-zinc-600 disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 disabled:hover:border-zinc-850 disabled:hover:bg-zinc-950 disabled:hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+        class="absolute -right-3 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-card border border-border text-primary flex items-center justify-center shadow-lg transition-all duration-150 cursor-pointer hover:bg-secondary hover:border-primary hover:scale-105 active:scale-95 active:bg-secondary active:border-primary disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:border-border/60 disabled:text-muted-foreground disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ChevronRight class="w-4 h-4" />
       </button>
@@ -573,7 +575,7 @@
         onscroll={updateScrollState}
         class="flex items-stretch gap-3 overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        {#each filteredBlueprints as bp}
+        {#each filteredBlueprints as bp (bp.id)}
           {@const Icon = getArchetypeIcon(bp)}
           {@const isSelected = selectedBlueprintId === bp.id}
           {@const formulaCount = bp.fields.filter((f: DynamicFieldDef) => f.fieldType === 'FORMULA').length}
@@ -591,52 +593,52 @@
           <button
             type="button"
             onclick={() => handleSelectBlueprint(bp.id)}
-            class={`w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
+            class={`w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border text-left transition cursor-pointer relative flex flex-col justify-between ${
               isSelected
-                ? 'border-teal-500 bg-gradient-to-b from-teal-950/40 via-zinc-900 to-zinc-900 ring-1 ring-teal-500/60 shadow-md shadow-teal-950/50'
-                : 'border-zinc-800 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-900/60'
+                ? 'border-primary bg-secondary/80 ring-1 ring-ring shadow-md'
+                : 'border-border bg-card/60 hover:border-border/80 hover:bg-muted/50'
             }`}
           >
             <div>
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  <div class={`p-1.5 rounded-lg ${isSelected ? 'bg-teal-900/60 text-teal-300 border border-teal-700' : 'bg-zinc-800/80 text-zinc-400'}`}>
+                  <div class={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-muted text-muted-foreground'}`}>
                     <Icon class="w-4 h-4" />
                   </div>
                   <div>
-                    <div class="font-bold text-xs text-zinc-100">{bp.name}</div>
-                    <span class="text-[10px] text-zinc-400 font-medium">{bp.category}</span>
+                    <div class="font-bold text-xs text-foreground">{bp.name}</div>
+                    <span class="text-[10px] text-muted-foreground font-medium">{bp.category}</span>
                   </div>
                 </div>
                 {#if isSelected}
-                  <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-700">
+                  <span class="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                     <Check class="w-3 h-3" />
                     <span>Selected</span>
                   </span>
                 {/if}
               </div>
 
-              <p class="text-[11px] text-zinc-400 mt-2.5 line-clamp-2 leading-relaxed">
+              <p class="text-[11px] text-muted-foreground mt-2.5 line-clamp-2 leading-relaxed">
                 {bp.description}
               </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-zinc-800/80 text-[10px] font-mono">
-              <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-teal-400">
+            <div class="flex flex-wrap items-center gap-1.5 pt-3 mt-3 border-t border-border/80 text-[10px] font-mono">
+              <span class="px-1.5 py-0.5 rounded bg-muted border border-border text-primary font-medium">
                 {bp.fields.length} fields
               </span>
               {#if formulaCount > 0}
-                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">
+                <span class="px-1.5 py-0.5 rounded bg-muted border border-border text-amber-500 font-medium">
                   {formulaCount} math
                 </span>
               {/if}
               {#if subSystemCount > 0}
-                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-cyan-400">
+                <span class="px-1.5 py-0.5 rounded bg-muted border border-border text-cyan-500 font-medium">
                   {subSystemCount} sub-systems
                 </span>
               {/if}
               {#if relationalLinkCount > 0}
-                <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-purple-400">
+                <span class="px-1.5 py-0.5 rounded bg-muted border border-border text-primary font-medium">
                   {relationalLinkCount} links
                 </span>
               {/if}
@@ -648,13 +650,13 @@
         <a
           href="/world/schemas/create?blueprintClass=FIRST_CLASS"
           target="_blank"
-          class="w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 hover:border-teal-500 hover:bg-teal-950/10 transition flex flex-col justify-center items-center text-center space-y-2 text-zinc-400 hover:text-teal-300 min-h-[160px]"
+          class="w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border border-dashed border-border bg-card/40 hover:border-primary hover:bg-muted/40 transition flex flex-col justify-center items-center text-center space-y-2 text-muted-foreground hover:text-foreground min-h-[160px]"
         >
-          <div class="p-2 rounded-full bg-zinc-900 border border-zinc-800">
-            <Plus class="w-4 h-4 text-teal-400" />
+          <div class="p-2 rounded-full bg-muted border border-border">
+            <Plus class="w-4 h-4 text-primary" />
           </div>
-          <div class="font-bold text-xs">Create 1st-Class Blueprint</div>
-          <p class="text-[10px] text-zinc-500 max-w-[180px]">
+          <div class="font-bold text-xs text-foreground">Create 1st-Class Blueprint</div>
+          <p class="text-[10px] text-muted-foreground max-w-[180px]">
             Define new fields, categories, formulas, and relational schemas.
           </p>
         </a>
@@ -667,10 +669,10 @@
             <button
               type="button"
               onclick={() => scrollToSlide(idx)}
-              class={`h-1.5 rounded-full transition-all ${
+              class={`h-1.5 rounded-full transition-all cursor-pointer ${
                 activeSlideIndex === idx
-                  ? 'w-6 bg-teal-400'
-                  : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
+                  ? 'w-6 bg-primary'
+                  : 'w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             ></button>
@@ -680,14 +682,14 @@
     </div>
 
     <!-- Identity & Lore Inputs -->
-    <div class="border-t border-zinc-800 pt-5 space-y-4">
+    <div class="border-t border-border pt-5 space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <ArchetypeIcon class="w-4 h-4 text-teal-400" />
+        <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+          <ArchetypeIcon class="w-4 h-4 text-primary" />
           <span>{archetypeContext.archetypeLabel} Identity</span>
         </h3>
         {#if selectedBlueprint}
-          <span class="text-[11px] text-teal-400 font-medium px-2.5 py-0.5 rounded bg-teal-950/70 border border-teal-800/60">
+          <span class="text-[11px] text-primary font-medium px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20">
             Bound Archetype: {selectedBlueprint.name}
           </span>
         {/if}
@@ -723,25 +725,25 @@
         />
       </Field>
     </div>
-  </div>
+  </Card>
 
   <!-- SECTION 2: Dynamic Template Attributes (1st-Class Options & Enums) -->
   {#if selectedBlueprint && directFields.length > 0}
-    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+    <Card class="p-6 space-y-5 border-border bg-card">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
         <div>
-          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles class="w-4 h-4 text-teal-400" />
+          <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <Sparkles class="w-4 h-4 text-primary" />
             <span>Dynamic Template Attributes ({selectedBlueprint.name})</span>
           </h3>
-          <p class="text-xs text-zinc-500 mt-0.5">
+          <p class="text-xs text-muted-foreground mt-0.5">
             Select concrete attributes defined directly in the <strong>{selectedBlueprint.name}</strong> template.
           </p>
         </div>
 
         <a href={`/world/schemas/${selectedBlueprint.id}`} target="_blank" class="shrink-0">
           <Button variant="outline" size="sm" class="h-7 text-[11px] px-2.5">
-            <Edit3 class="w-3 h-3 text-teal-400" />
+            <Edit3 class="w-3 h-3 text-primary" />
             <span>Edit Blueprint Schema</span>
           </Button>
         </a>
@@ -751,21 +753,21 @@
         {#each directFields as field}
           <!-- ENUM / VALUE_TYPE FIELD -->
           {#if field.fieldType === 'ENUM' || field.fieldType === 'VALUE_TYPE'}
-            <div class="p-4 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-2.5 col-span-1 md:col-span-2">
+            <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2">
               <div class="flex items-center justify-between">
-                <Label class="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
+                <Label class="text-xs font-medium text-foreground flex items-center gap-1.5">
                   {#if field.fieldType === 'VALUE_TYPE'}
-                    <Sparkles class="w-3.5 h-3.5 text-indigo-400" />
+                    <Sparkles class="w-3.5 h-3.5 text-primary" />
                   {:else}
-                    <ListFilter class="w-3.5 h-3.5 text-teal-400" />
+                    <ListFilter class="w-3.5 h-3.5 text-primary" />
                   {/if}
                   <span>{field.label}</span>
-                  <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
+                  <span class="text-[10px] font-mono text-muted-foreground">({field.name})</span>
                 </Label>
               </div>
 
               {#if field.description}
-                <p class="text-[11px] text-zinc-400">{field.description}</p>
+                <p class="text-[11px] text-muted-foreground">{field.description}</p>
               {/if}
 
               <div class="space-y-2">
@@ -778,7 +780,7 @@
 
                 {#if field.options && field.options.length > 0}
                   <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span class="text-[10px] text-zinc-500 mr-1 font-medium">Quick Select:</span>
+                    <span class="text-[10px] text-muted-foreground mr-1 font-medium">Quick Select:</span>
                     {#each field.options as opt}
                       {@const optVal = typeof opt === 'string' ? opt : opt.value}
                       {@const optLabel = typeof opt === 'string' ? opt : opt.label}
@@ -787,17 +789,15 @@
                       <button
                         type="button"
                         onclick={() => (properties[field.name] = optVal)}
-                        class={`px-2.5 py-1 rounded text-[11px] font-medium transition flex items-center gap-1.5 ${
+                        class={`px-2.5 py-1 rounded text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
                           isSelected
-                            ? field.fieldType === 'VALUE_TYPE'
-                              ? 'bg-indigo-950 text-indigo-200 border border-indigo-600 ring-1 ring-indigo-500/60 shadow-sm'
-                              : 'bg-teal-950 text-teal-200 border border-teal-600 ring-1 ring-teal-500/60 shadow-sm'
-                            : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                            ? 'bg-secondary text-secondary-foreground border border-border ring-1 ring-ring shadow-xs'
+                            : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted'
                         }`}
                       >
                         <span>{optLabel}</span>
                         {#if field.fieldType === 'VALUE_TYPE' && optPower !== undefined}
-                          <span class={`text-[9px] font-mono px-1 py-0.2 rounded ${isSelected ? 'bg-indigo-900 text-indigo-300 font-bold' : 'bg-zinc-800 text-zinc-400'}`}>
+                          <span class={`text-[9px] font-mono px-1 py-0.2 rounded ${isSelected ? 'bg-primary/20 text-primary font-bold' : 'bg-muted text-muted-foreground'}`}>
                             ⚡ {optPower}
                           </span>
                         {/if}
@@ -810,20 +810,20 @@
 
           <!-- NUMBER FIELD -->
           {:else if field.fieldType === 'NUMBER'}
-            <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
+            <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
               <div class="flex items-center justify-between">
-                <Label class="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
-                  <Hash class="w-3.5 h-3.5 text-emerald-400" />
+                <Label class="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <Hash class="w-3.5 h-3.5 text-emerald-500" />
                   <span>{field.label}</span>
-                  {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
+                  {#if field.unit}<span class="text-muted-foreground font-mono">({field.unit})</span>{/if}
                 </Label>
                 {#if field.min !== undefined && field.max !== undefined}
-                  <span class="text-[10px] font-mono text-zinc-500">[{field.min} - {field.max}]</span>
+                  <span class="text-[10px] font-mono text-muted-foreground">[{field.min} - {field.max}]</span>
                 {/if}
               </div>
 
               {#if field.description}
-                <p class="text-[10px] text-zinc-400">{field.description}</p>
+                <p class="text-[10px] text-muted-foreground">{field.description}</p>
               {/if}
 
               <Input
@@ -838,8 +838,8 @@
 
           <!-- BOOLEAN FIELD -->
           {:else if field.fieldType === 'BOOLEAN'}
-            <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
-              <span class="block text-xs font-medium text-zinc-200">{field.label}</span>
+            <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
+              <span class="block text-xs font-medium text-foreground">{field.label}</span>
               <Select
                 bind:value={properties[field.name]}
                 options={[
@@ -851,10 +851,10 @@
 
           <!-- STRING FIELD -->
           {:else}
-            <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/70 space-y-1.5">
-              <span class="block text-xs font-medium text-zinc-200">{field.label}</span>
+            <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
+              <span class="block text-xs font-medium text-foreground">{field.label}</span>
               {#if field.description}
-                <p class="text-[10px] text-zinc-400">{field.description}</p>
+                <p class="text-[10px] text-muted-foreground">{field.description}</p>
               {/if}
               <Input
                 bind:value={properties[field.name]}
@@ -864,41 +864,41 @@
           {/if}
         {/each}
       </div>
-    </div>
+    </Card>
   {/if}
 
   <!-- SECTION 3: Sub-Blueprint Systems & Scales (2nd-Class Schemas) -->
   {#if subBlueprintRefFields.length > 0}
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-          <Layers class="w-4 h-4 text-cyan-400" />
+        <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+          <Layers class="w-4 h-4 text-cyan-500" />
           <span>Sub-Blueprint Systems & Scales (2nd-Class Schemas)</span>
         </h3>
-        <span class="text-[11px] text-cyan-400/80 font-mono">Nested Sub-Systems</span>
+        <span class="text-[11px] text-cyan-500 font-mono">Nested Sub-Systems</span>
       </div>
 
       {#each subBlueprintRefFields as field}
         {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
         {#if targetBp}
           {@const subFormula = properties[field.name] ? getSubBlueprintComputedFormula(targetBp, field.name, properties[field.name]) : null}
-          <div class="p-5 rounded-lg border border-cyan-900/60 bg-gradient-to-br from-cyan-950/20 via-zinc-900 to-zinc-900 space-y-4 shadow-sm shadow-cyan-950/30">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyan-900/40 pb-3">
+          <Card class="p-5 border-cyan-500/30 bg-card space-y-4 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
               <div class="space-y-0.5">
-                <div class="flex items-center gap-2 text-xs font-bold text-cyan-300">
-                  <Link2 class="w-4 h-4 text-cyan-400" />
+                <div class="flex items-center gap-2 text-xs font-bold text-cyan-600 dark:text-cyan-400">
+                  <Link2 class="w-4 h-4 text-cyan-500" />
                   <span>{field.label}</span>
-                  <span class="text-zinc-500 font-mono">({field.name})</span>
+                  <span class="text-muted-foreground font-mono">({field.name})</span>
                 </div>
-                <p class="text-[11px] text-zinc-400">{targetBp.description}</p>
+                <p class="text-[11px] text-muted-foreground">{targetBp.description}</p>
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
                   Sub-Blueprint: {targetBp.name}
                 </span>
                 <a href={`/world/schemas/${targetBp.id}`} target="_blank">
-                  <Button variant="outline" size="sm" class="h-6 text-[10px] px-2 text-cyan-300 border-cyan-800 hover:bg-cyan-950/50">
+                  <Button variant="outline" size="sm" class="h-6 text-[10px] px-2 text-cyan-600 dark:text-cyan-400 border-cyan-500/40 hover:bg-cyan-500/10">
                     <Edit3 class="w-2.5 h-2.5" />
                     <span>Schema</span>
                   </Button>
@@ -911,14 +911,14 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {#each targetBp.fields as subF}
                   {#if subF.fieldType !== 'FORMULA'}
-                    <div class="space-y-2 p-3 rounded-lg bg-zinc-950/80 border border-zinc-800">
+                    <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
                       <div class="flex items-center justify-between">
-                        <span class="block text-[11px] font-medium text-zinc-200">
+                        <span class="block text-[11px] font-medium text-foreground">
                           {subF.label}
-                          {#if subF.unit}<span class="text-zinc-500 font-mono">({subF.unit})</span>{/if}
+                          {#if subF.unit}<span class="text-muted-foreground font-mono">({subF.unit})</span>{/if}
                         </span>
                         {#if subF.min !== undefined && subF.max !== undefined}
-                          <span class="text-[9px] font-mono text-zinc-500">[{subF.min}-{subF.max}]</span>
+                          <span class="text-[9px] font-mono text-muted-foreground">[{subF.min}-{subF.max}]</span>
                         {/if}
                       </div>
 
@@ -938,12 +938,10 @@
                                 <button
                                   type="button"
                                   onclick={() => (properties[field.name][subF.name] = optVal)}
-                                  class={`px-2 py-0.5 rounded text-[10px] font-medium transition flex items-center gap-1 ${
+                                  class={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer flex items-center gap-1 ${
                                     isSelected
-                                      ? subF.fieldType === 'VALUE_TYPE'
-                                        ? 'bg-indigo-950 text-indigo-200 border border-indigo-600 ring-1 ring-indigo-500/50'
-                                        : 'bg-cyan-950 text-cyan-200 border border-cyan-600 ring-1 ring-cyan-500/50'
-                                      : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                      ? 'bg-secondary text-secondary-foreground border border-border ring-1 ring-ring'
+                                      : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                                   }`}
                                 >
                                   <span>{optLabel}</span>
@@ -984,16 +982,16 @@
               </div>
 
               {#if subFormula}
-                <div class="p-2.5 rounded bg-cyan-950/40 border border-cyan-900/50 flex items-center justify-between text-xs">
-                  <span class="text-cyan-300 font-medium">{subFormula.label}:</span>
+                <div class="p-2.5 rounded bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between text-xs">
+                  <span class="text-cyan-600 dark:text-cyan-300 font-medium">{subFormula.label}:</span>
                   <div class="flex items-center gap-2 font-mono">
-                    <span class="text-[10px] text-cyan-400/70">{subFormula.expr}</span>
-                    <span class="px-2 py-0.5 rounded bg-cyan-900/60 font-bold text-cyan-200">{subFormula.formatted}</span>
+                    <span class="text-[10px] text-cyan-600/80 dark:text-cyan-400/80">{subFormula.expr}</span>
+                    <span class="px-2 py-0.5 rounded bg-cyan-500/20 font-bold text-cyan-700 dark:text-cyan-200">{subFormula.formatted}</span>
                   </div>
                 </div>
               {/if}
             {/if}
-          </div>
+          </Card>
         {/if}
       {/each}
     </div>
@@ -1001,37 +999,37 @@
 
   <!-- SECTION 4: 1st-Class Relational Entity Links (Entity Graph Connections) -->
   {#if relationalEntityRefFields.length > 0}
-    <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+    <Card class="p-6 space-y-4 border-border bg-card">
+      <div class="flex items-center justify-between border-b border-border pb-3">
         <div>
-          <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-            <Link2 class="w-4 h-4 text-purple-400" />
+          <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+            <Link2 class="w-4 h-4 text-primary" />
             <span>1st-Class Relational Entity Connections</span>
           </h3>
-          <p class="text-xs text-zinc-500 mt-0.5">
+          <p class="text-xs text-muted-foreground mt-0.5">
             Connect this entity to other 1st-class entity objects (e.g. character owning a weapon, belonging to a faction).
           </p>
         </div>
-        <span class="text-[11px] text-purple-400/80 font-mono">1st-Class Links</span>
+        <span class="text-[11px] text-primary font-mono">1st-Class Links</span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each relationalEntityRefFields as field}
           {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
-          {@const candidateEntities = targetBp ? worldStore.entities.filter((e: EntityItem) => e.blueprintId === targetBp.id) : worldStore.entities}
-          <div class="p-4 rounded-lg border border-purple-950/70 bg-purple-950/15 space-y-2.5">
+          {@const candidateEntities = targetBp ? worldStore.entities.filter((e: any) => e.blueprintId === targetBp.id) : worldStore.entities}
+          <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5">
             <div class="flex items-center justify-between">
-              <Label class="text-xs font-medium text-purple-200 flex items-center gap-1.5">
-                <Link2 class="w-3.5 h-3.5 text-purple-400" />
+              <Label class="text-xs font-medium text-foreground flex items-center gap-1.5">
+                <Link2 class="w-3.5 h-3.5 text-primary" />
                 <span>{field.label}</span>
               </Label>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/80 border border-purple-800 text-purple-300">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary">
                 Target: {targetBp ? targetBp.name : '1st-Class Entity'}
               </span>
             </div>
 
             {#if field.description}
-              <p class="text-[11px] text-zinc-400">{field.description}</p>
+              <p class="text-[11px] text-muted-foreground">{field.description}</p>
             {/if}
 
             <div class="space-y-2">
@@ -1039,7 +1037,7 @@
                 bind:value={properties[field.name]}
                 options={[
                   { value: '', label: 'None (Unassigned)' },
-                  ...candidateEntities.map((e: EntityItem) => ({
+                  ...candidateEntities.map((e: any) => ({
                     value: e.id,
                     label: `${e.name} (${e.category})`,
                   })),
@@ -1048,14 +1046,14 @@
 
               {#if candidateEntities.length > 0}
                 <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  <span class="text-[10px] text-zinc-500 mr-1">Quick Link:</span>
+                  <span class="text-[10px] text-muted-foreground mr-1">Quick Link:</span>
                   <button
                     type="button"
                     onclick={() => (properties[field.name] = '')}
-                    class={`px-2 py-0.5 rounded text-[10px] transition ${
+                    class={`px-2 py-0.5 rounded text-[10px] transition cursor-pointer ${
                       !properties[field.name]
-                        ? 'bg-zinc-800 text-zinc-200 font-bold border border-zinc-700'
-                        : 'bg-zinc-950 text-zinc-500 border border-zinc-850 hover:text-zinc-300'
+                        ? 'bg-secondary text-secondary-foreground font-bold border border-border'
+                        : 'bg-card text-muted-foreground border border-border hover:text-foreground'
                     }`}
                   >
                     None
@@ -1064,10 +1062,10 @@
                     <button
                       type="button"
                       onclick={() => (properties[field.name] = cand.id)}
-                      class={`px-2 py-0.5 rounded text-[10px] font-medium transition flex items-center gap-1 ${
+                      class={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer flex items-center gap-1 ${
                         properties[field.name] === cand.id
-                          ? 'bg-purple-950 text-purple-200 border border-purple-600 ring-1 ring-purple-500/50'
-                          : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                          ? 'bg-secondary text-secondary-foreground border border-border ring-1 ring-ring'
+                          : 'bg-card border border-border text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <span>{cand.name}</span>
@@ -1079,42 +1077,42 @@
           </div>
         {/each}
       </div>
-    </div>
+    </Card>
   {/if}
 
   <!-- SECTION 5: Live Evaluated Mathematical Formulas (Sandbox) -->
   {#if Object.keys(liveComputedFormulas).length > 0}
-    <div class="bg-gradient-to-r from-amber-950/40 via-zinc-900 to-zinc-900 rounded-lg border border-amber-900/50 p-6 space-y-4 shadow-md shadow-amber-950/20">
+    <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
-          <Calculator class="w-4 h-4 text-amber-400" />
+        <h3 class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2">
+          <Calculator class="w-4 h-4 text-amber-500" />
           <span>Live Evaluated Mathematical Formulas</span>
         </h3>
-        <span class="text-[10px] text-amber-400/90 font-mono bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-800/70">
+        <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
           Auto-evaluates instantly as you adjust any option above
         </span>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
-          <div class="p-4 rounded-lg bg-black/60 border border-amber-900/70 space-y-2">
+          <div class="p-4 rounded-lg bg-muted/50 border border-amber-500/30 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-medium text-zinc-100">{fData.label}</span>
-              <div class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-950 border border-amber-600 text-amber-300 font-mono text-base font-bold shadow-sm">
+              <span class="text-xs font-medium text-foreground">{fData.label}</span>
+              <div class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-mono text-base font-bold shadow-xs">
                 <span>{fData.formatted}</span>
               </div>
             </div>
-            <div class="text-[11px] font-mono text-amber-400/80 pt-1" title={fData.expr}>
+            <div class="text-[11px] font-mono text-muted-foreground pt-1" title={fData.expr}>
               Formula: {fData.expr}
             </div>
           </div>
         {/each}
       </div>
-    </div>
+    </Card>
   {/if}
 
   <!-- SECTION 6: Actions -->
-  <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
+  <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
     <a href="/world/entities">
       <Button variant="outline" size="sm">Cancel</Button>
     </a>
@@ -1124,3 +1122,4 @@
     </Button>
   </div>
 </div>
+
