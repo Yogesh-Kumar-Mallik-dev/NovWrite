@@ -2,16 +2,14 @@
   "name": "@novwrite/data-service",
   "version": "1.0.0",
   "private": true,
-  "description": "TypeScript Prisma Data Service and Development Test Seeder for NovWrite",
+  "description": "TypeScript Prisma Data Service for NovWrite",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "seed:dev": "tsx src/seed/cli.ts",
     "test": "node --test dist/__tests__/*.test.js"
-
   },
   "dependencies": {
     "@novwrite/bridge": "workspace:*",
