@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed:dev": "tsx src/seed/cli.ts",
-    "test": "node --test dist/__tests__/seeder.test.js"
+    "test": "node --test dist/__tests__/*.test.js"
+
   },
   "dependencies": {
     "@novwrite/bridge": "workspace:*",
