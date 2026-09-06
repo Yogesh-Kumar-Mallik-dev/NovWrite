@@ -241,7 +241,15 @@
   function inspectEventSequence(seq: number) {
     scrubSequence = seq;
     isTimeTravelOpen = true;
-    toast.info("Scrubber Updated", `Time-travel fold point set to sequence #${seq}.`);
+    toast.info("Scrubber Synced", `Fold point set to sequence #${seq}.`);
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        const el = document.getElementById("time-travel-fold-inspector");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 50);
+    }
   }
 </script>
 
@@ -302,7 +310,7 @@
 
   <!-- Interactive Time-Travel Sequence Scrubber & State Snapshot Inspector -->
   {#if isTimeTravelOpen}
-    <Card class="border-border bg-card p-5 space-y-4 shadow-sm transition-colors">
+    <Card id="time-travel-fold-inspector" class="border-border bg-card p-5 space-y-4 shadow-sm transition-colors scroll-mt-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">

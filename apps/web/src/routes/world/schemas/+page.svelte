@@ -77,12 +77,10 @@
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="/world/schemas/create">
-        <Button size="sm">
-          <Plus class="w-3.5 h-3.5" />
-          <span>Create Blueprint from Scratch</span>
-        </Button>
-      </a>
+      <Button size="sm" href="/world/schemas/create">
+        <Plus class="w-3.5 h-3.5" />
+        <span>Create Blueprint from Scratch</span>
+      </Button>
     </div>
   </div>
 
@@ -256,20 +254,16 @@
 
             <div class="flex items-center gap-2">
               {#if bp.blueprintClass === 'FIRST_CLASS'}
-                <a href={`/world/entities/create?blueprintId=${bp.id}`}>
-                  <Button variant="secondary" size="sm" class="h-7 text-xs">
-                    <Plus class="w-3 h-3" />
-                    <span>New Entity</span>
-                  </Button>
-                </a>
+                <Button href={`/world/entities/create?blueprintId=${bp.id}`} variant="secondary" size="sm" class="h-7 text-xs">
+                  <Plus class="w-3 h-3" />
+                  <span>New Entity</span>
+                </Button>
               {/if}
 
-              <a href={`/world/schemas/${bp.id}`}>
-                <Button variant="outline" size="sm" class="h-7 text-xs">
-                  <Edit3 class="w-3 h-3" />
-                  <span>Inspect & Edit</span>
-                </Button>
-              </a>
+              <Button href={`/world/schemas/${bp.id}`} variant="outline" size="sm" class="h-7 text-xs">
+                <Edit3 class="w-3 h-3" />
+                <span>Inspect & Edit</span>
+              </Button>
             </div>
           </div>
         </Card>

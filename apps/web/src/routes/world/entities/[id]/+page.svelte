@@ -360,19 +360,15 @@
 
       <div class="flex items-center gap-2">
         {#if blueprint}
-          <a href={`/world/schemas/${blueprint.id}`} target="_blank">
-            <Button variant="outline" size="sm" class="text-xs">
-              <Edit3 class="w-3.5 h-3.5 text-primary" />
-              <span>Edit Blueprint Schema</span>
-            </Button>
-          </a>
-        {/if}
-        <a href="/world/entities">
-          <Button variant="outline" size="sm">
-            <ArrowLeft class="w-3.5 h-3.5" />
-            <span>All Entities</span>
+          <Button href={`/world/schemas/${blueprint.id}`} target="_blank" variant="outline" size="sm" class="text-xs">
+            <Edit3 class="w-3.5 h-3.5 text-primary" />
+            <span>Edit Blueprint Schema</span>
           </Button>
-        </a>
+        {/if}
+        <Button href="/world/entities" variant="outline" size="sm">
+          <ArrowLeft class="w-3.5 h-3.5" />
+          <span>All Entities</span>
+        </Button>
       </div>
     </div>
 

@@ -314,19 +314,15 @@
 
       <div class="flex items-center gap-2">
         {#if blueprint.blueprintClass === 'FIRST_CLASS'}
-          <a href={`/world/entities/create?blueprintId=${blueprint.id}`}>
-            <Button variant="secondary" size="sm">
-              <Plus class="w-3.5 h-3.5" />
-              <span>Instantiate Entity</span>
-            </Button>
-          </a>
-        {/if}
-        <a href="/world/schemas">
-          <Button variant="outline" size="sm">
-            <ArrowLeft class="w-3.5 h-3.5" />
-            <span>All Blueprints</span>
+          <Button href={`/world/entities/create?blueprintId=${blueprint.id}`} variant="secondary" size="sm">
+            <Plus class="w-3.5 h-3.5" />
+            <span>Instantiate Entity</span>
           </Button>
-        </a>
+        {/if}
+        <Button href="/world/schemas" variant="outline" size="sm">
+          <ArrowLeft class="w-3.5 h-3.5" />
+          <span>All Blueprints</span>
+        </Button>
       </div>
     </div>
 
