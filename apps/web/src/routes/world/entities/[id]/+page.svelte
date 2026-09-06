@@ -244,18 +244,46 @@
           {#each blueprint.fields as field}
             <!-- 1. ENUM FIELD (e.g. Gender with Male/Female) -->
             {#if field.fieldType === 'ENUM'}
-              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
-                <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                  <ListFilter class="w-3.5 h-3.5 text-teal-400" />
-                  <span>{field.label}</span>
-                  <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
-                </Label>
+              <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-2">
+                <div class="flex items-center justify-between">
+                  <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <ListFilter class="w-3.5 h-3.5 text-teal-400" />
+                    <span>{field.label}</span>
+                    <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
+                  </Label>
+                </div>
 
-                <div class="max-w-md pt-1">
+                <div class="space-y-2 max-w-lg">
                   <Select
                     bind:value={properties[field.name]}
                     options={formatEnumOptions(field.options)}
                   />
+
+                  {#if field.options && field.options.length > 0}
+                    <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <span class="text-[10px] text-zinc-500 mr-1">Template Options:</span>
+                      {#each field.options as opt}
+                        {@const optVal = typeof opt === 'string' ? opt : opt.value}
+                        {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                        {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
+                        {@const isSelected = properties[field.name] === optVal || properties[field.name] === optLabel}
+                        <button
+                          type="button"
+                          onclick={() => (properties[field.name] = optVal)}
+                          class={`px-2 py-0.5 rounded text-[11px] font-medium transition flex items-center gap-1 ${
+                            isSelected
+                              ? 'bg-teal-950 text-teal-300 border border-teal-700 ring-1 ring-teal-500/50'
+                              : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                          }`}
+                        >
+                          <span>{optLabel}</span>
+                          {#if optPower !== undefined}
+                            <span class="text-[9px] font-mono opacity-80">({optPower})</span>
+                          {/if}
+                        </button>
+                      {/each}
+                    </div>
+                  {/if}
                 </div>
               </div>
 
@@ -277,16 +305,42 @@
                   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
                     {#each targetBp.fields as subF}
                       {#if subF.fieldType !== 'FORMULA'}
-                        <div class="space-y-1 p-2.5 rounded bg-zinc-900 border border-zinc-800">
+                        <div class="space-y-1.5 p-2.5 rounded bg-zinc-900 border border-zinc-800">
                           <span class="block text-[11px] font-medium text-zinc-300">
                             {subF.label}
                             {#if subF.unit}<span class="text-zinc-500">({subF.unit})</span>{/if}
                           </span>
                           {#if subF.fieldType === 'ENUM'}
-                            <Select
-                              bind:value={properties[field.name][subF.name]}
-                              options={formatEnumOptions(subF.options)}
-                            />
+                            <div class="space-y-1.5">
+                              <Select
+                                bind:value={properties[field.name][subF.name]}
+                                options={formatEnumOptions(subF.options)}
+                              />
+                              {#if subF.options && subF.options.length > 0}
+                                <div class="flex flex-wrap gap-1 pt-0.5">
+                                  {#each subF.options as opt}
+                                    {@const optVal = typeof opt === 'string' ? opt : opt.value}
+                                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                                    {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
+                                    {@const isSelected = properties[field.name][subF.name] === optVal || properties[field.name][subF.name] === optLabel}
+                                    <button
+                                      type="button"
+                                      onclick={() => (properties[field.name][subF.name] = optVal)}
+                                      class={`px-1.5 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
+                                        isSelected
+                                          ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 ring-1 ring-cyan-500/50'
+                                          : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200'
+                                      }`}
+                                    >
+                                      <span>{optLabel}</span>
+                                      {#if optPower !== undefined}
+                                        <span class="text-[8px] font-mono opacity-80">({optPower})</span>
+                                      {/if}
+                                    </button>
+                                  {/each}
+                                </div>
+                              {/if}
+                            </div>
                           {:else if subF.fieldType === 'NUMBER'}
                             <Input
                               type="number"
