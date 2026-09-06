@@ -35,7 +35,7 @@
         <Label for={id}>
           {label}
           {#if required}
-            <span class="text-red-400 font-bold">*</span>
+            <span class="text-destructive font-bold">*</span>
           {/if}
         </Label>
       {/if}
@@ -47,10 +47,10 @@
   {/if}
 
   {#if description}
-    <p class="text-[11px] text-zinc-400 leading-normal">{description}</p>
+    <p class="text-[11px] text-muted-foreground leading-normal">{description}</p>
   {/if}
 
   {#if error}
-    <p class="text-[11px] text-red-400 leading-normal font-medium">{error}</p>
+    <p class="text-[11px] text-destructive leading-normal font-medium">{error}</p>
   {/if}
 </div>

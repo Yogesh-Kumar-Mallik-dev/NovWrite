@@ -15,7 +15,7 @@
 <Label.Root
   for={htmlFor}
   class={cn(
-    "text-xs font-medium text-zinc-300 select-none flex items-center gap-1.5",
+    "text-xs font-medium text-foreground select-none flex items-center gap-1.5 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
     className
   )}
   {...rest}

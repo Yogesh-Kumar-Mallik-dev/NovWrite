@@ -49,18 +49,18 @@
   <Select.Trigger
     {id}
     class={cn(
-      "flex h-9 w-full items-center justify-between rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1 text-sm text-zinc-100 shadow-sm transition-colors hover:border-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 focus-visible:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50 min-h-[36px] cursor-pointer",
+      "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[36px] cursor-pointer",
       className
     )}
   >
-    <span class={cn("truncate text-left", !selectedLabel && "text-zinc-500")}>
+    <span class={cn("truncate text-left", !selectedLabel && "text-muted-foreground")}>
       {selectedLabel || placeholder}
     </span>
-    <ChevronDown class="w-4 h-4 text-zinc-400 shrink-0 opacity-70 ml-2" />
+    <ChevronDown class="w-4 h-4 text-muted-foreground shrink-0 opacity-70 ml-2" />
   </Select.Trigger>
   <Select.Portal>
     <Select.Content
-      class="z-50 min-w-[8rem] overflow-hidden rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 shadow-xl"
+      class="z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
       sideOffset={4}
     >
       <Select.Viewport class="p-1 max-h-60 overflow-y-auto">
@@ -70,12 +70,12 @@
             label={opt.label}
             disabled={opt.disabled}
             class={cn(
-              "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-3 text-sm outline-none transition-colors data-[highlighted]:bg-zinc-800 data-[highlighted]:text-zinc-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-zinc-800"
+              "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-3 text-sm outline-none transition-colors data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent hover:text-accent-foreground"
             )}
           >
             {#snippet children({ selected })}
               {#if selected}
-                <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center text-purple-400">
+                <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center text-primary">
                   <Check class="h-4 w-4" />
                 </span>
               {/if}
@@ -87,4 +87,3 @@
     </Select.Content>
   </Select.Portal>
 </Select.Root>
-

@@ -6,3 +6,5 @@ export { default as Field } from "./field.svelte";
 export { default as Textarea } from "./textarea.svelte";
 export { default as Card } from "./card.svelte";
 export { default as Breadcrumb } from "./breadcrumb.svelte";
+export { default as ThemeToggle } from "./theme-toggle.svelte";
+export * from "./radio-group";
