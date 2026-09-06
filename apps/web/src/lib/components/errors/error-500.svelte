@@ -9,8 +9,6 @@
     Terminal,
     ChevronDown,
     ChevronUp,
-    Globe2,
-    ArrowRight,
   } from "lucide-svelte";
   import { Button } from "$lib/components/ui/button";
   import { Card } from "$lib/components/ui/card";
@@ -73,97 +71,91 @@
   }
 </script>
 
-<div class="relative flex-1 flex flex-col justify-center items-center py-16 md:py-24 px-6 md:px-12 overflow-hidden min-h-[calc(100vh-8rem)]">
+<div class="relative flex-1 flex flex-col items-center justify-center py-16 md:py-24 px-6 md:px-12 overflow-hidden min-h-[calc(100vh-8rem)]">
   <!-- Subtle Amber / Destructive Ambient Glow Orbs -->
   <div
-    class="absolute -top-40 -left-40 w-[30rem] h-[30rem] bg-destructive/15 rounded-full blur-3xl pointer-events-none"
+    class="absolute -top-32 -left-32 w-96 h-96 bg-destructive/15 rounded-full blur-3xl pointer-events-none"
     aria-hidden="true"
   ></div>
   <div
-    class="absolute -bottom-40 -right-40 w-[30rem] h-[30rem] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"
+    class="absolute -bottom-32 -right-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"
     aria-hidden="true"
   ></div>
 
-  <div class="relative max-w-3xl w-full flex flex-col items-center text-center space-y-12 z-10">
-    <!-- Hero Header Section with ample spacing -->
-    <div class="space-y-6 flex flex-col items-center">
-      <!-- Status Badge -->
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono font-medium shadow-xs">
-        <AlertTriangle class="w-4 h-4" />
-        <span>INVARIANT FAILURE · ERROR {statusCode}</span>
-      </div>
+  <div class="relative max-w-2xl w-full flex flex-col items-center text-center space-y-10 md:space-y-12 z-10">
+    <!-- Status Badge -->
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono font-medium shadow-xs animate-in fade-in slide-in-from-top-3 duration-500">
+      <AlertTriangle class="w-4 h-4" />
+      <span>INVARIANT FAILURE · ERROR {statusCode}</span>
+    </div>
 
-      <!-- Giant Hero Number with Thematic Depth -->
-      <div class="relative select-none my-2">
-        <span
-          class="text-9xl sm:text-[11rem] font-black tracking-tighter bg-gradient-to-b from-foreground via-foreground/75 to-destructive/40 bg-clip-text text-transparent font-mono leading-none"
-        >
-          {statusCode}
-        </span>
-        <div
-          class="absolute inset-0 flex items-center justify-center text-destructive/20 blur-2xl text-9xl sm:text-[11rem] font-black font-mono select-none -z-10 leading-none"
-          aria-hidden="true"
-        >
-          {statusCode}
-        </div>
-      </div>
-
-      <!-- Headline and Description -->
-      <div class="space-y-3 max-w-xl mx-auto">
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-          Continuity Invariant Collapse
-        </h1>
-        <p class="text-base text-muted-foreground leading-relaxed">
-          {errorMessage}
-        </p>
+    <!-- Giant Hero Number with Generous Vertical Space -->
+    <div class="relative select-none my-2 md:my-4">
+      <span
+        class="text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tighter bg-gradient-to-b from-foreground via-foreground/75 to-destructive/40 bg-clip-text text-transparent opacity-90 font-mono leading-none"
+      >
+        {statusCode}
+      </span>
+      <div
+        class="absolute inset-0 flex items-center justify-center text-destructive/20 blur-xl text-8xl sm:text-9xl md:text-[10rem] font-black font-mono select-none -z-10 leading-none"
+        aria-hidden="true"
+      >
+        {statusCode}
       </div>
     </div>
 
-    <!-- Primary Action Buttons -->
-    <div class="flex flex-wrap items-center justify-center gap-4">
-      <Button
-        onclick={handleReload}
-        variant="default"
-        size="lg"
-        class="shadow-sm gap-2 px-6 h-11 text-sm"
-      >
+    <!-- Headline and Description -->
+    <div class="space-y-4 max-w-lg mx-auto">
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        Continuity Invariant Collapse
+      </h1>
+      <p class="text-sm sm:text-base text-muted-foreground leading-relaxed">
+        {errorMessage}
+      </p>
+    </div>
+
+    <!-- Action Navigation Buttons with comfortable spacing -->
+    <div class="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+      <Button onclick={handleReload} variant="default" size="lg" class="shadow-sm gap-2">
         <RefreshCw class="w-4 h-4" />
-        Recalibrate Timeline (Reload)
+        Recalibrate Timeline
       </Button>
-      <Button
-        href="/"
-        variant="outline"
-        size="lg"
-        class="gap-2 px-6 h-11 text-sm hover:bg-muted"
-      >
+      <Button href="/" variant="outline" size="lg" class="gap-2 hover:bg-muted">
         <Home class="w-4 h-4" />
-        Return to Home Hub
+        Return to Safety
       </Button>
-      <Button
-        href="/world/audit"
-        variant="secondary"
-        size="lg"
-        class="gap-2 px-6 h-11 text-sm"
-      >
+      <Button href="/world/audit" variant="secondary" size="lg" class="gap-2">
         <ShieldAlert class="w-4 h-4 text-destructive" />
         Continuity Audit
       </Button>
+      <Button
+        onclick={handleCopyDiagnostics}
+        variant="ghost"
+        size="lg"
+        class="gap-2 text-muted-foreground hover:text-foreground"
+      >
+        {#if isCopied}
+          <Check class="w-4 h-4 text-emerald-500" />
+          <span class="text-emerald-500">Copied!</span>
+        {:else}
+          <Copy class="w-4 h-4" />
+          <span>Copy Diagnostics</span>
+        {/if}
+      </Button>
     </div>
 
-    <!-- Diagnostic Details Card (Generous Padding & Expandable Console) -->
-    <Card class="w-full text-left bg-card/60 backdrop-blur border-border shadow-xs font-mono text-xs overflow-hidden">
+    <!-- Collapsible Continuum Diagnostic Trace Card with generous padding -->
+    <Card class="w-full text-left bg-card/60 backdrop-blur border-border/80 shadow-xs font-mono text-xs overflow-hidden mt-4">
       <button
         type="button"
         onclick={() => (isDetailsOpen = !isDetailsOpen)}
-        class="w-full flex items-center justify-between p-6 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer select-none"
+        class="w-full flex items-center justify-between p-5 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer select-none"
       >
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2">
           <Terminal class="w-4 h-4 text-destructive" />
-          <span class="font-semibold text-foreground text-sm">
-            Quantum Anomaly Diagnostic Console
-          </span>
+          <span class="font-semibold text-foreground text-xs">Quantum Anomaly Diagnostic Trace</span>
         </div>
-        <div class="flex items-center gap-3 text-xs">
+        <div class="flex items-center gap-2 text-[11px]">
           <span class="text-destructive font-mono font-medium">ERR_STATE_INVARIANT</span>
           {#if isDetailsOpen}
             <ChevronUp class="w-4 h-4" />
@@ -174,28 +166,26 @@
       </button>
 
       {#if isDetailsOpen}
-        <div class="p-6 pt-0 border-t border-border/70 bg-muted/30 space-y-4 animate-in fade-in duration-200">
+        <div class="p-5 pt-0 border-t border-border/60 bg-muted/40 space-y-3.5 animate-in fade-in duration-200">
           <div class="flex items-center justify-between pt-4">
-            <span class="text-muted-foreground text-[11px]">
+            <span class="text-muted-foreground text-[10px]">
               TIMESTAMP: {errorTimestamp}
             </span>
             <button
               type="button"
               onclick={handleCopyDiagnostics}
-              class="text-xs text-primary hover:underline flex items-center gap-1.5 cursor-pointer font-sans font-medium"
+              class="text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer font-sans"
             >
               {#if isCopied}
-                <Check class="w-3.5 h-3.5 text-emerald-500" />
-                <span class="text-emerald-500">Copied to Clipboard</span>
+                <Check class="w-3 h-3 text-emerald-500" /> Copied
               {:else}
-                <Copy class="w-3.5 h-3.5" />
-                <span>Copy Trace JSON</span>
+                <Copy class="w-3 h-3" /> Copy JSON
               {/if}
             </button>
           </div>
 
           <pre
-            class="p-4 rounded-lg bg-background/90 border border-border text-[11px] leading-relaxed text-muted-foreground overflow-x-auto selection:bg-primary/20"
+            class="p-3.5 rounded-md bg-background/80 border border-border text-[11px] leading-relaxed text-muted-foreground overflow-x-auto selection:bg-primary/20"
           ><code>{diagnosticPayload}</code></pre>
         </div>
       {/if}
