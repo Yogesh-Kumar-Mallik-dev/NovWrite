@@ -1,0 +1,36 @@
+{
+  "name": "@novwrite/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SvelteKit 2 and Svelte 5 frontend workbench for NovWrite",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "lint": "prettier --check .",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@novwrite/bridge": "workspace:*",
+    "lucide-svelte": "^0.475.0",
+    "bits-ui": "^1.3.11",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^4.0.0",
+    "@sveltejs/kit": "^2.17.3",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tailwindcss/vite": "^4.0.9",
+    "@types/node": "^22.13.4",
+    "prettier": "^3.5.0",
+    "prettier-plugin-svelte": "^3.3.3",
+    "svelte": "^5.20.5",
+    "svelte-check": "^4.1.4",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.1"
+  }
+}

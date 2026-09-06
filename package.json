@@ -1,0 +1,21 @@
+{
+  "name": "novwrite-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Continuity-First Multi-User Novel Creation Platform with a User-Defined Story Universe Engine",
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "seed:dev": "pnpm --filter @novwrite/data-service seed:dev",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "typescript": "^5.7.3"
+  }
+}
