@@ -1,6 +1,6 @@
 # Backend Architecture Specification
 
-**Status:** Locked Baseline (Version 1.0)  
+**Status:** Locked Baseline (Version 2.0 - Blueprint vs. Entity Paradigm, Relational Entity Graphs, Formula Engine & State Fold Architecture)  
 **Primary Application Engine:** Go 1.23+ (`api/`, `backend/`)  
 **Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`services/data/`)  
 **Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`)  
@@ -13,17 +13,17 @@
 ```mermaid
 flowchart TB
     subgraph Clients ["Client Layer"]
-        Web["Web Client (SvelteKit)"]
+        Web["Web Client (SvelteKit 2 + Svelte 5)"]
         Desk["Desktop Client (Tauri 2)"]
-        Mobile["Mobile Client (React Native)"]
+        Mobile["Mobile Client (React Native + Expo)"]
     end
 
     subgraph GoBackend ["Application Core & API Layer (Go)"]
         Router["Chi HTTP Router & Middleware"]
         AuthSvc["Identity & Auth Service"]
         NovelSvc["Novel & Prose Service"]
+        UniverseSvc["Universe & Blueprint Engine"]
         TimelineSvc["Timeline & Event Fold Engine"]
-        UniverseSvc["Universe & Dynamic Schema Service"]
         ContinuityEngine["Continuity & Invariant Engine"]
         AIGateway["AI Context Gateway"]
     end
@@ -32,22 +32,23 @@ flowchart TB
         GRPCServer["gRPC Data Server"]
         PrismaClient["Prisma ORM & Migration Engine"]
         QueryCompiler["JSONB Path Query Compiler"]
+        FormulaEngine["AST Mathematical Formula Evaluator"]
     end
 
     subgraph Storage ["Infrastructure & Storage"]
         PG[("PostgreSQL 18 + pgvector")]
-        Redis[("Redis 7 (Cache & PubSub)")]
+        Redis[("Redis 7 (Cache, Leases & PubSub)")]
     end
 
     Web & Desk & Mobile -->|"REST / SSE"| Router
-    Router --> AuthSvc & NovelSvc & TimelineSvc & UniverseSvc & ContinuityEngine & AIGateway
+    Router --> AuthSvc & NovelSvc & UniverseSvc & TimelineSvc & ContinuityEngine & AIGateway
 
     NovelSvc & TimelineSvc & UniverseSvc & ContinuityEngine & AIGateway -->|"Internal gRPC"| GRPCServer
-    GRPCServer --> PrismaClient
+    GRPCServer --> PrismaClient & FormulaEngine
     PrismaClient --> QueryCompiler
     QueryCompiler --> PG
 
-    AIGateway & TimelineSvc -->|"Cache & Stream Buffer"| Redis
+    AIGateway & TimelineSvc & NovelSvc -->|"Cache & Leases"| Redis
 ```
 
 ---
@@ -57,20 +58,24 @@ flowchart TB
 ### 2.1. Go Application API Layer (`api/`, `backend/`)
 
 - **HTTP Routing & Middleware:** Chi-based routing, JWT/session authentication, project tenancy scoping, rate limiting, and request correlation tracing.
-- **Prose & Novel Engine:** Managing scene markdown, word count telemetry, chapter hierarchies, and lock contention.
-- **Timeline & State Fold Engine:** Pure deterministic event folding, point-in-time state reconstruction, and historical snapshot generation.
-- **Universe & Schema Engine:** Validation of dynamic entity attributes against `PropertyDefinition` schemas, relationship graph traversal.
-- **Continuity & Rules Engine:** Invariant rule execution, predicate evaluation against folded state, explainable violation traceback generation.
-- **AI Context Gateway:** Assembling grounded prompts from canonical state and vector similarity, streaming model completions via SSE.
+- **Universe & Blueprint Engine (`universe`):**
+  - Manages **1st-Class Blueprints** (Entity Archetypes: Characters, Weapons, Sanctuaries, Factions) and **2nd-Class Blueprints** (Sub-Schemas & Gauges: Cultivation Ranks, Affection Scales, Power Matrices).
+  - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including dual-valued enums (`{ label, value, power }`) and relational `BLUEPRINT_REF` links.
+  - Executes AST mathematical formulas server-side during entity persistence and event mutation.
+- **Prose & Novel Engine (`novel`):** Managing scene markdown, word count telemetry, chapter hierarchies, entity mentions, and collaborative 60-second heartbeat scene locks (`scene_leases`).
+- **Timeline & State Fold Engine (`timeline`):** Pure deterministic event folding, point-in-time state reconstruction, and historical snapshot generation over ordered `EventEffect` sequences.
+- **Continuity & Rules Engine (`continuity`):** Invariant rule execution, predicate evaluation against folded state, relational link validation, and explainable violation traceback generation.
+- **AI Context Gateway (`ai`):** Assembling grounded prompts from canonical state and `pgvector` similarity, streaming model completions via SSE.
 
 ### 2.2. TypeScript Data Service (`services/data/`)
 
-- **Isolation Scope:** Encapsulates all direct database queries, migrations, and Prisma ORM client operations.
-- **No Business Logic:** The data service does NOT perform continuity validation or narrative logic; it provides high-speed, type-safe persistence and vector indexing.
-- **Coarse-Grained Domain gRPC API:** Replaces raw relational CRUD with atomic operations:
-  - `GetNovelState(projectId, sequenceNumber)`
+- **Isolation Scope:** Encapsulates direct database queries, migrations, and Prisma ORM client operations.
+- **No Business Logic:** The data service does NOT perform continuity validation or narrative logic; it provides high-speed, type-safe persistence, JSONB attribute querying, and vector indexing.
+- **Coarse-Grained Domain gRPC API:**
+  - `GetProjectState(projectId, sequenceNumber)`
   - `CreateEventWithEffects(projectId, eventData, effects)`
   - `GetEntityTimeline(projectId, entityId)`
+  - `EvaluateEntityFormulas(projectId, entityId, propertiesJson)`
   - `SearchVectorGrounding(projectId, queryEmbedding, limit)`
 
 ---
@@ -82,12 +87,12 @@ Each domain module in `backend/` follows strict Dependency Injection (DI) with i
 ```text
 backend/
 ├── shared/                       # Shared error types, logger, ID generators
-├── identity/                     # Users, auth tokens, workspace tenancy
-├── novel/                        # Novel, chapter, scene, prose operations
-├── universe/                     # Entity types, property definitions, entities, relationships
+├── identity/                     # Users, auth tokens, workspace tenancy, MFA
+├── novel/                        # Novel, chapter, scene, prose operations, scene leases
+├── universe/                     # Blueprints (1st/2nd Class), fields, entities, formulas, relations
 ├── timeline/                     # Events, event effects, state snapshots, fold engine
 ├── continuity/                   # Invariant rules, predicate evaluator, violation generator
-└── ai/                           # Prompt builder, model clients (Anthropic/Gemini/OpenAI), SSE streamer
+└── ai/                           # Prompt builder, model clients (Gemini/Anthropic/OpenAI), SSE streamer
 ```
 
 ### 3.1. Block-Based Construction Standard
@@ -109,14 +114,47 @@ func (e *TimelineFoldEngine) FoldStateAtSequence(ctx context.Context, projectID 
         return nil, fmt.Errorf("BLOCK_TIMELINE_FOLD_STATE_001: failed to retrieve base snapshot: %w", err)
     }
 
-    // Flat execution flow with early returns...
+    // Flat execution flow with early returns and deterministic state folding...
     return foldedState, nil
 }
 ```
 
 ---
 
-## 4. Continuity Verification Pipeline
+## 4. Universe Blueprint & Entity Domain Mechanics
+
+### 4.1. Blueprint (Class) vs Entity (Object) Service Model
+
+```mermaid
+flowchart TD
+    subgraph BlueprintService ["Blueprint Domain Service (universe/blueprint.go)"]
+        BP1["1st-Class Archetypes<br/>(Characters, Weapons, Realms, Factions)"]
+        BP2["2nd-Class Sub-Schemas<br/>(Cultivation Ranks, Affection Scales, Matrices)"]
+        BP3["Dynamic Field Validator<br/>(Types: String, Number, Boolean, Enum, Ref, Formula)"]
+    end
+
+    subgraph EntityService ["Entity Domain Service (universe/entity.go)"]
+        E1["Concrete Entity Instantiation<br/>(Only 1st-Class Blueprints)"]
+        E2["Relational Graph Builder<br/>(Character -> Faction, Weapon -> Realm)"]
+        E3["JSONB Property Store<br/>(Dynamic attributes + nested 2nd-class objects)"]
+        E4["Formula Evaluator<br/>(AST math execution & computed cache)"]
+    end
+
+    BP1 --> E1
+    BP2 --> E3
+    BP3 --> E3
+    E3 --> E4
+    E1 --> E2
+```
+
+### 4.2. Relational Entity Graph Traversal & Reference Integrity
+- 1st-Class Blueprints can define fields of type `BLUEPRINT_REF` targeting other 1st-Class Blueprints (e.g. `cultivator.sect_id -> Ancient Faction & Sect`, `cultivator.equipped_weapon -> Sacred Weapon & Relic`).
+- The backend validates reference integrity during instantiation and mutation, preventing dangling entity references.
+- Circular references in formula dependencies are detected via cycle-detection algorithms before expression execution.
+
+---
+
+## 5. Continuity Verification Pipeline
 
 ```mermaid
 sequenceDiagram
@@ -135,7 +173,7 @@ sequenceDiagram
     Data-->>Fold: Base state + ordered effects
     Fold-->>API: Authoritative folded entity state
     API->>Rules: Evaluate continuity invariants against prose & metadata
-    Rules->>Rules: Run status, possession, power tier & custom predicates
+    Rules->>Rules: Run status, possession, power tier, relationship & custom predicates
     alt Violation Detected
         Rules-->>API: Return ContinuityViolation (claim, baseline, causal event, actions)
         API->>Redis: Publish continuity alert to scene SSE channel
@@ -148,7 +186,7 @@ sequenceDiagram
 
 ---
 
-## 5. gRPC Protobuf Contracts (`proto/data/v1/`)
+## 6. gRPC Protobuf Contracts (`proto/data/v1/`)
 
 ```protobuf
 syntax = "proto3";
@@ -160,8 +198,69 @@ service DataService {
   rpc GetProjectState(GetProjectStateRequest) returns (GetProjectStateResponse);
   rpc CreateEventWithEffects(CreateEventRequest) returns (CreateEventResponse);
   rpc QueryEntityHistory(QueryEntityHistoryRequest) returns (QueryEntityHistoryResponse);
+  rpc EvaluateFormulas(EvaluateFormulasRequest) returns (EvaluateFormulasResponse);
   rpc FindSimilarContext(FindSimilarContextRequest) returns (FindSimilarContextResponse);
   rpc SaveStateSnapshot(SaveStateSnapshotRequest) returns (SaveStateSnapshotResponse);
+}
+
+enum BlueprintClass {
+  BLUEPRINT_CLASS_UNSPECIFIED = 0;
+  FIRST_CLASS = 1;
+  SECOND_CLASS = 2;
+}
+
+enum BlueprintFieldType {
+  FIELD_TYPE_UNSPECIFIED = 0;
+  STRING = 1;
+  NUMBER = 2;
+  BOOLEAN = 3;
+  ENUM = 4;
+  BLUEPRINT_REF = 5;
+  FORMULA = 6;
+}
+
+message EnumOption {
+  string label = 1;
+  string value = 2;
+  double power = 3;
+}
+
+message DynamicFieldDef {
+  string id = 1;
+  string name = 2;
+  string label = 3;
+  BlueprintFieldType field_type = 4;
+  repeated EnumOption options = 5;
+  string target_blueprint_id = 6;
+  double min_val = 7;
+  double max_val = 8;
+  double step_val = 9;
+  string unit = 10;
+  string formula_expression = 11;
+  bool is_required = 12;
+}
+
+message BlueprintDef {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  BlueprintClass blueprint_class = 4;
+  string category = 5;
+  string description = 6;
+  repeated DynamicFieldDef fields = 7;
+}
+
+message EntityItem {
+  string id = 1;
+  string project_id = 2;
+  string blueprint_id = 3;
+  string name = 4;
+  repeated string aliases = 5;
+  string description = 6;
+  bytes properties_json = 7;
+  bytes computed_formulas_json = 8;
+  string status = 9;
+  int32 last_mutated_seq = 10;
 }
 
 message GetProjectStateRequest {
@@ -172,7 +271,7 @@ message GetProjectStateRequest {
 message GetProjectStateResponse {
   string project_id = 1;
   int32 sequence_number = 2;
-  bytes folded_entities_json = 3;
+  repeated EntityItem entities = 3;
   string checksum = 4;
 }
 
@@ -198,13 +297,25 @@ message CreateEventResponse {
   string event_id = 1;
   bool success = 2;
 }
+
+message EvaluateFormulasRequest {
+  string project_id = 1;
+  string blueprint_id = 2;
+  bytes properties_json = 3;
+}
+
+message EvaluateFormulasResponse {
+  bytes computed_formulas_json = 1;
+  bool success = 2;
+  string error_message = 3;
+}
 ```
 
 ---
 
-## 6. Error Handling Standard (RFC 7807 Problem Details)
+## 7. Error Handling Standard (RFC 7807 Problem Details)
 
-All HTTP error responses must adhere to `application/problem+json`:
+All HTTP error responses adhere to `application/problem+json`:
 
 ```json
 {
@@ -225,17 +336,6 @@ All HTTP error responses must adhere to `application/problem+json`:
 
 ---
 
-## 7. Testing Architecture & 100% Coverage Target
-
-1. **Dependency Injection (DI):** All domain services depend strictly on interfaces (`EntityReader`, `EventFoldEngine`, `RuleStore`, `AIProvider`).
-2. **Co-Located Unit Tests:** Every Go file `foo.go` must have an accompanying `foo_test.go` in the same directory covering:
-   - Happy paths.
-   - Guard clause early returns and edge cases.
-   - Error wrapping and block ID assertions.
-3. **Deterministic Mocking:** Use mock implementations of `DataServiceClient` for pure in-memory test execution without running database instances.
-
----
-
 ## 8. Multi-User Collaboration & Concurrency Engine
 
 ### 8.1. Scene Lock & Heartbeat Lease Protocol
@@ -244,7 +344,7 @@ To prevent concurrent overwrite conflicts when multiple co-authors work on a sha
 
 1. **Acquire Lease:** When an author opens a scene for editing, the client issues `POST /api/v1/projects/{id}/scenes/{sceneId}/lock`. The Go backend records an entry in `scene_leases` and returns a 60-second heartbeat lease token.
 2. **Heartbeat Renewal:** The client pings `POST /api/v1/projects/{id}/scenes/{sceneId}/heartbeat` every 20 seconds to extend the lease.
-3. **Read-Only Peer View:** Other authors attempting to edit the same scene receive an active editor indicator with the current writer's identity and avatar, placing their editor in synchronized read-only mode.
+3. **Read-Only Peer View:** Other authors attempting to edit the same scene receive an active editor indicator with the current writer's identity, placing their editor in synchronized read-only mode.
 4. **Lock Breaking:** If a writer disconnects without releasing the lease, a `CO_AUTHOR` or `LEAD_AUTHOR` can break the lock via `DELETE /api/v1/projects/{id}/scenes/{sceneId}/lock` (logged to `admin_override_logs`).
 
 ---
@@ -275,14 +375,14 @@ func (s *AuthorOverrideService) ForceApproveViolation(ctx context.Context, proje
 }
 ```
 
-### 9.2. Project Author Override Decision Matrix: Permitted vs Prohibited
+### 9.2. Project Author Override Decision Matrix
 
 | Target Operation                        | Permitted for CO_AUTHOR? | Permitted for LEAD_AUTHOR? | Audit Requirement                                               | Immutable Safety Rail                                             |
 | :-------------------------------------- | :----------------------- | :------------------------- | :-------------------------------------------------------------- | :---------------------------------------------------------------- |
 | **Force-Approve Invariant Violation**   | Yes                      | Yes                        | Mandatory textual justification logged to `admin_override_logs` | Cannot erase violation history; marks resolved with override flag |
 | **Break Stale Scene Lock**              | Yes                      | Yes                        | Lease expiration verification or reason logged                  | Cannot overwrite uncommitted client drafts                        |
 | **Merge Conflicting Timeline Branches** | Yes                      | Yes                        | Conflict resolution rationale recorded                          | Replays new branch; past effects remain append-only               |
-| **Modify Project Custom Schemas**       | Yes                      | Yes                        | Schema version bump logged                                      | Legacy entity data preserved with deprecation flags               |
+| **Modify Project Blueprints**           | Yes                      | Yes                        | Blueprint version bump logged                                   | Legacy entity data preserved with deprecation flags               |
 | **Transfer / Delete Project**           | **NO**                   | **YES**                    | Multi-factor confirmation + Owner password check                | Project deletion is strictly restricted to LEAD_AUTHOR            |
 | **Cross-Tenant Project Access**         | **NO**                   | **NO**                     | Blocked at SQL & JWT middleware level                           | Absolute tenant isolation between different fictional universes   |
 | **Impersonate Author Attribution**      | **NO**                   | **NO**                     | Blocked by cryptographic user ID binding                        | Edits always record the executing user's true ID                  |
@@ -291,36 +391,10 @@ func (s *AuthorOverrideService) ForceApproveViolation(ctx context.Context, proje
 
 ## 10. Platform Administration API & Support Operations
 
-Platform Administrators (`is_platform_admin = true`) access a dedicated operational subsystem to assist end users:
-
-### 10.1. Platform Admin API Routes & Middleware
-
-Protected by `PlatformAdminAuthMiddleware` requiring active session token with `is_platform_admin == true` and step-up MFA verification:
+Platform Administrators (`is_platform_admin = true`) access a dedicated operational subsystem:
 
 - `GET /api/v1/platform/users` — Search and view user account metadata, subscription status, and auth history.
 - `POST /api/v1/platform/users/{userId}/mfa/reset` — Reset user 2FA after verified identity check (logs support ticket ID).
 - `POST /api/v1/platform/users/{userId}/unlock` — Clear brute-force account lockout.
 - `POST /api/v1/platform/billing/refunds` — Issue partial/full Stripe refunds and adjust customer subscription tiers.
 - `POST /api/v1/platform/support/repair-project-snapshots` — Trigger deterministic snapshot rebuild for corrupted universes upon user support request.
-
-### 10.2. Platform Admin Block Standard
-
-```go
-// Block: BLOCK_PLATFORM_ADMIN_MFA_RESET_001
-// Description: Allows Platform Admins to reset a user's lost MFA credentials after verifying identity via support ticket.
-// Inputs: ctx context.Context, adminID uuid.UUID, targetUserID uuid.UUID, ticketID string, reason string
-// Output: error
-func (s *PlatformAdminService) ResetUserMFA(ctx context.Context, adminID uuid.UUID, targetUserID uuid.UUID, ticketID, reason string) error {
-    if strings.TrimSpace(ticketID) == "" || strings.TrimSpace(reason) == "" {
-        return fmt.Errorf("BLOCK_PLATFORM_ADMIN_MFA_RESET_001: support ticket ID and reason are mandatory")
-    }
-
-    err := s.userRepo.ClearMFA(ctx, targetUserID)
-    if err != nil {
-        return fmt.Errorf("BLOCK_PLATFORM_ADMIN_MFA_RESET_001: failed to clear user MFA: %w", err)
-    }
-
-    s.auditLogger.LogPlatformAdminAction(ctx, adminID, targetUserID, "MFA_RESET", fmt.Sprintf("Ticket: %s | Reason: %s", ticketID, reason))
-    return nil
-}
-```

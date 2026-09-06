@@ -1,6 +1,6 @@
 # Database Architecture Specification
 
-**Status:** Locked Baseline (Version 1.0)  
+**Status:** Locked Baseline (Version 2.0 - First & Second Class Blueprints, Relational Entity Graph, Formula Evaluation & State Sourcing)  
 **Engine:** PostgreSQL 18 with `pgvector` extension  
 **ORM / Data Access:** TypeScript Data Service (`services/data/`) using Prisma ORM & Coarse-Grained gRPC
 
@@ -9,10 +9,13 @@
 ## 1. Architectural Principles & Data Philosophy
 
 1. **Canon Over AI Memory:** Canonical world state is stored exclusively in PostgreSQL relational tables and dynamic JSONB attributes. AI models never act as the system of record.
-2. **Relational Backbone with Dynamic JSONB Schemas:** Rigid relational models govern structural hierarchies (Projects, Novels, Chapters, Scenes, Events, Rules), while user-defined entities (Characters, Items, Locations, Powers) utilize JSONB columns validated against project-level `PropertyDefinition` schemas.
-3. **Event-Sourced State Transitions:** Historical truth is never overwritten. Changes to entity attributes over narrative time are recorded as immutable `EventEffect` rows attached to sequential `Event` records.
-4. **Strict Project Isolation (Multi-Tenancy):** Every database query and index must be partitioned by `project_id` to guarantee tenant isolation and performance predictability.
-5. **Vector Knowledge Grounding:** Semantic prose and entity embeddings use the `pgvector` extension with HNSW indexing for rapid continuity retrieval.
+2. **Relational Backbone with Dynamic Blueprint Schemas:** Rigid relational models govern structural hierarchies (Projects, Novels, Chapters, Scenes, Events, Rules), while user-defined entities (Characters, Items, Locations, Factions) instantiate 1st-Class Blueprints with JSONB columns validated against `blueprint_fields` schemas.
+3. **Class vs. Object Paradigm in Storage:**
+   - `blueprints` & `blueprint_fields`: Defines classes/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas), dynamic validation rules, dual-valued enums (`{ label, value, power }`), and AST formula expressions.
+   - `entities`: Stores concrete instantiated objects with author values in `properties` JSONB and cached math outcomes in `computed_formulas` JSONB.
+4. **Event-Sourced State Transitions:** Historical truth is never overwritten. Changes to entity attributes over narrative time are recorded as immutable `event_effects` rows attached to sequential `events` records.
+5. **Strict Project Isolation (Multi-Tenancy):** Every database query and index is partitioned by `project_id` to guarantee tenant isolation and performance predictability.
+6. **Vector Knowledge Grounding:** Semantic prose and entity embeddings use the `pgvector` extension with HNSW indexing for rapid continuity retrieval.
 
 ---
 
@@ -21,19 +24,25 @@
 ```mermaid
 erDiagram
     User ||--o{ Project : owns
+    Project ||--o{ ProjectMember : has
     Project ||--o{ Novel : contains
-    Project ||--o{ EntityType : defines
-    Project ||--o{ PropertyDefinition : defines
+    Project ||--o{ Blueprint : defines
+    Project ||--o{ BlueprintField : defines
     Project ||--o{ Entity : contains
     Project ||--o{ Event : logs
     Project ||--o{ ContinuityRule : configures
+    Project ||--o{ UserBlueprintColumnPref : persists
 
     Novel ||--o{ Chapter : contains
     Chapter ||--o{ Scene : contains
     Scene ||--o{ SceneEmbedding : generates
+    Scene ||--o{ SceneLease : locks
 
-    EntityType ||--o{ PropertyDefinition : has
-    EntityType ||--o{ Entity : categorizes
+    Blueprint ||--o{ BlueprintField : contains
+    Blueprint ||--o{ Entity : instantiates
+    Blueprint ||--o{ UserBlueprintColumnPref : scopes
+    BlueprintField }o--o| Blueprint : "targets (ref)"
+
     Entity ||--o{ EntityRelationship : participates
     Entity ||--o{ EventEffect : mutates
     Entity ||--o{ EntityEmbedding : generates
@@ -100,7 +109,7 @@ CREATE TABLE platform_admin_audit_logs (
     target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     action_type VARCHAR(50) NOT NULL, -- MFA_RESET, PASSWORD_RESET_TRIGGERED, ACCOUNT_UNLOCKED, REFUND_ISSUED, SUBSCRIPTION_ADJUSTED, SUPPORT_DATA_REPAIR
     justification TEXT NOT NULL,
-    metadata JSONB NOT NULL DEFAULT '{}'::jsonb, -- e.g. {"refund_amount_cents": 2900, "stripe_charge_id": "ch_..."}
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     ip_address VARCHAR(45),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -172,62 +181,84 @@ CREATE TABLE admin_override_logs (
 );
 ```
 
-### 3.2. World Building & Dynamic Universe Schemas
+### 3.2. World Building, Blueprints & Dynamic Schemas
 
 ```sql
--- User-defined entity types (e.g. Character, Faction, Sect, Divine Artifact, Realm)
-CREATE TABLE entity_types (
+-- Blueprints: Defines 1st-Class Entity Archetypes and 2nd-Class Sub-Schemas
+CREATE TABLE blueprints (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    slug VARCHAR(150) NOT NULL,
+    blueprint_class VARCHAR(50) NOT NULL DEFAULT 'FIRST_CLASS', -- FIRST_CLASS, SECOND_CLASS
+    category VARCHAR(100) NOT NULL DEFAULT 'General',
     description TEXT,
-    icon_name VARCHAR(50),
+    icon_name VARCHAR(50) DEFAULT 'Sparkles',
     is_built_in BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_project_entity_type_slug UNIQUE (project_id, slug)
+    CONSTRAINT uq_project_blueprint_slug UNIQUE (project_id, slug)
 );
 
--- Property definitions for dynamic schemas (e.g. Cultivation Stage, Bloodline, Affiliation)
-CREATE TABLE property_definitions (
+-- Blueprint Fields: Dynamic fields, dual-valued enums, sub-schemas & formulas
+CREATE TABLE blueprint_fields (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    blueprint_id UUID NOT NULL REFERENCES blueprints(id) ON DELETE CASCADE,
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    entity_type_id UUID NOT NULL REFERENCES entity_types(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     key VARCHAR(100) NOT NULL,
-    data_type VARCHAR(50) NOT NULL, -- string, number, enum, boolean, range, entity_ref, ladder
-    validation_rules JSONB NOT NULL DEFAULT '{}'::jsonb, -- e.g. {"enum_values": ["Core Formation", "Nascent Soul"], "min": 0, "max": 100}
-    default_value JSONB,
-    description TEXT,
+    label VARCHAR(150) NOT NULL,
+    field_type VARCHAR(50) NOT NULL, -- STRING, NUMBER, BOOLEAN, ENUM, BLUEPRINT_REF, FORMULA
+    options JSONB NOT NULL DEFAULT '[]'::jsonb, -- e.g. [{"label": "Divine", "value": "divine", "power": 1000}]
+    target_blueprint_id UUID REFERENCES blueprints(id) ON DELETE SET NULL,
+    min_val DOUBLE PRECISION,
+    max_val DOUBLE PRECISION,
+    step_val DOUBLE PRECISION,
+    unit VARCHAR(50),
+    formula_expression TEXT, -- e.g. "(cultivation.major_realm * 10) + attack"
     is_required BOOLEAN NOT NULL DEFAULT FALSE,
     order_index INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_property_key UNIQUE (project_id, entity_type_id, key)
+    CONSTRAINT uq_blueprint_field_key UNIQUE (blueprint_id, key)
 );
 
--- Canonical entities in the universe
+-- Author Per-Blueprint Table Column Preferences
+CREATE TABLE user_blueprint_column_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    blueprint_id UUID NOT NULL REFERENCES blueprints(id) ON DELETE CASCADE,
+    visible_columns JSONB NOT NULL DEFAULT '[]'::jsonb, -- e.g. ["gender", "cultivation.major_realm", "total_combat_power"]
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_user_blueprint_columns UNIQUE (user_id, blueprint_id)
+);
+
+-- Concrete Universe Entities (Instantiated from 1st-Class Blueprints)
 CREATE TABLE entities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    entity_type_id UUID NOT NULL REFERENCES entity_types(id) ON DELETE RESTRICT,
+    blueprint_id UUID NOT NULL REFERENCES blueprints(id) ON DELETE RESTRICT,
     name VARCHAR(255) NOT NULL,
     aliases TEXT[] NOT NULL DEFAULT '{}',
+    category VARCHAR(100),
     description TEXT,
-    properties JSONB NOT NULL DEFAULT '{}'::jsonb, -- dynamic attributes conforming to property_definitions
+    properties JSONB NOT NULL DEFAULT '{}'::jsonb, -- Dynamic values, 2nd-class objects & 1st-class entity IDs
+    computed_formulas JSONB NOT NULL DEFAULT '{}'::jsonb, -- Evaluated math formula cache
     status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, deceased, destroyed, sealed
+    last_mutated_seq INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Inter-entity relationships (e.g., Master -> Disciple, Rival -> Rival)
+-- Inter-Entity Relational Graph (e.g. Master -> Disciple, Wielder -> Weapon, Member -> Sect)
 CREATE TABLE entity_relationships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     source_entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
     target_entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-    relationship_type VARCHAR(100) NOT NULL, -- master, apprentice, rival, ally, spouse, parent
+    relationship_type VARCHAR(100) NOT NULL, -- master, apprentice, rival, ally, wielder, member, sovereign
     is_bidirectional BOOLEAN NOT NULL DEFAULT FALSE,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -249,7 +280,7 @@ CREATE TABLE events (
     narrative_sequence INT NOT NULL, -- order in author's storytelling
     chronological_timestamp BIGINT, -- in-universe timeline order (if applicable)
     importance_tier VARCHAR(20) NOT NULL DEFAULT 'standard', -- minor, standard, major, epoch
-    causal_predecessors UUID[] NOT NULL DEFAULT '{}', -- event IDs leading directly to this event
+    causal_predecessors UUID[] NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -260,7 +291,7 @@ CREATE TABLE event_effects (
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-    property_key VARCHAR(100) NOT NULL, -- key in entity properties (e.g. 'realm', 'location', 'weapon')
+    property_key VARCHAR(100) NOT NULL, -- e.g. 'cultivation.major_realm', 'status', 'equipped_weapon'
     operation VARCHAR(20) NOT NULL, -- SET, INCREMENT, APPEND, REMOVE, TRANSFER
     previous_value JSONB,
     new_value JSONB NOT NULL,
@@ -291,7 +322,7 @@ CREATE TABLE continuity_rules (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     rule_type VARCHAR(50) NOT NULL, -- status_invariant, possession_exclusive, power_tier_ladder, custom_predicate
-    target_entity_type_id UUID REFERENCES entity_types(id) ON DELETE CASCADE,
+    target_blueprint_id UUID REFERENCES blueprints(id) ON DELETE CASCADE,
     predicate_expression JSONB NOT NULL, -- e.g. {"field": "status", "op": "NEQ", "value": "deceased"}
     severity VARCHAR(20) NOT NULL DEFAULT 'error', -- error, warning, info
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -330,7 +361,7 @@ CREATE TABLE scene_embeddings (
     scene_id UUID NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,
     chunk_index INT NOT NULL DEFAULT 0,
     chunk_text TEXT NOT NULL,
-    embedding vector(1536) NOT NULL, -- standard embedding dimension (e.g. OpenAI text-embedding-3-small or Gemini text-embedding-004 768)
+    embedding vector(1536) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_scene_chunk UNIQUE (scene_id, chunk_index)
 );
@@ -355,13 +386,16 @@ CREATE TABLE entity_embeddings (
 -- Multi-tenant compound indexes
 CREATE INDEX idx_chapters_project_seq ON chapters(project_id, global_sequence_number);
 CREATE INDEX idx_scenes_chapter_order ON scenes(chapter_id, order_index);
-CREATE INDEX idx_entities_project_type ON entities(project_id, entity_type_id);
+CREATE INDEX idx_blueprints_project_class ON blueprints(project_id, blueprint_class);
+CREATE INDEX idx_blueprint_fields_bp ON blueprint_fields(blueprint_id, order_index);
+CREATE INDEX idx_entities_project_bp ON entities(project_id, blueprint_id);
 CREATE INDEX idx_events_project_narrative ON events(project_id, narrative_sequence);
 CREATE INDEX idx_event_effects_entity_event ON event_effects(entity_id, event_id);
 CREATE INDEX idx_rule_violations_scene_resolved ON rule_violations(scene_id, is_resolved);
 
 -- JSONB GIN Indexes for high-speed dynamic attribute filtering
 CREATE INDEX idx_entities_properties_gin ON entities USING gin (properties jsonb_path_ops);
+CREATE INDEX idx_entities_computed_gin ON entities USING gin (computed_formulas jsonb_path_ops);
 CREATE INDEX idx_event_effects_new_val_gin ON event_effects USING gin (new_value jsonb_path_ops);
 
 -- HNSW Vector Indexes for cosine similarity search
@@ -383,84 +417,10 @@ To compute the authoritative state of an entity at chapter sequence $N$:
 1. Retrieve the nearest state snapshot where `sequence_number <= N`.
 2. Retrieve all `event_effects` from events between `snapshot.sequence_number` and $N$ ordered by `events.narrative_sequence ASC`.
 3. Fold `event_effects` into the snapshot baseline:
-   - `SET`: Overwrite target attribute with `new_value`.
+   - `SET`: Overwrite target attribute (supports dot-notation path into `properties` JSONB).
    - `INCREMENT`: Add numeric `new_value` to current value.
    - `APPEND`: Append item to array attribute.
    - `REMOVE`: Remove item from array or nullify attribute.
    - `TRANSFER`: Change ownership or location reference.
-4. Output the deterministic, explainable point-in-time universe state.
-
----
-
-## 6. Migration & Evolution Guidelines
-
-1. **Prisma as Schema Authority:** All structural changes originate in `services/data/prisma/schema.prisma` and are applied using `pnpm prisma migrate dev`.
-2. **Zero Destructive Alterations:** Production migrations must never drop dynamic property columns directly; property deprecation flags in `property_definitions` are used instead.
-3. **Data Backfill Transactions:** Migrations involving event replay or snapshot rebuilds must execute inside explicit PostgreSQL transactions with row-level locks on affected `project_id`s.
-
----
-
-### 7. Multi-User Author Roles & Project Collaboration Matrix
-
-In-app project workspaces utilize author-centric roles:
-
-### 7.1. In-App Author Role Hierarchy
-
-| Role              | Creative Title                    | Prose Drafting    | World & Entity CRUD  | Timeline Mutations | Schema & Rules  | Project Canon Overrides                          |
-| :---------------- | :-------------------------------- | :---------------- | :------------------- | :----------------- | :-------------- | :----------------------------------------------- |
-| **`LEAD_AUTHOR`** | Primary Author / Universe Creator | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Full Authority + Invites & Project Deletion      |
-| **`CO_AUTHOR`**   | Co-Author / Senior Lorekeeper     | Full Read/Write   | Full Read/Write      | Full Read/Write    | Full Read/Write | Canon Overrides, Lock Breaking, Conflict Merging |
-| **`EDITOR`**      | Chapter / Line Editor             | Full Read/Write   | Create/Edit Entities | Log Scene Events   | Read Only       | None                                             |
-| **`CONTRIBUTOR`** | Lore Builder / Guest Writer       | Draft Submissions | Draft Proposals      | Propose Events     | Read Only       | None                                             |
-| **`VIEWER`**      | Beta Reader / Proofreader         | Read Only         | Read Only            | Read Only          | Read Only       | None                                             |
-
-### 7.2. Co-Author & Lead Author Canon Overrides
-
-```mermaid
-flowchart TD
-    AuthorAction["Lead Author / Co-Author In-App Action"]
-
-    AuthorAction --> CanOverride["WHAT AUTHORS CAN OVERRIDE (Canon Authority)"]
-    AuthorAction --> CannotOverride["WHAT AUTHORS CANNOT OVERRIDE (Project Integrity Rails)"]
-
-    subgraph Permitted ["Authorized Project Overrides (Logged to admin_override_logs)"]
-        C1["Force-Approve Continuity Violations<br/>(e.g., Miraculous resurrection, Divine intervention)"]
-        C2["Break Stale Scene Locks<br/>(When a co-author disconnects or abandons an active lease)"]
-        C3["Resolve Timeline Branch Merges<br/>(Select canonical historical branch between conflicting drafts)"]
-        C4["Force Dynamic Schema Evolutions<br/>(Apply new required properties across legacy entities)"]
-        C5["Quarantine / Soft-Archive Broken Entities<br/>(Safely isolate malformed entities without breaking relational FKs)"]
-    end
-    CanOverride --> Permitted
-
-    subgraph Prohibited ["Strict Architectural Safety Rails (Enforced by Engine)"]
-        X1["CANNOT Overwrite Historical Audit Trail<br/>(EventEffects remain append-only; overrides log new corrective events)"]
-        X2["CANNOT Transfer / Delete Project Ownership<br/>(Exclusively reserved for LEAD_AUTHOR role)"]
-        X3["CANNOT Access Cross-Tenant Private Projects<br/>(Zero visibility or authority across other projects)"]
-        X4["CANNOT Forge Cryptographic Snapshot Hashes<br/>(Integrity checksums are calculated deterministically by Go backend)"]
-        X5["CANNOT Impersonate Author Attribution<br/>(Edits retain true author identity in immutable audit logs)"]
-    end
-    CannotOverride --> Prohibited
-```
-
----
-
-## 8. Platform Administration (System Operations & User Support)
-
-Platform Administrators (`is_platform_admin = TRUE`) provide infrastructure, account security, billing, and operational support to end users.
-
-### 8.1. Platform Admin Capabilities: Empowering User Assistance
-
-| Support Domain              | Administrative Action                    | Purpose & Workflow                                                                                 | Audit Requirement                                            |
-| :-------------------------- | :--------------------------------------- | :------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
-| **Account Auth & Security** | **MFA / 2FA Reset**                      | Assist legitimate users locked out due to lost authenticators after identity verification          | Logged to `platform_admin_audit_logs` with support ticket ID |
-| **Account Lifecycle**       | **Unlock Account / Password Reset**      | Clear security lockouts, trigger verified reset links, revoke compromised session tokens           | Full IP and timestamp log                                    |
-| **Billing & Payments**      | **Refund Processing & Tier Adjustments** | Issue partial/full refunds via Stripe gateway, adjust subscription tiers, resolve billing disputes | Stripe charge ID, refund amount, and justification logged    |
-| **Data Integrity Support**  | **Manual Snapshot Repair / Re-Index**    | Repair corrupted state snapshots or re-index vector embeddings upon user support request           | Target `project_id` and repair execution log captured        |
-| **Compliance & Safety**     | **Account Quarantine / DMCA Takedown**   | Temporarily suspend malicious or infringing accounts under legal / terms compliance                | Legal case / report reference logged                         |
-
-### 8.2. Platform Admin Prohibitions & Strict Security Boundaries
-
-1. **NO Plaintext Password Access:** Passwords are cryptographically hashed using Argon2id/bcrypt. Platform admins cannot view or decrypt passwords under any circumstance.
-2. **NO Unconsented Private Manuscript Reading:** Platform admins cannot silently browse or read private user prose. Access to project data for debugging requires an explicit, time-bounded **User Support Access Grant** generated by the user.
-3. **NO Raw Credit Card Data Access:** Platform complies with PCI-DSS by tokenizing all payment methods via Stripe; admins only view masked IDs and transaction statuses.
-4. **NO Audit Tampering:** `platform_admin_audit_logs` is append-only and cannot be altered or truncated by platform administrators.
+4. Trigger AST formula engine recalculation to update `computed_formulas` JSONB cache.
+5. Output the deterministic, explainable point-in-time universe state.

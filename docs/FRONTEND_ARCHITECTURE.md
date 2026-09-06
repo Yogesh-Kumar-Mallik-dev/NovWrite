@@ -1,9 +1,9 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.0 - First & Second Class Blueprints, Dynamic Formulas & Dedicated Page Routes)  
+**Status:** Locked Baseline (Version 2.0 - Blueprint vs. Entity Paradigm, Dual-Valued Enums, Dynamic Formula Engine, Archetype Carousel & Dedicated Page Routes)  
 **Web & Desktop Framework:** SvelteKit 2 with Svelte 5 (Runes Mode) & Tauri 2  
 **Mobile Framework:** React Native with Expo (SDK 52+, Expo Router)  
-**Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
+**Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (`bits-ui` in `zinc` on Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
 **Styling Engines:** Tailwind CSS v4 (Web/Desktop) & NativeWind v4 (Mobile)  
 **Iconography:** `@lucide/svelte` (Web/Desktop) & `lucide-react-native` (Mobile)  
 **Target Platforms (Co-Developed Together):** Web (SvelteKit), Desktop (Tauri 2), Mobile (React Native + Expo)
@@ -16,7 +16,7 @@
 
 Novel writing and world building require completely different cognitive modes, visual structures, and interaction paradigms:
 
-- **Prose Writing Space (NovWrite Prose Studio):** Requires maximum unobstructed canvas real estate, distraction-free typography, chapter/scene tree navigation, and background non-intrusive continuity verification.
+- **Prose Writing Space (NovWrite Prose Studio):** Requires maximum unobstructed canvas real estate, distraction-free typography, chapter/scene tree navigation, entity mentions (`@entity`), and non-intrusive background continuity verification.
 - **World Creation Space (NovWrite World Studio):** Requires dense, information-rich master-detail data tables, dynamic blueprint architects, power tier progression ladders, causal timeline event streams, relationship scales, and mutation audit logs.
 
 ```mermaid
@@ -47,9 +47,9 @@ flowchart TB
 
 To ensure maximum focus, deep linking, and zero modal crowding, all primary domains are partitioned into dedicated, full-page routes:
 
-1. **Default List View (`/`)**: High-density table/grid of records with full search, category filtering, and a prominent `[+ Create]` action button.
-2. **Dedicated Creation View (`/create`)**: Full-canvas form for blueprint configuration, dynamic field generation, and entity instantiation.
-3. **Dedicated Update / Inspector View (`/[id]`)**: Deep-linkable detail workbench for editing properties, evaluating live formulas, inspecting change history, and managing causal sequences.
+1. **Default List View (`/`)**: High-density table/grid of records with full search, category filtering, per-blueprint column pickers, and a prominent `[+ Create]` action button.
+2. **Dedicated Creation View (`/create`)**: Full-canvas form with Archetype Carousel for selecting 1st-Class Blueprints, dynamic field inputs, sub-blueprint forms, relational links, and real-time live formula preview.
+3. **Dedicated Update / Inspector View (`/[id]`)**: Deep-linkable detail workbench for editing properties, inspecting causal sequence numbers, previewing formula recalculations, and managing relational links.
 
 ### 1.3. Strict Anti-Pattern Prohibitions
 
@@ -60,9 +60,11 @@ To ensure maximum focus, deep linking, and zero modal crowding, all primary doma
 
 ---
 
-## 2. Blueprint System Architecture: First-Class & Second-Class Blueprints
+## 2. The Blueprint (Class) vs. Entity (Object) Paradigm
 
-NovWrite provides complete freedom to build custom fictional universes from scratch with a two-tier blueprint classification:
+Borrowing directly from object-oriented software engineering (e.g. Java / TypeScript class and object design), NovWrite cleanly bifurcates the system into:
+- **Blueprints (Classes / Templates):** The structural archetype definitions that specify what properties, validation rules, dual-valued options, relational links, sub-schemas, and mathematical formulas exist.
+- **Entities (Concrete Objects):** The instantiated objects placed into the author's fictional universe and timeline, possessing concrete values for all attributes, links to other entities, and live computed formula outcomes.
 
 ```mermaid
 classDiagram
@@ -86,12 +88,19 @@ classDiagram
         +string name
         +string label
         +BlueprintFieldType fieldType
-        +string[] options
+        +EnumOption[] options
         +string targetBlueprintId
         +number min
         +number max
+        +number step
         +string unit
         +string formulaExpression
+    }
+
+    class EnumOption {
+        +string label
+        +string value
+        +number power
     }
 
     class BlueprintFieldType {
@@ -109,6 +118,7 @@ classDiagram
         +string name
         +string blueprintId
         +string category
+        +string description
         +Record properties
         +Record computedFormulas
         +number lastMutatedSeqNumber
@@ -117,63 +127,112 @@ classDiagram
     BlueprintDef --> BlueprintClass
     BlueprintDef --> DynamicFieldDef
     DynamicFieldDef --> BlueprintFieldType
-    EntityItem --> BlueprintDef : instantiates 1st-class
+    DynamicFieldDef --> EnumOption
+    EntityItem --> BlueprintDef : "instantiates (1st-Class only)"
 ```
 
-### 2.1. First-Class Blueprints (Primary Entity Archetypes)
-- **Definition:** Primary universe entities that exist as distinct actors, objects, or locations within the timeline (e.g. `Character / Cultivator`, `Sacred Weapon & Relic`, `Sanctuary & Realm`, `Sect & Faction`).
-- **Capabilities:** Can be instantiated into concrete `EntityItem` instances with unique IDs, causal mutation histories, and event logs.
+### 2.1. First-Class Blueprints (`FIRST_CLASS`)
+- **Role:** Primary universe entities that exist as distinct actors, objects, realms, or factions within the story timeline (e.g. `Cultivator / Protagonist`, `Sacred Weapon & Relic`, `Sanctuary & Realm`, `Ancient Faction & Sect`).
+- **Instantiation:** Can be instantiated directly into concrete `EntityItem` instances on `/world/entities/create`.
+- **Relational Links:** Can reference other 1st-Class Blueprints via `BLUEPRINT_REF` targeting entity IDs (e.g., a Character referencing a Sect entity, a Weapon entity, or a Sanctuary Realm entity), constructing an interconnected universe entity graph.
+- **Sub-System Embedding:** Can embed 2nd-Class Blueprints as nested sub-systems.
 
-### 2.2. Second-Class Blueprints (Sub-Blueprints & Value Objects)
-- **Definition:** Reusable structured schemas, sub-systems, gauges, and continuous scales (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`, `Soul Constitution Profile`).
-- **Capabilities:** Embedded or referenced as fields inside 1st-Class or other 2nd-Class blueprints. Supports nested dot-notation property traversal (e.g. `cultivation.major_realm`).
+### 2.2. Second-Class Blueprints (`SECOND_CLASS`)
+- **Role:** Reusable structured schemas, sub-systems, value objects, gauges, and continuous scales (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`, `Soul Profile`).
+- **Limitation:** **CANNOT** instantiate standalone entity objects on their own. They exist purely as embedded schemas within 1st-Class entities or other 2nd-Class sub-blueprints.
+- **Dot-Notation Traversal:** Embedded properties are accessed via dot notation in formula expressions (e.g. `cultivation.major_realm`, `romantic_feelings.affection_level`).
 
-### 2.3. Dynamic Field Types & Custom Enum Categories
-- **`STRING`**: Freeform text input.
-- **`NUMBER`**: Numeric values with optional `min`, `max`, `step`, and `unit` (e.g., `Points`, `Rank`, `Atk`).
-- **`BOOLEAN`**: Toggle switch.
-- **`ENUM`**: User-defined categorical options (e.g., `gender` with custom options `["Male", "Female", "Dual-Yin-Yang", "Genderless / Celestial"]`).
-- **`BLUEPRINT_REF`**: Reference to any First-Class or Second-Class Blueprint.
-- **`FORMULA`**: Live evaluated mathematical and logical expressions.
+### 2.3. Dual-Valued Enums (`{ label, value, power }`)
+Enums in NovWrite bridge qualitative narrative categorization with quantitative power ratings:
+- **`label`**: Author-facing display text (e.g. `"Dual-Yin-Yang Physique"`, `"Divine / Celestial"`, `"Heaven Step"`).
+- **`value`**: Machine-readable identifier (e.g. `"dual_yin_yang"`, `"divine_celestial"`, `"heaven_step"`).
+- **`power`**: Optional numerical power weight or multiplier (e.g. `2.5`, `1000`, `50`) that can be ingested directly by the mathematical formula engine.
+
+### 2.4. Dynamic Field Types Reference
+| Field Type | Form Widget / Input Control | Description & Configuration | Formula Interoperability |
+| :--- | :--- | :--- | :--- |
+| **`STRING`** | Text Input / Textarea | Freeform textual lore, origin story, bloodline notes | String matching & truthiness checks in `IF` |
+| **`NUMBER`** | Numeric Input + Stepper | Numeric values with `min`, `max`, `step`, and `unit` (e.g. `Points`, `Rank`, `Atk`, `Km`) | Direct arithmetic operand |
+| **`BOOLEAN`** | Toggle Switch | Binary flag (e.g. `awakened_dao_heart`, `is_bound`) | Boolean logic (`AND`, `OR`, `NOT`, `IF`) |
+| **`ENUM`** | Select Popover / Option Chips | Categorical options with optional numeric `power` ratings | Contributes `power` or option value to formulas |
+| **`BLUEPRINT_REF`** | Entity Picker (1st-Class) / Sub-Form (2nd-Class) | Relational link to another entity or embedded sub-blueprint | Nested dot-notation variable traversal |
+| **`FORMULA`** | Read-Only Live Calculation Pill | Safe AST mathematical & logical expression | Output variable available to subsequent formulas |
 
 ---
 
 ## 3. Mathematical & Logical Formula Engine (`formulaEngine.ts`)
 
-NovWrite includes a safe, sandboxed, AST-based expression parser and evaluator for computed properties:
+NovWrite includes a client-and-server shared, sandboxed, AST-based expression parser and evaluator for dynamic computed properties:
 
 ### 3.1. Expression Capabilities
 - **Arithmetic Operators:** `+`, `-`, `*`, `/`, `%`, `^` (exponentiation).
-- **Parentheses Grouping:** Full precedence support `( ... )`.
-- **Dot-Notation Variable Resolution:** Accesses nested sub-blueprint fields (e.g. `cultivation.major_realm`, `romantic_feelings.affection_level`).
+- **Parentheses Grouping:** Arbitrary depth precedence support `( ... )`.
+- **Dot-Notation Variable Resolution:** Resolves nested sub-blueprint fields (e.g. `cultivation.major_realm`, `romantic_feelings.affection_level`).
 - **Mathematical Functions:** `CLAMP(val, min, max)`, `MIN(a, b, ...)`, `MAX(a, b, ...)`, `ROUND(val)`, `FLOOR(val)`, `CEIL(val)`, `ABS(val)`, `SQRT(val)`, `POW(base, exp)`.
 - **Logical & Conditional Statements:** `IF(condition, trueVal, falseVal)`, `>`, `<`, `>=`, `<=`, `==`, `!=`, `AND`, `OR`, `NOT`.
 
 ### 3.2. Real-World Cultivation Formula Example
 $$\text{Total Combat Power} = (\text{cultivation.major\_realm} \times \text{cultivation.minor\_realm}) \times \text{special\_Physique} + \text{attack} \times \text{attack\_technique\_Mastery} - \text{defence} \times \text{defence\_technique\_mastery}$$
 
-- **Live Reactive Updates:** Changing component fields (e.g. `attack` or `cultivation.major_realm`) immediately re-evaluates the formula and updates the entity profile in real-time.
+- **Live Reactive Updates:** Modifying any component field (e.g. changing `attack` or selecting a higher `cultivation.major_realm`) immediately re-evaluates the formula and updates the entity profile in real-time.
 
 ---
 
-## 4. Dedicated World Creation Workspaces Breakdown
+## 4. World Studio Component Architecture
+
+### 4.1. Archetype Carousel Deck (`/world/entities/create`)
+
+To support an arbitrary and growing number of 1st-Class Blueprints without cluttering the screen or cutting off cards, the archetype selector features a dedicated horizontal scroll carousel:
+
+```mermaid
+flowchart LR
+    PrevBtn["[‹] Prev Button<br/>(Always visible, disabled at start)"]
+    subgraph Deck ["Horizontal Scroll Deck (hidden scrollbar, snap alignment)"]
+        Card1["Card 1: Cultivator<br/>(Selected: primary border)"]
+        Card2["Card 2: Sacred Weapon"]
+        Card3["Card 3: Sanctuary Realm"]
+        Card4["Card 4: Ancient Faction"]
+        CardN["Card N: Future Archetype..."]
+    end
+    NextBtn["[›] Next Button<br/>(Always visible, disabled at end)"]
+
+    PrevBtn --> Deck --> NextBtn
+```
+
+- **Container Mechanics:** Flex layout with `overflow-x-auto`, `scroll-smooth`, and snap alignment (`snap-x snap-mandatory`).
+- **Side Navigation Buttons:** Always visible `<Button variant="outline" size="icon">` components positioned on the left and right flanks.
+- **Button States:** Explicit `disabled` state when `scrollLeft <= 0` or `scrollLeft + clientWidth >= scrollWidth - 2`, with distinct `hover:bg-accent` and `active:scale-95` micro-interactions.
+- **Stepping Mechanism:** Programmatic single-card stepping via `scrollBy({ left: ±(cardWidth + gap), behavior: 'smooth' })`.
+- **Scrollbar Hidden:** Zero visible scrollbar track (`scrollbar-none` / `::-webkit-scrollbar { display: none }`).
+- **No Cut-Off Cards:** Fixed card widths (`min-w-[280px] max-w-[320px]`) and padding ensure clean card boundaries without awkward half-card cutoffs.
+
+### 4.2. Per-Blueprint Customizable Table Columns (`/world/entities`)
+
+The Entities Catalog table provides author-level column customization per 1st-Class Blueprint:
+- **Column Registry:** Maintains a dictionary of all available dynamic fields and computed formulas for each blueprint archetype.
+- **Column Visibility Dropdown:** Accessible popover allowing authors to toggle checkboxes for individual attributes (e.g. show `cultivation.major_realm`, hide `romantic_feelings.trust_score`, show `total_combat_power`).
+- **State Persistence:** Custom column preferences are saved in local storage and synced to user project preferences.
+
+---
+
+## 5. Dedicated World Creation Workspaces Breakdown
 
 Every world building domain is implemented as a first-class, standalone workbench:
 
-### 4.1. Universe Entities Workbench (`/world/entities`)
-- **List Page (`/world/entities`)**: Table showing archetype identities, customizable per-blueprint columns, custom enum values (`Male`/`Female` with numeric power levels), nested sub-blueprint properties, and live computed mathematical formulas.
-- **Create Page (`/world/entities/create`)**: Instantiation form bound to 1st-Class Blueprints with dynamic enum selects, sub-blueprint forms, and real-time live formula preview.
-- **Update Page (`/world/entities/[id]`)**: Deep inspector for modifying attributes, inspecting causal sequence numbers, and previewing real-time formula recalculations.
+### 5.1. Universe Entities Workbench (`/world/entities`)
+- **List Page (`/world/entities`)**: Table showing archetype identities, customizable per-blueprint columns, custom enum values with power levels, nested sub-blueprint properties, and live computed mathematical formulas.
+- **Create Page (`/world/entities/create`)**: Instantiation form featuring the Archetype Carousel, dynamic enum selects, sub-blueprint forms, relational entity links, and real-time live formula preview.
+- **Update Page (`/world/entities/[id]`)**: Deep inspector for modifying attributes, inspecting causal sequence numbers, viewing relational links, and previewing real-time formula recalculations.
 
-### 4.2. Blueprints & Schemas Workbench (`/world/schemas`)
-- **Unified Registry**: Integrates both **1st-Class Archetypes** (Characters, Relics, Locations, Factions) and **2nd-Class Sub-Schemas** (Progression Ladders, Affection Gauges, Power Matrices, Magic Circuits) under one coherent schema engine.
+### 5.2. Blueprints & Schemas Workbench (`/world/schemas`)
+- **Unified Registry**: Integrates both **1st-Class Archetypes** (Characters, Relics, Locations, Factions) and **2nd-Class Sub-Schemas** (Progression Ladders, Affection Gauges, Power Matrices) under one coherent schema engine.
 - **List Page (`/world/schemas`)**: Filter by 1st-Class vs 2nd-Class blueprints, category tags, search, and dynamic fields summary.
-- **Create Page (`/world/schemas/create`)**: Full-canvas blueprint architect with dual-valued enum options (`{ label, power }`), target blueprint reference selector, bounds, and mathematical formula engine with token insertion chips.
+- **Create Page (`/world/schemas/create`)**: Full-canvas blueprint architect with dual-valued enum options (`{ label, value, power }`), target blueprint reference selector, bounds, and mathematical formula engine with token insertion chips.
 - **Update Page (`/world/schemas/[id]`)**: Deep inspector, inline option adder/remover with power metrics, dynamic field attachments, and sandbox formula evaluation.
 
 ---
 
-## 5. Tri-Platform Co-Development Architecture (Web, Desktop, Mobile)
+## 6. Tri-Platform Co-Development Architecture (Web, Desktop, Mobile)
 
 All three frontends are **co-developed together** as unified client applications sharing common design tokens, TypeScript contracts, and API transport protocols:
 
@@ -190,13 +249,13 @@ All three frontends are **co-developed together** as unified client applications
 
 ---
 
-## 6. Svelte 5 Runes State Architecture (`worldStore.svelte.ts`)
+## 7. Svelte 5 Runes State Architecture (`worldStore.svelte.ts`)
 
 State across all workspaces is managed via modular, reactive class instances utilizing Svelte 5 runes (`$state`, `$derived`, `$props`, `$effect`):
 
 ```typescript
-// Block: BLOCK_WORLD_STORE_RUNE_002
-// Description: Reactive state store for 1st/2nd class blueprints, dynamic fields, formulas, and entities.
+// Block: BLOCK_WORLD_STORE_RUNE_003
+// Description: Reactive state store for 1st/2nd class blueprints, dynamic fields, dual-valued enums, formulas, and entities.
 
 import { evaluateFormula } from '../engine/formulaEngine.ts';
 
@@ -222,6 +281,17 @@ export class WorldStateStore {
 
     const computed: Record<string, number> = {};
     const context = { ...entity.properties };
+
+    // Inject enum power ratings into formula context
+    for (const field of blueprint.fields) {
+      if (field.fieldType === 'ENUM' && field.options) {
+        const val = entity.properties[field.name];
+        const matched = field.options.find((o) => (typeof o === 'string' ? o === val : o.value === val || o.label === val));
+        if (matched && typeof matched === 'object' && matched.power !== undefined) {
+          context[`${field.name}_power`] = matched.power;
+        }
+      }
+    }
 
     for (const field of blueprint.fields) {
       if (field.fieldType === 'FORMULA' && field.formulaExpression) {
