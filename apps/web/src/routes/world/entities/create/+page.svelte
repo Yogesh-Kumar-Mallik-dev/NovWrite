@@ -65,10 +65,11 @@
 
   function scrollCarousel(direction: 'left' | 'right') {
     if (!carouselEl) return;
-    const { clientWidth } = carouselEl;
-    const amount = direction === 'left' ? -clientWidth : clientWidth;
+    const firstCard = carouselEl.querySelector<HTMLElement>(':scope > button, :scope > a');
+    const cardStep = firstCard ? firstCard.offsetWidth + 12 : 300;
+    const amount = direction === 'left' ? -cardStep : cardStep;
     carouselEl.scrollBy({ left: amount, behavior: 'smooth' });
-    setTimeout(updateScrollState, 350);
+    setTimeout(updateScrollState, 250);
   }
 
   function scrollToSlide(index: number) {
@@ -543,26 +544,26 @@
 
     <!-- Carousel Deck with Side Navigation Buttons and Hidden Scrollbar -->
     <div class="relative px-1 pt-1">
-      <!-- Left Carousel Button -->
+      <!-- Left Carousel Button (Always visible with distinct disabled, hover, and active states) -->
       <button
         type="button"
         onclick={() => scrollCarousel('left')}
         disabled={!canScrollLeft}
-        aria-label="Previous Archetypes"
-        class="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 hover:border-teal-500 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center shadow-lg shadow-black/80 transition disabled:opacity-20 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+        aria-label="Previous Archetype"
+        class="absolute -left-3 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 text-teal-400 flex items-center justify-center shadow-lg shadow-black/80 transition-all duration-150 cursor-pointer hover:bg-zinc-800 hover:border-teal-400 hover:text-teal-300 hover:scale-105 active:scale-95 active:bg-teal-950 active:border-teal-500 active:text-teal-200 disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-zinc-950 disabled:border-zinc-850 disabled:text-zinc-600 disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 disabled:hover:border-zinc-850 disabled:hover:bg-zinc-950 disabled:hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
       >
-        <ChevronLeft class="w-4 h-4 text-teal-400" />
+        <ChevronLeft class="w-4 h-4" />
       </button>
 
-      <!-- Right Carousel Button -->
+      <!-- Right Carousel Button (Always visible with distinct disabled, hover, and active states) -->
       <button
         type="button"
         onclick={() => scrollCarousel('right')}
         disabled={!canScrollRight}
-        aria-label="Next Archetypes"
-        class="absolute -right-3 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 hover:border-teal-500 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center shadow-lg shadow-black/80 transition disabled:opacity-20 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+        aria-label="Next Archetype"
+        class="absolute -right-3 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-zinc-900 border border-zinc-700 text-teal-400 flex items-center justify-center shadow-lg shadow-black/80 transition-all duration-150 cursor-pointer hover:bg-zinc-800 hover:border-teal-400 hover:text-teal-300 hover:scale-105 active:scale-95 active:bg-teal-950 active:border-teal-500 active:text-teal-200 disabled:opacity-35 disabled:cursor-not-allowed disabled:bg-zinc-950 disabled:border-zinc-850 disabled:text-zinc-600 disabled:shadow-none disabled:scale-100 disabled:hover:scale-100 disabled:hover:border-zinc-850 disabled:hover:bg-zinc-950 disabled:hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
       >
-        <ChevronRight class="w-4 h-4 text-teal-400" />
+        <ChevronRight class="w-4 h-4" />
       </button>
 
       <!-- Carousel Cards Track (Exact Page Grid, No Cut-Offs, Invisible Scrollbar) -->
