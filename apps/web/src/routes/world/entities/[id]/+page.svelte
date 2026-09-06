@@ -15,6 +15,10 @@
     Hash,
     Layers,
     Clock,
+    User,
+    Sword,
+    MapPin,
+    Edit3,
   } from 'lucide-svelte';
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
@@ -49,7 +53,136 @@
     }
   });
 
-  function formatEnumOptions(options?: Array<string | { label: string; value: string; power?: number; numericValue?: number }>) {
+  function getArchetypeIcon(bp?: BlueprintDef) {
+    if (!bp) return Boxes;
+    const cat = (bp.category || '').toLowerCase();
+    const nm = (bp.name || '').toLowerCase();
+    if (
+      cat.includes('char') ||
+      nm.includes('cultivator') ||
+      nm.includes('char') ||
+      nm.includes('hero') ||
+      nm.includes('protagonist')
+    ) {
+      return User;
+    }
+    if (
+      cat.includes('relic') ||
+      cat.includes('arm') ||
+      cat.includes('weapon') ||
+      nm.includes('weapon') ||
+      nm.includes('relic') ||
+      nm.includes('artifact')
+    ) {
+      return Sword;
+    }
+    if (
+      cat.includes('cosmo') ||
+      cat.includes('geo') ||
+      cat.includes('loc') ||
+      nm.includes('sanctuary') ||
+      nm.includes('realm') ||
+      nm.includes('location') ||
+      nm.includes('peak')
+    ) {
+      return MapPin;
+    }
+    return Boxes;
+  }
+
+  function getArchetypeContext(bp?: BlueprintDef) {
+    if (!bp) {
+      return {
+        archetypeLabel: 'Universe Entity',
+        nameLabel: 'Entity Name',
+        namePlaceholder: 'e.g. Lin Fan, Heavensbane Spear, Azure Cloud Peak',
+        domainLabel: 'Domain / Category',
+        loreLabel: 'Lore Background & Narrative Role',
+        lorePlaceholder:
+          'Lore summary, background origins, and narrative significance...',
+      };
+    }
+
+    const catLower = (bp.category || '').toLowerCase();
+    const nameLower = (bp.name || '').toLowerCase();
+
+    if (
+      catLower.includes('char') ||
+      nameLower.includes('cultivator') ||
+      nameLower.includes('char') ||
+      nameLower.includes('hero') ||
+      nameLower.includes('protagonist')
+    ) {
+      return {
+        archetypeLabel: 'Character / Cultivator',
+        nameLabel: 'Character / Cultivator Name',
+        namePlaceholder: 'e.g. Lin Fan, Xiao Yan, Gu Changge, Meng Hao, Han Li',
+        domainLabel: 'Cultivation Faction / Domain',
+        loreLabel: 'Character Background, Personality & Story Arc',
+        lorePlaceholder:
+          'Character origins, personality traits, martial dao pursuit, spiritual bloodline, and narrative role...',
+      };
+    }
+
+    if (
+      catLower.includes('relic') ||
+      catLower.includes('arm') ||
+      catLower.includes('weapon') ||
+      nameLower.includes('weapon') ||
+      nameLower.includes('relic') ||
+      nameLower.includes('artifact')
+    ) {
+      return {
+        archetypeLabel: 'Sacred Relic & Weapon',
+        nameLabel: 'Artifact / Sacred Relic Name',
+        namePlaceholder:
+          'e.g. Heavensbane Spear, Void-Sundering Lotus, Solar Emperor Bell, Celestial Frost Blade',
+        domainLabel: 'Armament Classification',
+        loreLabel: 'Forging Lore, Ancient Masters & Spirit Awakening',
+        lorePlaceholder:
+          'Forging origin, ancient lineage, awakening of the weapon soul, and past legendary wielders...',
+      };
+    }
+
+    if (
+      catLower.includes('cosmo') ||
+      catLower.includes('geo') ||
+      catLower.includes('loc') ||
+      nameLower.includes('sanctuary') ||
+      nameLower.includes('realm') ||
+      nameLower.includes('location') ||
+      nameLower.includes('peak')
+    ) {
+      return {
+        archetypeLabel: 'Sanctuary & Spiritual Realm',
+        nameLabel: 'Sanctuary / Location Name',
+        namePlaceholder:
+          'e.g. Azure Cloud Peak, Black Dragon Abyss, Nine Heavens Void, Kunlun Sanctuary',
+        domainLabel: 'Cosmological Domain',
+        loreLabel: 'Geographical Lore, Qi Formations & Regional Sects',
+        lorePlaceholder:
+          'Geographical terrain, spiritual Qi density, ancient protective formations, indigenous sects, and regional significance...',
+      };
+    }
+
+    return {
+      archetypeLabel: bp.name,
+      nameLabel: `${bp.name} Name`,
+      namePlaceholder: `e.g. Name of this ${bp.name.toLowerCase()} instance...`,
+      domainLabel: 'Classification / Domain',
+      loreLabel: `${bp.name} Lore Background & Narrative Role`,
+      lorePlaceholder: `Origins, universe context, and narrative significance for this ${bp.name.toLowerCase()}...`,
+    };
+  }
+
+  let archetypeContext = $derived(getArchetypeContext(blueprint));
+  let ArchetypeIcon = $derived(getArchetypeIcon(blueprint));
+
+  function formatEnumOptions(
+    options?: Array<
+      string | { label: string; value: string; power?: number; numericValue?: number }
+    >
+  ) {
     if (!options) return [];
     return options.map((opt) => {
       if (typeof opt === 'string') {
@@ -71,15 +204,19 @@
       properties: $state.snapshot(properties),
     };
     const results = worldStore.evaluateEntityFormulas(dummyEntity, blueprint);
-    const computed: Record<string, { value: number; formatted: string; expr: string }> = {};
+    const computed: Record<
+      string,
+      { value: number; formatted: string; expr: string; label: string }
+    > = {};
 
     for (const field of blueprint.fields) {
       if (field.fieldType === 'FORMULA' && field.formulaExpression) {
         const val = results[field.name] ?? 0;
         computed[field.name] = {
           value: val,
-          formatted: String(val),
+          formatted: Number.isInteger(val) ? String(val) : val.toFixed(2),
           expr: field.formulaExpression,
+          label: field.label || field.name,
         };
       }
     }
@@ -143,7 +280,9 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
-          <Boxes class="w-5 h-5 text-teal-400" />
+          <div class="p-1.5 rounded bg-teal-950/60 border border-teal-800 text-teal-400">
+            <ArchetypeIcon class="w-5 h-5" />
+          </div>
           <h2 class="text-xl font-bold tracking-tight text-zinc-100">{entity.name}</h2>
         </div>
         <div class="flex items-center gap-2 text-xs">
@@ -156,6 +295,14 @@
       </div>
 
       <div class="flex items-center gap-2">
+        {#if blueprint}
+          <a href={`/world/schemas/${blueprint.id}`} target="_blank">
+            <Button variant="outline" size="sm" class="text-xs">
+              <Edit3 class="w-3.5 h-3.5 text-teal-400" />
+              <span>Edit Blueprint</span>
+            </Button>
+          </a>
+        {/if}
         <a href="/world/entities">
           <Button variant="outline" size="sm">
             <ArrowLeft class="w-3.5 h-3.5" />
@@ -188,11 +335,11 @@
           {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
             <div class="p-3.5 rounded bg-black/40 border border-amber-900/50 space-y-1">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-zinc-300 capitalize">{fKey.replace(/_/g, ' ')}</span>
+                <span class="text-xs font-medium text-zinc-300">{fData.label}</span>
                 <span class="text-sm font-bold font-mono text-amber-300">{fData.formatted}</span>
               </div>
-              <div class="text-[10px] font-mono text-amber-500/70 line-clamp-1">
-                {fData.expr}
+              <div class="text-[10px] font-mono text-amber-500/70 line-clamp-1" title={fData.expr}>
+                Formula: {fData.expr}
               </div>
             </div>
           {/each}
@@ -203,13 +350,18 @@
     <!-- Primary Entity Overview -->
     <div class="bg-zinc-900 rounded-lg border border-zinc-800 p-6 space-y-4">
       <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-        <Boxes class="w-4 h-4 text-teal-400" />
-        <span>Entity Identity</span>
+        <ArchetypeIcon class="w-4 h-4 text-teal-400" />
+        <span>{archetypeContext.archetypeLabel} Identity</span>
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field id="entity-name" label="Entity Name">
-          <Input id="entity-name" bind:value={name} class="w-full text-xs" />
+        <Field id="entity-name" label={archetypeContext.nameLabel} required>
+          <Input
+            id="entity-name"
+            bind:value={name}
+            placeholder={archetypeContext.namePlaceholder}
+            class="w-full text-xs font-medium"
+          />
         </Field>
 
         <Field id="entity-bp" label="Blueprint Archetype">
@@ -217,12 +369,13 @@
         </Field>
       </div>
 
-      <Field id="entity-desc" label="Description & Lore">
+      <Field id="entity-desc" label={archetypeContext.loreLabel}>
         <Textarea
           id="entity-desc"
           bind:value={description}
-          rows={2}
-          class="w-full text-xs"
+          rows={3}
+          placeholder={archetypeContext.lorePlaceholder}
+          class="w-full text-xs leading-relaxed"
         />
       </Field>
     </div>
@@ -233,7 +386,7 @@
         <div class="border-b border-zinc-800 pb-3">
           <h3 class="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
             <Sparkles class="w-4 h-4 text-teal-400" />
-            <span>Blueprint Attributes & Dynamic Fields</span>
+            <span>Blueprint Attributes & Dynamic Fields ({blueprint.name})</span>
           </h3>
           <p class="text-xs text-zinc-500 mt-0.5">
             Modify state values to trigger real-time formula updates and causal state folds.
@@ -253,7 +406,7 @@
                   </Label>
                 </div>
 
-                <div class="space-y-2 max-w-lg">
+                <div class="space-y-2 max-w-xl">
                   <Select
                     bind:value={properties[field.name]}
                     options={formatEnumOptions(field.options)}
@@ -261,7 +414,7 @@
 
                   {#if field.options && field.options.length > 0}
                     <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span class="text-[10px] text-zinc-500 mr-1">Template Options:</span>
+                      <span class="text-[10px] text-zinc-500 mr-1 font-medium">Template Options:</span>
                       {#each field.options as opt}
                         {@const optVal = typeof opt === 'string' ? opt : opt.value}
                         {@const optLabel = typeof opt === 'string' ? opt : opt.label}
@@ -270,15 +423,17 @@
                         <button
                           type="button"
                           onclick={() => (properties[field.name] = optVal)}
-                          class={`px-2 py-0.5 rounded text-[11px] font-medium transition flex items-center gap-1 ${
+                          class={`px-2.5 py-1 rounded text-[11px] font-medium transition flex items-center gap-1.5 ${
                             isSelected
-                              ? 'bg-teal-950 text-teal-300 border border-teal-700 ring-1 ring-teal-500/50'
+                              ? 'bg-teal-950 text-teal-200 border border-teal-600 ring-1 ring-teal-500/60 shadow-sm'
                               : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
                           }`}
                         >
                           <span>{optLabel}</span>
                           {#if optPower !== undefined}
-                            <span class="text-[9px] font-mono opacity-80">({optPower})</span>
+                            <span class={`text-[9px] font-mono px-1 py-0.2 rounded ${isSelected ? 'bg-teal-900 text-teal-300 font-bold' : 'bg-zinc-800 text-zinc-400'}`}>
+                              ⚡ {optPower}
+                            </span>
                           {/if}
                         </button>
                       {/each}
@@ -299,6 +454,11 @@
                       (Sub-Blueprint: {targetBp ? targetBp.name : field.targetBlueprintName})
                     </span>
                   </div>
+                  {#if targetBp}
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300">
+                      {targetBp.blueprintClass === 'SECOND_CLASS' ? '2nd-Class Sub-System' : '1st-Class Entity Link'}
+                    </span>
+                  {/if}
                 </div>
 
                 {#if targetBp && targetBp.blueprintClass === 'SECOND_CLASS' && properties[field.name]}
@@ -308,7 +468,7 @@
                         <div class="space-y-1.5 p-2.5 rounded bg-zinc-900 border border-zinc-800">
                           <span class="block text-[11px] font-medium text-zinc-300">
                             {subF.label}
-                            {#if subF.unit}<span class="text-zinc-500">({subF.unit})</span>{/if}
+                            {#if subF.unit}<span class="text-zinc-500 font-mono">({subF.unit})</span>{/if}
                           </span>
                           {#if subF.fieldType === 'ENUM'}
                             <div class="space-y-1.5">
@@ -328,7 +488,7 @@
                                       onclick={() => (properties[field.name][subF.name] = optVal)}
                                       class={`px-1.5 py-0.5 rounded text-[10px] transition flex items-center gap-1 ${
                                         isSelected
-                                          ? 'bg-cyan-950 text-cyan-300 border border-cyan-700 ring-1 ring-cyan-500/50'
+                                          ? 'bg-cyan-950 text-cyan-200 border border-cyan-700 ring-1 ring-cyan-500/50'
                                           : 'bg-zinc-950 border border-zinc-850 text-zinc-400 hover:text-zinc-200'
                                       }`}
                                     >
@@ -348,7 +508,7 @@
                               max={subF.max}
                               step={subF.step || 1}
                               bind:value={properties[field.name][subF.name]}
-                              class="text-xs"
+                              class="text-xs font-mono"
                             />
                           {:else if subF.fieldType === 'BOOLEAN'}
                             <Select
@@ -373,7 +533,7 @@
                   {@const candidateEntities = worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id)}
                   <div class="space-y-1.5 pt-1">
                     <span class="block text-[11px] text-zinc-400">
-                      Select an instantiated {targetBp.name} entity instance:
+                      Select an instantiated {targetBp.name} entity instance ({candidateEntities.length} available):
                     </span>
                     <div class="max-w-md">
                       <Select
@@ -399,12 +559,12 @@
             {:else if field.fieldType === 'NUMBER'}
               <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
                 <div class="flex items-center justify-between">
-                <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                  <Hash class="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{field.label}</span>
-                  {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
-                </Label>
-                {#if field.min !== undefined && field.max !== undefined}
+                  <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <Hash class="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{field.label}</span>
+                    {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
+                  </Label>
+                  {#if field.min !== undefined && field.max !== undefined}
                     <span class="text-[10px] font-mono text-zinc-500">Range: [{field.min} to {field.max}]</span>
                   {/if}
                 </div>
@@ -447,7 +607,7 @@
 
       <Button variant="default" size="sm" onclick={handleSaveEntity}>
         <Check class="w-3.5 h-3.5" />
-        <span>Save Entity State</span>
+        <span>Save {archetypeContext.archetypeLabel} State</span>
       </Button>
     </div>
   </div>

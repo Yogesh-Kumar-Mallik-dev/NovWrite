@@ -184,7 +184,7 @@
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="/world/entities/create">
+      <a href={blueprintFilter !== 'ALL' ? `/world/entities/create?blueprintId=${blueprintFilter}` : '/world/entities/create'}>
         <Button size="sm">
           <Plus class="w-3.5 h-3.5" />
           <span>Instantiate Entity</span>
