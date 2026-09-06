@@ -5,7 +5,86 @@
  */
 
 export type EntityCategory =
-  "CHARACTER" | "LOCATION" | "ARTIFACT" | "FACTION" | "LORE_CONCEPT";
+  | "CHARACTER"
+  | "LOCATION"
+  | "ARTIFACT"
+  | "FACTION"
+  | "LORE_CONCEPT"
+  | "General"
+  | "Characters"
+  | "Relics & Armaments"
+  | "Cosmology & Geography"
+  | "Factions & Sects"
+  | "Sub-Systems & Gauges";
+
+export type BlueprintClass = "FIRST_CLASS" | "SECOND_CLASS";
+
+export type BlueprintFieldType =
+  | "STRING"
+  | "NUMBER"
+  | "BOOLEAN"
+  | "ENUM"
+  | "BLUEPRINT_REF"
+  | "FORMULA";
+
+export interface EnumOption {
+  label: string;
+  value: string;
+  power?: number;
+}
+
+export interface DynamicFieldDef {
+  id: string;
+  name: string;
+  label: string;
+  fieldType: BlueprintFieldType;
+  options?: (string | EnumOption)[];
+  targetBlueprintId?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  formulaExpression?: string;
+  isRequired?: boolean;
+  orderIndex?: number;
+}
+
+export interface BlueprintDef {
+  id: string;
+  projectId?: string;
+  name: string;
+  slug?: string;
+  blueprintClass: BlueprintClass;
+  category: string;
+  description?: string;
+  iconName?: string;
+  fields: DynamicFieldDef[];
+  isBuiltIn?: boolean;
+}
+
+export interface EntityItem {
+  id: string;
+  projectId?: string;
+  blueprintId: string;
+  name: string;
+  aliases?: string[];
+  category?: string;
+  description?: string;
+  properties: Record<string, unknown>;
+  computedFormulas?: Record<string, number>;
+  status?: string;
+  lastMutatedSeqNumber?: number;
+}
+
+export interface EntityRelationshipItem {
+  id: string;
+  projectId?: string;
+  sourceEntityId: string;
+  targetEntityId: string;
+  relationshipType: string;
+  isBidirectional?: boolean;
+  metadata?: Record<string, unknown>;
+}
 
 export type InvariantSeverity = "BLOCKING_ERROR" | "WARNING" | "ADVISORY_NOTE";
 
@@ -19,7 +98,7 @@ export type InvariantViolationCode =
 export interface FoldedEntityState {
   entityId: string;
   entityName: string;
-  category: EntityCategory;
+  category: string;
   computedProperties: Record<string, unknown>;
   lastMutatedSeqNumber: number;
 }
@@ -81,13 +160,13 @@ export interface ContinuityAuditResponse {
 export interface EntityMentionQuery {
   projectId: string;
   queryToken: string;
-  categoryLimit?: EntityCategory[];
+  categoryLimit?: string[];
 }
 
 export interface EntityCandidateMatch {
   entityId: string;
   name: string;
-  category: EntityCategory;
+  category: string;
   snippet: string;
   currentRealmOrStatus?: string;
 }

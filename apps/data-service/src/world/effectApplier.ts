@@ -1,10 +1,51 @@
 /**
  * @file effectApplier.ts
  * @description Deterministic state mutation and effect application logic for timeline events.
- * Block Standard: BLOCK_WORLD_TIMELINE_ENGINE_001
+ * Block Standard: BLOCK_WORLD_TIMELINE_ENGINE_002
  */
 
 import { EventEffectPayload, TransferPayload } from "./timelineTypes.js";
+
+/**
+ * Sets a value at a potentially nested dot-notation path inside an object immutably.
+ */
+function setNestedProperty(
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown,
+): Record<string, unknown> {
+  const next = { ...obj };
+  const keys = path.split(".");
+  if (keys.length === 1) {
+    next[path] = value;
+    return next;
+  }
+
+  let current: any = next;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    current[k] =
+      typeof current[k] === "object" && current[k] !== null
+        ? { ...current[k] }
+        : {};
+    current = current[k];
+  }
+  current[keys[keys.length - 1]] = value;
+  return next;
+}
+
+/**
+ * Gets a value from a potentially nested dot-notation path inside an object.
+ */
+function getNestedProperty(obj: Record<string, unknown>, path: string): unknown {
+  const keys = path.split(".");
+  let current: any = obj;
+  for (const k of keys) {
+    if (current === undefined || current === null) return undefined;
+    current = current[k];
+  }
+  return current;
+}
 
 /**
  * Applies a single event effect to an entity's mutable property state map.
@@ -14,64 +55,57 @@ export function applyEffectToEntityState(
   currentState: Record<string, unknown>,
   effect: EventEffectPayload,
 ): Record<string, unknown> {
-  const nextState: Record<string, unknown> = { ...currentState };
   const { propertyKey, operation, value } = effect;
 
   switch (operation) {
     case "SET": {
-      nextState[propertyKey] = value;
-      break;
+      return setNestedProperty(currentState, propertyKey, value);
     }
 
     case "INCREMENT": {
-      const currentVal = Number(nextState[propertyKey] ?? 0);
+      const currentVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
       const incVal = Number(value);
       if (isNaN(incVal)) {
         throw new Error(
-          `BLOCK_WORLD_TIMELINE_ENGINE_001: INCREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
+          `BLOCK_WORLD_TIMELINE_ENGINE_002: INCREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
         );
       }
-      nextState[propertyKey] = currentVal + incVal;
-      break;
+      return setNestedProperty(currentState, propertyKey, currentVal + incVal);
     }
 
     case "DECREMENT": {
-      const currentVal = Number(nextState[propertyKey] ?? 0);
+      const currentVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
       const decVal = Number(value);
       if (isNaN(decVal)) {
         throw new Error(
-          `BLOCK_WORLD_TIMELINE_ENGINE_001: DECREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
+          `BLOCK_WORLD_TIMELINE_ENGINE_002: DECREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
         );
       }
-      nextState[propertyKey] = currentVal - decVal;
-      break;
+      return setNestedProperty(currentState, propertyKey, currentVal - decVal);
     }
 
     case "APPEND": {
-      const currentList = Array.isArray(nextState[propertyKey])
-        ? [...(nextState[propertyKey] as unknown[])]
-        : nextState[propertyKey] !== undefined &&
-            nextState[propertyKey] !== null
-          ? [nextState[propertyKey]]
+      const existing = getNestedProperty(currentState, propertyKey);
+      const currentList = Array.isArray(existing)
+        ? [...existing]
+        : existing !== undefined && existing !== null
+          ? [existing]
           : [];
 
-      if (Array.isArray(value)) {
-        nextState[propertyKey] = [...currentList, ...value];
-      } else {
-        nextState[propertyKey] = [...currentList, value];
-      }
-      break;
+      const nextList = Array.isArray(value)
+        ? [...currentList, ...value]
+        : [...currentList, value];
+
+      return setNestedProperty(currentState, propertyKey, nextList);
     }
 
     case "REMOVE": {
-      if (!Array.isArray(nextState[propertyKey])) {
-        // If not an array, nothing to remove
-        break;
+      const existing = getNestedProperty(currentState, propertyKey);
+      if (!Array.isArray(existing)) {
+        return currentState;
       }
-      const currentList = nextState[propertyKey] as unknown[];
       const toRemove = Array.isArray(value) ? value : [value];
-
-      nextState[propertyKey] = currentList.filter(
+      const nextList = existing.filter(
         (item) =>
           !toRemove.some((rem) =>
             typeof item === "object" &&
@@ -82,38 +116,33 @@ export function applyEffectToEntityState(
               : item === rem,
           ),
       );
-      break;
+      return setNestedProperty(currentState, propertyKey, nextList);
     }
 
     case "TRANSFER": {
-      // In single entity context, TRANSFER reduces target entity's resource
+      const existingVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
       if (typeof value === "object" && value !== null) {
         const transfer = value as TransferPayload;
         if (typeof transfer.amount === "number") {
-          const currentVal = Number(nextState[propertyKey] ?? 0);
-          nextState[propertyKey] = currentVal - transfer.amount;
+          return setNestedProperty(currentState, propertyKey, existingVal - transfer.amount);
         } else if (transfer.item !== undefined) {
-          if (Array.isArray(nextState[propertyKey])) {
-            const list = nextState[propertyKey] as unknown[];
-            nextState[propertyKey] = list.filter(
-              (i) => JSON.stringify(i) !== JSON.stringify(transfer.item),
-            );
-          }
+          const list = Array.isArray(existingVal) ? (existingVal as any[]) : [];
+          const nextList = list.filter(
+            (i) => JSON.stringify(i) !== JSON.stringify(transfer.item),
+          );
+          return setNestedProperty(currentState, propertyKey, nextList);
         }
       } else if (typeof value === "number") {
-        const currentVal = Number(nextState[propertyKey] ?? 0);
-        nextState[propertyKey] = currentVal - value;
+        return setNestedProperty(currentState, propertyKey, existingVal - value);
       }
-      break;
+      return currentState;
     }
 
     default:
       throw new Error(
-        `BLOCK_WORLD_TIMELINE_ENGINE_001: Unsupported effect operation '${operation}'`,
+        `BLOCK_WORLD_TIMELINE_ENGINE_002: Unsupported effect operation '${operation}'`,
       );
   }
-
-  return nextState;
 }
 
 /**

@@ -1,10 +1,11 @@
 /**
  * @file propertyValidator.ts
- * @description Dynamic property validation and type coercion engine.
+ * @description Dynamic property validation, dual-valued enum resolution, and type coercion engine.
  * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_001
  */
 
 import {
+  DynamicFieldDef,
   DynamicPropertyDef,
   PropertyValidationError,
   ValidationResult,
@@ -18,23 +19,31 @@ const UUID_REGEX =
  * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_001
  */
 export function validateSingleProperty(
-  def: DynamicPropertyDef,
+  def: DynamicFieldDef | DynamicPropertyDef,
   rawVal: unknown,
 ): { valid: boolean; coercedVal?: unknown; error?: PropertyValidationError } {
-  const rules = def.validation || {};
+  const legacyDef = def as DynamicPropertyDef;
+  const fieldType = def.fieldType || legacyDef.propertyType || "STRING";
+  const name = def.name;
+  const isRequired = def.isRequired ?? legacyDef.validation?.required ?? false;
+  const minVal = def.min ?? legacyDef.validation?.min;
+  const maxVal = def.max ?? legacyDef.validation?.max;
+  const minLength = legacyDef.validation?.minLength;
+  const maxLength = legacyDef.validation?.maxLength;
+
   let val = rawVal;
 
   // Handle undefined / null: use defaultValue if available
   if (val === undefined || val === null) {
-    if (def.defaultValue !== undefined && def.defaultValue !== null) {
-      val = def.defaultValue;
-    } else if (rules.required) {
+    if (legacyDef.defaultValue !== undefined && legacyDef.defaultValue !== null) {
+      val = legacyDef.defaultValue;
+    } else if (isRequired) {
       return {
         valid: false,
         error: {
-          propertyKey: def.name,
+          propertyKey: name,
           code: "REQUIRED_FIELD_MISSING",
-          message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' is required but received empty value.`,
+          message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' is required but received empty value.`,
           receivedValue: val,
         },
       };
@@ -45,37 +54,37 @@ export function validateSingleProperty(
   }
 
   // Type-specific validation and coercion
-  switch (def.propertyType) {
+  switch (fieldType) {
     case "STRING": {
       if (typeof val !== "string") {
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "TYPE_MISMATCH_STRING",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected string, received ${typeof val}.`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' expected string, received ${typeof val}.`,
             receivedValue: val,
           },
         };
       }
-      if (rules.minLength !== undefined && val.length < rules.minLength) {
+      if (minLength !== undefined && val.length < minLength) {
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "STRING_MIN_LENGTH",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' length (${val.length}) is below minimum (${rules.minLength}).`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' length (${val.length}) is below minimum (${minLength}).`,
             receivedValue: val,
           },
         };
       }
-      if (rules.maxLength !== undefined && val.length > rules.maxLength) {
+      if (maxLength !== undefined && val.length > maxLength) {
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "STRING_MAX_LENGTH",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' length (${val.length}) exceeds maximum (${rules.maxLength}).`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' length (${val.length}) exceeds maximum (${maxLength}).`,
             receivedValue: val,
           },
         };
@@ -97,32 +106,32 @@ export function validateSingleProperty(
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "TYPE_MISMATCH_NUMBER",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected valid number, received ${typeof val}.`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' expected valid number, received ${typeof val}.`,
             receivedValue: val,
           },
         };
       }
 
-      if (rules.min !== undefined && numVal < rules.min) {
+      if (minVal !== undefined && numVal < minVal) {
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "NUMERIC_BELOW_MIN",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' value (${numVal}) is below minimum (${rules.min}).`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' value (${numVal}) is below minimum (${minVal}).`,
             receivedValue: numVal,
           },
         };
       }
-      if (rules.max !== undefined && numVal > rules.max) {
+      if (maxVal !== undefined && numVal > maxVal) {
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "NUMERIC_ABOVE_MAX",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' value (${numVal}) exceeds maximum (${rules.max}).`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' value (${numVal}) exceeds maximum (${maxVal}).`,
             receivedValue: numVal,
           },
         };
@@ -143,35 +152,39 @@ export function validateSingleProperty(
       return {
         valid: false,
         error: {
-          propertyKey: def.name,
+          propertyKey: name,
           code: "TYPE_MISMATCH_BOOLEAN",
-          message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected boolean, received ${typeof val}.`,
+          message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' expected boolean, received ${typeof val}.`,
           receivedValue: val,
         },
       };
     }
 
-    case "ENUM_SINGLE":
-    case "LADDER_TIER": {
-      if (typeof val !== "string") {
+    case "ENUM":
+    case "ENUM_SINGLE" as any: {
+      const allowed = def.options || legacyDef.validation?.allowedValues || [];
+      const strVal = String(val);
+
+      const isValid = allowed.some((opt) => {
+        if (typeof opt === "string") {
+          return opt.toLowerCase() === strVal.toLowerCase() || opt === val;
+        }
+        return (
+          opt.value.toLowerCase() === strVal.toLowerCase() ||
+          opt.label.toLowerCase() === strVal.toLowerCase() ||
+          opt.value === val ||
+          opt.label === val
+        );
+      });
+
+      if (!isValid && allowed.length > 0) {
+        const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
         return {
           valid: false,
           error: {
-            propertyKey: def.name,
-            code: "TYPE_MISMATCH_ENUM",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected string enum option, received ${typeof val}.`,
-            receivedValue: val,
-          },
-        };
-      }
-      const allowed = rules.allowedValues || [];
-      if (allowed.length > 0 && !allowed.includes(val)) {
-        return {
-          valid: false,
-          error: {
-            propertyKey: def.name,
+            propertyKey: name,
             code: "ENUM_INVALID_OPTION",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' value '${val}' is not in allowed options: [${allowed.join(", ")}].`,
+            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Option '${strVal}' is not valid for property '${name}'. Allowed: [${allowedLabels.join(", ")}]`,
             receivedValue: val,
           },
         };
@@ -179,49 +192,62 @@ export function validateSingleProperty(
       return { valid: true, coercedVal: val };
     }
 
-    case "ENUM_MULTI": {
-      if (!Array.isArray(val)) {
-        return {
-          valid: false,
-          error: {
-            propertyKey: def.name,
-            code: "TYPE_MISMATCH_ENUM_ARRAY",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected array of enum strings, received ${typeof val}.`,
-            receivedValue: val,
-          },
-        };
-      }
-      const allowed = rules.allowedValues || [];
-      for (const item of val) {
-        if (
-          typeof item !== "string" ||
-          (allowed.length > 0 && !allowed.includes(item))
-        ) {
+    case "ENUM_MULTI" as any: {
+      const allowed = def.options || legacyDef.validation?.allowedValues || [];
+      const listVal = Array.isArray(val) ? val : [val];
+
+      const coerced: string[] = [];
+      for (const item of listVal) {
+        const strItem = String(item);
+        const match = allowed.find((opt) => {
+          if (typeof opt === "string") {
+            return opt.toLowerCase() === strItem.toLowerCase() || opt === item;
+          }
+          return (
+            opt.value.toLowerCase() === strItem.toLowerCase() ||
+            opt.label.toLowerCase() === strItem.toLowerCase()
+          );
+        });
+
+        if (!match && allowed.length > 0) {
+          const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
           return {
             valid: false,
             error: {
-              propertyKey: def.name,
+              propertyKey: name,
               code: "ENUM_MULTI_INVALID_ITEM",
-              message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Item '${item}' in property '${def.name}' is not allowed: [${allowed.join(", ")}].`,
+              message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Item '${strItem}' in multi-enum '${name}' is invalid. Allowed: [${allowedLabels.join(", ")}]`,
               receivedValue: item,
             },
           };
         }
+        coerced.push(typeof match === "object" && match !== null ? match.value : strItem);
       }
-      return { valid: true, coercedVal: val };
+      return { valid: true, coercedVal: coerced };
     }
 
-    case "ENTITY_REF": {
-      if (typeof val !== "string" || !UUID_REGEX.test(val)) {
-        return {
-          valid: false,
-          error: {
-            propertyKey: def.name,
-            code: "INVALID_ENTITY_UUID",
-            message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${def.name}' expected valid entity UUID reference, received '${val}'.`,
-            receivedValue: val,
-          },
-        };
+    case "BLUEPRINT_REF":
+    case "ENTITY_REF" as any: {
+      if (typeof val === "string" && UUID_REGEX.test(val)) {
+        return { valid: true, coercedVal: val };
+      }
+      if (typeof val === "object" && val !== null) {
+        return { valid: true, coercedVal: val };
+      }
+      return {
+        valid: false,
+        error: {
+          propertyKey: name,
+          code: "INVALID_ENTITY_UUID",
+          message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property '${name}' expected valid UUID.`,
+          receivedValue: val,
+        },
+      };
+    }
+
+    case "FORMULA": {
+      if (typeof val === "number" || typeof val === "string" || val === null) {
+        return { valid: true, coercedVal: val };
       }
       return { valid: true, coercedVal: val };
     }
@@ -232,45 +258,44 @@ export function validateSingleProperty(
 }
 
 /**
- * Validate a full dynamic properties map against entity property definitions.
+ * Validates a map of properties against an array of property definitions.
  * Block Standard: BLOCK_WORLD_DYNAMIC_SCHEMA_001
  */
 export function validateEntityProperties(
-  propertyDefs: DynamicPropertyDef[],
-  rawProperties: Record<string, unknown>,
+  definitions: (DynamicFieldDef | DynamicPropertyDef)[],
+  properties: Record<string, unknown>,
 ): ValidationResult {
-  const coercedProperties: Record<string, unknown> = {};
   const errors: PropertyValidationError[] = [];
+  const coerced: Record<string, unknown> = {};
 
-  const defsMap = new Map(propertyDefs.map((d) => [d.name, d]));
+  const definedKeys = new Set(definitions.map((d) => d.name));
 
-  // 1. Validate all defined properties against provided values
-  for (const def of propertyDefs) {
-    const rawVal = rawProperties[def.name];
+  // Check for unregistered keys
+  for (const rawKey of Object.keys(properties)) {
+    if (!definedKeys.has(rawKey)) {
+      errors.push({
+        propertyKey: rawKey,
+        code: "UNDEFINED_PROPERTY_KEY",
+        message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Unregistered property '${rawKey}' is not allowed in schema.`,
+        receivedValue: properties[rawKey],
+      });
+    }
+  }
+
+  for (const def of definitions) {
+    const rawVal = properties[def.name];
     const res = validateSingleProperty(def, rawVal);
 
     if (!res.valid && res.error) {
       errors.push(res.error);
     } else {
-      coercedProperties[def.name] = res.coercedVal;
-    }
-  }
-
-  // 2. Check for unknown/unregistered properties (prevent arbitrary pollution)
-  for (const key of Object.keys(rawProperties)) {
-    if (!defsMap.has(key)) {
-      errors.push({
-        propertyKey: key,
-        code: "UNDEFINED_PROPERTY_KEY",
-        message: `BLOCK_WORLD_DYNAMIC_SCHEMA_001: Property key '${key}' is not defined in the active entity schema.`,
-        receivedValue: rawProperties[key],
-      });
+      coerced[def.name] = res.coercedVal;
     }
   }
 
   return {
     valid: errors.length === 0,
-    coercedProperties,
+    coercedProperties: coerced,
     errors,
   };
 }
