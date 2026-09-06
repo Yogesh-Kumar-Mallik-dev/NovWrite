@@ -296,6 +296,14 @@
                               bind:value={properties[field.name][subF.name]}
                               class="text-xs"
                             />
+                          {:else if subF.fieldType === 'BOOLEAN'}
+                            <Select
+                              bind:value={properties[field.name][subF.name]}
+                              options={[
+                                { value: 'true', label: 'True / Enabled' },
+                                { value: 'false', label: 'False / Disabled' },
+                              ]}
+                            />
                           {:else}
                             <Input
                               bind:value={properties[field.name][subF.name]}
@@ -305,6 +313,26 @@
                         </div>
                       {/if}
                     {/each}
+                  </div>
+                {:else if targetBp && targetBp.blueprintClass === 'FIRST_CLASS'}
+                  <!-- If referencing a 1st-Class Blueprint, allow selecting an instantiated entity instance -->
+                  {@const candidateEntities = worldStore.entities.filter((e) => e.blueprintId === targetBp.id && e.id !== entity.id)}
+                  <div class="space-y-1.5 pt-1">
+                    <span class="block text-[11px] text-zinc-400">
+                      Select an instantiated {targetBp.name} entity instance:
+                    </span>
+                    <div class="max-w-md">
+                      <Select
+                        bind:value={properties[field.name]}
+                        options={[
+                          { value: '', label: 'None (Unassigned)' },
+                          ...candidateEntities.map((e) => ({
+                            value: e.id,
+                            label: `${e.name} (${e.category})`,
+                          })),
+                        ]}
+                      />
+                    </div>
                   </div>
                 {/if}
               </div>
