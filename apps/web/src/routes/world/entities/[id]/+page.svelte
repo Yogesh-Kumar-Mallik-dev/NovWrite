@@ -23,6 +23,8 @@
     X,
     RotateCcw,
     Eye,
+    Copy,
+    CheckCheck,
   } from 'lucide-svelte';
   import {
     Button,
@@ -418,9 +420,27 @@
     return Object.keys(properties).filter((k) => !schemaFieldNames.has(k));
   });
 
+  function getFullEntityJson(): string {
+    return JSON.stringify(
+      {
+        id: entity?.id || loadedEntityId,
+        name,
+        blueprintId: entity?.blueprintId,
+        blueprintName: entity?.blueprintName,
+        category,
+        description,
+        properties,
+      },
+      null,
+      2
+    );
+  }
+
+  let jsonCopied = $state(false);
+
   // Switch to JSON editor mode and format JSON
   function switchToJsonMode() {
-    jsonEditorContent = JSON.stringify(properties, null, 2);
+    jsonEditorContent = getFullEntityJson();
     jsonParseError = null;
     editorMode = 'json';
   }
@@ -430,9 +450,16 @@
     try {
       const parsed = JSON.parse(jsonEditorContent);
       if (typeof parsed !== 'object' || parsed === null) {
-        throw new Error('Properties must be a valid JSON object');
+        throw new Error('Root JSON must be an object');
       }
-      properties = parsed;
+      if (parsed.name !== undefined) name = String(parsed.name);
+      if (parsed.category !== undefined) category = String(parsed.category);
+      if (parsed.description !== undefined) description = String(parsed.description);
+      if (parsed.properties && typeof parsed.properties === 'object') {
+        properties = ensureAllPropertiesExist(parsed.properties, blueprint);
+      } else if (!parsed.properties && typeof parsed === 'object') {
+        properties = ensureAllPropertiesExist(parsed, blueprint);
+      }
       jsonParseError = null;
       editorMode = 'form';
     } catch (e: any) {
@@ -446,11 +473,43 @@
     try {
       const parsed = JSON.parse(val);
       if (typeof parsed === 'object' && parsed !== null) {
-        properties = parsed;
+        if (parsed.name !== undefined) name = String(parsed.name);
+        if (parsed.category !== undefined) category = String(parsed.category);
+        if (parsed.description !== undefined) description = String(parsed.description);
+        if (parsed.properties && typeof parsed.properties === 'object') {
+          properties = parsed.properties;
+        } else if (!parsed.properties && typeof parsed === 'object') {
+          properties = parsed;
+        }
         jsonParseError = null;
       }
     } catch (e: any) {
       jsonParseError = e.message || 'Syntax error in JSON';
+    }
+  }
+
+  async function handleCopyJson() {
+    try {
+      await navigator.clipboard.writeText(jsonEditorContent);
+      jsonCopied = true;
+      toast.success('Copied to Clipboard', 'Raw JSON copied to clipboard.');
+      setTimeout(() => {
+        jsonCopied = false;
+      }, 2500);
+    } catch {
+      toast.info('Clipboard', 'Unable to write to clipboard automatically.');
+    }
+  }
+
+  function handleResetJsonToSaved() {
+    if (entity) {
+      name = entity.name;
+      category = entity.category || (blueprint ? blueprint.category : 'General');
+      description = entity.description || '';
+      properties = ensureAllPropertiesExist(entity.properties || {}, blueprint);
+      jsonEditorContent = getFullEntityJson();
+      jsonParseError = null;
+      toast.info('Reset JSON', 'Entity properties reverted to last saved state.');
     }
   }
 
@@ -597,29 +656,27 @@
 
       <div class="flex flex-wrap items-center gap-2">
         <!-- View / Editor Mode Switcher -->
-        <div class="inline-flex rounded-lg bg-muted p-0.5 border border-border text-xs">
+        <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs gap-1">
           <button
             type="button"
-            onclick={() => {
-              if (editorMode === 'json') switchToFormMode();
-            }}
-            class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition cursor-pointer {editorMode ===
-            'form'
-              ? 'bg-background text-foreground font-semibold shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'}"
+            onclick={switchToFormMode}
+            class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+              editorMode === 'form'
+                ? 'bg-background text-foreground shadow-xs border border-border font-bold'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
+            }`}
           >
-            <Sliders class="w-3.5 h-3.5" />
+            <Sliders class="w-3.5 h-3.5 text-primary" />
             <span>Visual Form</span>
           </button>
           <button
             type="button"
-            onclick={() => {
-              if (editorMode === 'form') switchToJsonMode();
-            }}
-            class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition cursor-pointer {editorMode ===
-            'json'
-              ? 'bg-background text-foreground font-semibold shadow-xs'
-              : 'text-muted-foreground hover:text-foreground'}"
+            onclick={switchToJsonMode}
+            class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+              editorMode === 'json'
+                ? 'bg-background text-foreground shadow-xs border border-border font-bold'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
+            }`}
           >
             <Code class="w-3.5 h-3.5 text-primary" />
             <span>Raw JSON</span>
@@ -666,73 +723,23 @@
       </div>
     {/if}
 
-    <!-- PRIMARY IDENTITY CARD (COMMON TO BOTH MODES) -->
-    <Card class="p-6 space-y-4 border-border bg-card">
-      <div class="flex items-center justify-between border-b border-border pb-3">
-        <h3
-          class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
-        >
-          <ArchetypeIcon class="w-4 h-4 text-primary" />
-          <span>{archetypeContext.archetypeLabel} Core Identity</span>
-        </h3>
-        <span
-          class="text-[11px] text-primary font-medium px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20"
-        >
-          Archetype: {entity.blueprintName}
-        </span>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Field id="entity-name" label={archetypeContext.nameLabel} required>
-          <Input
-            id="entity-name"
-            bind:value={name}
-            placeholder={archetypeContext.namePlaceholder}
-            class="w-full text-xs font-medium"
-          />
-        </Field>
-
-        <Field id="entity-cat" label="Category / Faction">
-          <Input
-            id="entity-cat"
-            bind:value={category}
-            placeholder="e.g. Characters, Protagonists, Silver Vanguard..."
-            class="w-full text-xs"
-          />
-        </Field>
-
-        <Field id="entity-bp" label="Blueprint Archetype">
-          <Input
-            id="entity-bp"
-            value={entity.blueprintName}
-            disabled
-            class="w-full text-xs opacity-70 cursor-not-allowed"
-          />
-        </Field>
-      </div>
-
-      <Field id="entity-desc" label={archetypeContext.loreLabel}>
-        <Textarea
-          id="entity-desc"
-          bind:value={description}
-          rows={3}
-          placeholder={archetypeContext.lorePlaceholder}
-          class="w-full text-xs leading-relaxed"
-        />
-      </Field>
-    </Card>
-
-    <!-- MODE 1: RAW JSON OBJECT INSPECTOR & EDITOR -->
     {#if editorMode === 'json'}
+      <!-- MODE 1: RAW JSON OBJECT INSPECTOR & EDITOR -->
       <Card class="p-6 space-y-4 border-primary/40 bg-card shadow-sm">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2">
-            <Code class="w-4 h-4 text-primary" />
-            <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Raw Object Properties (JSON Schema)
-            </h3>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2">
+              <Code class="w-4 h-4 text-primary" />
+              <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider">
+                Raw Universe Entity Document (JSON Schema)
+              </h3>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Directly inspect and mutate raw properties, nested arrays, or sub-keys on this entity. Changes synchronize live to formula engines.
+            </p>
           </div>
-          <div class="flex items-center gap-2">
+
+          <div class="flex items-center gap-2 shrink-0">
             {#if jsonParseError}
               <span
                 class="text-[11px] font-mono px-2 py-0.5 rounded bg-destructive/15 border border-destructive/30 text-destructive font-semibold"
@@ -743,7 +750,7 @@
               <span
                 class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold"
               >
-                Valid Object Structure
+                Valid JSON Document
               </span>
             {/if}
             <Button
@@ -763,31 +770,106 @@
               <RotateCcw class="w-3 h-3" />
               <span>Format JSON</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-7 text-xs"
+              onclick={handleCopyJson}
+            >
+              {#if jsonCopied}
+                <CheckCheck class="w-3 h-3 text-emerald-500" />
+                <span>Copied</span>
+              {:else}
+                <Copy class="w-3 h-3" />
+                <span>Copy</span>
+              {/if}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="h-7 text-xs text-muted-foreground hover:text-foreground"
+              onclick={handleResetJsonToSaved}
+            >
+              <span>Reset</span>
+            </Button>
           </div>
         </div>
-
-        <p class="text-xs text-muted-foreground">
-          Directly inspect and mutate any previous properties, nested arrays, or sub-keys on
-          this entity. Changes synchronize live to formula engines.
-        </p>
-
-        <textarea
-          class="w-full h-96 font-mono text-xs p-4 rounded-lg bg-muted/40 border {jsonParseError
-            ? 'border-destructive'
-            : 'border-border'} text-foreground focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed"
-          value={jsonEditorContent}
-          oninput={(e) => handleJsonTextareaChange(e.currentTarget.value)}
-        ></textarea>
 
         {#if jsonParseError}
           <div
             class="p-3 rounded bg-destructive/10 border border-destructive/30 text-xs font-mono text-destructive"
           >
-            {jsonParseError}
+            <strong>JSON Parse Error:</strong> {jsonParseError}
           </div>
         {/if}
+
+        <textarea
+          class="w-full h-[520px] font-mono text-xs p-4 rounded-lg bg-muted/40 border {jsonParseError
+            ? 'border-destructive'
+            : 'border-border'} text-foreground focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed resize-y"
+          value={jsonEditorContent}
+          oninput={(e) => handleJsonTextareaChange(e.currentTarget.value)}
+          placeholder="Enter valid JSON object..."
+          spellcheck="false"
+        ></textarea>
       </Card>
     {:else}
+      <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
+      <!-- PRIMARY IDENTITY CARD -->
+      <Card class="p-6 space-y-4 border-border bg-card">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <h3
+            class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
+          >
+            <ArchetypeIcon class="w-4 h-4 text-primary" />
+            <span>{archetypeContext.archetypeLabel} Core Identity</span>
+          </h3>
+          <span
+            class="text-[11px] text-primary font-medium px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20"
+          >
+            Archetype: {entity.blueprintName}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Field id="entity-name" label={archetypeContext.nameLabel} required>
+            <Input
+              id="entity-name"
+              bind:value={name}
+              placeholder={archetypeContext.namePlaceholder}
+              class="w-full text-xs font-medium"
+            />
+          </Field>
+
+          <Field id="entity-cat" label="Category / Faction">
+            <Input
+              id="entity-cat"
+              bind:value={category}
+              placeholder="e.g. Characters, Protagonists, Silver Vanguard..."
+              class="w-full text-xs"
+            />
+          </Field>
+
+          <Field id="entity-bp" label="Blueprint Archetype">
+            <Input
+              id="entity-bp"
+              value={entity.blueprintName}
+              disabled
+              class="w-full text-xs opacity-70 cursor-not-allowed"
+            />
+          </Field>
+        </div>
+
+        <Field id="entity-desc" label={archetypeContext.loreLabel}>
+          <Textarea
+            id="entity-desc"
+            bind:value={description}
+            rows={3}
+            placeholder={archetypeContext.lorePlaceholder}
+            class="w-full text-xs leading-relaxed"
+          />
+        </Field>
+      </Card>
       <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
 
       <!-- Dynamic Template Attributes (Direct Fields from Blueprint) -->
