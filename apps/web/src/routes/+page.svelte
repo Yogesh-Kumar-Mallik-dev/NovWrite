@@ -3,30 +3,18 @@
     BookOpen,
     Globe2,
     ArrowRight,
-    ShieldCheck,
-    Database,
-    Layers,
-    Sparkles,
   } from "lucide-svelte";
-  import { Button } from "$lib/components/ui/button";
   import {
     Card,
     CardHeader,
     CardTitle,
     CardDescription,
-    CardContent,
     CardFooter,
   } from "$lib/components/ui/card";
 </script>
 
 <div class="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
   <div class="mb-10 text-center space-y-3">
-    <div
-      class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono font-medium mx-auto"
-    >
-      <ShieldCheck class="w-4 h-4" />
-      <span>Canon Over AI Memory · Isolated Two-Front Architecture</span>
-    </div>
     <h1
       class="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground"
     >
@@ -37,7 +25,7 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- Prose Studio Card -->
     <a
       href="/novel"
@@ -98,17 +86,4 @@
       </Card>
     </a>
   </div>
-
-  <!-- Workspace Status Footer -->
-  <Card class="p-4 border-border bg-card/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground font-mono">
-    <div class="flex items-center gap-4">
-      <span class="flex items-center gap-1.5 text-foreground font-medium">
-        <Database class="w-4 h-4 text-primary" /> PostgreSQL 18
-      </span>
-      <span class="flex items-center gap-1.5 text-foreground font-medium">
-        <Layers class="w-4 h-4 text-destructive" /> Redis 7
-      </span>
-    </div>
-    <span class="text-muted-foreground">NovWrite v2.0 Architecture</span>
-  </Card>
 </div>
