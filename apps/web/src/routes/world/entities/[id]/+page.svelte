@@ -52,6 +52,7 @@
   );
 
   let name = $state('');
+  let category = $state('');
   let description = $state('');
   let properties = $state<Record<string, any>>({});
   let saveMessage = $state<string | null>(null);
@@ -59,6 +60,7 @@
   $effect(() => {
     if (entity) {
       name = entity.name;
+      category = entity.category || '';
       description = entity.description || '';
       properties = JSON.parse(JSON.stringify(entity.properties || {}));
     }
@@ -291,6 +293,7 @@
 
     worldStore.updateEntity(entity.id, {
       name: name.trim(),
+      category: category.trim() || entity.category,
       description: description.trim(),
       properties: JSON.parse(JSON.stringify(properties)),
     });
@@ -359,6 +362,10 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <Button variant="default" size="sm" onclick={handleSaveEntity} class="gap-1.5 shadow-xs">
+          <Check class="w-3.5 h-3.5" />
+          <span>Save Changes</span>
+        </Button>
         {#if blueprint}
           <Button href={`/world/schemas/${blueprint.id}`} target="_blank" variant="outline" size="sm" class="text-xs">
             <Edit3 class="w-3.5 h-3.5 text-primary" />
@@ -392,13 +399,22 @@
         </span>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Field id="entity-name" label={archetypeContext.nameLabel} required>
           <Input
             id="entity-name"
             bind:value={name}
             placeholder={archetypeContext.namePlaceholder}
             class="w-full text-xs font-medium"
+          />
+        </Field>
+
+        <Field id="entity-cat" label="Category / Faction">
+          <Input
+            id="entity-cat"
+            bind:value={category}
+            placeholder="e.g. Characters, Protagonists, Silver Vanguard..."
+            class="w-full text-xs"
           />
         </Field>
 
