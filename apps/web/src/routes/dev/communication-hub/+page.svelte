@@ -15,6 +15,8 @@
     Cpu,
   } from "lucide-svelte";
 
+  import Button from "$lib/components/ui/button.svelte";
+
   const bridge = new MockBridgeService();
 
   let activeTab = $state<"grounding" | "continuity" | "mentions">("continuity");
@@ -140,30 +142,33 @@
 
     <!-- Quick Action Triggers -->
     <div class="flex items-center gap-2">
-      <button
+      <Button
+        variant="destructive"
+        size="sm"
         onclick={runTestViolation}
         disabled={isExecuting}
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-red-950/80 border border-red-800 text-red-300 hover:bg-red-900 transition-colors"
       >
         <Play class="w-3.5 h-3.5" />
-        Test Invariant Violation (Malakor)
-      </button>
-      <button
+        <span>Test Invariant Violation</span>
+      </Button>
+      <Button
+        variant="default"
+        size="sm"
         onclick={runTestGrounding}
         disabled={isExecuting}
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-purple-950/80 border border-purple-800 text-purple-300 hover:bg-purple-900 transition-colors"
       >
         <Play class="w-3.5 h-3.5" />
-        Test Grounding (Eldrin)
-      </button>
-      <button
+        <span>Test Grounding</span>
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
         onclick={runTestMentions}
         disabled={isExecuting}
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:bg-zinc-700 transition-colors"
       >
         <Play class="w-3.5 h-3.5" />
-        Test Mentions Autocomplete
-      </button>
+        <span>Test Mentions Autocomplete</span>
+      </Button>
     </div>
   </div>
 
@@ -209,16 +214,12 @@
               </div>
 
               {#if log.status === "VIOLATION_DETECTED"}
-                <span
-                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-red-950 text-red-400 border border-red-800"
-                >
-                  <AlertTriangle class="w-3 h-3" /> VIOLATION
+                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-red-400">
+                  <AlertTriangle class="w-3.5 h-3.5" /> VIOLATION
                 </span>
               {:else}
-                <span
-                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800"
-                >
-                  <CheckCircle class="w-3 h-3" /> OK
+                <span class="flex items-center gap-1 text-[11px] font-mono font-semibold text-emerald-400">
+                  <CheckCircle class="w-3.5 h-3.5" /> OK
                 </span>
               {/if}
             </button>

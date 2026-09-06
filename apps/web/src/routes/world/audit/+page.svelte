@@ -12,6 +12,7 @@
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
   import Input from "$lib/components/ui/input.svelte";
+  import Field from "$lib/components/ui/field.svelte";
 
   interface ViolationItem {
     id: string;
@@ -266,19 +267,18 @@
           >
         </div>
 
-        <div>
-          <label
-            for="override-justification-input"
-            class="block text-xs font-medium text-zinc-300 mb-1.5"
-            >Editorial Justification (Required)</label
-          >
+        <Field
+          id="override-justification-input"
+          label="Editorial Justification"
+          required
+        >
           <Input
             id="override-justification-input"
             bind:value={justificationInput}
             placeholder="e.g., Character resurrected via astral echo in flashback scene #160..."
             class="text-xs"
           />
-        </div>
+        </Field>
 
         <div
           class="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800"

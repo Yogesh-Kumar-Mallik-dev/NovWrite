@@ -19,6 +19,9 @@
   import Button from '$lib/components/ui/button.svelte';
   import Input from '$lib/components/ui/input.svelte';
   import Select from '$lib/components/ui/select.svelte';
+  import Label from '$lib/components/ui/label.svelte';
+  import Field from '$lib/components/ui/field.svelte';
+  import Textarea from '$lib/components/ui/textarea.svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import {
     worldStore,
@@ -190,26 +193,23 @@
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label for="entity-name" class="block text-xs font-medium text-zinc-400 mb-1">Entity Name</label>
+        <Field id="entity-name" label="Entity Name">
           <Input id="entity-name" bind:value={name} class="w-full text-xs" />
-        </div>
+        </Field>
 
-        <div>
-          <label for="entity-bp" class="block text-xs font-medium text-zinc-400 mb-1">Blueprint Archetype</label>
+        <Field id="entity-bp" label="Blueprint Archetype">
           <Input id="entity-bp" value={entity.blueprintName} disabled class="w-full text-xs opacity-70" />
-        </div>
+        </Field>
       </div>
 
-      <div>
-        <label for="entity-desc" class="block text-xs font-medium text-zinc-400 mb-1">Description & Lore</label>
-        <textarea
+      <Field id="entity-desc" label="Description & Lore">
+        <Textarea
           id="entity-desc"
           bind:value={description}
           rows={2}
-          class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        ></textarea>
-      </div>
+          class="w-full text-xs"
+        />
+      </Field>
     </div>
 
     <!-- Dynamic Blueprint Properties Workbench -->
@@ -230,11 +230,11 @@
             <!-- 1. ENUM FIELD (e.g. Gender with Male/Female) -->
             {#if field.fieldType === 'ENUM'}
               <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
-                <label class="block text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                   <ListFilter class="w-3.5 h-3.5 text-teal-400" />
                   <span>{field.label}</span>
                   <span class="text-[10px] font-mono text-zinc-500">({field.name})</span>
-                </label>
+                </Label>
 
                 <div class="max-w-md pt-1">
                   <Select
@@ -302,12 +302,12 @@
             {:else if field.fieldType === 'NUMBER'}
               <div class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-950/60 space-y-1.5">
                 <div class="flex items-center justify-between">
-                  <label class="block text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                    <Hash class="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{field.label}</span>
-                    {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
-                  </label>
-                  {#if field.min !== undefined && field.max !== undefined}
+                <Label class="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                  <Hash class="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{field.label}</span>
+                  {#if field.unit}<span class="text-zinc-500 font-mono">({field.unit})</span>{/if}
+                </Label>
+                {#if field.min !== undefined && field.max !== undefined}
                     <span class="text-[10px] font-mono text-zinc-500">Range: [{field.min} to {field.max}]</span>
                   {/if}
                 </div>
