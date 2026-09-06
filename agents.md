@@ -48,13 +48,16 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
    - **Mandatory Hand-in-Hand Responsiveness**: Whenever any frontend component, layout, or feature is built or updated, responsiveness **MUST be implemented hand-in-hand** in the exact same change. Deferring responsive styling is strictly prohibited.
    - **Focus on Awkward Non-Standard Android Widths**: Frontends must be rigorously engineered and tested to handle narrow and non-standard Android viewports (e.g. 280px–360px outer foldable displays, compact Android devices 360px–390px, tall 20:9/21:9 aspect ratios, and virtual keyboard height shifts). Prevent all horizontal overflow, wrap toolbars gracefully, and provide accessible touch targets.
    - **Unified Responsive Parity**: All 3 frontends share identical UI elements (barring platform/OS-specific handling). A minimized or narrow Web or Desktop window must adapt to look and behave like the Mobile client, and Mobile on large viewports must expand into the full multi-pane studio view.
-10. **Strict UI/UX Rules & AI Anti-Pattern Avoidance**:
+10. **Strict UI/UX Rules, Zero-Badge Policy & Modern Interaction Primitives**:
+    - **Zero-Badge Policy**: Badges, pill tags, and badge-adjacent colored chips are **strictly prohibited** across the entire frontend. Replace with semantic icons with text dots, interactive action buttons, breadcrumb navigation, and slide-over side drawers/sheets.
+    - **No Communication Layer in Frontend**: The `@novwrite/bridge` transport and internal diagnostic message hubs belong to backend machinery and must **NOT** be exposed in primary user-facing navigation or UI bars.
     - **Avoid Excessive Gradients & Glows**: Use solid, grounded surfaces (Linear/MongoDB Compass aesthetic). Do not use multi-color rainbow gradients, glossy glassmorphism, or AI glow shimmers.
-    - **Strict Badge Discipline**: Badges are permitted **primarily on data tables** for status/enum indicators (e.g., `ALIVE`, `DEAD`, `PUBLISHED`) and compact header status pills. **DO NOT** scatter badges across cards, labels, or body text.
     - **Mandatory `Select` from `shadcn-svelte` for Dropdowns**: For dropdown option selection, **ALWAYS use `Select` from `shadcn-svelte`** (`$lib/components/ui/select`). Never use unstyled native `<select>` or custom div click hacks.
+    - **Breadcrumbs, Icons & Drawers**: Use breadcrumbs for hierarchical context, clean icons for state indicators, and slide-over sheets/drawers for inspection.
     - **Mandatory Pre-Commit UI/UX Checklist**: Before finalizing any frontend task, agents must verify:
-      1. _No Card Sprawl_: Group data into dense master-detail tables or clean lists rather than wrapping every tiny field in its own bordered Card.
-      2. _No Modal Soup_: Never open modals inside modals. Use side sheets (`Sheet`) or dedicated `/world/*` workbench routes.
-      3. _Complete States_: Include designed empty states (`Skeleton`, empty illustration/icon + action button) and error recovery messages.
-      4. _Keyboard Navigation_: Ensure `Esc` closes sheets/drawers, `Tab` traverses form inputs, and `Select` works via arrow keys.
-      5. _Verified Contrast_: Ensure text meets WCAG AA 4.5:1 contrast against dark/light surfaces.
+      1. _Zero Badges_: Ensure no badges or badge-adjacent chip boxes exist in the view.
+      2. _No Card Sprawl_: Group data into dense master-detail tables or clean lists rather than wrapping every tiny field in its own bordered Card.
+      3. _No Modal Soup_: Never open modals inside modals. Use side sheets (`Sheet`) or dedicated `/world/*` workbench routes.
+      4. _Complete States_: Include designed empty states (`Skeleton`, empty illustration/icon + action button) and error recovery messages.
+      5. _Keyboard Navigation_: Ensure `Esc` closes sheets/drawers, `Tab` traverses form inputs, and `Select` works via arrow keys.
+      6. _Verified Contrast_: Ensure text meets WCAG AA 4.5:1 contrast against dark/light surfaces.

@@ -8,9 +8,9 @@
     Check,
     Info,
     FileText,
+    CheckCircle,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
-  import Badge from "$lib/components/ui/badge.svelte";
   import Input from "$lib/components/ui/input.svelte";
 
   interface ViolationItem {
@@ -110,8 +110,11 @@
       </p>
     </div>
 
-    <div class="flex items-center gap-2">
-      <Badge variant="destructive">2 Active Violations Detected</Badge>
+    <div
+      class="flex items-center gap-2 text-xs font-mono text-red-400 font-semibold"
+    >
+      <AlertOctagon class="w-4 h-4 text-red-500" />
+      <span>2 Active Violations Detected</span>
     </div>
   </div>
 
@@ -151,11 +154,21 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             {#if viol.overridden}
-              <Badge variant="outline">OVERRIDDEN BY LEAD AUTHOR</Badge>
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400"
+              >
+                <CheckCircle class="w-3.5 h-3.5 text-zinc-500" />
+                OVERRIDDEN BY LEAD AUTHOR
+              </span>
             {:else}
-              <Badge variant="destructive">BLOCKING ERROR</Badge>
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-mono text-red-400 font-semibold"
+              >
+                <ShieldAlert class="w-3.5 h-3.5 text-red-500" />
+                BLOCKING ERROR
+              </span>
               <Button
                 variant="destructive"
                 size="sm"

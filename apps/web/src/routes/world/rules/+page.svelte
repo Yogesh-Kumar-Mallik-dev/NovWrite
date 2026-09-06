@@ -5,12 +5,10 @@
     ShieldCheck,
     Trash2,
     Edit3,
-    CheckCircle2,
+    AlertTriangle,
+    Info,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
-  import Badge from "$lib/components/ui/badge.svelte";
-  import Input from "$lib/components/ui/input.svelte";
-  import Select from "$lib/components/ui/select.svelte";
 
   interface RuleItem {
     id: string;
@@ -56,13 +54,6 @@
         "Domain techniques require at least Core Formation cultivation realm stage.",
     },
   ]);
-
-  let showAddModal = $state(false);
-  let newRuleName = $state("");
-  let newRuleSeverity = $state("BLOCKING_ERROR");
-  let newRuleType = $state("NUMERIC_BOUNDS");
-  let newPropertyKey = $state("mana_capacity");
-  let newMinValue = $state("0");
 </script>
 
 <div class="space-y-6">
@@ -78,7 +69,7 @@
       </p>
     </div>
 
-    <Button size="sm" onclick={() => (showAddModal = true)}>
+    <Button size="sm">
       <Plus class="w-3.5 h-3.5" />
       <span>Add Invariant Rule</span>
     </Button>
@@ -117,19 +108,32 @@
               <td class="px-4 py-3 font-mono text-[11px] text-purple-300"
                 >{rule.type}</td
               >
-              <td class="px-4 py-3">
+              <td class="px-4 py-3 font-mono text-[11px]">
                 {#if rule.severity === "BLOCKING_ERROR"}
-                  <Badge variant="destructive">BLOCKING_ERROR</Badge>
+                  <span
+                    class="inline-flex items-center gap-1 text-red-400 font-semibold"
+                  >
+                    <ShieldAlert class="w-3.5 h-3.5 text-red-500" />
+                    BLOCKING
+                  </span>
                 {:else if rule.severity === "WARNING"}
-                  <Badge variant="warning">WARNING</Badge>
+                  <span
+                    class="inline-flex items-center gap-1 text-amber-400 font-semibold"
+                  >
+                    <AlertTriangle class="w-3.5 h-3.5 text-amber-500" />
+                    WARNING
+                  </span>
                 {:else}
-                  <Badge variant="secondary">ADVISORY_NOTE</Badge>
+                  <span
+                    class="inline-flex items-center gap-1 text-zinc-400 font-semibold"
+                  >
+                    <Info class="w-3.5 h-3.5 text-zinc-500" />
+                    ADVISORY
+                  </span>
                 {/if}
               </td>
               <td class="px-4 py-3 font-mono text-zinc-300 text-[11px]">
-                <code
-                  class="bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-amber-200"
-                >
+                <code class="text-amber-200">
                   {rule.predicateSummary}
                 </code>
               </td>
@@ -137,11 +141,11 @@
                 >{rule.targetCategory}</td
               >
               <td class="px-4 py-3 text-right">
-                <button
-                  class="text-zinc-500 hover:text-red-400 p-1 rounded hover:bg-zinc-800 transition-colors"
-                >
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
+                <Button variant="ghost" size="sm">
+                  <Trash2
+                    class="w-3.5 h-3.5 text-zinc-500 hover:text-red-400"
+                  />
+                </Button>
               </td>
             </tr>
           {/each}

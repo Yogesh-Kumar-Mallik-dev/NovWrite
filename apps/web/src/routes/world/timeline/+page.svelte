@@ -7,12 +7,10 @@
     ArrowUpDown,
     Tag,
     Edit3,
-    Trash2,
+    ArrowRight,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
-  import Badge from "$lib/components/ui/badge.svelte";
   import Input from "$lib/components/ui/input.svelte";
-  import Select from "$lib/components/ui/select.svelte";
 
   interface EventEffect {
     targetEntity: string;
@@ -144,26 +142,24 @@
       <div
         class="inline-flex rounded-md bg-zinc-900 p-1 border border-zinc-800 text-xs"
       >
-        <button
+        <Button
+          variant={viewMode === "narrative" ? "default" : "ghost"}
+          size="sm"
           onclick={() => (viewMode = "narrative")}
-          class="flex items-center gap-1.5 px-3 py-1 rounded transition-colors font-medium {viewMode ===
-          'narrative'
-            ? 'bg-purple-600 text-white shadow-sm'
-            : 'text-zinc-400 hover:text-zinc-200'}"
+          class="h-7 text-xs"
         >
           <BookOpen class="w-3.5 h-3.5" />
           <span>Narrative Sequence</span>
-        </button>
-        <button
+        </Button>
+        <Button
+          variant={viewMode === "chronological" ? "default" : "ghost"}
+          size="sm"
           onclick={() => (viewMode = "chronological")}
-          class="flex items-center gap-1.5 px-3 py-1 rounded transition-colors font-medium {viewMode ===
-          'chronological'
-            ? 'bg-cyan-600 text-white shadow-sm'
-            : 'text-zinc-400 hover:text-zinc-200'}"
+          class="h-7 text-xs"
         >
           <Clock class="w-3.5 h-3.5" />
           <span>Chronological Order</span>
-        </button>
+        </Button>
       </div>
 
       <Button size="sm">
@@ -173,29 +169,9 @@
     </div>
   </div>
 
-  <!-- Dual Mode Context Banner -->
-  <div
-    class="p-3.5 rounded-lg border border-zinc-800 bg-zinc-900/60 flex items-center justify-between text-xs"
-  >
-    <div class="flex items-center gap-2">
-      <Layers class="w-4 h-4 text-zinc-400" />
-      <span class="text-zinc-300">
-        Current Ordering:
-        <strong class="text-zinc-100 font-semibold uppercase font-mono"
-          >{viewMode === "narrative"
-            ? "Narrative Sequence (#Seq)"
-            : "In-Universe Historical Time (Year/Day)"}</strong
-        >
-      </span>
-    </div>
-    <span class="text-zinc-500 font-mono text-[11px]"
-      >Total Events: {events.length}</span
-    >
-  </div>
-
   <!-- Timeline Event Stream -->
   <div class="space-y-3">
-    {#each sortedEvents as event, idx}
+    {#each sortedEvents as event}
       <div
         class="bg-zinc-900/80 rounded-lg border border-zinc-800 p-4 space-y-3 hover:border-zinc-700 transition-colors"
       >
@@ -203,14 +179,9 @@
           class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5"
         >
           <div class="flex items-center gap-3">
-            <span
-              class="px-2 py-0.5 rounded font-mono text-xs font-bold {viewMode ===
-              'narrative'
-                ? 'bg-purple-950/80 text-purple-300 border border-purple-800/80'
-                : 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/80'}"
-            >
+            <span class="font-mono text-xs font-bold text-purple-300">
               {viewMode === "narrative"
-                ? `Seq #${event.narrativeSequenceNumber}`
+                ? `Sequence #${event.narrativeSequenceNumber}`
                 : `Year #${event.chronologicalOrder}`}
             </span>
             <h3 class="text-sm font-semibold text-zinc-100">{event.title}</h3>
@@ -228,29 +199,21 @@
 
         <p class="text-xs text-zinc-300 leading-relaxed">{event.description}</p>
 
-        <!-- Attached Effect Mutations -->
-        <div class="pt-2 flex flex-wrap items-center gap-2">
-          <span class="text-[11px] text-zinc-500 font-mono font-medium"
-            >Atomic Effects:</span
-          >
+        <!-- Attached Effect Mutations with semantic text & icons -->
+        <div
+          class="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-zinc-400"
+        >
+          <span class="text-zinc-500 font-medium">Atomic Effects:</span>
           {#each event.effects as eff}
-            <span
-              class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-300"
-            >
-              <span class="text-purple-400 font-semibold">{eff.entityName}</span
-              >
-              <span class="text-zinc-600">→</span>
-              <span class="text-zinc-400">{eff.propertyKey}</span>
-              <span
-                class="px-1 py-0.2 rounded text-[10px] font-bold {eff.operation ===
-                'DECREMENT'
-                  ? 'bg-red-950 text-red-300'
-                  : 'bg-zinc-800 text-zinc-300'}">{eff.operation}</span
-              >
+            <div class="flex items-center gap-1.5 text-zinc-300">
+              <span class="text-purple-400 font-medium">{eff.entityName}</span>
+              <span class="text-zinc-600">.</span>
+              <span>{eff.propertyKey}</span>
+              <span class="text-zinc-500 font-semibold">{eff.operation}</span>
               <span class="text-amber-300 font-bold"
                 >{JSON.stringify(eff.value)}</span
               >
-            </span>
+            </div>
           {/each}
         </div>
       </div>

@@ -9,9 +9,11 @@
     User,
     MapPin,
     Sparkles,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
-  import Badge from "$lib/components/ui/badge.svelte";
   import Input from "$lib/components/ui/input.svelte";
   import Select from "$lib/components/ui/select.svelte";
 
@@ -135,7 +137,6 @@
   function handleSaveEntity() {
     if (!selectedEntity) return;
 
-    // Validate and update local entity
     entities = entities.map((e) => {
       if (e.id === selectedEntity!.id) {
         return {
@@ -209,7 +210,7 @@
 
   <!-- Master Table & Detail Pane Split -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-    <!-- Master Data Table (2 cols on large) -->
+    <!-- Master Data Table -->
     <div
       class="lg:col-span-2 bg-zinc-900/60 rounded-lg border border-zinc-800 overflow-hidden"
     >
@@ -224,7 +225,7 @@
               <th class="px-4 py-3">Realm / Stage</th>
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3">Mana / Metric</th>
-              <th class="px-4 py-3 text-right">Actions</th>
+              <th class="px-4 py-3 text-right">Inspect</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-800/60">
@@ -261,13 +262,26 @@
                   >
                   <td class="px-4 py-3">
                     {#if entity.properties.status === "ALIVE"}
-                      <Badge variant="success">ALIVE</Badge>
-                    {:else if entity.properties.status === "DEAD"}
-                      <Badge variant="destructive">DEAD</Badge>
-                    {:else}
-                      <Badge variant="secondary"
-                        >{entity.properties.status}</Badge
+                      <span
+                        class="inline-flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] font-semibold"
                       >
+                        <CheckCircle2 class="w-3.5 h-3.5 text-emerald-500" />
+                        ALIVE
+                      </span>
+                    {:else if entity.properties.status === "DEAD"}
+                      <span
+                        class="inline-flex items-center gap-1.5 text-red-400 font-mono text-[11px] font-semibold"
+                      >
+                        <XCircle class="w-3.5 h-3.5 text-red-500" />
+                        DEAD
+                      </span>
+                    {:else}
+                      <span
+                        class="inline-flex items-center gap-1.5 text-zinc-400 font-mono text-[11px]"
+                      >
+                        <AlertCircle class="w-3.5 h-3.5 text-zinc-500" />
+                        {entity.properties.status}
+                      </span>
                     {/if}
                   </td>
                   <td class="px-4 py-3 font-mono text-zinc-300">
@@ -276,16 +290,18 @@
                       : `${entity.properties.spiritual_density ?? "—"} Density`}
                   </td>
                   <td class="px-4 py-3 text-right">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onclick={(e) => {
                         e.stopPropagation();
                         openDetailDrawer(entity);
                       }}
-                      class="text-zinc-400 hover:text-purple-400 p-1 rounded hover:bg-zinc-800 transition-colors"
                       title="Inspect & Edit Properties"
                     >
-                      <Edit3 class="w-3.5 h-3.5" />
-                    </button>
+                      <Edit3 class="w-3.5 h-3.5 text-purple-400" />
+                      <span>Edit</span>
+                    </Button>
                   </td>
                 </tr>
               {/each}
@@ -311,7 +327,7 @@
           </div>
           <button
             onclick={() => (selectedEntity = null)}
-            class="text-zinc-500 hover:text-zinc-300 p-1 rounded hover:bg-zinc-800"
+            class="text-zinc-500 hover:text-zinc-300 p-1 rounded hover:bg-zinc-800 cursor-pointer"
           >
             <X class="w-4 h-4" />
           </button>
