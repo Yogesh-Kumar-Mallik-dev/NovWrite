@@ -33,6 +33,8 @@
     DialogDescription,
     DialogFooter,
   } from "$lib/components/ui/dialog";
+  import { ConfirmDialog, EmptyState } from "$lib/components/ui";
+  import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
     type TimelineEventItem,
@@ -40,6 +42,9 @@
     type EffectOperation,
     type EntityItem,
   } from "$lib/stores/worldStore.svelte";
+
+  // Confirmation State
+  let eventToDelete = $state<TimelineEventItem | null>(null);
 
   // Dual-index view mode: 'narrative' | 'chronological'
   let viewMode = $state<"narrative" | "chronological">("narrative");
@@ -203,6 +208,7 @@
         anchorSceneTitle: formAnchorScene.trim() || undefined,
         effects: normalizedEffects,
       });
+      toast.success("Event Logged", `Timeline event "${formTitle.trim()}" added to causal stream.`);
     } else if (activeEditId) {
       worldStore.updateTimelineEvent(activeEditId, {
         title: formTitle.trim(),
@@ -213,20 +219,29 @@
         anchorSceneTitle: formAnchorScene.trim() || undefined,
         effects: normalizedEffects,
       });
+      toast.success("Event Updated", `Timeline event "${formTitle.trim()}" updated.`);
     }
 
     isModalOpen = false;
   }
 
-  function handleDeleteEvent(id: string) {
-    if (confirm("Are you sure you want to delete this causal timeline event?")) {
-      worldStore.deleteTimelineEvent(id);
+  function handleDeleteEvent(event: TimelineEventItem) {
+    eventToDelete = event;
+  }
+
+  function confirmDeleteEvent() {
+    if (eventToDelete) {
+      const title = eventToDelete.title;
+      worldStore.deleteTimelineEvent(eventToDelete.id);
+      toast.success("Event Deleted", `Timeline event "${title}" was removed.`);
+      eventToDelete = null;
     }
   }
 
   function inspectEventSequence(seq: number) {
     scrubSequence = seq;
     isTimeTravelOpen = true;
+    toast.info("Scrubber Updated", `Time-travel fold point set to sequence #${seq}.`);
   }
 </script>
 
@@ -359,81 +374,90 @@
           <span>Folded Universe State at Point (Entities & Formulas)</span>
         </h4>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {#each foldedEntities as entity}
-            <Card class="border-border bg-card/70 p-3.5 space-y-2.5 hover:border-primary/50 transition-colors shadow-xs">
-              <div class="flex items-start justify-between gap-2 border-b border-border pb-2">
-                <div>
-                  <h5 class="text-xs font-bold text-foreground">{entity.name}</h5>
-                  <span class="text-[10px] font-mono text-primary">{entity.blueprintName}</span>
-                </div>
-                <div class="text-right">
-                  <span class="text-[10px] font-mono text-muted-foreground">
-                    Last Mutated: <strong class="text-foreground">Seq #{entity.lastMutatedSeqNumber}</strong>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Folded Properties Highlights -->
-              <div class="space-y-1 text-xs font-mono">
-                {#if entity.properties.cultivation}
-                  <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-muted-foreground">Cultivation Realm:</span>
-                    <span class="text-amber-600 dark:text-amber-400 font-semibold">
-                      {entity.properties.cultivation.realm_name || `Stage ${entity.properties.cultivation.major_realm}.${entity.properties.cultivation.minor_realm}`}
+        {#if foldedEntities.length === 0}
+          <EmptyState
+            icon={Cpu}
+            title="No Entities Folded"
+            description="No entities exist in the universe registry to evaluate at this sequence point."
+            compact={true}
+          />
+        {:else}
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {#each foldedEntities as entity}
+              <Card class="border-border bg-card/70 p-3.5 space-y-2.5 hover:border-primary/50 transition-colors shadow-xs">
+                <div class="flex items-start justify-between gap-2 border-b border-border pb-2">
+                  <div>
+                    <h5 class="text-xs font-bold text-foreground">{entity.name}</h5>
+                    <span class="text-[10px] font-mono text-primary">{entity.blueprintName}</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] font-mono text-muted-foreground">
+                      Last Mutated: <strong class="text-foreground">Seq #{entity.lastMutatedSeqNumber}</strong>
                     </span>
                   </div>
-                {/if}
+                </div>
 
-                {#if entity.properties.romantic_feelings}
-                  <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-muted-foreground">Affection Level:</span>
-                    <span class="text-pink-600 dark:text-pink-400 font-semibold">
-                      {entity.properties.romantic_feelings.affection_level} / 1000
-                    </span>
-                  </div>
-                {/if}
-
-                {#if entity.properties.attack !== undefined}
-                  <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-muted-foreground">Attack:</span>
-                    <span class="text-foreground font-semibold">{entity.properties.attack}</span>
-                  </div>
-                {/if}
-
-                {#if entity.properties.bound_weapon}
-                  <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-muted-foreground">Bound Weapon:</span>
-                    <span class="text-primary truncate max-w-[140px]">{entity.properties.bound_weapon}</span>
-                  </div>
-                {/if}
-
-                {#if entity.properties.current_wielder}
-                  <div class="flex items-center justify-between text-[11px]">
-                    <span class="text-muted-foreground">Current Wielder:</span>
-                    <span class="text-primary truncate max-w-[140px]">{entity.properties.current_wielder}</span>
-                  </div>
-                {/if}
-              </div>
-
-              <!-- Live Recomputed Formulas at Point-in-Time -->
-              {#if entity.computedFormulas && Object.keys(entity.computedFormulas).length > 0}
-                <div class="pt-2 border-t border-border space-y-1">
-                  <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <Sparkles class="w-3 h-3" />
-                    <span>Live AST Formulas</span>
-                  </span>
-                  {#each Object.entries(entity.computedFormulas) as [fKey, fVal]}
-                    <div class="flex items-center justify-between text-[11px] font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      <span class="text-emerald-700 dark:text-emerald-300 text-[10px]">{fKey}</span>
-                      <span class="text-emerald-700 dark:text-emerald-300 font-bold">{fVal}</span>
+                <!-- Folded Properties Highlights -->
+                <div class="space-y-1 text-xs font-mono">
+                  {#if entity.properties.cultivation}
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-muted-foreground">Cultivation Realm:</span>
+                      <span class="text-amber-600 dark:text-amber-400 font-semibold">
+                        {entity.properties.cultivation.realm_name || `Stage ${entity.properties.cultivation.major_realm}.${entity.properties.cultivation.minor_realm}`}
+                      </span>
                     </div>
-                  {/each}
+                  {/if}
+
+                  {#if entity.properties.romantic_feelings}
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-muted-foreground">Affection Level:</span>
+                      <span class="text-pink-600 dark:text-pink-400 font-semibold">
+                        {entity.properties.romantic_feelings.affection_level} / 1000
+                      </span>
+                    </div>
+                  {/if}
+
+                  {#if entity.properties.attack !== undefined}
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-muted-foreground">Attack:</span>
+                      <span class="text-foreground font-semibold">{entity.properties.attack}</span>
+                    </div>
+                  {/if}
+
+                  {#if entity.properties.bound_weapon}
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-muted-foreground">Bound Weapon:</span>
+                      <span class="text-primary truncate max-w-[140px]">{entity.properties.bound_weapon}</span>
+                    </div>
+                  {/if}
+
+                  {#if entity.properties.current_wielder}
+                    <div class="flex items-center justify-between text-[11px]">
+                      <span class="text-muted-foreground">Current Wielder:</span>
+                      <span class="text-primary truncate max-w-[140px]">{entity.properties.current_wielder}</span>
+                    </div>
+                  {/if}
                 </div>
-              {/if}
-            </Card>
-          {/each}
-        </div>
+
+                <!-- Live Recomputed Formulas at Point-in-Time -->
+                {#if entity.computedFormulas && Object.keys(entity.computedFormulas).length > 0}
+                  <div class="pt-2 border-t border-border space-y-1">
+                    <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <Sparkles class="w-3 h-3" />
+                      <span>Live AST Formulas</span>
+                    </span>
+                    {#each Object.entries(entity.computedFormulas) as [fKey, fVal]}
+                      <div class="flex items-center justify-between text-[11px] font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span class="text-emerald-700 dark:text-emerald-300 text-[10px]">{fKey}</span>
+                        <span class="text-emerald-700 dark:text-emerald-300 font-bold">{fVal}</span>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              </Card>
+            {/each}
+          </div>
+        {/if}
       </div>
     </Card>
   {/if}
@@ -445,86 +469,96 @@
       <span>Sorted by {viewMode === "narrative" ? "Narrative Sequence" : "Chronological Order"}</span>
     </div>
 
-    {#each sortedEvents as event}
-      <Card class="border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-xs">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-          <div class="flex items-center gap-3">
-            <span class="font-mono text-xs font-bold text-primary px-2.5 py-1 rounded bg-primary/10 border border-primary/20">
-              {viewMode === "narrative"
-                ? `Sequence #${event.narrativeSequenceNumber}`
-                : `Year #${event.chronologicalOrder}`}
+    {#if sortedEvents.length === 0}
+      <EmptyState
+        icon={Clock}
+        title="No Timeline Events Logged"
+        description="Causal events log state deltas across entities to enable dual-indexed timeline tracking and state folding."
+        actionText="+ Log First Event"
+        onAction={openAddModal}
+      />
+    {:else}
+      {#each sortedEvents as event (event.id)}
+        <Card class="border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xs font-bold text-primary px-2.5 py-1 rounded bg-primary/10 border border-primary/20">
+                {viewMode === "narrative"
+                  ? `Sequence #${event.narrativeSequenceNumber}`
+                  : `Year #${event.chronologicalOrder}`}
+              </span>
+              <div>
+                <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
+                  <span>{event.title}</span>
+                  {#if event.anchorChapterTitle || event.anchorSceneTitle}
+                    <span class="text-xs font-normal text-muted-foreground font-sans">
+                      · {event.anchorChapterTitle || ""} {event.anchorSceneTitle ? `(${event.anchorSceneTitle})` : ""}
+                    </span>
+                  {/if}
+                </h3>
+              </div>
+            </div>
+
+            <!-- Dual Index Tags & Actions -->
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 text-xs text-muted-foreground font-mono bg-muted px-2.5 py-1 rounded border border-border">
+                <span>Seq: <strong class="text-foreground">#{event.narrativeSequenceNumber}</strong></span>
+                <span class="text-muted-foreground/60">|</span>
+                <span>Year: <strong class="text-foreground">Y{event.chronologicalOrder}</strong></span>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => inspectEventSequence(event.narrativeSequenceNumber)}
+                title="Inspect state at this sequence"
+                class="h-7 px-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-500"
+              >
+                <Eye class="w-3.5 h-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => openEditModal(event)}
+                class="h-7 px-2 text-muted-foreground hover:text-foreground"
+              >
+                <Edit3 class="w-3.5 h-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => handleDeleteEvent(event)}
+                class="h-7 px-2 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          <p class="text-xs text-foreground/90 leading-relaxed font-sans">{event.description}</p>
+
+          <!-- Attached Effect Mutations with semantic styling -->
+          <div class="pt-2 flex flex-wrap items-center gap-2 text-xs font-mono">
+            <span class="text-muted-foreground font-medium text-[11px] uppercase tracking-wider flex items-center gap-1">
+              <Workflow class="w-3 h-3 text-primary" />
+              <span>Atomic Effects:</span>
             </span>
-            <div>
-              <h3 class="text-sm font-bold text-foreground flex items-center gap-2">
-                <span>{event.title}</span>
-                {#if event.anchorChapterTitle || event.anchorSceneTitle}
-                  <span class="text-xs font-normal text-muted-foreground font-sans">
-                    · {event.anchorChapterTitle || ""} {event.anchorSceneTitle ? `(${event.anchorSceneTitle})` : ""}
-                  </span>
-                {/if}
-              </h3>
-            </div>
+
+            {#each event.effects as eff}
+              <div class="flex items-center gap-1.5 bg-muted/60 px-2.5 py-1 rounded-md border border-border text-foreground">
+                <span class="text-primary font-semibold">{eff.entityName || eff.targetEntityId}</span>
+                <span class="text-muted-foreground">.</span>
+                <span class="text-cyan-600 dark:text-cyan-400">{eff.propertyKey}</span>
+                <span class="text-muted-foreground font-bold text-[10px] px-1 py-0.2 bg-background rounded border border-border">{eff.operation}</span>
+                <span class="text-amber-600 dark:text-amber-400 font-bold">{JSON.stringify(eff.value)}</span>
+              </div>
+            {/each}
           </div>
-
-          <!-- Dual Index Tags & Actions -->
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-2 text-xs text-muted-foreground font-mono bg-muted px-2.5 py-1 rounded border border-border">
-              <span>Seq: <strong class="text-foreground">#{event.narrativeSequenceNumber}</strong></span>
-              <span class="text-muted-foreground/60">|</span>
-              <span>Year: <strong class="text-foreground">Y{event.chronologicalOrder}</strong></span>
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onclick={() => inspectEventSequence(event.narrativeSequenceNumber)}
-              title="Inspect state at this sequence"
-              class="h-7 px-2 text-cyan-600 dark:text-cyan-400 hover:text-cyan-500"
-            >
-              <Eye class="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onclick={() => openEditModal(event)}
-              class="h-7 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Edit3 class="w-3.5 h-3.5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onclick={() => handleDeleteEvent(event.id)}
-              class="h-7 px-2 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        <p class="text-xs text-foreground/90 leading-relaxed font-sans">{event.description}</p>
-
-        <!-- Attached Effect Mutations with semantic styling -->
-        <div class="pt-2 flex flex-wrap items-center gap-2 text-xs font-mono">
-          <span class="text-muted-foreground font-medium text-[11px] uppercase tracking-wider flex items-center gap-1">
-            <Workflow class="w-3 h-3 text-primary" />
-            <span>Atomic Effects:</span>
-          </span>
-
-          {#each event.effects as eff}
-            <div class="flex items-center gap-1.5 bg-muted/60 px-2.5 py-1 rounded-md border border-border text-foreground">
-              <span class="text-primary font-semibold">{eff.entityName || eff.targetEntityId}</span>
-              <span class="text-muted-foreground">.</span>
-              <span class="text-cyan-600 dark:text-cyan-400">{eff.propertyKey}</span>
-              <span class="text-muted-foreground font-bold text-[10px] px-1 py-0.2 bg-background rounded border border-border">{eff.operation}</span>
-              <span class="text-amber-600 dark:text-amber-400 font-bold">{JSON.stringify(eff.value)}</span>
-            </div>
-          {/each}
-        </div>
-      </Card>
-    {/each}
+        </Card>
+      {/each}
+    {/if}
   </div>
 
   <!-- Log / Edit Timeline Event Modal -->
@@ -721,3 +755,15 @@
     </div>
   {/if}
 </div>
+
+<!-- Event Delete Confirmation Dialog -->
+<ConfirmDialog
+  open={eventToDelete !== null}
+  title="Delete Causal Event"
+  description={`Are you sure you want to delete the event "${eventToDelete?.title}"? Any state fold calculations depending on this event will be recomputed.`}
+  confirmText="Delete Event"
+  variant="destructive"
+  onConfirm={confirmDeleteEvent}
+  onCancel={() => (eventToDelete = null)}
+/>
+

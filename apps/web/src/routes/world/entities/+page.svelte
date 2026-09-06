@@ -18,7 +18,8 @@
     MapPin,
     Eye,
   } from 'lucide-svelte';
-  import { Button, Input, Select } from '$lib/components/ui';
+  import { Button, Input, Select, ConfirmDialog, EmptyState } from '$lib/components/ui';
+  import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Table,
     TableBody,
@@ -43,6 +44,9 @@
   } from '$lib/engine/tableConfig';
 
   const STORAGE_KEY = 'novwrite_world_entity_table_columns_v1';
+
+  // Deletion Confirmation Modal State
+  let entityToDelete = $state<{ id: string; name: string } | null>(null);
 
   let searchQuery = $state('');
   let blueprintFilter = $state('ALL');
@@ -166,8 +170,14 @@
   }
 
   function handleDelete(id: string, name: string) {
-    if (confirm(`Are you sure you want to delete entity "${name}"?`)) {
-      worldStore.deleteEntity(id);
+    entityToDelete = { id, name };
+  }
+
+  function confirmDeleteEntity() {
+    if (entityToDelete) {
+      worldStore.deleteEntity(entityToDelete.id);
+      toast.success("Entity Deleted", `Entity "${entityToDelete.name}" was permanently removed.`);
+      entityToDelete = null;
     }
   }
 
@@ -430,11 +440,18 @@
         <TableBody class="divide-y divide-border/60">
           {#if filteredEntities.length === 0}
             <TableRow class="hover:bg-transparent">
-              <TableCell colspan={visibleColumns.length + 1} class="px-4 py-12 text-center text-muted-foreground">
-                <p class="text-xs mb-2">No entities found matching your criteria.</p>
-                <a href="/world/entities/create" class="text-primary hover:underline font-medium">
-                  + Instantiate your first entity
-                </a>
+              <TableCell colspan={visibleColumns.length + 1} class="p-0 border-0">
+                <EmptyState
+                  icon={Boxes}
+                  title={worldStore.entities.length === 0 ? "No Entities Instantiated" : "No Matching Entities"}
+                  description={worldStore.entities.length === 0
+                    ? "Bring your story universe to life by instantiating characters, factions, artifacts, and celestial locations."
+                    : "No entities match the current search query or active blueprint filters."}
+                  actionText={worldStore.entities.length === 0 ? "+ Instantiate First Entity" : "Clear Filters"}
+                  actionHref={worldStore.entities.length === 0 ? "/world/entities/create" : undefined}
+                  onAction={worldStore.entities.length === 0 ? undefined : () => { searchQuery = ''; blueprintFilter = 'ALL'; categoryFilter = 'ALL'; }}
+                  class="border-0 rounded-none bg-transparent py-12"
+                />
               </TableCell>
             </TableRow>
           {:else}
@@ -516,5 +533,15 @@
       </Table>
     </div>
   </Card>
+
+  <!-- Delete Entity Confirmation Dialog -->
+  <ConfirmDialog
+    open={entityToDelete !== null}
+    title="Delete Entity"
+    description={`Are you sure you want to permanently delete entity "${entityToDelete?.name}"? All associated properties and references will be purged from the active world state.`}
+    confirmText="Delete Entity"
+    onConfirm={confirmDeleteEntity}
+    onCancel={() => (entityToDelete = null)}
+  />
 </div>
 
