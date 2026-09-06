@@ -42,14 +42,16 @@
   let description = $state('');
 
   // Draft fields list
+  // Draft fields list
   let fields = $state<Array<{
     id: string;
     name: string;
     label: string;
     fieldType: BlueprintFieldType;
     description: string;
-    options: string[];
-    newOptionInput: string;
+    options: Array<{ label: string; value: string; power?: number; numericValue?: number }>;
+    newOptionLabel: string;
+    newOptionPower: number | undefined;
     targetBlueprintId: string;
     min: number;
     max: number;
@@ -61,11 +63,17 @@
     {
       id: 'f-1',
       name: 'gender',
-      label: 'Gender',
+      label: 'Gender Identity',
       fieldType: 'ENUM',
-      description: 'Biological / physical identity',
-      options: ['Male', 'Female'],
-      newOptionInput: '',
+      description: 'Biological / spiritual gender category',
+      options: [
+        { label: 'Male', value: 'Male', power: 0, numericValue: 0 },
+        { label: 'Female', value: 'Female', power: 0, numericValue: 0 },
+        { label: 'Dual-Yin-Yang', value: 'Dual-Yin-Yang', power: 50, numericValue: 50 },
+        { label: 'Celestial / Genderless', value: 'Celestial / Genderless', power: 100, numericValue: 100 },
+      ],
+      newOptionLabel: '',
+      newOptionPower: undefined,
       targetBlueprintId: '',
       min: 0,
       max: 100,
@@ -89,7 +97,7 @@
   const fieldTypeOptions = [
     { value: 'STRING', label: 'Text (String)' },
     { value: 'NUMBER', label: 'Number (Numeric with bounds)' },
-    { value: 'ENUM', label: 'Enum / Custom Categories (Options)' },
+    { value: 'ENUM', label: 'Enum / Custom Categories (Options with Power/Value)' },
     { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
     { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
@@ -111,7 +119,8 @@
       fieldType: 'STRING',
       description: '',
       options: [],
-      newOptionInput: '',
+      newOptionLabel: '',
+      newOptionPower: undefined,
       targetBlueprintId: availableTargetBlueprints[0]?.value || '',
       min: 0,
       max: 100000,
@@ -127,15 +136,24 @@
   }
 
   function addOptionToField(fieldIndex: number) {
-    const input = fields[fieldIndex].newOptionInput.trim();
-    if (!input) return;
-    if (!fields[fieldIndex].options.includes(input)) {
-      fields[fieldIndex].options.push(input);
-      if (!fields[fieldIndex].defaultValue) {
-        fields[fieldIndex].defaultValue = input;
-      }
+    const label = fields[fieldIndex].newOptionLabel.trim();
+    if (!label) return;
+    const power = fields[fieldIndex].newOptionPower;
+    const value = label.toLowerCase().replace(/\s+/g, '_');
+    
+    fields[fieldIndex].options.push({
+      label,
+      value,
+      power: power !== undefined ? Number(power) : 0,
+      numericValue: power !== undefined ? Number(power) : 0,
+    });
+
+    if (!fields[fieldIndex].defaultValue) {
+      fields[fieldIndex].defaultValue = value;
     }
-    fields[fieldIndex].newOptionInput = '';
+
+    fields[fieldIndex].newOptionLabel = '';
+    fields[fieldIndex].newOptionPower = undefined;
   }
 
   function removeOptionFromField(fieldIndex: number, optionIndex: number) {
@@ -416,51 +434,80 @@
 
           <!-- Type-Specific Specialized Configurator -->
 
-          <!-- 1. ENUM / CATEGORY BUILDER -->
+          <!-- 1. ENUM / DUAL-VALUED CATEGORY BUILDER -->
           {#if field.fieldType === 'ENUM'}
-            <div class="p-3 bg-zinc-900/90 rounded border border-zinc-800/80 space-y-2.5">
-              <div class="flex items-center gap-1.5 text-xs text-teal-400 font-medium">
-                <ListFilter class="w-3.5 h-3.5" />
-                <span>Enum Categories & Allowed Options (e.g. "Male", "Female", "Genderless")</span>
+            <div class="p-3.5 bg-zinc-900 rounded-lg border border-zinc-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 text-xs text-teal-400 font-medium">
+                  <ListFilter class="w-3.5 h-3.5" />
+                  <span>Dual-Valued Enum Categories (Name + Numeric Power/Value for Formulas)</span>
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono">e.g. &#123; qi_refining : 100 &#125;</span>
               </div>
 
-              <!-- Current Options Tags -->
-              <div class="flex flex-wrap gap-2 items-center min-h-[32px]">
+              <!-- Options Tags -->
+              <div class="space-y-2">
                 {#if field.options.length === 0}
-                  <span class="text-xs text-zinc-500 italic">No options added yet. Type below and press Enter.</span>
+                  <p class="text-xs text-zinc-500 italic">No options defined yet. Add an option name and numeric power below.</p>
                 {/if}
 
-                {#each field.options as opt, optIdx}
-                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
-                    <span>{opt}</span>
-                    <button
-                      type="button"
-                      onclick={() => removeOptionFromField(index, optIdx)}
-                      class="text-zinc-400 hover:text-red-400 transition ml-0.5"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                {/each}
+                <div class="flex flex-wrap gap-2">
+                  {#each field.options as opt, optIdx}
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800/90 border border-zinc-700 text-xs text-zinc-200">
+                      <span class="font-medium text-zinc-100">{opt.label}</span>
+                      {#if opt.power !== undefined || opt.numericValue !== undefined}
+                        <span class="text-[11px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/60">
+                          Power: {opt.power ?? opt.numericValue}
+                        </span>
+                      {/if}
+                      <button
+                        type="button"
+                        onclick={() => removeOptionFromField(index, optIdx)}
+                        class="text-zinc-400 hover:text-red-400 transition ml-1"
+                        title="Remove Option"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  {/each}
+                </div>
               </div>
 
-              <!-- Add Option Input -->
-              <div class="flex items-center gap-2 max-w-sm">
-                <Input
-                  bind:value={field.newOptionInput}
-                  placeholder="Type option name (e.g. Male) and click Add"
-                  class="text-xs"
-                  onkeydown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addOptionToField(index);
-                    }
-                  }}
-                />
-                <Button variant="secondary" size="sm" onclick={() => addOptionToField(index)}>
-                  <Plus class="w-3 h-3" />
-                  <span>Add Option</span>
-                </Button>
+              <!-- Add Dual-Valued Option Inputs -->
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+                <div class="sm:col-span-6">
+                  <Input
+                    bind:value={field.newOptionLabel}
+                    placeholder="Option Name (e.g. Qi Refining, Foundation)"
+                    class="text-xs"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOptionToField(index);
+                      }
+                    }}
+                  />
+                </div>
+                <div class="sm:col-span-4">
+                  <Input
+                    type="number"
+                    bind:value={field.newOptionPower}
+                    placeholder="Power / Numeric Value (e.g. 100)"
+                    class="text-xs font-mono"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOptionToField(index);
+                      }
+                    }}
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <Button variant="secondary" size="sm" class="w-full h-9" onclick={() => addOptionToField(index)}>
+                    <Plus class="w-3 h-3" />
+                    <span>Add</span>
+                  </Button>
+                </div>
               </div>
             </div>
           {/if}

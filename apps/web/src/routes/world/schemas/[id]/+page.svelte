@@ -51,8 +51,12 @@
   let newFieldLabel = $state('');
   let newFieldType = $state<BlueprintFieldType>('STRING');
   let newFieldDesc = $state('');
-  let newFieldOptions = $state<string[]>(['Option A', 'Option B']);
-  let newOptionDraft = $state('');
+  let newFieldOptions = $state<Array<{ label: string; value: string; power?: number; numericValue?: number }>>([
+    { label: 'Option A', value: 'option_a', power: 100, numericValue: 100 },
+    { label: 'Option B', value: 'option_b', power: 500, numericValue: 500 },
+  ]);
+  let newOptionLabelDraft = $state('');
+  let newOptionPowerDraft = $state<number | undefined>(undefined);
   let newFieldTargetBp = $state('');
   let newFieldMin = $state(0);
   let newFieldMax = $state(1000);
@@ -60,6 +64,10 @@
   let newFieldUnit = $state('');
   let newFieldDefault = $state('');
   let newFieldFormula = $state('');
+
+  // Inline option adder state for existing fields (keyed by field.id)
+  let inlineNewOptionLabels = $state<Record<string, string>>({});
+  let inlineNewOptionPowers = $state<Record<string, number | undefined>>({});
 
   // Sandbox simulation test state
   let testSandboxContext = $state<Record<string, any>>({
@@ -75,7 +83,7 @@
   const fieldTypeOptions = [
     { value: 'STRING', label: 'Text (String)' },
     { value: 'NUMBER', label: 'Number (Numeric with bounds)' },
-    { value: 'ENUM', label: 'Enum / Custom Categories (Options)' },
+    { value: 'ENUM', label: 'Enum / Custom Categories (Options with Power/Value)' },
     { value: 'BLUEPRINT_REF', label: 'Blueprint Reference (1st or 2nd Class)' },
     { value: 'FORMULA', label: 'Formula (Mathematical & Logical Computed Math)' },
     { value: 'BOOLEAN', label: 'Toggle (Boolean)' },
@@ -132,8 +140,10 @@
     };
 
     if (newFieldType === 'ENUM') {
-      fieldDef.options = newFieldOptions.length > 0 ? [...newFieldOptions] : ['Default'];
-      fieldDef.defaultValue = newFieldDefault || fieldDef.options[0];
+      fieldDef.options = newFieldOptions.length > 0
+        ? newFieldOptions.map((o) => ({ ...o }))
+        : [{ label: 'Default', value: 'default', power: 0, numericValue: 0 }];
+      fieldDef.defaultValue = newFieldDefault || (typeof fieldDef.options[0] === 'object' ? fieldDef.options[0].value : fieldDef.options[0]);
     } else if (newFieldType === 'NUMBER') {
       fieldDef.min = newFieldMin;
       fieldDef.max = newFieldMax;
@@ -160,13 +170,41 @@
     newFieldLabel = '';
     newFieldDesc = '';
     newFieldFormula = '';
-    newFieldOptions = ['Option A', 'Option B'];
+    newFieldOptions = [
+      { label: 'Option A', value: 'option_a', power: 100, numericValue: 100 },
+      { label: 'Option B', value: 'option_b', power: 500, numericValue: 500 },
+    ];
+    newOptionLabelDraft = '';
+    newOptionPowerDraft = undefined;
     showNewFieldModal = false;
 
     saveMessage = `Dynamic field "${key}" added to blueprint!`;
     setTimeout(() => {
       saveMessage = null;
     }, 3000);
+  }
+
+  function handleAddOptionToExistingField(fieldId: string) {
+    if (!blueprint) return;
+    const label = (inlineNewOptionLabels[fieldId] || '').trim();
+    if (!label) return;
+    const power = inlineNewOptionPowers[fieldId];
+    const value = label.toLowerCase().replace(/\s+/g, '_');
+
+    worldStore.addOptionToField(blueprint.id, fieldId, {
+      label,
+      value,
+      power: power !== undefined ? Number(power) : 0,
+      numericValue: power !== undefined ? Number(power) : 0,
+    });
+
+    inlineNewOptionLabels[fieldId] = '';
+    inlineNewOptionPowers[fieldId] = undefined;
+  }
+
+  function handleRemoveOptionFromExistingField(fieldId: string, optionIndex: number) {
+    if (!blueprint) return;
+    worldStore.removeOptionFromField(blueprint.id, fieldId, optionIndex);
   }
 
   function handleDeleteField(fieldId: string, fieldName: string) {
@@ -358,48 +396,80 @@
 
           <!-- ENUM options builder -->
           {#if newFieldType === 'ENUM'}
-            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-2">
-              <span class="text-xs font-medium text-teal-400">Enum Options (e.g. "Male", "Female")</span>
+            <div class="p-3 bg-zinc-900 rounded border border-zinc-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-teal-400">Enum Options & Dual-Valued Power Metrics</span>
+                <span class="text-[10px] text-zinc-500">Attach numeric values for mathematical formulas</span>
+              </div>
               <div class="flex flex-wrap gap-1.5">
                 {#each newFieldOptions as opt, optIdx}
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 text-xs text-zinc-200">
-                    {opt}
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs text-zinc-200">
+                    <span>{opt.label}</span>
+                    {#if opt.power !== undefined || opt.numericValue !== undefined}
+                      <span class="px-1 py-0.2 rounded bg-teal-950 text-teal-300 font-mono text-[10px]">
+                        Power: {opt.power ?? opt.numericValue}
+                      </span>
+                    {/if}
                     <button
                       type="button"
                       onclick={() => newFieldOptions.splice(optIdx, 1)}
-                      class="text-zinc-400 hover:text-red-400"
+                      class="text-zinc-400 hover:text-red-400 ml-0.5"
                     >
                       &times;
                     </button>
                   </span>
                 {/each}
               </div>
-              <div class="flex items-center gap-2 max-w-sm">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                 <Input
-                  bind:value={newOptionDraft}
-                  placeholder="Type option and press Add"
-                  class="text-xs"
+                  bind:value={newOptionLabelDraft}
+                  placeholder="Option Name (e.g. Golden Core)"
+                  class="text-xs sm:col-span-1"
                   onkeydown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      if (newOptionDraft.trim()) {
-                        newFieldOptions.push(newOptionDraft.trim());
-                        newOptionDraft = '';
+                      if (newOptionLabelDraft.trim()) {
+                        const lbl = newOptionLabelDraft.trim();
+                        const pwr = newOptionPowerDraft !== undefined ? Number(newOptionPowerDraft) : 0;
+                        newFieldOptions.push({
+                          label: lbl,
+                          value: lbl.toLowerCase().replace(/\s+/g, '_'),
+                          power: pwr,
+                          numericValue: pwr,
+                        });
+                        newOptionLabelDraft = '';
+                        newOptionPowerDraft = undefined;
                       }
                     }
                   }}
                 />
+                <Input
+                  type="number"
+                  bind:value={newOptionPowerDraft}
+                  placeholder="Power / Value (e.g. 500)"
+                  class="text-xs font-mono sm:col-span-1"
+                />
                 <Button
                   variant="secondary"
                   size="sm"
+                  class="sm:col-span-1"
                   onclick={() => {
-                    if (newOptionDraft.trim()) {
-                      newFieldOptions.push(newOptionDraft.trim());
-                      newOptionDraft = '';
+                    if (newOptionLabelDraft.trim()) {
+                      const lbl = newOptionLabelDraft.trim();
+                      const pwr = newOptionPowerDraft !== undefined ? Number(newOptionPowerDraft) : 0;
+                      newFieldOptions.push({
+                        label: lbl,
+                        value: lbl.toLowerCase().replace(/\s+/g, '_'),
+                        power: pwr,
+                        numericValue: pwr,
+                      });
+                      newOptionLabelDraft = '';
+                      newOptionPowerDraft = undefined;
                     }
                   }}
                 >
-                  Add
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>Add Option</span>
                 </Button>
               </div>
             </div>
@@ -487,16 +557,71 @@
               </div>
             </div>
 
-            <!-- Enum Details -->
+            <!-- Enum Details & Options Management -->
             {#if field.fieldType === 'ENUM' && field.options}
-              <div class="flex items-center gap-2 text-xs pt-1">
-                <span class="text-zinc-500 font-medium">Allowed Options:</span>
+              <div class="space-y-2 pt-2 border-t border-zinc-900">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-zinc-400 font-medium">Enum Options & Formula Power Values:</span>
+                  <span class="text-[10px] text-zinc-500 font-mono">{field.options.length} options defined</span>
+                </div>
+
                 <div class="flex flex-wrap gap-1.5">
-                  {#each field.options as opt}
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
-                      {opt}
+                  {#each field.options as opt, optIdx}
+                    {@const optLabel = typeof opt === 'string' ? opt : opt.label}
+                    {@const optPower = typeof opt === 'string' ? undefined : (opt.power ?? opt.numericValue)}
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300">
+                      <span>{optLabel}</span>
+                      {#if optPower !== undefined}
+                        <span class="px-1 py-0.2 rounded bg-teal-950/80 text-teal-300 font-mono text-[10px]">
+                          Power: {optPower}
+                        </span>
+                      {/if}
+                      <button
+                        type="button"
+                        onclick={() => handleRemoveOptionFromExistingField(field.id, optIdx)}
+                        class="text-zinc-500 hover:text-red-400 transition ml-0.5"
+                        title="Delete Option"
+                      >
+                        &times;
+                      </button>
                     </span>
                   {/each}
+                </div>
+
+                <!-- Inline Option Adder -->
+                <div class="flex items-center gap-2 max-w-md pt-1">
+                  <Input
+                    bind:value={inlineNewOptionLabels[field.id]}
+                    placeholder="New Option (e.g. Tribulation Realm)"
+                    class="text-xs h-7"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOptionToExistingField(field.id);
+                      }
+                    }}
+                  />
+                  <Input
+                    type="number"
+                    bind:value={inlineNewOptionPowers[field.id]}
+                    placeholder="Power"
+                    class="text-xs font-mono h-7 w-24"
+                    onkeydown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddOptionToExistingField(field.id);
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    class="h-7 px-2.5 text-xs shrink-0"
+                    onclick={() => handleAddOptionToExistingField(field.id)}
+                  >
+                    <Plus class="w-3 h-3" />
+                    <span>Add</span>
+                  </Button>
                 </div>
               </div>
             {/if}
