@@ -6,7 +6,6 @@
     BookOpen,
     Globe2,
     Menu,
-    X,
     Home,
     Users,
     LayoutTemplate,
@@ -47,6 +46,8 @@
     { href: "/world/audit", label: "Continuity Audit", icon: AlertOctagon },
   ];
 </script>
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && mobileDrawerOpen) mobileDrawerOpen = false; }} />
 
 <div class="min-h-screen flex flex-col bg-background text-foreground font-sans relative">
   {#if !isErrorPage}
@@ -137,7 +138,7 @@
           tabindex="-1"
         >
           <!-- Drawer Header -->
-          <div class="h-14 px-4 flex items-center justify-between border-b border-border shrink-0">
+          <div class="h-14 px-4 flex items-center border-b border-border shrink-0">
             <div class="flex items-center gap-2.5 font-bold text-base tracking-tight">
               <img
                 src="/logo.png"
@@ -148,14 +149,6 @@
                 <span class="text-primary">Nov</span>Write
               </span>
             </div>
-            <button
-              type="button"
-              class="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-              onclick={() => (mobileDrawerOpen = false)}
-              aria-label="Close Navigation Drawer"
-            >
-              <X class="w-4 h-4" />
-            </button>
           </div>
 
           <!-- Drawer Scrollable Body -->

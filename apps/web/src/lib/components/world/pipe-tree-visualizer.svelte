@@ -16,7 +16,6 @@
     Sliders,
     Layers,
     Tag,
-    X,
     Maximize2,
     CornerDownRight,
     Info,
@@ -246,6 +245,8 @@
     isAddEditModalOpen = false;
   }
 </script>
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && isAddEditModalOpen) isAddEditModalOpen = false; }} />
 
 <div class="space-y-6">
   <!-- Top Visual Banner: The Horizontal UPDATE Pipe -->
@@ -656,21 +657,11 @@
         class="relative z-10 w-full max-w-xl my-4 sm:my-8"
       >
         <Card class="border-border bg-card w-full p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,800px)] overflow-y-auto">
-          <div class="flex items-center justify-between border-b border-border pb-3">
-            <div class="flex items-center gap-2 text-primary">
-              <GitBranch class="w-5 h-5" />
-              <h3 class="text-base font-bold text-foreground">
-                Branch New Edit Node
-              </h3>
-            </div>
-            <button
-              type="button"
-              onclick={() => (isAddEditModalOpen = false)}
-              class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
-              aria-label="Close dialog"
-            >
-              <X class="w-4 h-4" />
-            </button>
+          <div class="flex items-center gap-2 text-primary border-b border-border pb-3">
+            <GitBranch class="w-5 h-5" />
+            <h3 class="text-base font-bold text-foreground">
+              Branch New Edit Node
+            </h3>
           </div>
 
           <div class="space-y-4 text-xs font-sans">

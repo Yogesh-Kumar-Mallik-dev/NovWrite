@@ -136,6 +136,8 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && open) open = false; }} />
+
 {#if open}
   <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4"

@@ -10,7 +10,6 @@
     History,
     Sparkles,
     Eye,
-    X,
     Cpu,
     Workflow,
   } from "lucide-svelte";
@@ -282,6 +281,8 @@
     }
   }
 </script>
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && isModalOpen) isModalOpen = false; }} />
 
 <div class="space-y-6 transition-colors">
   <!-- Header & Mode Switcher -->
@@ -656,24 +657,24 @@
       class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
       transition:fade={{ duration: 150 }}
     >
+      <!-- Backdrop Click to Close -->
+      <button
+        type="button"
+        class="fixed inset-0 cursor-default bg-transparent border-0"
+        onclick={() => (isModalOpen = false)}
+        tabindex="-1"
+        aria-hidden="true"
+      ></button>
+
       <div
-        class="border border-border bg-card rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto"
+        class="relative z-10 border border-border bg-card rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto"
         transition:scale={{ start: 0.96, duration: 150 }}
       >
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2 text-primary">
-            <Clock class="w-5 h-5" />
-            <h3 class="text-base font-bold text-foreground">
-              {modalMode === "add" ? "Log Causal Timeline Event" : "Edit Timeline Event"}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onclick={() => (isModalOpen = false)}
-            class="text-muted-foreground hover:text-foreground p-1 rounded transition-colors"
-          >
-            <X class="w-4 h-4" />
-          </button>
+        <div class="flex items-center gap-2 text-primary border-b border-border pb-3">
+          <Clock class="w-5 h-5" />
+          <h3 class="text-base font-bold text-foreground">
+            {modalMode === "add" ? "Log Causal Timeline Event" : "Edit Timeline Event"}
+          </h3>
         </div>
 
         <div class="space-y-4">

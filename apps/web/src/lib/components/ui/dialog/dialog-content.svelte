@@ -13,7 +13,7 @@
 		class: className,
 		portalProps,
 		children,
-		showCloseButton = true,
+		showCloseButton = false,
 		...restProps
 	}: WithoutChildrenOrChild<DialogPrimitive.ContentProps> & {
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof DialogPortal>>;

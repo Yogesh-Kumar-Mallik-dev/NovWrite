@@ -5,7 +5,7 @@
   import Field from "$lib/components/ui/field.svelte";
   import { projectStore } from "$lib/stores/projectStore.svelte";
   import { worldStore } from "$lib/stores/worldStore.svelte";
-  import { Sparkles, FolderPlus, X, Layers, FileCode } from "lucide-svelte";
+  import { Sparkles, FolderPlus, Layers, FileCode } from "lucide-svelte";
   import * as Select from "$lib/components/ui/select";
 
   interface Props {
@@ -118,29 +118,18 @@
         class="border-border bg-card p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,750px)] overflow-y-auto"
       >
       <!-- Dialog Header -->
-      <div class="flex items-start justify-between gap-3 border-b border-border/80 pb-3.5">
-        <div class="flex items-start gap-3">
-          <div class="p-2.5 rounded-lg bg-primary/10 text-primary mt-0.5 shrink-0 border border-primary/20">
-            <FolderPlus class="w-5 h-5" />
-          </div>
-          <div>
-            <h2 id="create-project-title" class="text-base sm:text-lg font-bold text-foreground leading-snug">
-              Create New Novel Universe
-            </h2>
-            <p id="create-project-description" class="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Instantiate an isolated project workspace for your manuscript, dynamic lore schemas, entities, and timeline.
-            </p>
-          </div>
+      <div class="flex items-start gap-3 border-b border-border/80 pb-3.5">
+        <div class="p-2.5 rounded-lg bg-primary/10 text-primary mt-0.5 shrink-0 border border-primary/20">
+          <FolderPlus class="w-5 h-5" />
         </div>
-
-        <button
-          type="button"
-          onclick={handleClose}
-          class="text-muted-foreground hover:text-foreground p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer -mr-2 -mt-2"
-          aria-label="Close dialog"
-        >
-          <X class="w-4 h-4" />
-        </button>
+        <div>
+          <h2 id="create-project-title" class="text-base sm:text-lg font-bold text-foreground leading-snug">
+            Create New Novel Universe
+          </h2>
+          <p id="create-project-description" class="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+            Instantiate an isolated project workspace for your manuscript, dynamic lore schemas, entities, and timeline.
+          </p>
+        </div>
       </div>
 
       <!-- Form Content -->

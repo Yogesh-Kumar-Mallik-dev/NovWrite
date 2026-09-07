@@ -13,7 +13,6 @@
     History,
     Wrench,
     ExternalLink,
-    X,
     ShieldCheck,
   } from "lucide-svelte";
   import { Button } from "$lib/components/ui/button";
@@ -145,6 +144,8 @@
     }, 4500);
   }
 </script>
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && activeOverrideViolation) activeOverrideViolation = null; }} />
 
 <div class="space-y-6 transition-colors">
   <!-- Header & Primary Action -->
@@ -481,21 +482,11 @@
         class="relative z-10 w-full max-w-lg my-4 sm:my-8"
       >
         <Card class="border-border bg-card w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[min(90dvh,600px)] overflow-y-auto">
-          <div class="flex items-center justify-between border-b border-border pb-3">
-            <div class="flex items-center gap-2 text-destructive">
-              <Key class="w-5 h-5" />
-              <h3 class="text-base font-bold text-foreground">
-                Lead Author Override Authorization
-              </h3>
-            </div>
-            <button
-              type="button"
-              onclick={() => (activeOverrideViolation = null)}
-              class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
-              aria-label="Close dialog"
-            >
-              <X class="w-4 h-4" />
-            </button>
+          <div class="flex items-center gap-2 text-destructive border-b border-border pb-3">
+            <Key class="w-5 h-5" />
+            <h3 class="text-base font-bold text-foreground">
+              Lead Author Override Authorization
+            </h3>
           </div>
 
           <p class="text-xs text-muted-foreground leading-relaxed">

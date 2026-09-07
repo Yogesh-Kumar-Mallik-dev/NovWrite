@@ -8,7 +8,6 @@
     Plus,
     Trash2,
     Edit3,
-    X,
     Boxes,
     Layers,
     Calculator,
@@ -505,6 +504,8 @@
     goto('/world/schemas');
   }
 </script>
+
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && editingField) editingField = null; }} />
 
 {#if !blueprint}
   <div class="max-w-4xl mx-auto space-y-6">
@@ -1183,22 +1184,22 @@
     class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
     transition:fade={{ duration: 150 }}
   >
+    <!-- Backdrop Click to Close -->
+    <button
+      type="button"
+      class="fixed inset-0 cursor-default bg-transparent border-0"
+      onclick={() => (editingField = null)}
+      tabindex="-1"
+      aria-hidden="true"
+    ></button>
+
     <div
-      class="w-full max-w-2xl bg-card border border-border rounded-xl shadow-2xl p-4 sm:p-6 space-y-5 my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto"
+      class="relative z-10 w-full max-w-2xl bg-card border border-border rounded-xl shadow-2xl p-4 sm:p-6 space-y-5 my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto"
       transition:scale={{ start: 0.96, duration: 150 }}
     >
-      <div class="flex items-center justify-between border-b border-border pb-3">
-        <div class="flex items-center gap-2">
-          <Edit3 class="w-4 h-4 text-primary" />
-          <h3 class="text-sm font-bold text-foreground">Edit Dynamic Field Schema</h3>
-        </div>
-        <button
-          type="button"
-          onclick={() => (editingField = null)}
-          class="text-muted-foreground hover:text-foreground p-1 cursor-pointer rounded"
-        >
-          <X class="w-4 h-4" />
-        </button>
+      <div class="flex items-center gap-2 border-b border-border pb-3">
+        <Edit3 class="w-4 h-4 text-primary" />
+        <h3 class="text-sm font-bold text-foreground">Edit Dynamic Field Schema</h3>
       </div>
 
       <div class="space-y-4">
