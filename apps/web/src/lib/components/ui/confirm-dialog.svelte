@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { fade, scale } from "svelte/transition";
   import Button from "$lib/components/ui/button.svelte";
   import Card from "$lib/components/ui/card.svelte";
-  import { AlertTriangle, Info, X } from "lucide-svelte";
+  import { AlertTriangle, Info } from "lucide-svelte";
 
   interface Props {
     open: boolean;
@@ -38,7 +39,8 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in-0 duration-150"
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
     role="dialog"
     aria-modal="true"
     aria-labelledby="confirm-dialog-title"
@@ -53,10 +55,13 @@
       aria-hidden="true"
     ></button>
 
-    <Card
-      class="relative z-10 border-border bg-card max-w-md w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[min(90dvh,600px)] overflow-y-auto animate-in zoom-in-95 duration-150"
+    <div
+      transition:scale={{ start: 0.96, duration: 150 }}
+      class="relative z-10 w-full max-w-md"
     >
-      <div class="flex items-start justify-between gap-3">
+      <Card
+        class="border-border bg-card p-4 sm:p-6 space-y-4 shadow-2xl max-h-[min(90dvh,600px)] overflow-y-auto"
+      >
         <div class="flex items-start gap-3">
           <div
             class="p-2 rounded-lg {variant === 'destructive'
@@ -85,34 +90,25 @@
           </div>
         </div>
 
-        <button
-          type="button"
-          onclick={onCancel}
-          class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer -mr-2 -mt-2"
-          aria-label="Close dialog"
-        >
-          <X class="w-4 h-4" />
-        </button>
-      </div>
-
-      <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-border">
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={onCancel}
-          class="h-8 px-3 text-xs w-full sm:w-auto"
-        >
-          {cancelText}
-        </Button>
-        <Button
-          variant={variant}
-          size="sm"
-          onclick={onConfirm}
-          class="h-8 px-3 text-xs font-semibold w-full sm:w-auto"
-        >
-          {confirmText}
-        </Button>
-      </div>
-    </Card>
+        <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-border">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={onCancel}
+            class="h-8 px-3 text-xs w-full sm:w-auto"
+          >
+            {cancelText}
+          </Button>
+          <Button
+            variant={variant}
+            size="sm"
+            onclick={onConfirm}
+            class="h-8 px-3 text-xs font-semibold w-full sm:w-auto"
+          >
+            {confirmText}
+          </Button>
+        </div>
+      </Card>
+    </div>
   </div>
 {/if}

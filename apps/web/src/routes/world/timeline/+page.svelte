@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from "svelte/transition";
   import {
     Plus,
     Clock,
@@ -651,8 +652,14 @@
 
   <!-- Log / Edit Timeline Event Modal -->
   {#if isModalOpen}
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <Card class="border-border bg-card max-w-2xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto">
+    <div
+      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      transition:fade={{ duration: 150 }}
+    >
+      <div
+        class="border border-border bg-card rounded-xl max-w-2xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto"
+        transition:scale={{ start: 0.96, duration: 150 }}
+      >
         <div class="flex items-center justify-between border-b border-border pb-3">
           <div class="flex items-center gap-2 text-primary">
             <Clock class="w-5 h-5" />
@@ -663,7 +670,7 @@
           <button
             type="button"
             onclick={() => (isModalOpen = false)}
-            class="text-muted-foreground hover:text-foreground"
+            class="text-muted-foreground hover:text-foreground p-1 rounded transition-colors"
           >
             <X class="w-4 h-4" />
           </button>
@@ -835,7 +842,7 @@
             {modalMode === "add" ? "Log Event to Stream" : "Save Changes"}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   {/if}
 </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from "svelte/transition";
   import {
     ShieldAlert,
     Plus,
@@ -485,135 +486,155 @@
 
   <!-- Create / Edit Invariant Rule Modal -->
   {#if isModalOpen}
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <Card class="border-border bg-card max-w-xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2 text-amber-500">
-            <ShieldCheck class="w-5 h-5" />
-            <h3 class="text-base font-bold text-foreground">
-              {modalMode === "add" ? "Create Invariant Rule" : "Edit Invariant Rule"}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onclick={() => (isModalOpen = false)}
-            class="text-muted-foreground hover:text-foreground"
-          >
-            <X class="w-4 h-4" />
-          </button>
-        </div>
+    <div
+      transition:fade={{ duration: 150 }}
+      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop Click to Close -->
+      <button
+        type="button"
+        class="fixed inset-0 cursor-default bg-transparent border-0"
+        onclick={() => (isModalOpen = false)}
+        tabindex="-1"
+        aria-hidden="true"
+      ></button>
 
-        <div class="space-y-4">
-          <!-- Rule Name -->
-          <div class="space-y-1.5">
-            <Label for="rule-name">Rule Name <span class="text-destructive">*</span></Label>
-            <Input
-              id="rule-name"
-              bind:value={formName}
-              placeholder="e.g. Non-Negative Mana Invariant, Relic Ownership Integrity..."
-              class="text-xs"
-            />
+      <div
+        transition:scale={{ start: 0.96, duration: 150 }}
+        class="relative z-10 w-full max-w-xl my-4 sm:my-8"
+      >
+        <Card class="border-border bg-card w-full p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,800px)] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-border pb-3">
+            <div class="flex items-center gap-2 text-amber-500">
+              <ShieldCheck class="w-5 h-5" />
+              <h3 class="text-base font-bold text-foreground">
+                {modalMode === "add" ? "Create Invariant Rule" : "Edit Invariant Rule"}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onclick={() => (isModalOpen = false)}
+              class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X class="w-4 h-4" />
+            </button>
           </div>
 
-          <!-- Severity & Type Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-4">
+            <!-- Rule Name -->
             <div class="space-y-1.5">
-              <Label for="rule-severity">Severity Level</Label>
+              <Label for="rule-name">Rule Name <span class="text-destructive">*</span></Label>
+              <Input
+                id="rule-name"
+                bind:value={formName}
+                placeholder="e.g. Non-Negative Mana Invariant, Relic Ownership Integrity..."
+                class="text-xs"
+              />
+            </div>
+
+            <!-- Severity & Type Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <Label for="rule-severity">Severity Level</Label>
+                <Select
+                  id="rule-severity"
+                  bind:value={formSeverity}
+                  options={severityOptions}
+                  class="h-9 text-xs"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <Label for="rule-type">Rule Type</Label>
+                <Select
+                  id="rule-type"
+                  bind:value={formType}
+                  options={typeOptions}
+                  class="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <!-- Target Blueprint / Scope -->
+            <div class="space-y-1.5">
+              <Label for="rule-target-bp">Target Blueprint Scope</Label>
               <Select
-                id="rule-severity"
-                bind:value={formSeverity}
-                options={severityOptions}
+                id="rule-target-bp"
+                bind:value={formTargetBlueprintId}
+                options={targetBlueprintOptions}
+                placeholder="Select blueprint scope..."
                 class="h-9 text-xs"
               />
             </div>
 
+            <!-- Predicate Condition & Summary -->
             <div class="space-y-1.5">
-              <Label for="rule-type">Rule Type</Label>
-              <Select
-                id="rule-type"
-                bind:value={formType}
-                options={typeOptions}
-                class="h-9 text-xs"
+              <Label for="rule-predicate">Predicate Condition (AST Logic) <span class="text-destructive">*</span></Label>
+              <Input
+                id="rule-predicate"
+                bind:value={formPredicateExpression}
+                placeholder="e.g. cultivation.major_realm >= 3 or mana_capacity >= 0"
+                class="text-xs font-mono text-amber-600 dark:text-amber-300"
               />
+            </div>
+
+            <div class="space-y-1.5">
+              <Label for="rule-pred-summary">Predicate Human Summary</Label>
+              <Input
+                id="rule-pred-summary"
+                bind:value={formPredicateSummary}
+                placeholder="e.g. REQUIRES cultivation.major_realm >= 3 (Core Formation)"
+                class="text-xs font-mono"
+              />
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-1.5">
+              <Label for="rule-desc">Rule Rationale & Description</Label>
+              <Textarea
+                id="rule-desc"
+                bind:value={formDescription}
+                rows={2}
+                placeholder="Explain why this universe law must remain invariant..."
+                class="text-xs"
+              />
+            </div>
+
+            <!-- Suggested Resolution -->
+            <div class="space-y-1.5">
+              <Label for="rule-resolution">Suggested Editorial Resolution</Label>
+              <Input
+                id="rule-resolution"
+                bind:value={formSuggestedResolution}
+                placeholder="e.g. Auto-log breakthrough event or link valid sacred weapon wielder..."
+                class="text-xs"
+              />
+            </div>
+
+            <!-- Active Toggle Switch -->
+            <div class="flex items-center gap-2 pt-1">
+              <Switch
+                id="rule-enabled"
+                checked={formEnabled}
+                onCheckedChange={(c: boolean) => (formEnabled = c)}
+              />
+              <Label for="rule-enabled" class="text-xs font-medium text-foreground cursor-pointer">
+                Enforce rule actively in real-time continuity audit checks
+              </Label>
             </div>
           </div>
 
-          <!-- Target Blueprint / Scope -->
-          <div class="space-y-1.5">
-            <Label for="rule-target-bp">Target Blueprint Scope</Label>
-            <Select
-              id="rule-target-bp"
-              bind:value={formTargetBlueprintId}
-              options={targetBlueprintOptions}
-              placeholder="Select blueprint scope..."
-              class="h-9 text-xs"
-            />
+          <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>Cancel</Button>
+            <Button size="sm" disabled={!formName.trim()} onclick={handleSaveRule}>
+              {modalMode === "add" ? "Create Rule" : "Save Changes"}
+            </Button>
           </div>
-
-          <!-- Predicate Condition & Summary -->
-          <div class="space-y-1.5">
-            <Label for="rule-predicate">Predicate Condition (AST Logic) <span class="text-destructive">*</span></Label>
-            <Input
-              id="rule-predicate"
-              bind:value={formPredicateExpression}
-              placeholder="e.g. cultivation.major_realm >= 3 or mana_capacity >= 0"
-              class="text-xs font-mono text-amber-600 dark:text-amber-300"
-            />
-          </div>
-
-          <div class="space-y-1.5">
-            <Label for="rule-pred-summary">Predicate Human Summary</Label>
-            <Input
-              id="rule-pred-summary"
-              bind:value={formPredicateSummary}
-              placeholder="e.g. REQUIRES cultivation.major_realm >= 3 (Core Formation)"
-              class="text-xs font-mono"
-            />
-          </div>
-
-          <!-- Description -->
-          <div class="space-y-1.5">
-            <Label for="rule-desc">Rule Rationale & Description</Label>
-            <Textarea
-              id="rule-desc"
-              bind:value={formDescription}
-              rows={2}
-              placeholder="Explain why this universe law must remain invariant..."
-              class="text-xs"
-            />
-          </div>
-
-          <!-- Suggested Resolution -->
-          <div class="space-y-1.5">
-            <Label for="rule-resolution">Suggested Editorial Resolution</Label>
-            <Input
-              id="rule-resolution"
-              bind:value={formSuggestedResolution}
-              placeholder="e.g. Auto-log breakthrough event or link valid sacred weapon wielder..."
-              class="text-xs"
-            />
-          </div>
-
-          <!-- Active Toggle Switch -->
-          <div class="flex items-center gap-2 pt-1">
-            <Switch
-              id="rule-enabled"
-              checked={formEnabled}
-              onCheckedChange={(c: boolean) => (formEnabled = c)}
-            />
-            <Label for="rule-enabled" class="text-xs font-medium text-foreground cursor-pointer">
-              Enforce rule actively in real-time continuity audit checks
-            </Label>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>Cancel</Button>
-          <Button size="sm" disabled={!formName.trim()} onclick={handleSaveRule}>
-            {modalMode === "add" ? "Create Rule" : "Save Changes"}
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   {/if}
 </div>

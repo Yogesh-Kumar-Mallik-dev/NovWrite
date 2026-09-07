@@ -1,5 +1,7 @@
 <script lang="ts">
   import "../app.css";
+  import { fade, fly } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
   import {
     BookOpen,
     Globe2,
@@ -116,7 +118,8 @@
     <!-- Mobile Slide-In Navigation Drawer -->
     {#if mobileDrawerOpen}
       <div
-        class="fixed inset-0 z-50 md:hidden bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in-0 duration-200"
+        transition:fade={{ duration: 180 }}
+        class="fixed inset-0 z-50 md:hidden bg-black/70 backdrop-blur-xs"
         onclick={() => (mobileDrawerOpen = false)}
         onkeydown={(e) => e.key === "Escape" && (mobileDrawerOpen = false)}
         role="button"
@@ -124,7 +127,8 @@
         aria-label="Close Navigation Backdrop"
       >
         <div
-          class="fixed inset-y-0 left-0 w-[min(85vw,320px)] bg-card border-r border-border shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200"
+          transition:fly={{ x: -320, duration: 220, easing: cubicOut }}
+          class="fixed inset-y-0 left-0 w-[min(85vw,320px)] bg-card border-r border-border shadow-2xl flex flex-col z-50"
           onclick={(e) => e.stopPropagation()}
           onkeydown={(e) => e.stopPropagation()}
           role="dialog"

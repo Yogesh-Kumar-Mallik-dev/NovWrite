@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fly } from "svelte/transition";
   import { toast, type ToastItem } from "$lib/stores/toastStore.svelte";
   import {
     CheckCircle2,
@@ -16,7 +17,8 @@
 >
   {#each toast.items as item (item.id)}
     <div
-      class="pointer-events-auto flex items-start gap-3 p-3.5 rounded-lg border border-border bg-card text-card-foreground shadow-lg transition-all animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
+      transition:fly={{ y: 16, duration: 180 }}
+      class="pointer-events-auto flex items-start gap-3 p-3.5 rounded-lg border border-border bg-card text-card-foreground shadow-lg transition-all"
       role="alert"
     >
       {#if item.type === "success"}
@@ -43,7 +45,7 @@
       <button
         type="button"
         onclick={() => toast.remove(item.id)}
-        class="text-muted-foreground hover:text-foreground transition-colors p-0.5 -mr-1 -mt-1 cursor-pointer rounded hover:bg-muted"
+        class="text-muted-foreground/60 hover:text-foreground transition-all duration-150 p-1 -mr-1 -mt-1 cursor-pointer rounded-md hover:bg-muted/80 opacity-60 hover:opacity-100 active:scale-90"
         aria-label="Dismiss notification"
       >
         <X class="w-3.5 h-3.5" />

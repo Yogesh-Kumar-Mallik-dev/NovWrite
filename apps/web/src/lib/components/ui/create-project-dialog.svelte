@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from "svelte/transition";
   import Button from "$lib/components/ui/button.svelte";
   import Card from "$lib/components/ui/card.svelte";
   import Field from "$lib/components/ui/field.svelte";
@@ -93,7 +94,8 @@
 
 {#if open || projectStore.isCreateDialogOpen}
   <div
-    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in-0 duration-150"
+    transition:fade={{ duration: 150 }}
+    class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
     role="dialog"
     aria-modal="true"
     aria-labelledby="create-project-title"
@@ -108,9 +110,13 @@
       aria-hidden="true"
     ></button>
 
-    <Card
-      class="relative z-10 border-border bg-card max-w-lg w-full p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,750px)] overflow-y-auto animate-in zoom-in-95 duration-150"
+    <div
+      transition:scale={{ start: 0.96, duration: 150 }}
+      class="relative z-10 w-full max-w-lg"
     >
+      <Card
+        class="border-border bg-card p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,750px)] overflow-y-auto"
+      >
       <!-- Dialog Header -->
       <div class="flex items-start justify-between gap-3 border-b border-border/80 pb-3.5">
         <div class="flex items-start gap-3">
@@ -253,5 +259,6 @@
         </div>
       </form>
     </Card>
+    </div>
   </div>
 {/if}

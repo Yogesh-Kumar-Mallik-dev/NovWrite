@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from 'svelte/transition';
   import {
     History,
     GitBranch,
@@ -137,10 +138,19 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in-0 duration-150"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4"
+    transition:fade={{ duration: 150 }}
   >
+    <button
+      type="button"
+      tabindex="-1"
+      aria-label="Close modal overlay"
+      onclick={() => (open = false)}
+      class="fixed inset-0 cursor-default bg-transparent border-0"
+    ></button>
     <div
-      class="w-full max-w-5xl h-[min(90dvh,850px)] max-h-[95dvh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+      class="w-full max-w-5xl h-[min(90dvh,850px)] max-h-[95dvh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden relative z-10"
+      transition:scale={{ start: 0.96, duration: 150 }}
     >
       <!-- Dialog Header -->
       <div

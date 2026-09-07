@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from 'svelte/transition';
   import {
     GitBranch,
     Workflow,
@@ -635,88 +636,114 @@
 
   <!-- Modal: Branch / Add New Edit Node -->
   {#if isAddEditModalOpen}
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <Card class="border-border bg-card max-w-xl w-full p-6 space-y-5 shadow-2xl my-8">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2 text-primary">
-            <GitBranch class="w-5 h-5" />
-            <h3 class="text-base font-bold text-foreground">
-              Branch New Edit Node
-            </h3>
-          </div>
-          <button
-            type="button"
-            onclick={() => (isAddEditModalOpen = false)}
-            class="text-muted-foreground hover:text-foreground"
-          >
-            <X class="w-4 h-4" />
-          </button>
-        </div>
+    <div
+      transition:fade={{ duration: 150 }}
+      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop Click to Close -->
+      <button
+        type="button"
+        class="fixed inset-0 cursor-default bg-transparent border-0"
+        onclick={() => (isAddEditModalOpen = false)}
+        tabindex="-1"
+        aria-hidden="true"
+      ></button>
 
-        <div class="space-y-4 text-xs font-sans">
-          <!-- Parent Info -->
-          <div class="p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between font-mono">
-            <span class="text-primary font-bold">Branching Parent Node:</span>
-            <span class="text-foreground font-semibold">
-              {branchParentNodeId ? `Node (${branchParentNodeId.slice(0, 12)}...)` : 'Active Head'}
-            </span>
-          </div>
-
-          <!-- Edit Title -->
-          <div class="space-y-1.5">
-            <Label for="edit-title">Event Title in this Revision <span class="text-destructive">*</span></Label>
-            <Input id="edit-title" bind:value={editFormTitle} class="text-xs" />
-          </div>
-
-          <!-- Author Note / Reason -->
-          <div class="space-y-1.5">
-            <Label for="author-note">Author Note / Reason for Edit <span class="text-destructive">*</span></Label>
-            <Input
-              id="author-note"
-              bind:value={editFormAuthorNote}
-              placeholder="e.g. Fixed typos in narrative description, added dragon scale reward..."
-              class="text-xs"
-            />
+      <div
+        transition:scale={{ start: 0.96, duration: 150 }}
+        class="relative z-10 w-full max-w-xl my-4 sm:my-8"
+      >
+        <Card class="border-border bg-card w-full p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,800px)] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-border pb-3">
+            <div class="flex items-center gap-2 text-primary">
+              <GitBranch class="w-5 h-5" />
+              <h3 class="text-base font-bold text-foreground">
+                Branch New Edit Node
+              </h3>
+            </div>
+            <button
+              type="button"
+              onclick={() => (isAddEditModalOpen = false)}
+              class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X class="w-4 h-4" />
+            </button>
           </div>
 
-          <!-- Revision Type -->
-          <div class="space-y-1.5">
-            <Label for="rev-type">Revision Classification</Label>
-            <Select
-              id="rev-type"
-              bind:value={editFormType}
-              options={[
-                { value: 'TYPO_FIX', label: 'Typo / Label Fix' },
-                { value: 'BASELINE_EDIT', label: 'Baseline Attribute Edit' },
-                { value: 'RETROACTIVE_PLOT_FIX', label: 'Retroactive Plot Fix' },
-                { value: 'REVERT', label: 'Revert Snapshot' },
-              ]}
-              class="text-xs"
-            />
+          <div class="space-y-4 text-xs font-sans">
+            <!-- Parent Info -->
+            <div class="p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between font-mono">
+              <span class="text-primary font-bold">Branching Parent Node:</span>
+              <span class="text-foreground font-semibold">
+                {branchParentNodeId ? `Node (${branchParentNodeId.slice(0, 12)}...)` : 'Active Head'}
+              </span>
+            </div>
+
+            <!-- Edit Title -->
+            <div class="space-y-1.5">
+              <Label for="branch-title">Edit / Revision Title <span class="text-destructive">*</span></Label>
+              <Input
+                id="branch-title"
+                bind:value={editFormTitle}
+                placeholder="e.g. Altered outcome: Lin Fan uses sword instead of talisman..."
+                class="text-xs"
+              />
+            </div>
+
+            <!-- Revision Type & Author Note -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <Label for="branch-type">Revision Classification</Label>
+                <Select
+                  id="branch-type"
+                  bind:value={editFormType}
+                  options={[
+                    { value: 'BASELINE_EDIT', label: 'Baseline Narrative Edit' },
+                    { value: 'CANON_FORK', label: 'Canon Multi-Timeline Fork' },
+                    { value: 'TYPO_FIX', label: 'Typo / Label Fix' },
+                    { value: 'RETROACTIVE_PLOT_FIX', label: 'Retroactive Plot Fix' },
+                  ]}
+                  class="h-9 text-xs"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <Label for="branch-author">Author Editorial Rationale</Label>
+                <Input
+                  id="branch-author"
+                  bind:value={editFormAuthorNote}
+                  placeholder="e.g. Exploring darker alternative ending..."
+                  class="text-xs"
+                />
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-1.5">
+              <Label for="branch-desc">Revision Manuscript Notes</Label>
+              <Textarea
+                id="branch-desc"
+                bind:value={editFormDescription}
+                rows={2}
+                placeholder="Narrative description for this revision..."
+                class="text-xs"
+              />
+            </div>
           </div>
 
-          <!-- Description -->
-          <div class="space-y-1.5">
-            <Label for="edit-desc">Event Description</Label>
-            <Textarea
-              id="edit-desc"
-              bind:value={editFormDescription}
-              rows={3}
-              placeholder="Narrative description for this revision..."
-              class="text-xs"
-            />
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button variant="outline" size="sm" onclick={() => (isAddEditModalOpen = false)}>
+              Cancel
+            </Button>
+            <Button size="sm" disabled={!editFormTitle.trim()} onclick={handleSaveBranchEdit}>
+              Create & Checkout Branch
+            </Button>
           </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button variant="outline" size="sm" onclick={() => (isAddEditModalOpen = false)}>
-            Cancel
-          </Button>
-          <Button size="sm" disabled={!editFormTitle.trim()} onclick={handleSaveBranchEdit}>
-            Create & Checkout Branch
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   {/if}
 </div>

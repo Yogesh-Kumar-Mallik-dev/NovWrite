@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, scale } from "svelte/transition";
   import {
     AlertOctagon,
     CheckCircle2,
@@ -460,75 +461,95 @@
 
   <!-- Override Justification Modal -->
   {#if activeOverrideViolation}
-    <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <Card class="border-border bg-card max-w-lg w-full p-4 sm:p-6 space-y-4 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,600px)] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2 text-destructive">
-            <Key class="w-5 h-5" />
-            <h3 class="text-base font-bold text-foreground">
-              Lead Author Override Authorization
-            </h3>
-          </div>
-          <button
-            type="button"
-            onclick={() => (activeOverrideViolation = null)}
-            class="text-muted-foreground hover:text-foreground"
-          >
-            <X class="w-4 h-4" />
-          </button>
-        </div>
+    <div
+      transition:fade={{ duration: 150 }}
+      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop Click to Close -->
+      <button
+        type="button"
+        class="fixed inset-0 cursor-default bg-transparent border-0"
+        onclick={() => (activeOverrideViolation = null)}
+        tabindex="-1"
+        aria-hidden="true"
+      ></button>
 
-        <p class="text-xs text-muted-foreground leading-relaxed">
-          Overriding a canonical invariant bypasses continuity blocking for <strong class="text-destructive font-mono">{activeOverrideViolation.code}</strong>.
-          You must provide a formal editorial rationale to preserve audit integrity.
-        </p>
-
-        <div class="p-3 rounded-lg bg-muted/50 border border-border text-xs font-mono space-y-1 text-muted-foreground">
-          <div>Entity: <strong class="text-foreground">{activeOverrideViolation.entityName}</strong></div>
-          <div>Scene Anchor: <strong class="text-foreground">{activeOverrideViolation.sceneTitle}</strong></div>
-          <div>Violated Rule: <strong class="text-foreground">{activeOverrideViolation.ruleName}</strong></div>
-        </div>
-
-        <div class="space-y-3">
-          <div class="space-y-1.5">
-            <Label for="author-name-input">Author Identifier <span class="text-destructive">*</span></Label>
-            <Input
-              id="author-name-input"
-              bind:value={authorNameInput}
-              placeholder="e.g. Lead Author, Head Lorekeeper"
-              class="text-xs"
-            />
+      <div
+        transition:scale={{ start: 0.96, duration: 150 }}
+        class="relative z-10 w-full max-w-lg my-4 sm:my-8"
+      >
+        <Card class="border-border bg-card w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[min(90dvh,600px)] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-border pb-3">
+            <div class="flex items-center gap-2 text-destructive">
+              <Key class="w-5 h-5" />
+              <h3 class="text-base font-bold text-foreground">
+                Lead Author Override Authorization
+              </h3>
+            </div>
+            <button
+              type="button"
+              onclick={() => (activeOverrideViolation = null)}
+              class="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X class="w-4 h-4" />
+            </button>
           </div>
 
-          <div class="space-y-1.5">
-            <Label for="override-justification-input">Editorial Justification <span class="text-destructive">*</span></Label>
-            <Input
-              id="override-justification-input"
-              bind:value={justificationInput}
-              placeholder="e.g., Entity resurrected via astral echo in flashback sequence #160..."
-              class="text-xs"
-            />
-          </div>
-        </div>
+          <p class="text-xs text-muted-foreground leading-relaxed">
+            Overriding a canonical invariant bypasses continuity blocking for <strong class="text-destructive font-mono">{activeOverrideViolation.code}</strong>.
+            You must provide a formal editorial rationale to preserve audit integrity.
+          </p>
 
-        <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            onclick={() => (activeOverrideViolation = null)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={!justificationInput.trim()}
-            onclick={handleExecuteOverride}
-          >
-            Confirm & Log Override
-          </Button>
-        </div>
-      </Card>
+          <div class="p-3 rounded-lg bg-muted/50 border border-border text-xs font-mono space-y-1 text-muted-foreground">
+            <div>Entity: <strong class="text-foreground">{activeOverrideViolation.entityName}</strong></div>
+            <div>Scene Anchor: <strong class="text-foreground">{activeOverrideViolation.sceneTitle}</strong></div>
+            <div>Violated Rule: <strong class="text-foreground">{activeOverrideViolation.ruleName}</strong></div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-1.5">
+              <Label for="author-name-input">Author Identifier <span class="text-destructive">*</span></Label>
+              <Input
+                id="author-name-input"
+                bind:value={authorNameInput}
+                placeholder="e.g. Lead Author, Head Lorekeeper"
+                class="text-xs"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <Label for="override-justification-input">Editorial Justification <span class="text-destructive">*</span></Label>
+              <Input
+                id="override-justification-input"
+                bind:value={justificationInput}
+                placeholder="e.g., Entity resurrected via astral echo in flashback sequence #160..."
+                class="text-xs"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={() => (activeOverrideViolation = null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={!justificationInput.trim()}
+              onclick={handleExecuteOverride}
+            >
+              Confirm & Log Override
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   {/if}
 </div>
