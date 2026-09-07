@@ -122,7 +122,15 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `GET /livez` — Kubernetes/process liveness probe.
 - `GET /readyz` — Database and dependency readiness probe.
 
-### 3.2 Blueprints (Schemas)
+### 3.2 Projects & Workspace Scoping
+
+- `GET /api/v1/projects` — List user's active projects with pagination, sorting, and search.
+- `POST /api/v1/projects` — Create a new project workspace. Automatically scaffolds initial universe context and default schemas. Returns `201 Created` with `Location` header.
+- `GET /api/v1/projects/{projectId}` — Retrieve project metadata, novel count, word count velocity, and author roles.
+- `PUT /api/v1/projects/{projectId}` — Update project name, description, genre, or settings.
+- `DELETE /api/v1/projects/{projectId}` — Soft-delete / remove project workspace and cascade-archive entities (`204 No Content`).
+
+### 3.3 Blueprints (Schemas)
 
 - `GET /api/v1/projects/{projectId}/blueprints` — List blueprints with pagination, search, and category filters.
 - `POST /api/v1/projects/{projectId}/blueprints` — Create a new blueprint schema. Machine keys are automatically normalized to lowercase; duplicate keys are rejected with 422. Returns `201 Created` with `Location` header.
@@ -130,7 +138,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `PUT /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Update blueprint. Changing a field's type automatically wipes the slate clean for incompatible attributes.
 - `DELETE /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Remove blueprint schema (`204 No Content`).
 
-### 3.3 Entities & Bitemporal Revisions (The Feather & Web Model)
+### 3.4 Entities & Bitemporal Revisions (The Feather & Web Model)
 
 - `GET /api/v1/projects/{projectId}/entities` — List entities with pagination, `blueprintId`, and `category` filters.
 - `POST /api/v1/projects/{projectId}/entities` — Create an entity. Formulas are deterministically evaluated and populated on the backend. Automatically records Revision #0 (`BASELINE_EDIT`). Returns `201 Created` with `Location` header.
@@ -145,7 +153,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/projects/{projectId}/entities/{entityId}/edits` — Branch a new edit node on the entity tree.
 - `POST /api/v1/projects/{projectId}/entities/{entityId}/edits/{editId}/checkout` — Non-destructively switch the active EDIT head to `editId` (child branches are preserved).
 
-### 3.4 Formulas Engine
+### 3.5 Formulas Engine
 
 - `POST /api/v1/formulas/evaluate` — Test and evaluate mathematical and logical formulas with sample context.
   - Supported functions: `IF(cond, t, f)`, `CLAMP(val, min, max)`, `MIN(a, b)`, `MAX(a, b)`, `ABS(x)`, `ROUND(x)`, `FLOOR(x)`, `CEIL(x)`, `SQRT(x)`, `POW(x, y)`.
@@ -153,7 +161,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
   - Context keys are case-insensitive.
 - `POST /api/v1/formulas/validate` — Validate formula syntax and extract referenced variables.
 
-### 3.5 Timeline, UPDATE Pipe & Hanging EDIT Trees
+### 3.6 Timeline, UPDATE Pipe & Hanging EDIT Trees
 
 - `GET /api/v1/projects/{projectId}/timeline/pipe` — Retrieve the full UPDATE horizontal pipeline containing all chronological narrative events alongside their hanging EDIT trees, active EDIT head pointers, and resolved snapshots.
 - `GET /api/v1/projects/{projectId}/timeline/events` — Retrieve chronological events with pagination.
@@ -166,7 +174,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/projects/{projectId}/timeline/events/{eventId}/edits/{editId}/checkout` — Non-destructively checkout an edit node as active EDIT head (preserves all child branches).
 - `GET /api/v1/projects/{projectId}/timeline/state?seq={seq}` — Fold and compute canonical entity state at a given sequence number.
 
-### 3.6 World Domain Bridge
+### 3.7 World Domain Bridge
 
 - `POST /api/v1/bridge/ground` — Ground a scene with folded canonical state for referenced entities.
 - `POST /api/v1/bridge/audit` — Audit draft prose actions against invariant rules (e.g. deceased entity taking actions, numeric bounds underflow).

@@ -79,11 +79,46 @@ timeline
                : Theme Toggle Dual-Mode Color Harmonization (Sun & Moon Tokens)
                : Go Backend REST /api/v1/projects Endpoints & Tests
                : Clean-Slate Database & Redis Flush Utility (flush_db.sh)
+    2026-09-07 : Version 2.7 (Multi-OS Toolchains, Mobile-First Responsive System & Bidirectional Transitions)
+               : Comprehensive Installation Commands for Windows, macOS, Linux (Ubuntu, Fedora, Arch) & WSL2
+               : Mobile-First Layout Architecture (2-Tier Sub-Header Strip, Auto-Fit Grids, Top Pagination)
+               : Svelte 5 Native Bidirectional Transitions (fade, scale, fly) & Motion Accessibility
+               : Single-Icon Purple Theme Toggle & Global Scrollbar Suppression
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.7] — 2026-09-07
+
+**Scope:** Multi-OS Toolchain Installation Commands, Mobile-First Responsive Architecture, Svelte 5 Bidirectional Transitions & Micro-Interactions  
+**Target Documents:** [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added
+
+- **Comprehensive Multi-OS Dependency Installation Toolchain ([`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md)):**
+  - **Linux (Ubuntu / Debian / Linux Mint):** `apt-get` packages for Go 1.23+, Node.js 22 LTS, `pnpm` via corepack, Docker Engine & Compose plugin, `protobuf-compiler`, `protoc-gen-go`, `protoc-gen-go-grpc`, and `buf`.
+  - **Linux (Fedora / RHEL / CentOS Stream):** `dnf` groupinstall and module commands for Go, Node.js 22, Docker CE, and Protobuf toolchains.
+  - **Linux (Arch Linux / Manjaro):** `pacman` commands for base-devel, Go, Node.js LTS, Protobuf, Docker, and Buf.
+  - **macOS (Homebrew):** Homebrew commands for Go, Node 22, pnpm, Docker Desktop/OrbStack, protobuf, and plugins.
+  - **Windows (Native & WSL2):** Winget, Chocolatey, Scoop, and WSL2 Ubuntu step-by-step commands.
+  - **Unified Verification Script:** Terminal one-liner testing presence of all toolchains.
+- **Mobile-First Responsive Layout Architecture:**
+  - Standardized fluid gutters (`px-4 sm:px-6 lg:px-8`) across all shell and workbench routes.
+  - 2-Tier Sub-Header Control Strip in `world/+layout.svelte` separating breadcrumb context from action dropdowns and action buttons.
+  - Standardized Top Pagination Bar placed strictly above lists to prevent layout jumps on dynamic record heights.
+  - Viewport-safe modals constrained to `max-h-[min(90dvh,800px)] overflow-y-auto` with internal scrolling.
+  - Isolated horizontal scrolling for wide data tables and DAG visualizers.
+- **Svelte 5 Bidirectional Transitions & Motion Accessibility:**
+  - Applied paired `transition:fade={{ duration: 150 }}` on backdrops and `transition:scale={{ start: 0.96, duration: 150 }}` on modal dialogs.
+  - Physics-based cubic easing on mobile slide-over drawers (`transition:fly={{ x: -320, duration: 220, easing: cubicOut }}`).
+  - Global accessibility reset via `@media (prefers-reduced-motion: reduce)` in `app.css`.
+  - Pruned redundant close controls in binary action dialogs and toasts.
+- **Single-Icon Purple Theme Toggle:**
+  - Strict single-icon rendering (Sun in dark mode, Moon in light mode) styled in purple `#7c3aed` matching both themes.
+
+---
 
 ### [Version 2.6] — 2026-09-07
 
