@@ -436,6 +436,21 @@
 
     <!-- Entities Table with Shadcn UI Table -->
     <Card class="border-border bg-card overflow-hidden shadow-xs">
+      <!-- Top Pagination Header Bar (prevents layout jumps during browsing) -->
+      {#if filteredEntities.length > 0}
+        <Pagination
+          page={paginatedResult.pagination.page}
+          pageSize={paginatedResult.pagination.pageSize}
+          totalCount={paginatedResult.pagination.totalCount}
+          totalPages={paginatedResult.pagination.totalPages}
+          hasNextPage={paginatedResult.pagination.hasNextPage}
+          hasPreviousPage={paginatedResult.pagination.hasPreviousPage}
+          itemLabel={activeBlueprint ? `${activeBlueprint.name.replace(/_/g, ' ').toLowerCase()} entities` : "entities"}
+          borderPosition="bottom"
+          onPageChange={(p) => (currentPage = p)}
+        />
+      {/if}
+
       <div class="overflow-x-auto w-full">
         <Table class="w-full text-left text-xs min-w-[750px]">
           <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
@@ -609,20 +624,6 @@
           </TableBody>
         </Table>
       </div>
-
-      <!-- Standardized 10-Item Pagination -->
-      {#if filteredEntities.length > 0}
-        <Pagination
-          page={paginatedResult.pagination.page}
-          pageSize={paginatedResult.pagination.pageSize}
-          totalCount={paginatedResult.pagination.totalCount}
-          totalPages={paginatedResult.pagination.totalPages}
-          hasNextPage={paginatedResult.pagination.hasNextPage}
-          hasPreviousPage={paginatedResult.pagination.hasPreviousPage}
-          itemLabel={activeBlueprint ? `${activeBlueprint.name.toLowerCase()} entities` : "entities"}
-          onPageChange={(p) => (currentPage = p)}
-        />
-      {/if}
     </Card>
   {/if}
 

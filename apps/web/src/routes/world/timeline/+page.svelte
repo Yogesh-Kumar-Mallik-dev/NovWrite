@@ -548,6 +548,21 @@
         onAction={openAddModal}
       />
     {:else}
+      <!-- Top Pagination Header Bar (prevents layout jumps during browsing) -->
+      <Card class="border-border bg-card overflow-hidden">
+        <Pagination
+          page={paginatedEvents.pagination.page}
+          pageSize={paginatedEvents.pagination.pageSize}
+          totalCount={paginatedEvents.pagination.totalCount}
+          totalPages={paginatedEvents.pagination.totalPages}
+          hasNextPage={paginatedEvents.pagination.hasNextPage}
+          hasPreviousPage={paginatedEvents.pagination.hasPreviousPage}
+          itemLabel="events"
+          borderPosition="none"
+          onPageChange={(p) => (currentStreamPage = p)}
+        />
+      </Card>
+
       {#each paginatedEvents.data as event (event.id)}
         <Card class="border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-xs">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
@@ -628,20 +643,6 @@
           </div>
         </Card>
       {/each}
-
-      <!-- Stream Events Pagination -->
-      <Card class="border-border bg-card overflow-hidden">
-        <Pagination
-          page={paginatedEvents.pagination.page}
-          pageSize={paginatedEvents.pagination.pageSize}
-          totalCount={paginatedEvents.pagination.totalCount}
-          totalPages={paginatedEvents.pagination.totalPages}
-          hasNextPage={paginatedEvents.pagination.hasNextPage}
-          hasPreviousPage={paginatedEvents.pagination.hasPreviousPage}
-          itemLabel="events"
-          onPageChange={(p) => (currentStreamPage = p)}
-        />
-      </Card>
     {/if}
   </div>
   {/if}

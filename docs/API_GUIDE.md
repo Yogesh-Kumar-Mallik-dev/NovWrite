@@ -199,4 +199,3 @@ The Web and Desktop frontends (`apps/web`) consume and paginate API resources th
 - **Pure Client Paginator**: `paginateArray<T>(items, params)` providing RFC 7807 metadata and envelope structures for client-side stores.
 - **Frontend Page Size Standard**: Set to **10 items per page** across all list tables and workbench grids.
 - **Reusable Component**: `<Pagination />` (`apps/web/src/lib/components/ui/pagination.svelte`) with item range telemetry (`Showing X–Y of Z items`), zero-badge indicator (`Page X / Y`), and Previous / Next navigation buttons.
-

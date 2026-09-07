@@ -10,6 +10,7 @@
     hasNextPage?: boolean;
     hasPreviousPage?: boolean;
     itemLabel?: string;
+    borderPosition?: 'top' | 'bottom' | 'none';
     class?: string;
     onPageChange: (newPage: number) => void;
   }
@@ -22,6 +23,7 @@
     hasNextPage: propHasNextPage,
     hasPreviousPage: propHasPreviousPage,
     itemLabel = 'items',
+    borderPosition = 'bottom',
     class: className = '',
     onPageChange,
   }: Props = $props();
@@ -54,7 +56,15 @@
   }
 </script>
 
-<div class={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-border bg-card/40 ${className}`}>
+<div
+  class={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-2.5 bg-card/60 ${
+    borderPosition === 'bottom'
+      ? 'border-b border-border'
+      : borderPosition === 'top'
+        ? 'border-t border-border'
+        : ''
+  } ${className}`}
+>
   <!-- Item Range Telemetry -->
   <div class="text-xs text-muted-foreground font-mono">
     {#if totalCount === 0}

@@ -199,6 +199,21 @@
         class="py-14"
       />
     {:else}
+      <!-- Top Pagination Header Bar (prevents layout jumps during browsing) -->
+      <Card class="border-border bg-card overflow-hidden">
+        <Pagination
+          page={paginatedBlueprints.pagination.page}
+          pageSize={paginatedBlueprints.pagination.pageSize}
+          totalCount={paginatedBlueprints.pagination.totalCount}
+          totalPages={paginatedBlueprints.pagination.totalPages}
+          hasNextPage={paginatedBlueprints.pagination.hasNextPage}
+          hasPreviousPage={paginatedBlueprints.pagination.hasPreviousPage}
+          itemLabel="blueprints"
+          borderPosition="none"
+          onPageChange={(p) => (currentPage = p)}
+        />
+      </Card>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each paginatedBlueprints.data as bp (bp.id)}
           <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between shadow-xs">
@@ -289,20 +304,6 @@
           </Card>
         {/each}
       </div>
-
-      <!-- Pagination Footer -->
-      <Card class="border-border bg-card overflow-hidden">
-        <Pagination
-          page={paginatedBlueprints.pagination.page}
-          pageSize={paginatedBlueprints.pagination.pageSize}
-          totalCount={paginatedBlueprints.pagination.totalCount}
-          totalPages={paginatedBlueprints.pagination.totalPages}
-          hasNextPage={paginatedBlueprints.pagination.hasNextPage}
-          hasPreviousPage={paginatedBlueprints.pagination.hasPreviousPage}
-          itemLabel="blueprints"
-          onPageChange={(p) => (currentPage = p)}
-        />
-      </Card>
     {/if}
   </div>
 

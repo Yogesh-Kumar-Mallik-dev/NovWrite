@@ -331,6 +331,21 @@
 
   <!-- Rules Table -->
   <Card class="border-border bg-card overflow-hidden shadow-xs">
+    <!-- Top Pagination Header Bar (prevents layout jumps during browsing) -->
+    {#if filteredRules.length > 0}
+      <Pagination
+        page={paginatedRules.pagination.page}
+        pageSize={paginatedRules.pagination.pageSize}
+        totalCount={paginatedRules.pagination.totalCount}
+        totalPages={paginatedRules.pagination.totalPages}
+        hasNextPage={paginatedRules.pagination.hasNextPage}
+        hasPreviousPage={paginatedRules.pagination.hasPreviousPage}
+        itemLabel="rules"
+        borderPosition="bottom"
+        onPageChange={(p) => (currentPage = p)}
+      />
+    {/if}
+
     <div class="overflow-x-auto w-full">
       <Table class="w-full text-left text-xs min-w-[900px]">
         <TableHeader class="bg-muted/50 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
@@ -456,20 +471,6 @@
         </TableBody>
       </Table>
     </div>
-
-    <!-- Rules Table Pagination -->
-    {#if filteredRules.length > 0}
-      <Pagination
-        page={paginatedRules.pagination.page}
-        pageSize={paginatedRules.pagination.pageSize}
-        totalCount={paginatedRules.pagination.totalCount}
-        totalPages={paginatedRules.pagination.totalPages}
-        hasNextPage={paginatedRules.pagination.hasNextPage}
-        hasPreviousPage={paginatedRules.pagination.hasPreviousPage}
-        itemLabel="rules"
-        onPageChange={(p) => (currentPage = p)}
-      />
-    {/if}
   </Card>
 
   <!-- Delete Confirmation Dialog -->
