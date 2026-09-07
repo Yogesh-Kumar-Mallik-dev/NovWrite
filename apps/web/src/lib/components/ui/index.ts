@@ -11,4 +11,5 @@ export { default as ConfirmDialog } from "./confirm-dialog.svelte";
 export { default as EmptyState } from "./empty-state.svelte";
 export { default as Toaster } from "./toaster.svelte";
 export { default as JsonEditor } from "./json-editor/json-editor.svelte";
+export { default as Pagination } from "./pagination.svelte";
 export * from "./radio-group";

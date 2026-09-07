@@ -19,7 +19,7 @@
     Eye,
     Tag,
   } from 'lucide-svelte';
-  import { Button, Input, Select, ConfirmDialog, EmptyState } from '$lib/components/ui';
+  import { Button, Input, Select, ConfirmDialog, EmptyState, Pagination } from '$lib/components/ui';
   import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Table,
@@ -43,6 +43,7 @@
     formatTableCellValue,
     type TableColumnDef,
   } from '$lib/engine/tableConfig';
+  import { paginateArray } from '$lib/api/apiClient';
 
   const STORAGE_KEY = 'novwrite_world_entity_table_columns_v1';
 
@@ -50,11 +51,14 @@
   let entityToDelete = $state<{ id: string; name: string } | null>(null);
 
   let searchQuery = $state('');
-  let blueprintFilter = $state('ALL');
-  let categoryFilter = $state('ALL');
+  let blueprintFilter = $state('');
   let showColumnCustomizer = $state(false);
 
-  // Per-blueprint column visibility preferences map (keyed by blueprint id, or 'ALL')
+  // Pagination State (Page size 10)
+  let currentPage = $state(1);
+  const pageSize = 10;
+
+  // Per-blueprint column visibility preferences map (keyed by blueprint id)
   let columnPreferences = $state<Record<string, string[]>>({});
 
   // Load preferences from localStorage on mount
@@ -71,24 +75,34 @@
 
   const firstClassBlueprints = $derived(worldStore.getFirstClassBlueprints());
 
-  const blueprintOptions = $derived([
-    { value: 'ALL', label: 'All Blueprint Archetypes' },
-    ...firstClassBlueprints.map((bp: BlueprintDef) => ({
+  // Automatically sync blueprint filter to first available 1st-class blueprint
+  $effect(() => {
+    if (firstClassBlueprints.length > 0) {
+      if (!blueprintFilter || !firstClassBlueprints.some((bp) => bp.id === blueprintFilter)) {
+        blueprintFilter = firstClassBlueprints[0].id;
+      }
+    } else {
+      blueprintFilter = '';
+    }
+  });
+
+  // Reset pagination page when search or blueprint changes
+  $effect(() => {
+    // Reference dependencies
+    searchQuery;
+    blueprintFilter;
+    currentPage = 1;
+  });
+
+  const blueprintOptions = $derived(
+    firstClassBlueprints.map((bp: BlueprintDef) => ({
       value: bp.id,
       label: `${bp.name} (${bp.category})`,
-    })),
-  ]);
-
-  const allCategories = $derived([
-    { value: 'ALL', label: 'All Categories' },
-    ...Array.from(new Set<string>(worldStore.entities.map((e: EntityItem) => e.category))).map((c) => ({
-      value: c,
-      label: c,
-    })),
-  ]);
+    }))
+  );
 
   const activeBlueprint = $derived(
-    blueprintFilter !== 'ALL' ? worldStore.getBlueprint(blueprintFilter) : undefined
+    blueprintFilter ? worldStore.getBlueprint(blueprintFilter) : undefined
   );
 
   // All available columns for the active blueprint context
@@ -99,7 +113,7 @@
   // Active visible column IDs for current blueprint
   const visibleColumnIds = $derived.by<string[]>(() => {
     const key = blueprintFilter;
-    if (columnPreferences[key] && Array.isArray(columnPreferences[key])) {
+    if (key && columnPreferences[key] && Array.isArray(columnPreferences[key])) {
       return columnPreferences[key];
     }
     return getDefaultVisibleColumns(activeBlueprint);
@@ -112,17 +126,22 @@
 
   const filteredEntities = $derived(
     worldStore.entities.filter((e: EntityItem) => {
-      const matchesBp = blueprintFilter === 'ALL' || e.blueprintId === blueprintFilter;
-      const matchesCat = categoryFilter === 'ALL' || e.category === categoryFilter;
-      const q = searchQuery.toLowerCase();
+      const matchesBp = blueprintFilter ? e.blueprintId === blueprintFilter : true;
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        !searchQuery ||
+        !q ||
         e.name.toLowerCase().includes(q) ||
         (e.description && e.description.toLowerCase().includes(q)) ||
-        e.blueprintName.toLowerCase().includes(q) ||
-        e.category.toLowerCase().includes(q);
-      return matchesBp && matchesCat && matchesSearch;
+        Object.values(e.properties || {}).some((v) =>
+          String(v).toLowerCase().includes(q)
+        );
+      return matchesBp && matchesSearch;
     })
+  );
+
+  // Paginated entities (10 per page)
+  const paginatedResult = $derived(
+    paginateArray(filteredEntities, { page: currentPage, pageSize })
   );
 
   function savePreferences(newPrefs: Record<string, string[]>) {
@@ -136,6 +155,7 @@
 
   function toggleColumnVisibility(colId: string) {
     const key = blueprintFilter;
+    if (!key) return;
     const current = [...visibleColumnIds];
     let updated: string[];
 
@@ -155,6 +175,7 @@
 
   function handleSelectAllColumns() {
     const key = blueprintFilter;
+    if (!key) return;
     const allIds = availableColumns.map((c) => c.id);
     savePreferences({
       ...columnPreferences,
@@ -164,7 +185,7 @@
 
   function handleResetColumnsToDefault() {
     const key = blueprintFilter;
-    const defaults = getDefaultVisibleColumns(activeBlueprint);
+    if (!key) return;
     const updated = { ...columnPreferences };
     delete updated[key];
     savePreferences(updated);
@@ -200,11 +221,11 @@
         <span>Universe Entities</span>
       </h2>
       <p class="text-xs text-muted-foreground mt-0.5">
-        Instantiated universe entities with dynamic blueprints, custom columns per blueprint, and live formula evaluations.
+        Instantiated universe entities with dynamic attributes, formula evaluations, and blueprint-tuned columns.
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <Button size="sm" href={blueprintFilter !== 'ALL' ? `/world/entities/create?blueprintId=${blueprintFilter}` : '/world/entities/create'}>
+      <Button size="sm" href={blueprintFilter ? `/world/entities/create?blueprintId=${blueprintFilter}` : '/world/entities/create'}>
         <Plus class="w-3.5 h-3.5" />
         <span>Instantiate Entity</span>
       </Button>
@@ -212,134 +233,104 @@
   </div>
 
   <!-- Filters & Table Customization Controls -->
-  <div class="space-y-3">
-    <Card class="p-3.5 border-border bg-card/75">
-      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-        <!-- Search Input -->
-        <div class="relative sm:col-span-4">
-          <Search class="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
-          <Input
-            bind:value={searchQuery}
-            placeholder="Filter entities by name, properties..."
-            class="pl-9 h-9 text-xs w-full"
-          />
-        </div>
+  {#if firstClassBlueprints.length === 0}
+    <EmptyState
+      icon={Boxes}
+      title="No Blueprint Archetypes Defined"
+      description="Create a 1st-Class Blueprint archetype first (e.g. Cultivator, Sacred Weapon, Celestial Location) to instantiate entities."
+      actionText="+ Create Blueprint Archetype"
+      actionHref="/world/schemas/create"
+      class="py-12"
+    />
+  {:else}
+    <div class="space-y-3">
+      <Card class="p-3.5 border-border bg-card/75">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+          <!-- Blueprint Archetype Selector -->
+          <div class="sm:col-span-5">
+            <Select options={blueprintOptions} bind:value={blueprintFilter} />
+          </div>
 
-        <!-- Blueprint Filter -->
-        <div class="sm:col-span-3">
-          <Select options={blueprintOptions} bind:value={blueprintFilter} />
-        </div>
+          <!-- Search Input -->
+          <div class="relative sm:col-span-4">
+            <Search class="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
+            <Input
+              bind:value={searchQuery}
+              placeholder="Search by name or attributes..."
+              class="pl-9 h-9 text-xs w-full"
+            />
+          </div>
 
-        <!-- Category Filter -->
-        <div class="sm:col-span-3">
-          <Select options={allCategories} bind:value={categoryFilter} />
+          <!-- Column Visibility Customizer Toggle Button -->
+          <div class="sm:col-span-3 flex justify-end">
+            <Button
+              variant={showColumnCustomizer ? 'default' : 'outline'}
+              size="sm"
+              class="w-full h-9 text-xs flex items-center justify-center gap-1.5"
+              onclick={() => (showColumnCustomizer = !showColumnCustomizer)}
+            >
+              <SlidersHorizontal class="w-3.5 h-3.5 text-primary" />
+              <span>Columns ({visibleColumns.length}/{availableColumns.length})</span>
+            </Button>
+          </div>
         </div>
+      </Card>
 
-        <!-- Column Visibility Customizer Toggle Button -->
-        <div class="sm:col-span-2 flex justify-end">
-          <Button
-            variant={showColumnCustomizer ? 'default' : 'outline'}
-            size="sm"
-            class="w-full h-9 text-xs flex items-center justify-center gap-1.5"
-            onclick={() => (showColumnCustomizer = !showColumnCustomizer)}
-          >
-            <SlidersHorizontal class="w-3.5 h-3.5 text-primary" />
-            <span>Columns ({visibleColumns.length}/{availableColumns.length})</span>
-          </Button>
-        </div>
-      </div>
-    </Card>
-
-    <!-- Per-Blueprint Column Customizer Drawer / Panel -->
-    {#if showColumnCustomizer}
-      <Card class="p-4 border-border bg-card/90 space-y-4 transition-all">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-          <div class="space-y-0.5">
-            <div class="flex items-center gap-2 text-xs font-bold text-foreground">
-              <SlidersHorizontal class="w-4 h-4 text-primary" />
-              <span>Customize Table Columns ({activeBlueprint ? activeBlueprint.name : 'All Archetypes'})</span>
+      <!-- Per-Blueprint Column Customizer Drawer / Panel -->
+      {#if showColumnCustomizer}
+        <Card class="p-4 border-border bg-card/90 space-y-4 transition-all">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2 text-xs font-bold text-foreground">
+                <SlidersHorizontal class="w-4 h-4 text-primary" />
+                <span>Customize Columns: {activeBlueprint?.name || 'Blueprint'}</span>
+              </div>
+              <p class="text-[11px] text-muted-foreground">
+                Configure exactly which dynamic attributes, formulas, and references appear in this table. Preferences are preserved per blueprint.
+              </p>
             </div>
-            <p class="text-[11px] text-muted-foreground">
-              Configure exactly which attributes, formulas, and references appear in this entity table. Preferences are preserved per blueprint.
-            </p>
-          </div>
 
-          <!-- Quick Action Buttons -->
-          <div class="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              class="h-7 text-[11px] px-2.5"
-              onclick={handleSelectAllColumns}
-            >
-              <Eye class="w-3 h-3 text-muted-foreground" />
-              <span>Show All</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              class="h-7 text-[11px] px-2.5"
-              onclick={handleResetColumnsToDefault}
-            >
-              <RotateCcw class="w-3 h-3 text-muted-foreground" />
-              <span>Reset Defaults</span>
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              class="h-7 text-[11px] px-2.5"
-              onclick={() => (showColumnCustomizer = false)}
-            >
-              <Check class="w-3 h-3 text-primary" />
-              <span>Done</span>
-            </Button>
-          </div>
-        </div>
-
-        <!-- Grouped Columns Selection -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- 1. Core Columns -->
-          <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
-            <span class="text-[11px] font-semibold text-foreground uppercase tracking-wider block">
-              Core Identity Fields
-            </span>
-            <div class="space-y-1.5">
-              {#each availableColumns.filter((c) => c.category === 'core') as col}
-                {@const isChecked = visibleColumnIds.includes(col.id)}
-                <button
-                  type="button"
-                  onclick={() => toggleColumnVisibility(col.id)}
-                  class={`w-full flex items-center justify-between p-2 rounded text-xs text-left transition cursor-pointer ${
-                    isChecked
-                      ? 'bg-secondary text-secondary-foreground border border-border font-medium'
-                      : 'bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  <div class="flex items-center gap-2">
-                    <span class={`w-4 h-4 rounded border flex items-center justify-center ${
-                      isChecked ? 'border-primary bg-primary/20 text-primary' : 'border-border'
-                    }`}>
-                      {#if isChecked}
-                        <Check class="w-3 h-3" />
-                      {/if}
-                    </span>
-                    <span>{col.label}</span>
-                  </div>
-                </button>
-              {/each}
+            <!-- Quick Action Buttons -->
+            <div class="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                class="h-7 text-[11px] px-2.5"
+                onclick={handleSelectAllColumns}
+              >
+                <Eye class="w-3 h-3 text-muted-foreground" />
+                <span>Show All</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                class="h-7 text-[11px] px-2.5"
+                onclick={handleResetColumnsToDefault}
+              >
+                <RotateCcw class="w-3 h-3 text-muted-foreground" />
+                <span>Reset Defaults</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                class="h-7 text-[11px] px-2.5"
+                onclick={() => (showColumnCustomizer = false)}
+              >
+                <Check class="w-3 h-3 text-primary" />
+                <span>Done</span>
+              </Button>
             </div>
           </div>
 
-          <!-- 2. Dynamic Blueprint Properties -->
-          <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
-            <span class="text-[11px] font-semibold text-primary uppercase tracking-wider block">
-              Blueprint Attributes ({availableColumns.filter((c) => c.category === 'dynamic').length})
-            </span>
-            {#if availableColumns.filter((c) => c.category === 'dynamic').length === 0}
-              <p class="text-xs text-muted-foreground italic p-2">Select a specific blueprint to view custom attributes.</p>
-            {:else}
-              <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                {#each availableColumns.filter((c) => c.category === 'dynamic') as col}
+          <!-- Grouped Columns Selection -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- 1. Core Columns -->
+            <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
+              <span class="text-[11px] font-semibold text-foreground uppercase tracking-wider block">
+                Core Identity Fields
+              </span>
+              <div class="space-y-1.5">
+                {#each availableColumns.filter((c) => c.category === 'core') as col}
                   {@const isChecked = visibleColumnIds.includes(col.id)}
                   <button
                     type="button"
@@ -360,230 +351,280 @@
                       </span>
                       <span>{col.label}</span>
                     </div>
-                    <span class="text-[10px] font-mono text-muted-foreground">{col.fieldType}</span>
                   </button>
                 {/each}
               </div>
-            {/if}
-          </div>
+            </div>
 
-          <!-- 3. Mathematical & Logical Formulas -->
-          <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
-            <span class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider block">
-              Computed Formulas ({availableColumns.filter((c) => c.category === 'formula').length})
-            </span>
-            {#if availableColumns.filter((c) => c.category === 'formula').length === 0}
-              <p class="text-xs text-muted-foreground italic p-2">No formula fields defined on this blueprint.</p>
-            {:else}
-              <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                {#each availableColumns.filter((c) => c.category === 'formula') as col}
-                  {@const isChecked = visibleColumnIds.includes(col.id)}
-                  <button
-                    type="button"
-                    onclick={() => toggleColumnVisibility(col.id)}
-                    class={`w-full flex items-center justify-between p-2 rounded text-xs text-left transition cursor-pointer ${
-                      isChecked
-                        ? 'bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-medium'
-                        : 'bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                    }`}
-                  >
-                    <div class="flex items-center gap-2">
-                      <span class={`w-4 h-4 rounded border flex items-center justify-center ${
-                        isChecked ? 'border-amber-500 bg-amber-500/20 text-amber-500' : 'border-border'
-                      }`}>
-                        {#if isChecked}
-                          <Check class="w-3 h-3" />
-                        {/if}
-                      </span>
-                      <span>{col.label}</span>
-                    </div>
-                    <Calculator class="w-3.5 h-3.5 text-amber-500" />
-                  </button>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        </div>
-      </Card>
-    {/if}
-  </div>
-
-  <!-- Entities Table with Shadcn UI Table -->
-  <Card class="border-border bg-card overflow-hidden shadow-xs">
-    <div class="overflow-x-auto w-full">
-      <Table class="w-full text-left text-xs min-w-[800px]">
-        <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
-          <TableRow class="hover:bg-transparent border-border">
-            {#each visibleColumns as col}
-              <TableHead class="px-4 py-3 text-muted-foreground font-semibold whitespace-nowrap">
-                <div class="flex items-center gap-1.5">
-                  {#if col.category === 'formula'}
-                    <Calculator class="w-3.5 h-3.5 text-amber-500" />
-                  {:else if col.fieldType === 'ENUM'}
-                    <ListFilter class="w-3.5 h-3.5 text-primary" />
-                  {:else if col.fieldType === 'VALUE_TYPE'}
-                    <Sparkles class="w-3.5 h-3.5 text-primary" />
-                  {:else if col.fieldType === 'BLUEPRINT_REF'}
-                    <Link2 class="w-3.5 h-3.5 text-cyan-500" />
-                  {:else if col.fieldType === 'ARRAY_REF'}
-                    <Link2 class="w-3.5 h-3.5 text-purple-400" />
-                  {:else if col.fieldType === 'ARRAY'}
-                    <Tag class="w-3.5 h-3.5 text-indigo-400" />
-                  {:else if col.fieldType === 'NUMBER'}
-                    <Hash class="w-3.5 h-3.5 text-emerald-500" />
-                  {/if}
-                  <span>{col.label}</span>
-                </div>
-              </TableHead>
-            {/each}
-            <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold w-[120px] whitespace-nowrap">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody class="divide-y divide-border/60">
-          {#if filteredEntities.length === 0}
-            <TableRow class="hover:bg-transparent">
-              <TableCell colspan={visibleColumns.length + 1} class="p-0 border-0">
-                <EmptyState
-                  icon={Boxes}
-                  title={worldStore.entities.length === 0 ? "No Entities Instantiated" : "No Matching Entities"}
-                  description={worldStore.entities.length === 0
-                    ? "Bring your story universe to life by instantiating characters, factions, artifacts, and celestial locations."
-                    : "No entities match the current search query or active blueprint filters."}
-                  actionText={worldStore.entities.length === 0 ? "+ Instantiate First Entity" : "Clear Filters"}
-                  actionHref={worldStore.entities.length === 0 ? "/world/entities/create" : undefined}
-                  onAction={worldStore.entities.length === 0 ? undefined : () => { searchQuery = ''; blueprintFilter = 'ALL'; categoryFilter = 'ALL'; }}
-                  class="border-0 rounded-none bg-transparent py-12"
-                />
-              </TableCell>
-            </TableRow>
-          {:else}
-            {#each filteredEntities as entity (entity.id)}
-              {@const IconComp = getEntityIcon(entity.category)}
-              <TableRow class="hover:bg-muted/40 transition-colors border-border">
-                {#each visibleColumns as col}
-                  {@const cellInfo = formatTableCellValue(col.id, entity, activeBlueprint)}
-
-                  <TableCell class="px-4 py-3.5 align-middle whitespace-normal break-words {col.id === 'name' ? 'min-w-[200px] max-w-xs' : col.id === 'description' ? 'min-w-[220px] max-w-sm' : col.id === 'lastMutatedSeqNumber' ? 'min-w-[90px] whitespace-nowrap' : 'min-w-[140px]'}">
-                    {#if col.id === 'name'}
-                      <!-- Entity Name Cell -->
-                      <a href={`/world/entities/${entity.id}`} class="hover:text-primary transition-colors flex items-center gap-2">
-                        <IconComp class="w-4 h-4 text-primary shrink-0" />
-                        <div class="min-w-0 flex-1">
-                          <div class="font-bold text-foreground leading-snug">{entity.name}</div>
-                          {#if entity.description}
-                            <div class="text-[10px] text-muted-foreground font-mono mt-0.5 leading-tight line-clamp-2">{entity.description}</div>
+            <!-- 2. Dynamic Blueprint Properties -->
+            <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
+              <span class="text-[11px] font-semibold text-primary uppercase tracking-wider block">
+                Dynamic Attributes ({availableColumns.filter((c) => c.category === 'dynamic').length})
+              </span>
+              {#if availableColumns.filter((c) => c.category === 'dynamic').length === 0}
+                <p class="text-xs text-muted-foreground italic p-2">No dynamic attributes defined on this blueprint.</p>
+              {:else}
+                <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                  {#each availableColumns.filter((c) => c.category === 'dynamic') as col}
+                    {@const isChecked = visibleColumnIds.includes(col.id)}
+                    <button
+                      type="button"
+                      onclick={() => toggleColumnVisibility(col.id)}
+                      class={`w-full flex items-center justify-between p-2 rounded text-xs text-left transition cursor-pointer ${
+                        isChecked
+                          ? 'bg-secondary text-secondary-foreground border border-border font-medium'
+                          : 'bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      }`}
+                    >
+                      <div class="flex items-center gap-2">
+                        <span class={`w-4 h-4 rounded border flex items-center justify-center ${
+                          isChecked ? 'border-primary bg-primary/20 text-primary' : 'border-border'
+                        }`}>
+                          {#if isChecked}
+                            <Check class="w-3 h-3" />
                           {/if}
-                        </div>
-                      </a>
-                    {:else if col.id === 'blueprintName'}
-                      <span class="text-foreground font-mono text-[11px] font-medium">{entity.blueprintName}</span>
-                    {:else if col.id === 'category'}
-                      <span class="text-muted-foreground capitalize">{entity.category}</span>
-                    {:else if col.id === 'description'}
-                      <span class="text-muted-foreground text-[11px] leading-relaxed whitespace-normal break-words">{entity.description || '—'}</span>
-                    {:else if col.id === 'lastMutatedSeqNumber'}
-                      <span class="text-muted-foreground font-mono text-[11px]">#{entity.lastMutatedSeqNumber}</span>
-                    {:else if cellInfo.isFormula}
-                      <!-- Live Formula Cell -->
-                      {#if cellInfo.text !== '—'}
-                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 font-mono text-xs font-bold">
-                          <Calculator class="w-3 h-3 text-amber-500 shrink-0" />
-                          <span>{cellInfo.text}</span>
-                        </div>
-                      {:else}
-                        <span class="text-muted-foreground/60 text-xs font-mono">—</span>
-                      {/if}
-                    {:else if col.fieldType === 'ARRAY_REF' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
-                      {@const refIds = entity.properties[col.id.replace('prop:', '')] || []}
-                      {#if refIds.length === 0}
-                        <span class="text-muted-foreground/60 text-xs font-mono">—</span>
-                      {:else}
-                        <div class="flex flex-wrap gap-1 items-center">
-                          {#each refIds as refId}
-                            {@const refEntity = worldStore.getEntity(refId)}
-                            {#if refEntity}
-                              <a
-                                href={`/world/entities/${refEntity.id}`}
-                                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-[11px] font-medium hover:bg-purple-500/20 transition-colors"
-                              >
-                                <Link2 class="w-2.5 h-2.5 text-purple-500" />
-                                <span>{refEntity.name}</span>
-                              </a>
-                            {:else}
-                              <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-mono">
-                                {refId.slice(0, 8)}...
-                              </span>
+                        </span>
+                        <span>{col.label}</span>
+                      </div>
+                      <span class="text-[10px] font-mono text-muted-foreground">{col.fieldType}</span>
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+
+            <!-- 3. Mathematical & Logical Formulas -->
+            <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
+              <span class="text-[11px] font-semibold text-amber-500 uppercase tracking-wider block">
+                Computed Formulas ({availableColumns.filter((c) => c.category === 'formula').length})
+              </span>
+              {#if availableColumns.filter((c) => c.category === 'formula').length === 0}
+                <p class="text-xs text-muted-foreground italic p-2">No formula fields defined on this blueprint.</p>
+              {:else}
+                <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                  {#each availableColumns.filter((c) => c.category === 'formula') as col}
+                    {@const isChecked = visibleColumnIds.includes(col.id)}
+                    <button
+                      type="button"
+                      onclick={() => toggleColumnVisibility(col.id)}
+                      class={`w-full flex items-center justify-between p-2 rounded text-xs text-left transition cursor-pointer ${
+                        isChecked
+                          ? 'bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-medium'
+                          : 'bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      }`}
+                    >
+                      <div class="flex items-center gap-2">
+                        <span class={`w-4 h-4 rounded border flex items-center justify-center ${
+                          isChecked ? 'border-amber-500 bg-amber-500/20 text-amber-500' : 'border-border'
+                        }`}>
+                          {#if isChecked}
+                            <Check class="w-3 h-3" />
+                          {/if}
+                        </span>
+                        <span>{col.label}</span>
+                      </div>
+                      <Calculator class="w-3.5 h-3.5 text-amber-500" />
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+        </Card>
+      {/if}
+    </div>
+
+    <!-- Entities Table with Shadcn UI Table -->
+    <Card class="border-border bg-card overflow-hidden shadow-xs">
+      <div class="overflow-x-auto w-full">
+        <Table class="w-full text-left text-xs min-w-[750px]">
+          <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
+            <TableRow class="hover:bg-transparent border-border">
+              {#each visibleColumns as col}
+                <TableHead class="px-4 py-3 text-muted-foreground font-semibold whitespace-nowrap">
+                  <div class="flex items-center gap-1.5">
+                    {#if col.category === 'formula'}
+                      <Calculator class="w-3.5 h-3.5 text-amber-500" />
+                    {:else if col.fieldType === 'ENUM'}
+                      <ListFilter class="w-3.5 h-3.5 text-primary" />
+                    {:else if col.fieldType === 'VALUE_TYPE'}
+                      <Sparkles class="w-3.5 h-3.5 text-primary" />
+                    {:else if col.fieldType === 'BLUEPRINT_REF'}
+                      <Link2 class="w-3.5 h-3.5 text-cyan-500" />
+                    {:else if col.fieldType === 'ARRAY_REF'}
+                      <Link2 class="w-3.5 h-3.5 text-purple-400" />
+                    {:else if col.fieldType === 'ARRAY'}
+                      <Tag class="w-3.5 h-3.5 text-indigo-400" />
+                    {:else if col.fieldType === 'NUMBER'}
+                      <Hash class="w-3.5 h-3.5 text-emerald-500" />
+                    {/if}
+                    <span>{col.label}</span>
+                  </div>
+                </TableHead>
+              {/each}
+              <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold w-[120px] whitespace-nowrap">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody class="divide-y divide-border/60">
+            {#if filteredEntities.length === 0}
+              <TableRow class="hover:bg-transparent">
+                <TableCell colspan={visibleColumns.length + 1} class="p-0 border-0">
+                  <EmptyState
+                    icon={Boxes}
+                    title={worldStore.entities.length === 0 ? "No Entities Instantiated" : `No ${activeBlueprint?.name || 'Matching'} Entities`}
+                    description={worldStore.entities.length === 0
+                      ? "Bring your story universe to life by instantiating characters, weapons, and celestial locations."
+                      : `No entities match the current search query for ${activeBlueprint?.name || 'this archetype'}.`}
+                    actionText={worldStore.entities.length === 0 ? "+ Instantiate First Entity" : "Clear Search"}
+                    actionHref={worldStore.entities.length === 0 ? `/world/entities/create?blueprintId=${blueprintFilter}` : undefined}
+                    onAction={worldStore.entities.length === 0 ? undefined : () => { searchQuery = ''; }}
+                    class="border-0 rounded-none bg-transparent py-12"
+                  />
+                </TableCell>
+              </TableRow>
+            {:else}
+              {#each paginatedResult.data as entity (entity.id)}
+                {@const IconComp = getEntityIcon(entity.category)}
+                <TableRow class="hover:bg-muted/40 transition-colors border-border">
+                  {#each visibleColumns as col}
+                    {@const cellInfo = formatTableCellValue(col.id, entity, activeBlueprint)}
+
+                    <TableCell class="px-4 py-3.5 align-middle whitespace-normal break-words {col.id === 'name' ? 'min-w-[200px] max-w-xs' : col.id === 'description' ? 'min-w-[220px] max-w-sm' : col.id === 'lastMutatedSeqNumber' ? 'min-w-[90px] whitespace-nowrap' : 'min-w-[130px]'}">
+                      {#if col.id === 'name'}
+                        <!-- Entity Name Cell -->
+                        <a href={`/world/entities/${entity.id}`} class="hover:text-primary transition-colors flex items-center gap-2">
+                          <IconComp class="w-4 h-4 text-primary shrink-0" />
+                          <div class="min-w-0 flex-1">
+                            <div class="font-bold text-foreground leading-snug">{entity.name}</div>
+                            {#if entity.description}
+                              <div class="text-[10px] text-muted-foreground font-mono mt-0.5 leading-tight line-clamp-2">{entity.description}</div>
                             {/if}
-                          {/each}
-                        </div>
-                      {/if}
-                    {:else if col.fieldType === 'ARRAY' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
-                      {@const tags = entity.properties[col.id.replace('prop:', '')] || []}
-                      {#if tags.length === 0}
-                        <span class="text-muted-foreground/60 text-xs font-mono">—</span>
-                      {:else}
-                        <div class="flex flex-wrap gap-1 items-center">
-                          {#each tags as tag}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium">
-                              {tag}
+                          </div>
+                        </a>
+                      {:else if col.id === 'blueprintName'}
+                        <span class="text-foreground font-mono text-[11px] font-medium">{entity.blueprintName}</span>
+                      {:else if col.id === 'category'}
+                        <span class="text-muted-foreground capitalize">{entity.category}</span>
+                      {:else if col.id === 'description'}
+                        <span class="text-muted-foreground text-[11px] leading-relaxed whitespace-normal break-words">{entity.description || '—'}</span>
+                      {:else if col.id === 'lastMutatedSeqNumber'}
+                        <span class="text-muted-foreground font-mono text-[11px]">#{entity.lastMutatedSeqNumber}</span>
+                      {:else if cellInfo.isFormula}
+                        <!-- Live Formula Cell -->
+                        {#if cellInfo.text !== '—'}
+                          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 font-mono text-xs font-bold">
+                            <Calculator class="w-3 h-3 text-amber-500 shrink-0" />
+                            <span>{cellInfo.text}</span>
+                          </div>
+                        {:else}
+                          <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                        {/if}
+                      {:else if col.fieldType === 'ARRAY_REF' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
+                        {@const refIds = entity.properties[col.id.replace('prop:', '')] || []}
+                        {#if refIds.length === 0}
+                          <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                        {:else}
+                          <div class="flex flex-wrap gap-1 items-center">
+                            {#each refIds as refId}
+                              {@const refEntity = worldStore.getEntity(refId)}
+                              {#if refEntity}
+                                <a
+                                  href={`/world/entities/${refEntity.id}`}
+                                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-[11px] font-medium hover:bg-purple-500/20 transition-colors"
+                                >
+                                  <Link2 class="w-2.5 h-2.5 text-purple-500" />
+                                  <span>{refEntity.name}</span>
+                                </a>
+                              {:else}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-mono">
+                                  {refId.slice(0, 8)}...
+                                </span>
+                              {/if}
+                            {/each}
+                          </div>
+                        {/if}
+                      {:else if col.fieldType === 'ARRAY' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
+                        {@const tags = entity.properties[col.id.replace('prop:', '')] || []}
+                        {#if tags.length === 0}
+                          <span class="text-muted-foreground/60 text-xs font-mono">—</span>
+                        {:else}
+                          <div class="flex flex-wrap gap-1 items-center">
+                            {#each tags as tag}
+                              <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary text-[11px] font-medium">
+                                {tag}
+                              </span>
+                            {/each}
+                          </div>
+                        {/if}
+                      {:else if col.fieldType === 'BLUEPRINT_REF' && typeof entity.properties?.[col.id.replace('prop:', '')] === 'string' && entity.properties[col.id.replace('prop:', '')]}
+                        {@const refEntity = worldStore.getEntity(entity.properties[col.id.replace('prop:', '')])}
+                        {#if refEntity}
+                          <a
+                            href={`/world/entities/${refEntity.id}`}
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors"
+                          >
+                            <Link2 class="w-3 h-3 text-cyan-500" />
+                            <span>{refEntity.name}</span>
+                          </a>
+                        {:else}
+                          <span class="text-foreground text-xs leading-relaxed whitespace-normal break-words">{cellInfo.text}</span>
+                        {/if}
+                      {:else if cellInfo.subValues}
+                        <!-- Sub-blueprint structured values (e.g. cultivation or affection) -->
+                        <div class="flex flex-wrap gap-1 text-[11px]">
+                          {#each cellInfo.subValues as subItem}
+                            <span class="px-1.5 py-0.5 rounded bg-secondary border border-border text-secondary-foreground">
+                              <span class="text-muted-foreground capitalize">{subItem.label}:</span> {subItem.value}
                             </span>
                           {/each}
                         </div>
-                      {/if}
-                    {:else if col.fieldType === 'BLUEPRINT_REF' && typeof entity.properties?.[col.id.replace('prop:', '')] === 'string' && entity.properties[col.id.replace('prop:', '')]}
-                      {@const refEntity = worldStore.getEntity(entity.properties[col.id.replace('prop:', '')])}
-                      {#if refEntity}
-                        <a
-                          href={`/world/entities/${refEntity.id}`}
-                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors"
-                        >
-                          <Link2 class="w-3 h-3 text-cyan-500" />
-                          <span>{refEntity.name}</span>
-                        </a>
                       {:else}
+                        <!-- Regular Property Value -->
                         <span class="text-foreground text-xs leading-relaxed whitespace-normal break-words">{cellInfo.text}</span>
                       {/if}
-                    {:else if cellInfo.subValues}
-                      <!-- Sub-blueprint structured values (e.g. cultivation or affection) -->
-                      <div class="flex flex-wrap gap-1 text-[11px]">
-                        {#each cellInfo.subValues as subItem}
-                          <span class="px-1.5 py-0.5 rounded bg-secondary border border-border text-secondary-foreground">
-                            <span class="text-muted-foreground capitalize">{subItem.label}:</span> {subItem.value}
-                          </span>
-                        {/each}
-                      </div>
-                    {:else}
-                      <!-- Regular Property Value -->
-                      <span class="text-foreground text-xs leading-relaxed whitespace-normal break-words">{cellInfo.text}</span>
-                    {/if}
-                  </TableCell>
-                {/each}
+                    </TableCell>
+                  {/each}
 
-                <!-- Actions Column -->
-                <TableCell class="px-4 py-3 text-right align-middle w-[120px] whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <Button href={`/world/entities/${entity.id}`} variant="outline" size="sm" class="h-7 text-xs px-2.5">
-                      <Edit3 class="w-3 h-3" />
-                      <span>Inspect</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onclick={() => handleDelete(entity.id, entity.name)}
-                      class="text-muted-foreground hover:text-destructive h-7 px-2"
-                    >
-                      <Trash2 class="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
-  </Card>
+                  <!-- Actions Column -->
+                  <TableCell class="px-4 py-3 text-right align-middle w-[120px] whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Button href={`/world/entities/${entity.id}`} variant="outline" size="sm" class="h-7 text-xs px-2.5">
+                        <Edit3 class="w-3 h-3" />
+                        <span>Inspect</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onclick={() => handleDelete(entity.id, entity.name)}
+                        class="text-muted-foreground hover:text-destructive h-7 px-2"
+                      >
+                        <Trash2 class="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              {/each}
+            {/if}
+          </TableBody>
+        </Table>
+      </div>
+
+      <!-- Standardized 10-Item Pagination -->
+      {#if filteredEntities.length > 0}
+        <Pagination
+          page={paginatedResult.pagination.page}
+          pageSize={paginatedResult.pagination.pageSize}
+          totalCount={paginatedResult.pagination.totalCount}
+          totalPages={paginatedResult.pagination.totalPages}
+          hasNextPage={paginatedResult.pagination.hasNextPage}
+          hasPreviousPage={paginatedResult.pagination.hasPreviousPage}
+          itemLabel={activeBlueprint ? `${activeBlueprint.name.toLowerCase()} entities` : "entities"}
+          onPageChange={(p) => (currentPage = p)}
+        />
+      {/if}
+    </Card>
+  {/if}
 
   <!-- Delete Entity Confirmation Dialog -->
   <ConfirmDialog
@@ -595,4 +636,3 @@
     onCancel={() => (entityToDelete = null)}
   />
 </div>
-

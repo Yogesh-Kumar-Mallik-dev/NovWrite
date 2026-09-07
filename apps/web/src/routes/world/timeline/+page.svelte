@@ -33,7 +33,7 @@
     DialogDescription,
     DialogFooter,
   } from "$lib/components/ui/dialog";
-  import { ConfirmDialog, EmptyState, Select } from "$lib/components/ui";
+  import { ConfirmDialog, EmptyState, Select, Pagination } from "$lib/components/ui";
   import PipeTreeVisualizer from "$lib/components/world/pipe-tree-visualizer.svelte";
   import { toast } from "$lib/stores/toastStore.svelte";
   import {
@@ -43,6 +43,7 @@
     type EffectOperation,
     type EntityItem,
   } from "$lib/stores/worldStore.svelte";
+  import { paginateArray } from "$lib/api/apiClient";
 
   // Tab View Mode: 'pipe' (UPDATE Pipe & Edit Trees) | 'stream' (Event List & Scrubber)
   let activeTimelineTab = $state<"pipe" | "stream">("pipe");
@@ -74,6 +75,15 @@
   let formAnchorScene = $state("");
   let formEffects = $state<TimelineEffectItem[]>([]);
 
+  // Stream Tab Pagination (10 events per page)
+  let currentStreamPage = $state(1);
+  const pageSize = 10;
+
+  $effect(() => {
+    viewMode;
+    currentStreamPage = 1;
+  });
+
   // Sorted timeline events from worldStore
   const sortedEvents = $derived(
     [...worldStore.timelineEvents].sort((a: TimelineEventItem, b: TimelineEventItem) => {
@@ -82,6 +92,10 @@
       }
       return a.chronologicalOrder - b.chronologicalOrder;
     }),
+  );
+
+  const paginatedEvents = $derived(
+    paginateArray(sortedEvents, { page: currentStreamPage, pageSize })
   );
 
   // Max sequence available for scrubber
@@ -534,7 +548,7 @@
         onAction={openAddModal}
       />
     {:else}
-      {#each sortedEvents as event (event.id)}
+      {#each paginatedEvents.data as event (event.id)}
         <Card class="border-border bg-card p-4 space-y-3 hover:border-primary/50 transition-colors shadow-xs">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <div class="flex items-center gap-3">
@@ -614,6 +628,20 @@
           </div>
         </Card>
       {/each}
+
+      <!-- Stream Events Pagination -->
+      <Card class="border-border bg-card overflow-hidden">
+        <Pagination
+          page={paginatedEvents.pagination.page}
+          pageSize={paginatedEvents.pagination.pageSize}
+          totalCount={paginatedEvents.pagination.totalCount}
+          totalPages={paginatedEvents.pagination.totalPages}
+          hasNextPage={paginatedEvents.pagination.hasNextPage}
+          hasPreviousPage={paginatedEvents.pagination.hasPreviousPage}
+          itemLabel="events"
+          onPageChange={(p) => (currentStreamPage = p)}
+        />
+      </Card>
     {/if}
   </div>
   {/if}

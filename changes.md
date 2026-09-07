@@ -73,11 +73,39 @@ timeline
                : Standardized Pagination Envelopes & Empty Query Guarantees
                : RFC 7807 Problem Details & Container Health Probes
                : 5-Phase Monorepo Test Runner (66+ Unit & Component Tests)
+    2026-09-07 : Version 2.5 (Standardized 10-Item Frontend Pagination & Blueprint-Scoped Dynamic Entity Tables)
+               : Frontend NovWriteApiClient & Pure Array Paginator (apiClient.ts)
+               : Reusable 10-Item <Pagination /> Component with Prev/Next Controls
+               : Removal of Global Archetype/Category Clutter from Entity Table
+               : Blueprint-Tuned Dynamic Column & Formula Selection
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.5] — 2026-09-07
+
+**Scope:** Standardized 10-Item Frontend Pagination, NovWriteApiClient, Pure Array Paginator & Blueprint-Tuned Dynamic Entity Tables  
+**Target Documents:** [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added
+
+- **Unified Frontend API Client Layer (`apps/web/src/lib/api/apiClient.ts`):**
+  - Typed `NovWriteApiClient` class supporting `getPaginated<T>` and `getSingle<T>` methods with RFC 7807 problem detail error decoding (`ApiError`).
+  - Pure client-side array paginator `paginateArray<T>` matching the backend RFC pagination response structure (`{ data: [...], pagination: {...}, meta: {...} }`).
+- **Standardized Reusable 10-Item Pagination Component (`apps/web/src/lib/components/ui/pagination.svelte`):**
+  - Uniform **10 items per page** standard applied across all frontend table and list views.
+  - Interactive **Previous Page** and **Next Page** buttons with subtle Chevron icons and accessible disabled states.
+  - Live item range telemetry (`Showing X–Y of Z items`) and zero-badge page indicator (`Page X / Y`).
+  - Implemented across Universe Entities (`/world/entities`), Blueprints & Schemas (`/world/schemas`), Timeline Stream (`/world/timeline`), Invariant Rules (`/world/rules`), and Continuity Audit Violations (`/world/audit`).
+- **Blueprint-Scoped Dynamic Entity Table Architecture (`/world/entities`):**
+  - **Elimination of Global Filter Clutter:** Removed the redundant "All Blueprint Archetypes" and "All Categories" dropdown filters to prevent mixed column mismatches and empty cell artifacts across unrelated archetypes.
+  - **Archetype-Scoped View:** Each table view is dedicated to a selected 1st-Class Blueprint Archetype, automatically defaulting to the first available blueprint.
+  - **Blueprint-Tuned Column Selection:** Core columns streamlined to `name`, `description`, `lastMutatedSeqNumber`, while dynamic and computed formula columns dynamically adapt to the selected blueprint's schema fields.
+  - Per-blueprint column preferences stored and restored independently in `localStorage`.
+
+---
 
 ### [Version 2.4] — 2026-09-07
 

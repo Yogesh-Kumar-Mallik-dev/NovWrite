@@ -5,6 +5,7 @@ import {
   getDefaultVisibleColumns,
   formatTableCellValue,
   CORE_TABLE_COLUMNS,
+  GLOBAL_CORE_TABLE_COLUMNS,
   type TableBlueprintDef,
   type TableEntityItem,
 } from "../tableConfig.ts";
@@ -66,7 +67,7 @@ describe("BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine", () =
 
   it("should generate correct available columns for global and per-blueprint views", () => {
     const globalCols = getAvailableColumnsForBlueprint();
-    assert.equal(globalCols.length, CORE_TABLE_COLUMNS.length + 1); // core + computed_formulas
+    assert.equal(globalCols.length, GLOBAL_CORE_TABLE_COLUMNS.length + 1); // global core + computed_formulas
 
     const charCols = getAvailableColumnsForBlueprint(mockCharacterBlueprint);
     assert.equal(charCols.length, CORE_TABLE_COLUMNS.length + 5);
@@ -97,7 +98,6 @@ describe("BLOCK_WORLD_TABLE_CONFIG_001: Table Column Customization Engine", () =
 
     const charDefaults = getDefaultVisibleColumns(mockCharacterBlueprint);
     assert.ok(charDefaults.includes("name"));
-    assert.ok(charDefaults.includes("category"));
     assert.ok(charDefaults.includes("prop:gender"));
     assert.ok(charDefaults.includes("prop:rarity"));
     assert.ok(charDefaults.includes("formula:combat_power"));

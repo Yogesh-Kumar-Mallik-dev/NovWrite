@@ -29,7 +29,9 @@
   import ConfirmDialog from "$lib/components/ui/confirm-dialog.svelte";
   import EmptyState from "$lib/components/ui/empty-state.svelte";
   import Select from "$lib/components/ui/select.svelte";
+  import Pagination from "$lib/components/ui/pagination.svelte";
   import { toast } from "$lib/stores/toastStore.svelte";
+  import { paginateArray } from "$lib/api/apiClient";
   import {
     worldStore,
     type InvariantRuleItem,
@@ -105,6 +107,17 @@
     })),
   ]);
 
+  // Pagination State (10 items per page)
+  let currentPage = $state(1);
+  const pageSize = 10;
+
+  $effect(() => {
+    searchQuery;
+    selectedSeverityFilter;
+    selectedTypeFilter;
+    currentPage = 1;
+  });
+
   // Derived filtered rules
   const filteredRules = $derived(
     worldStore.rules.filter((r: InvariantRuleItem) => {
@@ -124,6 +137,10 @@
 
       return matchesSeverity && matchesType && matchesQuery;
     }),
+  );
+
+  const paginatedRules = $derived(
+    paginateArray(filteredRules, { page: currentPage, pageSize })
   );
 
   // Statistics
@@ -345,7 +362,7 @@
             </TableRow>
           {/if}
 
-          {#each filteredRules as rule}
+          {#each paginatedRules.data as rule}
             <TableRow class="hover:bg-accent/40 transition-colors {rule.enabled ? '' : 'opacity-50'}">
               <!-- Rule Definition -->
               <TableCell class="px-4 py-3.5 font-medium text-foreground min-w-[280px] max-w-sm whitespace-normal break-words">
@@ -439,6 +456,20 @@
         </TableBody>
       </Table>
     </div>
+
+    <!-- Rules Table Pagination -->
+    {#if filteredRules.length > 0}
+      <Pagination
+        page={paginatedRules.pagination.page}
+        pageSize={paginatedRules.pagination.pageSize}
+        totalCount={paginatedRules.pagination.totalCount}
+        totalPages={paginatedRules.pagination.totalPages}
+        hasNextPage={paginatedRules.pagination.hasNextPage}
+        hasPreviousPage={paginatedRules.pagination.hasPreviousPage}
+        itemLabel="rules"
+        onPageChange={(p) => (currentPage = p)}
+      />
+    {/if}
   </Card>
 
   <!-- Delete Confirmation Dialog -->

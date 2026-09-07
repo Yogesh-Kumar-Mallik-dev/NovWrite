@@ -34,6 +34,12 @@ export interface TableColumnDef {
 
 export const CORE_TABLE_COLUMNS: TableColumnDef[] = [
   { id: "name", label: "Entity Name", category: "core" },
+  { id: "description", label: "Description & Lore", category: "core" },
+  { id: "lastMutatedSeqNumber", label: "Sequence Version", category: "core" },
+];
+
+export const GLOBAL_CORE_TABLE_COLUMNS: TableColumnDef[] = [
+  { id: "name", label: "Entity Name", category: "core" },
   { id: "blueprintName", label: "Blueprint Archetype", category: "core" },
   { id: "category", label: "Category", category: "core" },
   { id: "description", label: "Description & Lore", category: "core" },
@@ -46,10 +52,8 @@ export const CORE_TABLE_COLUMNS: TableColumnDef[] = [
 export function getAvailableColumnsForBlueprint(
   blueprint?: TableBlueprintDef,
 ): TableColumnDef[] {
-  const columns: TableColumnDef[] = [...CORE_TABLE_COLUMNS];
-
   if (!blueprint) {
-    // If no specific blueprint, add standard computed formula column
+    const columns: TableColumnDef[] = [...GLOBAL_CORE_TABLE_COLUMNS];
     columns.push({
       id: "computed_formulas",
       label: "Live Computed Formulas",
@@ -57,6 +61,8 @@ export function getAvailableColumnsForBlueprint(
     });
     return columns;
   }
+
+  const columns: TableColumnDef[] = [...CORE_TABLE_COLUMNS];
 
   // Dynamic fields from the blueprint
   for (const field of blueprint.fields) {
@@ -91,13 +97,17 @@ export function getDefaultVisibleColumns(
     return ["name", "blueprintName", "category", "computed_formulas"];
   }
 
-  const defaultIds = ["name", "category"];
+  const defaultIds = ["name"];
   for (const field of blueprint.fields) {
     if (field.fieldType === "FORMULA") {
       defaultIds.push(`formula:${field.name}`);
     } else {
       defaultIds.push(`prop:${field.name}`);
     }
+  }
+
+  if (defaultIds.length <= 1) {
+    defaultIds.push("description", "lastMutatedSeqNumber");
   }
 
   // Limit default to at most 6 columns for clean display

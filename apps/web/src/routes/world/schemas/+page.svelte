@@ -12,7 +12,7 @@
     Hash,
     Sparkles,
   } from 'lucide-svelte';
-  import { Button, Input, ConfirmDialog, EmptyState } from '$lib/components/ui';
+  import { Button, Input, ConfirmDialog, EmptyState, Pagination } from '$lib/components/ui';
   import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
@@ -22,13 +22,26 @@
     CardTitle,
   } from '$lib/components/ui/card';
   import { worldStore, type BlueprintClass, type BlueprintDef, type DynamicFieldDef } from '$lib/stores/worldStore.svelte';
+  import { paginateArray } from '$lib/api/apiClient';
 
   let searchQuery = $state('');
   let selectedClassFilter = $state<'ALL' | BlueprintClass>('ALL');
   let selectedCategoryFilter = $state<string>('ALL');
 
+  // Pagination State (10 items per page)
+  let currentPage = $state(1);
+  const pageSize = 10;
+
   // Deletion Confirmation Dialog State
   let bpToDelete = $state<{ id: string; name: string } | null>(null);
+
+  // Reset pagination on filter change
+  $effect(() => {
+    searchQuery;
+    selectedClassFilter;
+    selectedCategoryFilter;
+    currentPage = 1;
+  });
 
   // Categories list
   const allCategories = $derived(
@@ -39,9 +52,9 @@
     worldStore.blueprints.filter((b: BlueprintDef) => {
       const matchClass = selectedClassFilter === 'ALL' || b.blueprintClass === selectedClassFilter;
       const matchCat = selectedCategoryFilter === 'ALL' || b.category === selectedCategoryFilter;
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchSearch =
-        !searchQuery ||
+        !q ||
         b.name.toLowerCase().includes(q) ||
         b.description.toLowerCase().includes(q) ||
         b.category.toLowerCase().includes(q) ||
@@ -49,6 +62,10 @@
 
       return matchClass && matchCat && matchSearch;
     })
+  );
+
+  const paginatedBlueprints = $derived(
+    paginateArray(filteredBlueprints, { page: currentPage, pageSize })
   );
 
   function handleDelete(id: string, name: string) {
@@ -168,110 +185,124 @@
   </Card>
 
   <!-- Blueprints Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="space-y-4">
     {#if filteredBlueprints.length === 0}
-      <div class="col-span-1 md:col-span-2">
-        <EmptyState
-          icon={Boxes}
-          title={worldStore.blueprints.length === 0 ? "No Blueprints Defined" : "No Matching Blueprints"}
-          description={worldStore.blueprints.length === 0
-            ? "Create custom schema blueprints to architect universe archetypes, nested sub-schemas, dynamic enums, and mathematical formula models."
-            : "No blueprints match your active class, category, or search filters."}
-          actionText={worldStore.blueprints.length === 0 ? "+ Create First Blueprint" : "Clear Filters"}
-          actionHref={worldStore.blueprints.length === 0 ? "/world/schemas/create" : undefined}
-          onAction={worldStore.blueprints.length === 0 ? undefined : () => { searchQuery = ''; selectedClassFilter = 'ALL'; selectedCategoryFilter = 'ALL'; }}
-          class="py-14"
-        />
-      </div>
+      <EmptyState
+        icon={Boxes}
+        title={worldStore.blueprints.length === 0 ? "No Blueprints Defined" : "No Matching Blueprints"}
+        description={worldStore.blueprints.length === 0
+          ? "Create custom schema blueprints to architect universe archetypes, nested sub-schemas, dynamic enums, and mathematical formula models."
+          : "No blueprints match your active class, category, or search filters."}
+        actionText={worldStore.blueprints.length === 0 ? "+ Create First Blueprint" : "Clear Filters"}
+        actionHref={worldStore.blueprints.length === 0 ? "/world/schemas/create" : undefined}
+        onAction={worldStore.blueprints.length === 0 ? undefined : () => { searchQuery = ''; selectedClassFilter = 'ALL'; selectedCategoryFilter = 'ALL'; }}
+        class="py-14"
+      />
     {:else}
-      {#each filteredBlueprints as bp (bp.id)}
-        <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between">
-          <div class="space-y-3">
-            <!-- Header with Class Indicator & Category -->
-            <div class="flex items-start justify-between gap-2">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  {#if bp.blueprintClass === 'FIRST_CLASS'}
-                    <Boxes class="w-4 h-4 text-primary" />
-                  {:else}
-                    <Layers class="w-4 h-4 text-cyan-500" />
-                  {/if}
-                  <h3 class="text-sm font-bold text-foreground">{bp.name}</h3>
-                </div>
-                <div class="flex items-center gap-2 text-[11px]">
-                  <span class={`font-medium ${bp.blueprintClass === 'FIRST_CLASS' ? 'text-primary' : 'text-cyan-500'}`}>
-                    {bp.blueprintClass === 'FIRST_CLASS' ? '1st-Class Archetype' : '2nd-Class Sub-Schema'}
-                  </span>
-                  <span class="text-muted-foreground/60">·</span>
-                  <span class="text-muted-foreground">{bp.category}</span>
-                </div>
-              </div>
-
-              {#if bp.isSystemDefault}
-                <span class="text-[10px] text-muted-foreground font-mono">System Default</span>
-              {/if}
-            </div>
-
-            <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">{bp.description}</p>
-
-            <!-- Dynamic Fields Summary -->
-            <div class="pt-2 border-t border-border space-y-2">
-              <div class="flex items-center justify-between text-[11px] text-muted-foreground font-medium">
-                <span>Dynamic Fields ({bp.fields.length})</span>
-              </div>
-
-              <div class="flex flex-wrap gap-1.5">
-                {#each bp.fields as field}
-                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted/60 border border-border text-[11px] font-mono text-foreground">
-                    {#if field.fieldType === 'FORMULA'}
-                      <Calculator class="w-3 h-3 text-amber-500" />
-                    {:else if field.fieldType === 'ENUM'}
-                      <ListFilter class="w-3 h-3 text-primary" />
-                    {:else if field.fieldType === 'VALUE_TYPE'}
-                      <Sparkles class="w-3 h-3 text-primary" />
-                    {:else if field.fieldType === 'ARRAY'}
-                      <ListFilter class="w-3 h-3 text-indigo-500" />
-                    {:else if field.fieldType === 'BLUEPRINT_REF'}
-                      <Link2 class="w-3 h-3 text-cyan-500" />
-                    {:else if field.fieldType === 'ARRAY_REF'}
-                      <Link2 class="w-3 h-3 text-cyan-400" />
-                    {:else if field.fieldType === 'NUMBER'}
-                      <Hash class="w-3 h-3 text-emerald-500" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {#each paginatedBlueprints.data as bp (bp.id)}
+          <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between shadow-xs">
+            <div class="space-y-3">
+              <!-- Header with Class Indicator & Category -->
+              <div class="flex items-start justify-between gap-2">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    {#if bp.blueprintClass === 'FIRST_CLASS'}
+                      <Boxes class="w-4 h-4 text-primary" />
+                    {:else}
+                      <Layers class="w-4 h-4 text-cyan-500" />
                     {/if}
-                    <span>{field.name}</span>
+                    <h3 class="text-sm font-bold text-foreground">{bp.name}</h3>
                   </div>
-                {/each}
+                  <div class="flex items-center gap-2 text-[11px]">
+                    <span class={`font-medium ${bp.blueprintClass === 'FIRST_CLASS' ? 'text-primary' : 'text-cyan-500'}`}>
+                      {bp.blueprintClass === 'FIRST_CLASS' ? '1st-Class Archetype' : '2nd-Class Sub-Schema'}
+                    </span>
+                    <span class="text-muted-foreground/60">·</span>
+                    <span class="text-muted-foreground">{bp.category}</span>
+                  </div>
+                </div>
+
+                {#if bp.isSystemDefault}
+                  <span class="text-[10px] text-muted-foreground font-mono">System Default</span>
+                {/if}
+              </div>
+
+              <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">{bp.description}</p>
+
+              <!-- Dynamic Fields Summary -->
+              <div class="pt-2 border-t border-border space-y-2">
+                <div class="flex items-center justify-between text-[11px] text-muted-foreground font-medium">
+                  <span>Dynamic Fields ({bp.fields.length})</span>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5">
+                  {#each bp.fields as field}
+                    <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted/60 border border-border text-[11px] font-mono text-foreground">
+                      {#if field.fieldType === 'FORMULA'}
+                        <Calculator class="w-3 h-3 text-amber-500" />
+                      {:else if field.fieldType === 'ENUM'}
+                        <ListFilter class="w-3 h-3 text-primary" />
+                      {:else if field.fieldType === 'VALUE_TYPE'}
+                        <Sparkles class="w-3 h-3 text-primary" />
+                      {:else if field.fieldType === 'ARRAY'}
+                        <ListFilter class="w-3 h-3 text-indigo-500" />
+                      {:else if field.fieldType === 'BLUEPRINT_REF'}
+                        <Link2 class="w-3 h-3 text-cyan-500" />
+                      {:else if field.fieldType === 'ARRAY_REF'}
+                        <Link2 class="w-3 h-3 text-cyan-400" />
+                      {:else if field.fieldType === 'NUMBER'}
+                        <Hash class="w-3 h-3 text-emerald-500" />
+                      {/if}
+                      <span>{field.name}</span>
+                    </div>
+                  {/each}
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Card Footer Actions -->
-          <div class="pt-3 border-t border-border flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onclick={() => handleDelete(bp.id, bp.name)}
-              class="text-muted-foreground hover:text-destructive px-2 h-7"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-            </Button>
-
-            <div class="flex items-center gap-2">
-              {#if bp.blueprintClass === 'FIRST_CLASS'}
-                <Button href={`/world/entities/create?blueprintId=${bp.id}`} variant="secondary" size="sm" class="h-7 text-xs">
-                  <Plus class="w-3 h-3" />
-                  <span>New Entity</span>
-                </Button>
-              {/if}
-
-              <Button href={`/world/schemas/${bp.id}`} variant="outline" size="sm" class="h-7 text-xs">
-                <Edit3 class="w-3 h-3" />
-                <span>Inspect & Edit</span>
+            <!-- Card Footer Actions -->
+            <div class="pt-3 border-t border-border flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onclick={() => handleDelete(bp.id, bp.name)}
+                class="text-muted-foreground hover:text-destructive px-2 h-7"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
               </Button>
+
+              <div class="flex items-center gap-2">
+                {#if bp.blueprintClass === 'FIRST_CLASS'}
+                  <Button href={`/world/entities/create?blueprintId=${bp.id}`} variant="secondary" size="sm" class="h-7 text-xs">
+                    <Plus class="w-3 h-3" />
+                    <span>New Entity</span>
+                  </Button>
+                {/if}
+
+                <Button href={`/world/schemas/${bp.id}`} variant="outline" size="sm" class="h-7 text-xs">
+                  <Edit3 class="w-3 h-3" />
+                  <span>Inspect & Edit</span>
+                </Button>
+              </div>
             </div>
-          </div>
-        </Card>
-      {/each}
+          </Card>
+        {/each}
+      </div>
+
+      <!-- Pagination Footer -->
+      <Card class="border-border bg-card overflow-hidden">
+        <Pagination
+          page={paginatedBlueprints.pagination.page}
+          pageSize={paginatedBlueprints.pagination.pageSize}
+          totalCount={paginatedBlueprints.pagination.totalCount}
+          totalPages={paginatedBlueprints.pagination.totalPages}
+          hasNextPage={paginatedBlueprints.pagination.hasNextPage}
+          hasPreviousPage={paginatedBlueprints.pagination.hasPreviousPage}
+          itemLabel="blueprints"
+          onPageChange={(p) => (currentPage = p)}
+        />
+      </Card>
     {/if}
   </div>
 
@@ -285,4 +316,3 @@
     onCancel={() => (bpToDelete = null)}
   />
 </div>
-

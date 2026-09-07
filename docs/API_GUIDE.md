@@ -188,3 +188,15 @@ The Go backend communicates with the TypeScript Prisma Data Service over interna
 - `rpc QueryStoryContext(QueryStoryContextRequest) returns (QueryStoryContextResponse)`
 
 _Generic arbitrary table CRUD is strictly prohibited over gRPC to protect domain consistency._
+
+---
+
+## 5. Frontend API Client & Standardized 10-Item Pagination Standard
+
+The Web and Desktop frontends (`apps/web`) consume and paginate API resources through a unified TypeScript client layer (`apps/web/src/lib/api/apiClient.ts`):
+
+- **Client Class**: `NovWriteApiClient` with typed methods `getPaginated<T>(endpoint, params)` and `getSingle<T>(endpoint)`.
+- **Pure Client Paginator**: `paginateArray<T>(items, params)` providing RFC 7807 metadata and envelope structures for client-side stores.
+- **Frontend Page Size Standard**: Set to **10 items per page** across all list tables and workbench grids.
+- **Reusable Component**: `<Pagination />` (`apps/web/src/lib/components/ui/pagination.svelte`) with item range telemetry (`Showing X–Y of Z items`), zero-badge indicator (`Page X / Y`), and Previous / Next navigation buttons.
+

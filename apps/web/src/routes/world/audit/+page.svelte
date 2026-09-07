@@ -19,16 +19,26 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { Card } from "$lib/components/ui/card";
-  import { EmptyState } from "$lib/components/ui";
+  import { EmptyState, Pagination } from "$lib/components/ui";
   import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
     type ContinuityViolationItem,
     type RuleSeverity,
   } from "$lib/stores/worldStore.svelte";
+  import { paginateArray } from "$lib/api/apiClient";
 
   // Filter State
   let statusFilter = $state<"ALL" | "ACTIVE" | "OVERRIDDEN">("ALL");
+
+  // Pagination State (10 items per page)
+  let currentPage = $state(1);
+  const pageSize = 10;
+
+  $effect(() => {
+    statusFilter;
+    currentPage = 1;
+  });
 
   // Modal State
   let activeOverrideViolation = $state<ContinuityViolationItem | null>(null);
@@ -44,6 +54,10 @@
       if (statusFilter === "OVERRIDDEN") return !!v.overridden;
       return true;
     }),
+  );
+
+  const paginatedViolations = $derived(
+    paginateArray(filteredViolations, { page: currentPage, pageSize })
   );
 
   // Health Metrics
@@ -251,7 +265,7 @@
       />
     {/if}
 
-    {#each filteredViolations as viol}
+    {#each paginatedViolations.data as viol}
       <Card
         class="border-border bg-card {viol.overridden
           ? 'opacity-65'
@@ -355,54 +369,54 @@
           </div>
         {/if}
 
-        <!-- One-Click Reconciliations (if not overridden) -->
-        {#if !viol.overridden}
-          <div class="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
-                <Wrench class="w-3.5 h-3.5 text-primary" />
-                <span>Suggested Quick-Fix:</span>
+        <!-- Corrective Action Engine Strip -->
+        {#if !viol.overridden && viol.suggestedResolution}
+          <div class="p-3.5 rounded-lg bg-card border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+            <div class="space-y-0.5">
+              <span class="text-muted-foreground text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
+                <Sparkles class="w-3 h-3 text-primary" />
+                <span>Deterministic Correction Available</span>
               </span>
-              <span class="text-xs text-foreground/80 font-sans">{viol.suggestedResolution}</span>
+              <p class="text-foreground font-sans font-medium">{viol.suggestedResolution}</p>
             </div>
 
             <div class="flex items-center gap-2">
-              {#if viol.code === "INVARIANT_PREREQUISITE_STAGE_UNMET"}
+              {#if viol.code === "RULE_INVALID_REALM_BREAKTHROUGH"}
                 <Button
                   size="sm"
                   onclick={() => handleReconcile(viol, "AUTO_LOG_BREAKTHROUGH")}
-                  class="h-7 text-xs flex items-center gap-1 font-mono"
+                  class="h-7 text-xs flex items-center gap-1.5"
                 >
-                  <Sparkles class="w-3 h-3" />
-                  <span>Auto-Log Breakthrough Event</span>
+                  <Wrench class="w-3 h-3" />
+                  <span>Log Breakthrough</span>
                 </Button>
-              {:else if viol.code === "INVARIANT_RELATIONAL_MISMATCH"}
+              {:else if viol.code === "RULE_BOUND_WEAPON_WIELDER"}
                 <Button
                   size="sm"
                   onclick={() => handleReconcile(viol, "AUTO_LINK_RELATIONAL_WEAPON")}
-                  class="h-7 text-xs flex items-center gap-1 font-mono"
+                  class="h-7 text-xs flex items-center gap-1.5"
                 >
-                  <Sparkles class="w-3 h-3" />
-                  <span>Auto-Link Relational Weapon</span>
+                  <Wrench class="w-3 h-3" />
+                  <span>Bind Relational Wielder</span>
                 </Button>
               {/if}
 
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onclick={() => handleDismiss(viol.id)}
-                class="h-7 text-xs"
+                class="h-7 text-xs text-muted-foreground hover:text-foreground"
               >
-                Dismiss
+                <span>Dismiss</span>
               </Button>
             </div>
           </div>
         {/if}
 
-        <!-- Overridden Justification Box -->
+        <!-- Editorial Override Rationale -->
         {#if viol.overridden}
-          <div class="p-3 rounded-lg bg-muted/60 border border-border space-y-1 text-xs font-sans">
-            <div class="flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+          <div class="p-3 rounded-lg bg-muted/60 border border-border text-xs font-mono space-y-1">
+            <div class="flex items-center justify-between text-muted-foreground text-[10px]">
               <span class="font-bold text-foreground">Lead Author Editorial Justification:</span>
               <span>Logged: {viol.overriddenAt ? new Date(viol.overriddenAt).toLocaleString() : "Recently"}</span>
             </div>
@@ -427,6 +441,22 @@
         </div>
       </Card>
     {/each}
+
+    <!-- Violations List Pagination -->
+    {#if filteredViolations.length > 0}
+      <Card class="border-border bg-card overflow-hidden">
+        <Pagination
+          page={paginatedViolations.pagination.page}
+          pageSize={paginatedViolations.pagination.pageSize}
+          totalCount={paginatedViolations.pagination.totalCount}
+          totalPages={paginatedViolations.pagination.totalPages}
+          hasNextPage={paginatedViolations.pagination.hasNextPage}
+          hasPreviousPage={paginatedViolations.pagination.hasPreviousPage}
+          itemLabel="violations"
+          onPageChange={(p) => (currentPage = p)}
+        />
+      </Card>
+    {/if}
   </div>
 
   <!-- Override Justification Modal -->
