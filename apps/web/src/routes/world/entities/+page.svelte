@@ -611,7 +611,7 @@
         </div>
       {:else}
         <!-- DESKTOP TABULAR GRID (Horizontally scrollable container) -->
-        <div class="overflow-x-auto w-full">
+        <div class="overflow-x-auto w-full min-w-0">
           <Table class="w-full text-left text-xs min-w-[750px]">
             <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
               <TableRow class="hover:bg-transparent border-border">

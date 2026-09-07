@@ -50,14 +50,14 @@
   {#if !isErrorPage}
     <!-- Main Navigation Bar -->
     <nav
-      class="bg-card/85 backdrop-blur border-b border-border px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between transition-colors gap-2 sm:gap-4 min-w-0 sticky top-0 z-30"
+      class="h-14 bg-card/85 backdrop-blur border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors gap-2.5 sm:gap-4 min-w-0 sticky top-0 z-30"
     >
       <!-- Left: Mobile Hamburger OR Desktop Brand + Links -->
       <div class="flex items-center gap-2 sm:gap-6 md:gap-8 min-w-0">
         <!-- Mobile Hamburger Button (< 768px) -->
         <button
           type="button"
-          class="md:hidden flex items-center justify-center w-10 h-10 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+          class="md:hidden flex items-center justify-center w-9 h-9 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer shrink-0"
           onclick={() => (mobileDrawerOpen = true)}
           aria-label="Open Navigation Menu"
         >
@@ -72,7 +72,7 @@
           <img
             src="/logo.png"
             alt="NovWrite"
-            class="w-6 h-6 rounded-md object-contain border border-border shadow-2xs"
+            class="w-6 h-6 rounded-md object-contain border border-border shadow-2xs shrink-0"
           />
           <div class="flex items-center">
             <span class="text-primary">Nov</span><span>Write</span>

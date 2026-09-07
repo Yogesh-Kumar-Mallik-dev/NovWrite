@@ -21,7 +21,7 @@
   import { projectStore } from "$lib/stores/projectStore.svelte";
 </script>
 
-<div class="max-w-5xl mx-auto space-y-6 transition-colors">
+<div class="w-full space-y-6 transition-colors">
   <!-- Active Project Header / Onboarding Hero -->
   {#if !projectStore.activeProject}
     <div class="p-6 rounded-xl border border-primary/30 bg-primary/5 space-y-3">

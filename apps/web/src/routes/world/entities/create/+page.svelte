@@ -542,7 +542,7 @@
 
       <!-- Filter Tabs & Search -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div class="flex items-center gap-1.5 overflow-x-auto min-w-0 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {#each allCategories as cat}
             <button
               type="button"
@@ -570,7 +570,7 @@
     </div>
 
     <!-- Carousel Deck with Side Navigation Buttons and Hidden Scrollbar -->
-    <div class="relative px-1 pt-1">
+    <div class="relative px-1 pt-1 min-w-0">
       <!-- Left Carousel Button (Always visible with distinct disabled, hover, and active states) -->
       <button
         type="button"
@@ -597,7 +597,7 @@
       <div
         bind:this={carouselEl}
         onscroll={updateScrollState}
-        class="flex items-stretch gap-3 overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        class="flex items-stretch gap-3 overflow-x-auto min-w-0 py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {#each filteredBlueprints as bp (bp.id)}
           {@const Icon = getArchetypeIcon(bp)}

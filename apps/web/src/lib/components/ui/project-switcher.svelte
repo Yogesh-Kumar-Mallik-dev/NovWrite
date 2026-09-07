@@ -44,10 +44,12 @@
     <button
       type="button"
       onclick={handleOpenCreate}
-      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors cursor-pointer {className}"
+      class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors cursor-pointer shrink-0 {className}"
+      aria-label="Create New Project"
     >
-      <Plus class="w-3.5 h-3.5" />
-      <span>Create Project</span>
+      <Plus class="w-3.5 h-3.5 shrink-0" />
+      <span class="hidden xs:inline">Create Project</span>
+      <span class="xs:hidden">New</span>
     </button>
   {/if}
 {:else}
@@ -55,7 +57,7 @@
   {#if !isMobile}
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/80 transition-colors cursor-pointer max-w-[240px] {className}"
+        class="inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/80 transition-colors cursor-pointer max-w-[130px] xs:max-w-[160px] sm:max-w-[200px] md:max-w-[240px] shrink-0 {className}"
         aria-label="Switch Active Project"
       >
         <Folder class="w-3.5 h-3.5 text-primary shrink-0" />

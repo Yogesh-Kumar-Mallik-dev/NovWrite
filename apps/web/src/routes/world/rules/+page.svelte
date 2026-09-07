@@ -346,7 +346,7 @@
       />
     {/if}
 
-    <div class="overflow-x-auto w-full">
+    <div class="overflow-x-auto w-full min-w-0">
       <Table class="w-full text-left text-xs min-w-[900px]">
         <TableHeader class="bg-muted/50 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
           <TableRow>
