@@ -208,3 +208,87 @@ export interface DevSeedResponse {
   seededScenesCount: number;
   message: string;
 }
+
+// =====================================
+// Bitemporal & Dual-Axis Revision Types
+// =====================================
+
+export type RevisionType =
+  | "TYPO_FIX"
+  | "BASELINE_EDIT"
+  | "RETROACTIVE_PLOT_FIX"
+  | "REVERT";
+
+export interface EntityRevisionPatch {
+  name?: { before: string; after: string };
+  description?: { before: string; after: string };
+  category?: { before: string; after: string };
+  propertiesChanged?: Record<string, { before: unknown; after: unknown }>;
+  formulasChanged?: Record<string, { before: number; after: number }>;
+}
+
+export interface EntityRevision {
+  id: string;
+  entityId: string;
+  projectId?: string;
+  parentRevisionId: string | null;
+  revisionNumber: number;
+  createdAt: string;
+  type: RevisionType;
+  authorNote?: string;
+  patch: EntityRevisionPatch;
+  snapshot: EntityItem;
+}
+
+export interface TimelineEventRevision {
+  id: string;
+  eventId: string;
+  projectId?: string;
+  parentRevisionId: string | null;
+  revisionNumber: number;
+  createdAt: string;
+  type: RevisionType;
+  authorNote?: string;
+  patch: {
+    title?: { before: string; after: string };
+    sequenceNumber?: { before: number; after: number };
+    effectsChanged?: { before: unknown[]; after: unknown[] };
+  };
+  snapshot: {
+    id: string;
+    narrativeSequenceNumber: number;
+    chronologicalOrder: number;
+    title: string;
+    description?: string | null;
+    anchorSceneId?: string | null;
+  };
+}
+
+export interface BitemporalCoordinateQuery {
+  entityId: string;
+  projectId?: string;
+  targetSequenceNumber?: number; // T_narrative (Plot Time)
+  targetRevisionId?: string;     // T_revision (Authorial Revision)
+}
+
+export interface BitemporalEntityState {
+  entityId: string;
+  entityName: string;
+  category: string;
+  narrativeSequenceNumber: number;
+  revisionId: string;
+  revisionNumber: number;
+  revisionType: RevisionType;
+  properties: Record<string, unknown>;
+  computedFormulas?: Record<string, number>;
+  appliedEventsCount: number;
+  activeMutations: Array<{
+    eventId: string;
+    eventTitle: string;
+    sequenceNumber: number;
+    propertyKey: string;
+    operation: string;
+    value: unknown;
+  }>;
+}
+

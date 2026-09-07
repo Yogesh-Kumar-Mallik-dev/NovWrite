@@ -58,7 +58,7 @@ func main() {
 
 	healthHandler := handlers.NewHealthHandler()
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore)
-	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore)
+	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, timelineStore)
 	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore)
 	formulaHandler := handlers.NewFormulaHandler()
 	bridgeHandler := handlers.NewWorldBridgeHandler(nil, nil, nil)
@@ -99,13 +99,19 @@ func main() {
 				r.Delete("/{blueprintId}", blueprintHandler.Delete)
 			})
 
-			// Entities
+			// Entities & Bitemporal Revisions
 			r.Route("/entities", func(r chi.Router) {
 				r.Get("/", entityHandler.List)
 				r.Post("/", entityHandler.Create)
 				r.Get("/{entityId}", entityHandler.Get)
 				r.Put("/{entityId}", entityHandler.Update)
 				r.Delete("/{entityId}", entityHandler.Delete)
+
+				// Bitemporal Revisions & Coordinate Resolution
+				r.Get("/{entityId}/revisions", entityHandler.ListRevisions)
+				r.Post("/{entityId}/revisions", entityHandler.CreateRevision)
+				r.Post("/{entityId}/revisions/{revisionId}/revert", entityHandler.RevertRevision)
+				r.Get("/{entityId}/coordinate", entityHandler.ResolveCoordinate)
 			})
 
 			// Timeline & Events

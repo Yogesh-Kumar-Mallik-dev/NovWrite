@@ -16,3 +16,5 @@ export * from "./world/ruleEvaluator.js";
 export * from "./world/stateFoldEngine.js";
 export * from "./world/formulaEngine.js";
 export * from "./world/worldBridgeServer.js";
+export * from "./world/revisionEngine.js";
+

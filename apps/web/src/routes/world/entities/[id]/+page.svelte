@@ -25,6 +25,8 @@
     Eye,
     Copy,
     CheckCheck,
+    GitBranch,
+    History,
   } from 'lucide-svelte';
   import {
     Button,
@@ -38,6 +40,7 @@
     EmptyState,
     JsonEditor,
   } from '$lib/components/ui';
+  import FeatherHistoryDialog from '$lib/components/world/feather-history-dialog.svelte';
   import { toast } from '$lib/stores/toastStore.svelte';
   import {
     Card,
@@ -602,6 +605,19 @@
     goto('/world/entities');
   }
 
+  let featherHistoryOpen = $state(false);
+
+  function handleHistoryRevert(restored: EntityItem) {
+    if (entity) {
+      name = restored.name;
+      category = restored.category || (blueprint ? blueprint.category : 'General');
+      description = restored.description || '';
+      properties = ensureAllPropertiesExist(restored.properties || {}, blueprint);
+      jsonEditorContent = getFullEntityJson();
+      jsonParseError = null;
+    }
+  }
+
   // Keyboard shortcut Ctrl+S / Cmd+S to save
   function handleKeyDown(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -700,6 +716,16 @@
         >
           <Check class="w-3.5 h-3.5" />
           <span>Save Changes</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (featherHistoryOpen = true)}
+          class="gap-1.5 shadow-xs border-primary/30 hover:border-primary text-primary"
+        >
+          <GitBranch class="w-3.5 h-3.5" />
+          <span>Feather History ({worldStore.getEntityRevisions(entity.id).length})</span>
         </Button>
 
         {#if blueprint}
@@ -1748,4 +1774,11 @@
       </Card>
     </div>
   {/if}
+
+  <!-- Dual-Axis Feather & Web History Inspector Dialog -->
+  <FeatherHistoryDialog
+    bind:open={featherHistoryOpen}
+    entityId={entity.id}
+    onRevert={handleHistoryRevert}
+  />
 {/if}

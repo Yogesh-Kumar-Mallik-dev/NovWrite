@@ -226,3 +226,86 @@ export function validateEntityMentionQuery(payload: unknown) {
   }
   return result.data;
 }
+
+// =====================================
+// Bitemporal & Dual-Axis Zod Schemas
+// =====================================
+
+export const RevisionTypeSchema = z.enum([
+  "TYPO_FIX",
+  "BASELINE_EDIT",
+  "RETROACTIVE_PLOT_FIX",
+  "REVERT",
+]);
+
+export const EntityRevisionPatchSchema = z.object({
+  name: z.object({ before: z.string(), after: z.string() }).optional(),
+  description: z.object({ before: z.string(), after: z.string() }).optional(),
+  category: z.object({ before: z.string(), after: z.string() }).optional(),
+  propertiesChanged: z.record(z.object({ before: z.unknown(), after: z.unknown() })).optional(),
+  formulasChanged: z.record(z.object({ before: z.number(), after: z.number() })).optional(),
+});
+
+export const EntityRevisionSchema = z.object({
+  id: z.string(),
+  entityId: z.string(),
+  projectId: z.string().optional(),
+  parentRevisionId: z.string().nullable(),
+  revisionNumber: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  type: RevisionTypeSchema,
+  authorNote: z.string().optional(),
+  patch: EntityRevisionPatchSchema,
+  snapshot: EntityItemSchema,
+});
+
+export const BitemporalCoordinateQuerySchema = z.object({
+  entityId: z.string(),
+  projectId: z.string().optional(),
+  targetSequenceNumber: z.number().int().nonnegative().optional(),
+  targetRevisionId: z.string().optional(),
+});
+
+export const BitemporalEntityStateSchema = z.object({
+  entityId: z.string(),
+  entityName: z.string(),
+  category: z.string(),
+  narrativeSequenceNumber: z.number().int().nonnegative(),
+  revisionId: z.string(),
+  revisionNumber: z.number().int().nonnegative(),
+  revisionType: RevisionTypeSchema,
+  properties: z.record(z.unknown()),
+  computedFormulas: z.record(z.number()).optional(),
+  appliedEventsCount: z.number().int().nonnegative(),
+  activeMutations: z.array(
+    z.object({
+      eventId: z.string(),
+      eventTitle: z.string(),
+      sequenceNumber: z.number().int().nonnegative(),
+      propertyKey: z.string(),
+      operation: z.string(),
+      value: z.unknown(),
+    }),
+  ),
+});
+
+export function validateEntityRevision(payload: unknown) {
+  const result = EntityRevisionSchema.safeParse(payload);
+  if (!result.success) {
+    throw new Error(
+      `BLOCK_COMM_BRIDGE_CONTRACT_001: Invalid EntityRevision: ${result.error.message}`,
+    );
+  }
+  return result.data;
+}
+
+export function validateBitemporalCoordinateQuery(payload: unknown) {
+  const result = BitemporalCoordinateQuerySchema.safeParse(payload);
+  if (!result.success) {
+    throw new Error(
+      `BLOCK_COMM_BRIDGE_CONTRACT_001: Invalid BitemporalCoordinateQuery: ${result.error.message}`,
+    );
+  }
+  return result.data;
+}
+

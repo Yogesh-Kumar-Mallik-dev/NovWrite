@@ -127,12 +127,17 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `PUT /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Update blueprint. Changing a field's type automatically wipes the slate clean for incompatible attributes.
 - `DELETE /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Remove blueprint schema (`204 No Content`).
 
-### 3.3 Entities
+### 3.3 Entities & Bitemporal Revisions (The Feather & Web Model)
 - `GET /api/v1/projects/{projectId}/entities` — List entities with pagination, `blueprintId`, and `category` filters.
-- `POST /api/v1/projects/{projectId}/entities` — Create an entity. Formulas are deterministically evaluated and populated on the backend. Returns `201 Created` with `Location` header.
+- `POST /api/v1/projects/{projectId}/entities` — Create an entity. Formulas are deterministically evaluated and populated on the backend. Automatically records Revision #0 (`BASELINE_EDIT`). Returns `201 Created` with `Location` header.
 - `GET /api/v1/projects/{projectId}/entities/{entityId}` — Retrieve entity instance.
-- `PUT /api/v1/projects/{projectId}/entities/{entityId}` — Update entity properties with zero-trust validation.
+- `PUT /api/v1/projects/{projectId}/entities/{entityId}` — Update entity properties with zero-trust validation and automatic revision tracking.
 - `DELETE /api/v1/projects/{projectId}/entities/{entityId}` — Remove entity (`204 No Content`).
+- `GET /api/v1/projects/{projectId}/entities/{entityId}/revisions` — List immutable authorial revision history with pagination and granular delta patches (`name`, `description`, `propertiesChanged`, `formulasChanged`).
+- `POST /api/v1/projects/{projectId}/entities/{entityId}/revisions` — Explicitly record an authorial revision with revision type (`TYPO_FIX`, `BASELINE_EDIT`, `RETROACTIVE_PLOT_FIX`) and author note.
+- `POST /api/v1/projects/{projectId}/entities/{entityId}/revisions/{revisionId}/revert` — Revert entity to a historical revision state (creates an immutable `REVERT` revision preserving full audit history).
+- `GET /api/v1/projects/{projectId}/entities/{entityId}/coordinate?sequenceNumber={seq}&revisionId={rev}` — Resolve exact deterministic state at any 2D coordinate: $(T_{\text{narrative}}, T_{\text{revision}})$. Returns base revision snapshot folded with all story event mutations up to `sequenceNumber`.
+
 
 ### 3.4 Formulas Engine
 - `POST /api/v1/formulas/evaluate` — Test and evaluate mathematical and logical formulas with sample context.

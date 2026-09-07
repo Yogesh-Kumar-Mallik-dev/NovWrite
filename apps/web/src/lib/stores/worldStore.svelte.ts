@@ -174,6 +174,57 @@ export interface ContinuityViolationItem {
   overriddenAt?: string;
 }
 
+// =====================================
+// Bitemporal & Dual-Axis Revision Types
+// =====================================
+
+export type RevisionType =
+  | "TYPO_FIX"
+  | "BASELINE_EDIT"
+  | "RETROACTIVE_PLOT_FIX"
+  | "REVERT";
+
+export interface EntityRevisionPatch {
+  name?: { before: string; after: string };
+  description?: { before: string; after: string };
+  category?: { before: string; after: string };
+  propertiesChanged?: Record<string, { before: unknown; after: unknown }>;
+  formulasChanged?: Record<string, { before: number; after: number }>;
+}
+
+export interface EntityRevision {
+  id: string;
+  entityId: string;
+  parentRevisionId: string | null;
+  revisionNumber: number;
+  createdAt: string;
+  type: RevisionType;
+  authorNote?: string;
+  patch: EntityRevisionPatch;
+  snapshot: EntityItem;
+}
+
+export interface BitemporalEntityState {
+  entityId: string;
+  entityName: string;
+  category: string;
+  narrativeSequenceNumber: number;
+  revisionId: string;
+  revisionNumber: number;
+  revisionType: RevisionType;
+  properties: Record<string, unknown>;
+  computedFormulas?: Record<string, number>;
+  appliedEventsCount: number;
+  activeMutations: Array<{
+    eventId: string;
+    eventTitle: string;
+    sequenceNumber: number;
+    propertyKey: string;
+    operation: string;
+    value: unknown;
+  }>;
+}
+
 const WORLD_STATE_STORAGE_KEY = 'novwrite_world_state_v1';
 
 export class WorldStateStore {
@@ -182,6 +233,7 @@ export class WorldStateStore {
   timelineEvents = $state<TimelineEventItem[]>([]);
   rules = $state<InvariantRuleItem[]>([]);
   violations = $state<ContinuityViolationItem[]>([]);
+  revisions = $state<Record<string, EntityRevision[]>>({});
 
   constructor() {
     this.loadFromStorage();
@@ -199,6 +251,7 @@ export class WorldStateStore {
         if (Array.isArray(parsed.timelineEvents)) this.timelineEvents = parsed.timelineEvents;
         if (Array.isArray(parsed.rules)) this.rules = parsed.rules;
         if (Array.isArray(parsed.violations)) this.violations = parsed.violations;
+        if (parsed.revisions && typeof parsed.revisions === 'object') this.revisions = parsed.revisions;
       }
     } catch (e) {
       console.warn('[WorldStore] Failed to load state from localStorage:', e);
@@ -214,6 +267,7 @@ export class WorldStateStore {
         timelineEvents: this.timelineEvents,
         rules: this.rules,
         violations: this.violations,
+        revisions: this.revisions,
       };
       localStorage.setItem(WORLD_STATE_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
@@ -227,6 +281,7 @@ export class WorldStateStore {
     this.timelineEvents = [];
     this.rules = [];
     this.violations = [];
+    this.revisions = {};
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
     }
@@ -428,6 +483,10 @@ export class WorldStateStore {
 
     newEntity.computedFormulas = this.evaluateEntityFormulas(newEntity, bp);
     this.entities.push(newEntity);
+    
+    // Automatically record initial baseline revision
+    this.recordEntityRevision(newEntity, "BASELINE_EDIT", "Initial entity creation");
+    
     this.saveToStorage();
     return newEntity;
   }
@@ -435,10 +494,14 @@ export class WorldStateStore {
   updateEntity(
     id: string | undefined,
     updates: Partial<Omit<EntityItem, "id">>,
+    revisionType: RevisionType = "BASELINE_EDIT",
+    authorNote?: string,
   ): EntityItem | undefined {
     if (!id) return undefined;
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return undefined;
+
+    const previousSnapshot: EntityItem = JSON.parse(JSON.stringify(this.entities[idx]));
 
     this.entities[idx] = {
       ...this.entities[idx],
@@ -452,6 +515,10 @@ export class WorldStateStore {
     this.entities[idx].computedFormulas = this.evaluateEntityFormulas(
       this.entities[idx],
     );
+
+    // Automatically record edit revision
+    this.recordEntityRevision(this.entities[idx], revisionType, authorNote || "Updated entity properties");
+
     this.saveToStorage();
     return this.entities[idx];
   }
@@ -461,8 +528,212 @@ export class WorldStateStore {
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return false;
     this.entities.splice(idx, 1);
+    delete this.revisions[id];
     this.saveToStorage();
     return true;
+  }
+
+  // =====================================
+  // Bitemporal & Dual-Axis Revision Methods
+  // =====================================
+
+  computeEntityPatch(before: EntityItem | null, after: EntityItem): EntityRevisionPatch {
+    const patch: EntityRevisionPatch = {};
+    if (!before) {
+      patch.name = { before: "", after: after.name };
+      patch.propertiesChanged = {};
+      for (const [k, v] of Object.entries(after.properties || {})) {
+        patch.propertiesChanged[k] = { before: undefined, after: v };
+      }
+      return patch;
+    }
+
+    if (before.name !== after.name) {
+      patch.name = { before: before.name, after: after.name };
+    }
+    if ((before.description || "") !== (after.description || "")) {
+      patch.description = { before: before.description || "", after: after.description || "" };
+    }
+    if ((before.category || "") !== (after.category || "")) {
+      patch.category = { before: before.category || "", after: after.category || "" };
+    }
+
+    const propsChanged: Record<string, { before: unknown; after: unknown }> = {};
+    const allKeys = new Set([...Object.keys(before.properties || {}), ...Object.keys(after.properties || {})]);
+    for (const k of allKeys) {
+      const bVal = before.properties ? before.properties[k] : undefined;
+      const aVal = after.properties ? after.properties[k] : undefined;
+      if (JSON.stringify(bVal) !== JSON.stringify(aVal)) {
+        propsChanged[k] = { before: bVal, after: aVal };
+      }
+    }
+    if (Object.keys(propsChanged).length > 0) {
+      patch.propertiesChanged = propsChanged;
+    }
+
+    if (before.computedFormulas || after.computedFormulas) {
+      const formulasChanged: Record<string, { before: number; after: number }> = {};
+      const allFKeys = new Set([...Object.keys(before.computedFormulas || {}), ...Object.keys(after.computedFormulas || {})]);
+      for (const k of allFKeys) {
+        const bVal = before.computedFormulas ? before.computedFormulas[k] : undefined;
+        const aVal = after.computedFormulas ? after.computedFormulas[k] : undefined;
+        if (bVal !== aVal && (bVal !== undefined || aVal !== undefined)) {
+          formulasChanged[k] = { before: bVal ?? 0, after: aVal ?? 0 };
+        }
+      }
+      if (Object.keys(formulasChanged).length > 0) {
+        patch.formulasChanged = formulasChanged;
+      }
+    }
+
+    return patch;
+  }
+
+  recordEntityRevision(
+    entity: EntityItem,
+    type: RevisionType = "BASELINE_EDIT",
+    authorNote?: string,
+  ): EntityRevision {
+    if (!this.revisions[entity.id]) {
+      this.revisions[entity.id] = [];
+    }
+    const history = this.revisions[entity.id];
+    const parent = history.length > 0 ? history[history.length - 1] : null;
+    const patch = this.computeEntityPatch(parent ? parent.snapshot : null, entity);
+
+    const revision: EntityRevision = {
+      id: `rev-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
+      entityId: entity.id,
+      parentRevisionId: parent ? parent.id : null,
+      revisionNumber: history.length,
+      createdAt: new Date().toISOString(),
+      type,
+      authorNote: authorNote?.trim() || undefined,
+      patch,
+      snapshot: JSON.parse(JSON.stringify(entity)),
+    };
+
+    history.push(revision);
+    this.saveToStorage();
+    return revision;
+  }
+
+  revertEntityRevision(
+    entityId: string,
+    revisionId: string,
+    authorNote?: string,
+  ): { restoredEntity: EntityItem; revision: EntityRevision } | undefined {
+    const history = this.revisions[entityId];
+    if (!history || history.length === 0) return undefined;
+
+    const target = history.find((r) => r.id === revisionId);
+    if (!target) return undefined;
+
+    const restored: EntityItem = JSON.parse(JSON.stringify(target.snapshot));
+    const note = authorNote || `Reverted to revision #${target.revisionNumber} (${target.id})`;
+    const rev = this.recordEntityRevision(restored, "REVERT", note);
+
+    const idx = this.entities.findIndex((e) => e.id === entityId);
+    if (idx !== -1) {
+      this.entities[idx] = restored;
+      this.recomputeAllEntityFormulas();
+      this.saveToStorage();
+    }
+
+    return { restoredEntity: restored, revision: rev };
+  }
+
+  getEntityRevisions(entityId?: string): EntityRevision[] {
+    if (!entityId) return [];
+    return this.revisions[entityId] || [];
+  }
+
+  resolveEntityAtCoordinate(
+    entityId: string,
+    targetSeq: number = 0,
+    targetRevisionId?: string,
+  ): BitemporalEntityState | undefined {
+    const ent = this.getEntity(entityId);
+    if (!ent) return undefined;
+
+    const history = this.revisions[entityId] || [];
+    let baseRevision: EntityRevision | undefined;
+
+    if (targetRevisionId) {
+      baseRevision = history.find((r) => r.id === targetRevisionId);
+    } else if (history.length > 0) {
+      baseRevision = history[history.length - 1];
+    }
+
+    const snapshot = baseRevision ? baseRevision.snapshot : ent;
+    let computedProps: Record<string, any> = JSON.parse(JSON.stringify(snapshot.properties || {}));
+
+    const activeEvents = [...this.timelineEvents]
+      .filter((ev) => targetSeq === 0 || ev.narrativeSequenceNumber <= targetSeq)
+      .sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
+
+    const activeMutations: BitemporalEntityState["activeMutations"] = [];
+    let appliedCount = 0;
+
+    for (const ev of activeEvents) {
+      if (targetSeq > 0 && ev.narrativeSequenceNumber > targetSeq) break;
+      for (const eff of ev.effects) {
+        if (eff.targetEntityId === entityId || eff.entityName === ent.name) {
+          const keys = eff.propertyKey.split(".");
+          let curr: any = computedProps;
+          for (let i = 0; i < keys.length - 1; i++) {
+            const k = keys[i];
+            if (!curr[k] || typeof curr[k] !== "object") curr[k] = {};
+            curr = curr[k];
+          }
+          const finalKey = keys[keys.length - 1];
+
+          switch (eff.operation) {
+            case "SET":
+            case "TRANSFER":
+              curr[finalKey] = eff.value;
+              break;
+            case "INCREMENT":
+              curr[finalKey] = (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
+              break;
+            case "DECREMENT":
+              curr[finalKey] = (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
+              break;
+            case "APPEND":
+              if (Array.isArray(curr[finalKey])) curr[finalKey].push(eff.value);
+              else curr[finalKey] = [eff.value];
+              break;
+            case "REMOVE":
+              if (Array.isArray(curr[finalKey])) curr[finalKey] = curr[finalKey].filter((x: any) => x !== eff.value);
+              break;
+          }
+
+          activeMutations.push({
+            eventId: ev.id,
+            eventTitle: ev.title,
+            sequenceNumber: ev.narrativeSequenceNumber,
+            propertyKey: eff.propertyKey,
+            operation: eff.operation,
+            value: eff.value,
+          });
+          appliedCount++;
+        }
+      }
+    }
+
+    return {
+      entityId,
+      entityName: snapshot.name,
+      category: snapshot.category || "General",
+      narrativeSequenceNumber: targetSeq,
+      revisionId: baseRevision ? baseRevision.id : "initial",
+      revisionNumber: baseRevision ? baseRevision.revisionNumber : 0,
+      revisionType: baseRevision ? baseRevision.type : "BASELINE_EDIT",
+      properties: computedProps,
+      computedFormulas: snapshot.computedFormulas,
+      appliedEventsCount: appliedCount,
+      activeMutations,
+    };
   }
 
   // =====================================
