@@ -647,13 +647,24 @@
 
 {#if !entity}
   <div class="max-w-4xl mx-auto space-y-6">
-    <Breadcrumb
-      items={[
-        { label: 'World Studio', href: '/world' },
-        { label: 'Entities', href: '/world/entities' },
-        { label: 'Entity Not Found' },
-      ]}
-    />
+    <div class="flex items-center justify-between">
+      <Breadcrumb
+        items={[
+          { label: 'World Studio', href: '/world' },
+          { label: 'Entities', href: '/world/entities' },
+          { label: 'Entity Not Found' },
+        ]}
+      />
+      <Button
+        href="/world/entities"
+        variant="ghost"
+        size="sm"
+        class="gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 h-8"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        <span>All Entities</span>
+      </Button>
+    </div>
     <EmptyState
       icon={Shield}
       title="Entity Not Found"
@@ -663,47 +674,60 @@
     />
   </div>
 {:else}
-  <div class="max-w-4xl mx-auto space-y-7 pb-20 w-full min-w-0">
-    <!-- Breadcrumb -->
-    <Breadcrumb
-      items={[
-        { label: 'World Studio', href: '/world' },
-        { label: 'Entities', href: '/world/entities' },
-        { label: entity.name },
-      ]}
-    />
+  <div class="max-w-4xl mx-auto space-y-5 pb-20 w-full min-w-0">
+    <!-- Level 1: Navigation & Breadcrumb Tier -->
+    <div class="flex items-center justify-between gap-4">
+      <Breadcrumb
+        items={[
+          { label: 'World Studio', href: '/world' },
+          { label: 'Entities', href: '/world/entities' },
+          { label: entity.name },
+        ]}
+      />
+      <Button
+        href="/world/entities"
+        variant="ghost"
+        size="sm"
+        class="gap-1.5 text-xs text-muted-foreground hover:text-foreground shrink-0 h-8"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        <span>All Entities</span>
+      </Button>
+    </div>
 
-    <!-- Header & Mode Switcher -->
-    <div
-      class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4"
-    >
-      <div class="space-y-1 min-w-0 flex-1">
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="p-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary shrink-0">
-            <ArchetypeIcon class="w-5 h-5" />
-          </div>
-          <h2 class="text-xl font-bold tracking-tight text-foreground truncate">{entity.name}</h2>
+    <!-- Level 2: Entity Identity Tier -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+      <div class="flex items-center gap-3.5 min-w-0">
+        <div class="p-2.5 rounded-xl bg-primary/10 border border-primary/25 text-primary shrink-0 shadow-2xs">
+          <ArchetypeIcon class="w-6 h-6" />
         </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <span class="text-primary font-medium">{entity.blueprintName}</span>
-          <span class="text-muted-foreground/60">·</span>
-          <span class="text-muted-foreground">{entity.category}</span>
-          <span class="text-muted-foreground/60">·</span>
-          <span class="text-muted-foreground font-mono"
-            >Seq #{entity.lastMutatedSeqNumber}</span
-          >
+        <div class="space-y-0.5 min-w-0">
+          <h1 class="text-2xl font-bold tracking-tight text-foreground truncate">{entity.name}</h1>
+          <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span class="font-semibold text-primary">
+              {entity.blueprintName}
+            </span>
+            <span class="text-muted-foreground/40">·</span>
+            <span class="font-medium text-foreground/80">{entity.category}</span>
+            <span class="text-muted-foreground/40">·</span>
+            <span class="font-mono text-[11px] text-muted-foreground">Seq #{entity.lastMutatedSeqNumber}</span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <!-- View / Editor Mode Switcher -->
-        <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs gap-1">
+    <!-- Level 3: Action Toolbar & Editor Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-2 rounded-xl border border-border">
+      <!-- Left: Editor Mode (Segmented Toggle) & Tools -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Mode Switcher -->
+        <div class="inline-flex rounded-lg bg-background p-0.5 border border-border text-xs gap-0.5 shadow-2xs">
           <button
             type="button"
             onclick={switchToFormMode}
             class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
               editorMode === 'form'
-                ? 'bg-background text-foreground shadow-xs border border-border font-bold'
+                ? 'bg-secondary text-secondary-foreground shadow-2xs border border-border font-bold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
             }`}
           >
@@ -715,7 +739,7 @@
             onclick={switchToJsonMode}
             class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
               editorMode === 'json'
-                ? 'bg-background text-foreground shadow-xs border border-border font-bold'
+                ? 'bg-secondary text-secondary-foreground shadow-2xs border border-border font-bold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
             }`}
           >
@@ -724,24 +748,17 @@
           </button>
         </div>
 
-        <Button
-          variant="default"
-          size="sm"
-          onclick={handleSaveEntity}
-          class="gap-1.5 shadow-xs"
-        >
-          <Check class="w-3.5 h-3.5" />
-          <span>Save Changes</span>
-        </Button>
+        <div class="h-4 w-px bg-border hidden sm:block"></div>
 
+        <!-- Auxiliary Tools -->
         <Button
           variant="outline"
           size="sm"
           onclick={() => (featherHistoryOpen = true)}
-          class="gap-1.5 shadow-xs border-primary/30 hover:border-primary text-primary"
+          class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground"
         >
-          <GitBranch class="w-3.5 h-3.5" />
-          <span>Feather History ({worldStore.getEntityRevisions(entity.id).length})</span>
+          <GitBranch class="w-3.5 h-3.5 text-primary" />
+          <span>History ({worldStore.getEntityRevisions(entity.id).length})</span>
         </Button>
 
         {#if blueprint}
@@ -750,16 +767,24 @@
             target="_blank"
             variant="outline"
             size="sm"
-            class="text-xs"
+            class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground"
           >
             <Edit3 class="w-3.5 h-3.5 text-primary" />
-            <span>Schema</span>
+            <span>Schema Definition</span>
           </Button>
         {/if}
+      </div>
 
-        <Button href="/world/entities" variant="outline" size="sm">
-          <ArrowLeft class="w-3.5 h-3.5" />
-          <span>All Entities</span>
+      <!-- Right: Primary Save Action -->
+      <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <Button
+          variant="default"
+          size="sm"
+          onclick={handleSaveEntity}
+          class="h-8 gap-1.5 px-4 text-xs font-semibold shadow-xs"
+        >
+          <Check class="w-3.5 h-3.5" />
+          <span>Save Changes</span>
         </Button>
       </div>
     </div>
