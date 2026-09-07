@@ -24,9 +24,16 @@
       <div class="flex items-center gap-8">
         <a
           href="/"
-          class="flex items-center gap-2 font-bold text-lg tracking-tight hover:opacity-90"
+          class="flex items-center gap-2.5 font-bold text-lg tracking-tight hover:opacity-90 transition-opacity"
         >
-          <span class="text-primary">Nov</span><span>Write</span>
+          <img
+            src="/logo.png"
+            alt="NovWrite"
+            class="w-6 h-6 rounded-md object-contain border border-border shadow-2xs"
+          />
+          <div class="flex items-center">
+            <span class="text-primary">Nov</span><span>Write</span>
+          </div>
         </a>
 
         <!-- Studio Workspaces Switcher -->

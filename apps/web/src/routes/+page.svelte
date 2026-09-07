@@ -14,7 +14,15 @@
 </script>
 
 <div class="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
-  <div class="mb-10 text-center space-y-3">
+  <div class="mb-10 text-center space-y-4">
+    <div class="inline-block relative">
+      <div class="absolute -inset-1.5 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur-md opacity-30 animate-pulse"></div>
+      <img
+        src="/logo.png"
+        alt="NovWrite Logo"
+        class="relative w-20 h-20 mx-auto rounded-2xl border border-border bg-card p-1.5 shadow-xl object-contain"
+      />
+    </div>
     <h1
       class="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground"
     >
