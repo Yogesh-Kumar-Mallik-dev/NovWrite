@@ -118,3 +118,112 @@ func TestRevisionEngine_ResolveBitemporalCoordinate(t *testing.T) {
 		t.Fatalf("expected 2 applied events, got %d", state25.AppliedEventsCount)
 	}
 }
+
+func TestRevisionEngine_EditTreeBranchingAndCheckout(t *testing.T) {
+	// 1. Initialize EditTree at ED0
+	initialSnapshot := map[string]interface{}{"title": "Dragon Cave Trial", "effects": 1}
+	tree := NewEditTree(initialSnapshot, "Root (ED0)", "Initial draft", RevTypeBaselineEdit)
+
+	if tree.ActiveEditID != tree.RootID {
+		t.Fatalf("expected activeEditId to be rootId, got %s vs %s", tree.ActiveEditID, tree.RootID)
+	}
+	if len(tree.Nodes) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(tree.Nodes))
+	}
+	ed0 := tree.Nodes[tree.RootID]
+	if ed0.RevisionNumber != 0 {
+		t.Fatalf("expected revision number 0, got %d", ed0.RevisionNumber)
+	}
+
+	// 2. Add ED1, ED2, ED3, ED4 sequentially
+	snap1 := map[string]interface{}{"title": "Dragon Cave Trial - Rev 1"}
+	ed1, err := AddEditNode(&tree, snap1, "ED1", "Fixed typo", RevTypeTypoFix, nil)
+	if err != nil {
+		t.Fatalf("failed to add ED1: %v", err)
+	}
+
+	snap2 := map[string]interface{}{"title": "Dragon Cave Trial - Rev 2"}
+	ed2, err := AddEditNode(&tree, snap2, "ED2", "Added loot reward", RevTypeBaselineEdit, nil)
+	if err != nil {
+		t.Fatalf("failed to add ED2: %v", err)
+	}
+
+	snap3 := map[string]interface{}{"title": "Dragon Cave Trial - Rev 3"}
+	ed3, err := AddEditNode(&tree, snap3, "ED3", "Adjusted power scaling", RevTypeRetroactivePlotFix, nil)
+	if err != nil {
+		t.Fatalf("failed to add ED3: %v", err)
+	}
+
+	snap4 := map[string]interface{}{"title": "Dragon Cave Trial - Rev 4"}
+	ed4, err := AddEditNode(&tree, snap4, "ED4", "Major plot rewrite", RevTypeBaselineEdit, nil)
+	if err != nil {
+		t.Fatalf("failed to add ED4: %v", err)
+	}
+
+	// Active head should now be ED4
+	if tree.ActiveEditID != ed4.ID {
+		t.Fatalf("expected activeEditId to be ED4 (%s), got %s", ed4.ID, tree.ActiveEditID)
+	}
+	if len(tree.Nodes) != 5 {
+		t.Fatalf("expected 5 nodes in tree, got %d", len(tree.Nodes))
+	}
+
+	// Verify linear hierarchy: ED0 -> ED1 -> ED2 -> ED3 -> ED4
+	if tree.Nodes[ed0.ID].ChildrenIDs[0] != ed1.ID {
+		t.Fatalf("expected ED0 child to be ED1")
+	}
+	if tree.Nodes[ed1.ID].ChildrenIDs[0] != ed2.ID {
+		t.Fatalf("expected ED1 child to be ED2")
+	}
+	if tree.Nodes[ed2.ID].ChildrenIDs[0] != ed3.ID {
+		t.Fatalf("expected ED2 child to be ED3")
+	}
+	if tree.Nodes[ed3.ID].ChildrenIDs[0] != ed4.ID {
+		t.Fatalf("expected ED3 child to be ED4")
+	}
+
+	// 3. Revert / Checkout to ED3 non-destructively
+	checkedNode, err := CheckoutEditHead(&tree, ed3.ID)
+	if err != nil {
+		t.Fatalf("failed to checkout ED3: %v", err)
+	}
+	if checkedNode.ID != ed3.ID || tree.ActiveEditID != ed3.ID {
+		t.Fatalf("expected active EDIT head to be ED3, got %s", tree.ActiveEditID)
+	}
+
+	// Crucial assertion: ED4 MUST NOT BE DELETED! ED4 remains a child of ED3.
+	if len(tree.Nodes) != 5 {
+		t.Fatalf("ED4 was deleted! Expected 5 nodes in tree, got %d", len(tree.Nodes))
+	}
+	if len(tree.Nodes[ed3.ID].ChildrenIDs) != 1 || tree.Nodes[ed3.ID].ChildrenIDs[0] != ed4.ID {
+		t.Fatalf("ED4 branch was lost from ED3 children! Got %v", tree.Nodes[ed3.ID].ChildrenIDs)
+	}
+
+	// 4. Branch a new edit ED5 from checked-out ED3
+	snap5 := map[string]interface{}{"title": "Dragon Cave Trial - Alternate Timeline ED5"}
+	ed5, err := AddEditNode(&tree, snap5, "ED5", "Branched alternative route", RevTypeBaselineEdit, nil)
+	if err != nil {
+		t.Fatalf("failed to branch ED5: %v", err)
+	}
+
+	// Now ED3 must have TWO children: [ED4, ED5]
+	ed3Node := tree.Nodes[ed3.ID]
+	if len(ed3Node.ChildrenIDs) != 2 {
+		t.Fatalf("expected ED3 to have 2 children ([ED4, ED5]), got %d: %v", len(ed3Node.ChildrenIDs), ed3Node.ChildrenIDs)
+	}
+	if ed3Node.ChildrenIDs[0] != ed4.ID || ed3Node.ChildrenIDs[1] != ed5.ID {
+		t.Fatalf("expected ED3 children to be [%s, %s], got %v", ed4.ID, ed5.ID, ed3Node.ChildrenIDs)
+	}
+
+	// Active head should now be ED5
+	if tree.ActiveEditID != ed5.ID {
+		t.Fatalf("expected active EDIT head to be ED5, got %s", tree.ActiveEditID)
+	}
+
+	// 5. Verify active snapshot
+	activeNode, found := GetActiveEditNode(&tree)
+	if !found || activeNode.ID != ed5.ID {
+		t.Fatalf("expected active node to be ED5")
+	}
+}
+

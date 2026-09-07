@@ -1,26 +1,25 @@
 # Current Context
 
-- **Active Branch:** `world` (and mirrored to `main`).
+- **Active Branch:** `world` (and mirrored to `main` and `novel`).
 - **Execution Constraints:** **Local signed commits (`git commit -S`) are standard.**
-- **Architectural Baseline:** **Version 2.2 (Zero-Trust Backend Validation Parity, Deterministic Server-Side AST Formula Engine, Dynamic Field Type Slate Wipe, Array/Array-Ref Field Types, Universal Bits UI Selects & Graceful Monorepo Scripts)**.
+- **Architectural Baseline:** **Version 2.3 (UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Revision Engine, Non-Destructive Checkouts, Infinite Branching, REST Best Practices, Zero-Trust Backend Validation Parity)**.
 - **Recent Accomplishments:**
-  - **Zero-Trust Backend Validation Parity**:
-    - **Go API Backend (`apps/api/internal/world/*`)**: Implemented recursive descent AST formula parser and evaluator (`formula_engine.go`), and schema/entity sanitizer (`schema_validator.go`) enforcing lowercase machine keys (`strings.ToLower`), rejecting duplicate blueprint keys (`DUPLICATE_FIELD_KEY`), dynamic field type slate wipe, and deterministic server-side formula recomputations. All unit tests passing (`schema_validator_test.go`, `formula_engine_test.go`).
-    - **TypeScript Data Service (`apps/data-service/src/world/*`)**: Implemented TypeScript AST formula engine (`formulaEngine.ts`) and validation sanitizers (`propertyValidator.ts`, `schemaEngine.ts`). All 34 unit tests passing (`validationParity.test.ts`, `schemaEngine.test.ts`, etc.).
-    - **Bridge Layer (`packages/bridge/src/*`)**: Zod contracts (`contracts.ts`) preprocess and sanitize field machine keys to lowercase and reject duplicate field keys in `BlueprintDefSchema`. All 6 unit tests passing (`bridge.test.ts`).
-  - **Field Type Expansion & Dynamic Field Editing**:
-    - Added `ARRAY` (freeform item arrays) and `ARRAY_REF` (target blueprint reference arrays) across Prisma schema, Go backend, Data Service, Bridge, and Web UI.
-    - Full dynamic field editing with automatic type-specific slate wipe (wipes irrelevant bounds, options, or formulas when field type changes).
-  - **Clean Slate Architecture & UI Polish**:
-    - Dynamic fields start completely from scratch without hardcoded dummy fields (e.g. `gender`).
-    - Standardized 100% of dropdowns onto `shadcn-svelte` / `Bits UI` `Select` component.
-    - Added automatic route redirect back to `/world/schemas` or `/world/entities` upon successful save/edit.
-    - Added database reset script `./flush_db.sh`.
-  - **Graceful Monorepo Lifecycle Scripts**:
-    - Created robust `./dev.sh`, `./build.sh`, `./check.sh`, and `./test.sh` scripts with health check polling, process management, and graceful shutdown handling (SIGINT/SIGTERM with port freeing).
+  - **The UPDATE Pipe & Hanging EDIT Trees Architecture**:
+    - **Go API Backend (`apps/api/internal/world/*`, `apps/api/internal/handlers/*`)**:
+      - Implemented `EditNode` and `EditTree` engine (`revision_engine.go`) supporting non-destructive tree checkouts and infinite branching (`AddEditNode`, `CheckoutEditHead`, `GetActiveEditNode`).
+      - Added UPDATE Pipe endpoint `GET /api/v1/projects/{projectId}/timeline/pipe` returning narrative timeline events with their hanging Edit Trees and active EDIT heads.
+      - Added event and entity Edit Tree endpoints: `GET/POST /timeline/events/{id}/tree`, `POST /timeline/events/{id}/edits`, `POST /timeline/events/{id}/edits/{editId}/checkout`, `GET/POST /entities/{id}/tree`, `POST /entities/{id}/edits`, `POST /entities/{id}/edits/{editId}/checkout`.
+      - Comprehensive unit tests passing in `revision_engine_test.go` and `timeline_handler_test.go`.
+    - **TypeScript Data Service & Bridge (`packages/bridge`, `apps/data-service`)**:
+      - `EditNode<T>`, `EditTree<T>`, and `TimelineEventWithTree` contracts and Zod schemas in `@novwrite/bridge`.
+      - `EditTreeEngine<T>` and `RevisionEngine` in `@novwrite/data-service` with unit tests covering infinite branching and non-destructive checkout (`revisionEngine.test.ts`).
+    - **SvelteKit Web Studio (`apps/web`)**:
+      - Implemented `PipeTreeVisualizer` (`pipe-tree-visualizer.svelte`) rendering the horizontal glowing UPDATE timeline conduit alongside vertical hanging EDIT trees with SVG branch connections, active EDIT head indicators (`[⚡ ACTIVE EDIT HEAD]`), non-destructive checkout actions, branch creators, and delta diff inspectors.
+      - Integrated `PipeTreeVisualizer` into `/world/timeline` with smooth tab toggles between UPDATE Pipe & Edit Trees and Causal Stream & Time-Travel Scrubber.
+      - Updated `WorldStateStore` with persistent `eventEditTrees` and `entityEditTrees` with deterministic state folding.
   - **Verification Completed**:
     - `./check.sh`: Monorepo typecheck passed cleanly with 0 errors across all packages.
-    - `./test.sh`: 100% passing across `@novwrite/bridge` (6/6), `@novwrite/data-service` (34/34), Go API backend (all unit tests), and `@novwrite/web` (0 svelte-check diagnostics).
-    - Git commits signed with GPG and synced across `world` and `main` branches.
+    - `./test.sh`: 100% passing across `@novwrite/bridge` (6/6), `@novwrite/data-service` (39/39), Go API backend (all unit tests), and `@novwrite/web` (0 svelte-check diagnostics).
 - **Next Steps:**
-  - Proceed with planned Prose Studio (Novel Domain) phases or additional World Studio features.
+  - Synchronize across `world`, `main`, and `novel` branches with GPG-signed git commits.
+

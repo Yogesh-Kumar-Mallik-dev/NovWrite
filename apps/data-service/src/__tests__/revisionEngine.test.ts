@@ -201,4 +201,94 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
     assert.deepEqual(coord4.properties.titles, ["Apprentice", "One-Armed Swordsman"]);
     assert.equal(coord4.appliedEventsCount, 3);
   });
+
+  it("BLOCK_TEST_REVISION_ENGINE_001: should manage hanging EDIT tree with non-destructive checkout and infinite branching", () => {
+    const engine = new RevisionEngine();
+    const treeEngine = engine.getEventTreeEngine();
+    const event2Key = "ev-2";
+
+    // 1. Initial event edit: ED1
+    const ed1 = treeEngine.initTree(event2Key, {
+      id: "ev-2",
+      projectId: "proj-1",
+      title: "Battle of Dragon Peak",
+      narrativeSequenceNumber: 20,
+      chronologicalOrder: 20,
+      createdAt: new Date(),
+      effects: [],
+    }, "ED1: Initial draft");
+
+    assert.equal(ed1.revisionNumber, 0);
+    assert.equal(ed1.parentId, null);
+
+    // 2. Add ED2 from ED1
+    const ed2 = treeEngine.addEdit(event2Key, {
+      id: "ev-2",
+      projectId: "proj-1",
+      title: "Battle of Dragon Peak (Fierce)",
+      narrativeSequenceNumber: 20,
+      chronologicalOrder: 20,
+      createdAt: new Date(),
+      effects: [],
+    }, "TYPO_FIX", "ED2: Tuned title");
+    assert.equal(ed2.parentId, ed1.id);
+
+    // 3. Add ED3 from ED2
+    const ed3 = treeEngine.addEdit(event2Key, {
+      id: "ev-2",
+      projectId: "proj-1",
+      title: "Battle of Dragon Peak (Climax)",
+      narrativeSequenceNumber: 20,
+      chronologicalOrder: 20,
+      createdAt: new Date(),
+      effects: [{ id: "eff-10", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "hp", operation: "DECREMENT", value: 50 }],
+    }, "BASELINE_EDIT", "ED3: Added HP damage effect");
+    assert.equal(ed3.parentId, ed2.id);
+
+    // 4. Add ED4 from ED3 -> ED1 -> ED2 -> ED3 -> ED4 (EDIT head is on ED4)
+    const ed4 = treeEngine.addEdit(event2Key, {
+      id: "ev-2",
+      projectId: "proj-1",
+      title: "Battle of Dragon Peak (Cataclysm)",
+      narrativeSequenceNumber: 20,
+      chronologicalOrder: 20,
+      createdAt: new Date(),
+      effects: [{ id: "eff-11", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "hp", operation: "DECREMENT", value: 100 }],
+    }, "BASELINE_EDIT", "ED4: Increased damage to 100");
+
+    let tree = treeEngine.getTree(event2Key)!;
+    assert.equal(tree.activeEditId, ed4.id);
+    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Cataclysm)");
+
+    // 5. Non-destructive revert: Checkout ED3 as EDIT head
+    // ED4 must NOT be deleted; it remains a child of ED3
+    const checkedOut = treeEngine.checkoutHead(event2Key, ed3.id);
+    assert.equal(checkedOut.id, ed3.id);
+    tree = treeEngine.getTree(event2Key)!;
+    assert.equal(tree.activeEditId, ed3.id);
+    assert.equal(tree.nodes[ed3.id].childrenIds.includes(ed4.id), true);
+    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Climax)");
+
+    // 6. Add new branch ED5 from ED3 -> ED3 now has TWO children (ED4 and ED5), and EDIT head moves to ED5
+    const ed5 = treeEngine.addEdit(event2Key, {
+      id: "ev-2",
+      projectId: "proj-1",
+      title: "Battle of Dragon Peak (Tactical Retreat)",
+      narrativeSequenceNumber: 20,
+      chronologicalOrder: 20,
+      createdAt: new Date(),
+      effects: [{ id: "eff-12", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "status", operation: "SET", value: "RETREATING" }],
+    }, "RETROACTIVE_PLOT_FIX", "ED5: Alternate plot branch - retreat instead of damage", ed3.id);
+
+    tree = treeEngine.getTree(event2Key)!;
+    assert.equal(tree.activeEditId, ed5.id);
+    assert.equal(tree.nodes[ed3.id].childrenIds.length, 2);
+    assert.deepEqual(tree.nodes[ed3.id].childrenIds, [ed4.id, ed5.id]);
+    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Tactical Retreat)");
+
+    // 7. Verify we can switch back to ED4 at any time
+    treeEngine.checkoutHead(event2Key, ed4.id);
+    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Cataclysm)");
+  });
 });
+

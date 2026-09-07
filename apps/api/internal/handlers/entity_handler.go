@@ -27,20 +27,26 @@ type EntityStore interface {
 	GetRevisions(projectID, entityID string) []world.EntityRevision
 	RecordRevision(projectID string, revision world.EntityRevision) world.EntityRevision
 	GetRevision(projectID, entityID, revisionID string) (*world.EntityRevision, bool)
+
+	// Hanging Edit Tree
+	GetEntityTree(projectID, entityID string) (*world.EditTree, bool)
+	SaveEntityTree(projectID, entityID string, tree world.EditTree) world.EditTree
 }
 
 // InMemoryEntityStore provides an in-memory thread-safe store for development & testing.
 type InMemoryEntityStore struct {
-	mu        sync.RWMutex
-	entities  map[string]map[string]world.EntityItem        // projectID -> entityID -> EntityItem
-	revisions map[string]map[string][]world.EntityRevision // projectID -> entityID -> []EntityRevision
+	mu          sync.RWMutex
+	entities    map[string]map[string]world.EntityItem        // projectID -> entityID -> EntityItem
+	revisions   map[string]map[string][]world.EntityRevision // projectID -> entityID -> []EntityRevision
+	entityTrees map[string]map[string]world.EditTree      // projectID -> entityID -> EditTree
 }
 
 // NewInMemoryEntityStore creates a new in-memory entity store.
 func NewInMemoryEntityStore() *InMemoryEntityStore {
 	return &InMemoryEntityStore{
-		entities:  make(map[string]map[string]world.EntityItem),
-		revisions: make(map[string]map[string][]world.EntityRevision),
+		entities:    make(map[string]map[string]world.EntityItem),
+		revisions:   make(map[string]map[string][]world.EntityRevision),
+		entityTrees: make(map[string]map[string]world.EditTree),
 	}
 }
 
@@ -150,6 +156,32 @@ func (s *InMemoryEntityStore) GetRevision(projectID, entityID, revisionID string
 		}
 	}
 	return nil, false
+}
+
+func (s *InMemoryEntityStore) GetEntityTree(projectID, entityID string) (*world.EditTree, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	pMap, ok := s.entityTrees[projectID]
+	if !ok {
+		return nil, false
+	}
+	tree, found := pMap[entityID]
+	if !found {
+		return nil, false
+	}
+	return &tree, true
+}
+
+func (s *InMemoryEntityStore) SaveEntityTree(projectID, entityID string, tree world.EditTree) world.EditTree {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, ok := s.entityTrees[projectID]; !ok {
+		s.entityTrees[projectID] = make(map[string]world.EditTree)
+	}
+	s.entityTrees[projectID][entityID] = tree
+	return tree
 }
 
 // EntityHandler handles REST operations for Entities and their bitemporal revisions.
@@ -646,4 +678,154 @@ func (h *EntityHandler) ResolveCoordinate(w http.ResponseWriter, r *http.Request
 	resolved := world.ResolveBitemporalCoordinate(baseRev, targetSeq, events)
 	httputil.RespondJSON(w, r, http.StatusOK, resolved)
 }
+
+// GetTree handles GET /api/v1/projects/{projectId}/entities/{entityId}/tree
+func (h *EntityHandler) GetTree(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	if projectID == "" {
+		projectID = "default"
+	}
+	entityID := chi.URLParam(r, "entityId")
+
+	ent, found := h.store.Get(projectID, entityID)
+	if !found {
+		httputil.RespondNotFound(w, r, "Entity", entityID)
+		return
+	}
+
+	tree, treeFound := h.store.GetEntityTree(projectID, entityID)
+	if !treeFound {
+		t := world.NewEditTree(*ent, "Root Entity (ED0)", "Initial entity creation", world.RevTypeBaselineEdit)
+		tree = &t
+		h.store.SaveEntityTree(projectID, entityID, t)
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, tree)
+}
+
+// AddEdit handles POST /api/v1/projects/{projectId}/entities/{entityId}/edits
+func (h *EntityHandler) AddEdit(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	if projectID == "" {
+		projectID = "default"
+	}
+	entityID := chi.URLParam(r, "entityId")
+
+	ent, found := h.store.Get(projectID, entityID)
+	if !found {
+		httputil.RespondNotFound(w, r, "Entity", entityID)
+		return
+	}
+
+	var req struct {
+		Label          string             `json:"label"`
+		AuthorNote     string             `json:"authorNote"`
+		Type           world.RevisionType `json:"type"`
+		TargetParentID *string            `json:"targetParentId"`
+		Entity         world.EntityItem   `json:"entity"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.RespondBadRequest(w, r, fmt.Sprintf("Malformed JSON payload: %v", err), "MALFORMED_JSON")
+		return
+	}
+
+	if req.Type == "" {
+		req.Type = world.RevTypeBaselineEdit
+	}
+	req.Entity.ID = entityID
+	req.Entity.ProjectID = projectID
+	if req.Entity.BlueprintID == "" {
+		req.Entity.BlueprintID = ent.BlueprintID
+	}
+
+	bp, bpFound := h.blueprintStore.Get(projectID, req.Entity.BlueprintID)
+	if !bpFound {
+		httputil.RespondNotFound(w, r, "Blueprint", req.Entity.BlueprintID)
+		return
+	}
+
+	sanitized, errs := world.ValidateAndSanitizeEntityItem(*bp, req.Entity)
+	if len(errs) > 0 {
+		var invalidParams []httputil.InvalidParam
+		for _, e := range errs {
+			invalidParams = append(invalidParams, httputil.InvalidParam{
+				Name:          e.PropertyKey,
+				Reason:        e.Message,
+				ReceivedValue: e.ReceivedValue,
+			})
+		}
+		httputil.RespondValidationProblem(w, r, "Entity properties validation failed.", invalidParams)
+		return
+	}
+
+	saved := h.store.Save(projectID, *sanitized)
+
+	tree, treeFound := h.store.GetEntityTree(projectID, entityID)
+	if !treeFound {
+		t := world.NewEditTree(*ent, "Root Entity (ED0)", "Initial entity creation", world.RevTypeBaselineEdit)
+		tree = &t
+	}
+
+	newNode, err := world.AddEditNode(tree, saved, req.Label, req.AuthorNote, req.Type, req.TargetParentID)
+	if err != nil {
+		httputil.RespondBadRequest(w, r, err.Error(), "INVALID_EDIT_NODE")
+		return
+	}
+
+	h.store.SaveEntityTree(projectID, entityID, *tree)
+
+	httputil.RespondJSON(w, r, http.StatusCreated, map[string]interface{}{
+		"node":     newNode,
+		"editTree": tree,
+		"entity":   saved,
+	})
+}
+
+// CheckoutEdit handles POST /api/v1/projects/{projectId}/entities/{entityId}/edits/{editId}/checkout
+func (h *EntityHandler) CheckoutEdit(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	if projectID == "" {
+		projectID = "default"
+	}
+	entityID := chi.URLParam(r, "entityId")
+	editID := chi.URLParam(r, "editId")
+
+	ent, found := h.store.Get(projectID, entityID)
+	if !found {
+		httputil.RespondNotFound(w, r, "Entity", entityID)
+		return
+	}
+
+	tree, treeFound := h.store.GetEntityTree(projectID, entityID)
+	if !treeFound {
+		t := world.NewEditTree(*ent, "Root Entity (ED0)", "Initial entity creation", world.RevTypeBaselineEdit)
+		tree = &t
+	}
+
+	node, err := world.CheckoutEditHead(tree, editID)
+	if err != nil {
+		httputil.RespondNotFound(w, r, "EditNode", editID)
+		return
+	}
+
+	h.store.SaveEntityTree(projectID, entityID, *tree)
+
+	// Restore snapshot to active entity state
+	if snapBytes, errJSON := json.Marshal(node.Snapshot); errJSON == nil {
+		var restoredEntity world.EntityItem
+		if errUnmarshal := json.Unmarshal(snapBytes, &restoredEntity); errUnmarshal == nil && restoredEntity.ID != "" {
+			restoredEntity.ID = entityID
+			restoredEntity.ProjectID = projectID
+			h.store.Save(projectID, restoredEntity)
+		}
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]interface{}{
+		"activeEditId": tree.ActiveEditID,
+		"node":         node,
+		"editTree":     tree,
+	})
+}
+
 

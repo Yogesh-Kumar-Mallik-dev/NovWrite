@@ -309,3 +309,23 @@ export function validateBitemporalCoordinateQuery(payload: unknown) {
   return result.data;
 }
 
+export const EditNodeSchema = z.object({
+  id: z.string(),
+  parentId: z.string().nullable(),
+  childrenIds: z.array(z.string()),
+  revisionNumber: z.number().int().nonnegative(),
+  label: z.string().optional(),
+  authorNote: z.string().optional(),
+  type: RevisionTypeSchema,
+  createdAt: z.string(),
+  patch: z.unknown().optional(),
+  snapshot: z.unknown(),
+});
+
+export const EditTreeSchema = z.object({
+  rootId: z.string(),
+  activeEditId: z.string(),
+  nodes: z.record(EditNodeSchema),
+});
+
+

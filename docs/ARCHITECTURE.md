@@ -92,6 +92,41 @@ NovWrite cleanly separates world-building archetypes from concrete instantiated 
   - Status changes (e.g. `Elder Han: active -> deceased`)
 - **Canonical State Reconstruction:** Reconstructs the exact state of any entity or the entire universe at any historical chapter/scene index by folding ordered event effects over the nearest base snapshot.
 
+### 2.4.1 The UPDATE Pipe & Hanging EDIT Trees (Dual-Axis Reversible DAG Model)
+
+NovWrite separates story progression from authorial drafting through an orthogonal dual-axis architecture:
+
+```text
+======================= THE UPDATE PIPE (Plot Axis / T_story) =======================
+  [ Event 0 ] ════════► [ Event 1 ] ════════► [ Event 2 ] ════════► [ Event 3 ]
+       │                     │                     │                     │
+       ▼                     ▼                     ▼                     ▼
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│  Edit Tree 0 │      │  Edit Tree 1 │      │  Edit Tree 2 │      │  Edit Tree 3 │
+│  ED0 (Head)  │      │  ED0 -> ED1  │      │     ED0      │      │  ED0 -> ED1  │
+└──────────────┘      └──────────────┘      │      │       │      └──────────────┘
+                                            │     ED1      │
+                                            │      │       │
+                                            │     ED2      │
+                                            │      │       │
+                                            │     ED3 ◄───[ACTIVE EDIT HEAD]
+                                            │    /   \     │
+                                            │  ED4   ED5   │  (Infinite Branching DAG)
+                                            └──────────────┘
+```
+
+1. **The UPDATE Pipe (Horizontal Plot Timeline):**
+   - Sequential canonical story milestones (`event0 ---> event1 ---> event2 ---> event3 ---> event4`).
+   - Carries sequence numbers and chronological universe years.
+   - When folding universe state, each event evaluates using the snapshot of its current **Active EDIT Head**.
+2. **The Hanging EDIT Trees (Vertical Authorial Revision DAGs):**
+   - Every event and entity on the pipe has its own independent `EditTree<T>` DAG.
+   - Each node (`EditNode`) stores an immutable snapshot, author note, revision type (`TYPO_FIX`, `BASELINE_EDIT`, `RETROACTIVE_PLOT_FIX`, `REVERT`), timestamp, delta patch, and pointers to infinite children branches (`childrenIds`).
+3. **Non-Destructive Checkout & Infinite Branching:**
+   - **Reverting:** Checking out an earlier edit (e.g., from `ED4` back to `ED3`) moves the `activeEditId` pointer to `ED3` without deleting `ED4`. `ED4` remains a valid branch of `ED3`.
+   - **Branching:** When a new edit `ED5` is added while `ED3` is active, `ED3` now possesses multiple child branches (`[ED4, ED5]`), with the `activeEditId` advancing to `ED5`.
+   - Any parent node in the tree can have infinite child branches, guaranteeing complete non-destructive reversibility and auditability.
+
 ### 2.5 Continuity & Rules Engine (`continuity`)
 
 - **Rule Definitions (`ContinuityRule`):** System and author-defined invariants:

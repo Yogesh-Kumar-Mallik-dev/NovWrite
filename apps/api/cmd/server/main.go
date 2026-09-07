@@ -112,12 +112,24 @@ func main() {
 				r.Post("/{entityId}/revisions", entityHandler.CreateRevision)
 				r.Post("/{entityId}/revisions/{revisionId}/revert", entityHandler.RevertRevision)
 				r.Get("/{entityId}/coordinate", entityHandler.ResolveCoordinate)
+
+				// Hanging Edit Tree
+				r.Get("/{entityId}/tree", entityHandler.GetTree)
+				r.Post("/{entityId}/edits", entityHandler.AddEdit)
+				r.Post("/{entityId}/edits/{editId}/checkout", entityHandler.CheckoutEdit)
 			})
 
-			// Timeline & Events
+			// Timeline & UPDATE Pipe
 			r.Route("/timeline", func(r chi.Router) {
+				r.Get("/pipe", timelineHandler.GetPipe)
 				r.Get("/events", timelineHandler.ListEvents)
 				r.Post("/events", timelineHandler.CreateEvent)
+				r.Get("/events/{eventId}", timelineHandler.GetEvent)
+				r.Put("/events/{eventId}", timelineHandler.UpdateEvent)
+				r.Delete("/events/{eventId}", timelineHandler.DeleteEvent)
+				r.Get("/events/{eventId}/tree", timelineHandler.GetEventTree)
+				r.Post("/events/{eventId}/edits", timelineHandler.AddEventEdit)
+				r.Post("/events/{eventId}/edits/{editId}/checkout", timelineHandler.CheckoutEventEdit)
 				r.Get("/state", timelineHandler.GetState)
 			})
 		})

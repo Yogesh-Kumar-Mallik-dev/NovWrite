@@ -236,7 +236,149 @@ func CloneEntityItem(item EntityItem) EntityItem {
 	return clone
 }
 
+// EditNode represents an immutable node in a branching edit tree.
+type EditNode struct {
+	ID             string       `json:"id"`
+	ParentID       *string      `json:"parentId"`
+	ChildrenIDs    []string     `json:"childrenIds"`
+	RevisionNumber int          `json:"revisionNumber"`
+	Label          string       `json:"label,omitempty"`
+	AuthorNote     string       `json:"authorNote,omitempty"`
+	Type           RevisionType `json:"type"`
+	CreatedAt      string       `json:"createdAt"`
+	Patch          interface{}  `json:"patch,omitempty"`
+	Snapshot       interface{}  `json:"snapshot"`
+}
+
+// EditTree represents a non-destructive DAG of edits hanging from a pipeline node.
+type EditTree struct {
+	RootID       string              `json:"rootId"`
+	ActiveEditID string              `json:"activeEditId"` // Current EDIT Head
+	Nodes        map[string]EditNode `json:"nodes"`
+}
+
+// TimelineEventWithTree pairs a pipeline event with its hanging edit tree.
+type TimelineEventWithTree struct {
+	Event    TimelineEvent `json:"event"`
+	EditTree EditTree      `json:"editTree"`
+}
+
 // GenerateRevisionID generates a unique revision ID.
 func GenerateRevisionID() string {
 	return fmt.Sprintf("rev-%x-%d", time.Now().UnixNano(), time.Now().Unix()%1000)
+}
+
+// GenerateEditID generates a unique edit node ID.
+func GenerateEditID() string {
+	return fmt.Sprintf("ed-%x-%d", time.Now().UnixNano(), time.Now().Unix()%1000)
+}
+
+// NewEditTree creates an edit tree initialized with a root edit node (ED0).
+func NewEditTree(initialSnapshot interface{}, label, note string, revType RevisionType) EditTree {
+	rootID := GenerateEditID()
+	if revType == "" {
+		revType = RevTypeBaselineEdit
+	}
+	if label == "" {
+		label = "Root Edit (ED0)"
+	}
+	if note == "" {
+		note = "Initial root edit"
+	}
+
+	rootNode := EditNode{
+		ID:             rootID,
+		ParentID:       nil,
+		ChildrenIDs:    []string{},
+		RevisionNumber: 0,
+		Label:          label,
+		AuthorNote:     note,
+		Type:           revType,
+		CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
+		Snapshot:       initialSnapshot,
+	}
+
+	nodes := make(map[string]EditNode)
+	nodes[rootID] = rootNode
+
+	return EditTree{
+		RootID:       rootID,
+		ActiveEditID: rootID,
+		Nodes:        nodes,
+	}
+}
+
+// AddEditNode adds a new edit node branching from targetParentID (or active EDIT head if nil).
+// Advances the active EDIT head to this new node.
+func AddEditNode(tree *EditTree, snapshot interface{}, label, note string, revType RevisionType, targetParentID *string) (EditNode, error) {
+	if tree.Nodes == nil {
+		tree.Nodes = make(map[string]EditNode)
+	}
+
+	parentID := tree.ActiveEditID
+	if targetParentID != nil && *targetParentID != "" {
+		parentID = *targetParentID
+	}
+
+	parentNode, exists := tree.Nodes[parentID]
+	if !exists {
+		return EditNode{}, fmt.Errorf("parent edit node '%s' not found in tree", parentID)
+	}
+
+	newID := GenerateEditID()
+	revNum := len(tree.Nodes)
+	if label == "" {
+		label = fmt.Sprintf("Edit #%d (ED%d)", revNum, revNum)
+	}
+	if revType == "" {
+		revType = RevTypeBaselineEdit
+	}
+
+	newNode := EditNode{
+		ID:             newID,
+		ParentID:       &parentID,
+		ChildrenIDs:    []string{},
+		RevisionNumber: revNum,
+		Label:          label,
+		AuthorNote:     note,
+		Type:           revType,
+		CreatedAt:      time.Now().UTC().Format(time.RFC3339Nano),
+		Snapshot:       snapshot,
+	}
+
+	// Append child to parent node
+	parentNode.ChildrenIDs = append(parentNode.ChildrenIDs, newID)
+	tree.Nodes[parentID] = parentNode
+
+	// Insert new node and advance EDIT head
+	tree.Nodes[newID] = newNode
+	tree.ActiveEditID = newID
+
+	return newNode, nil
+}
+
+// CheckoutEditHead switches the active EDIT head to targetEditID without deleting any children branches.
+func CheckoutEditHead(tree *EditTree, targetEditID string) (*EditNode, error) {
+	if tree.Nodes == nil {
+		return nil, fmt.Errorf("edit tree has no nodes")
+	}
+	node, exists := tree.Nodes[targetEditID]
+	if !exists {
+		return nil, fmt.Errorf("edit node '%s' not found in tree", targetEditID)
+	}
+
+	tree.ActiveEditID = targetEditID
+	return &node, nil
+}
+
+// GetActiveEditNode returns the active EDIT head node and its snapshot.
+func GetActiveEditNode(tree *EditTree) (*EditNode, bool) {
+	if tree.Nodes == nil {
+		return nil, false
+	}
+	node, exists := tree.Nodes[tree.ActiveEditID]
+	if !exists {
+		return nil, false
+	}
+	return &node, true
 }

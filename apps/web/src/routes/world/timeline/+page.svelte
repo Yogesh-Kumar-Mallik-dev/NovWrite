@@ -34,6 +34,7 @@
     DialogFooter,
   } from "$lib/components/ui/dialog";
   import { ConfirmDialog, EmptyState, Select } from "$lib/components/ui";
+  import PipeTreeVisualizer from "$lib/components/world/pipe-tree-visualizer.svelte";
   import { toast } from "$lib/stores/toastStore.svelte";
   import {
     worldStore,
@@ -42,6 +43,12 @@
     type EffectOperation,
     type EntityItem,
   } from "$lib/stores/worldStore.svelte";
+
+  // Tab View Mode: 'pipe' (UPDATE Pipe & Edit Trees) | 'stream' (Event List & Scrubber)
+  let activeTimelineTab = $state<"pipe" | "stream">("pipe");
+
+  // Selected event ID on pipe
+  let selectedPipeEventId = $state<string | null>(null);
 
   // Confirmation State
   let eventToDelete = $state<TimelineEventItem | null>(null);
@@ -267,46 +274,70 @@
     <div>
       <h2 class="text-lg font-bold tracking-tight text-foreground flex items-center gap-2">
         <Clock class="w-5 h-5 text-primary" />
-        <span>Causal Timeline & Delta Event Log</span>
+        <span>Causal Timeline & UPDATE Pipe</span>
       </h2>
       <p class="text-xs text-muted-foreground mt-0.5">
-        Dual-indexed event sourcing stream powering time-travel state reconstruction across 1st-Class Entities & Sub-Schemas.
+        Dual-indexed plot timeline stream with hanging non-destructive EDIT branching trees.
       </p>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <!-- Dual Index Mode Switcher Button Group -->
+      <!-- Main Visual View Switcher (Pipe & Trees vs Stream & Scrubber) -->
       <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs">
         <Button
-          variant={viewMode === "narrative" ? "default" : "ghost"}
+          variant={activeTimelineTab === "pipe" ? "default" : "ghost"}
           size="sm"
-          onclick={() => (viewMode = "narrative")}
-          class="h-7 text-xs flex items-center gap-1.5"
+          onclick={() => (activeTimelineTab = "pipe")}
+          class="h-7 text-xs flex items-center gap-1.5 font-medium"
         >
-          <BookOpen class="w-3.5 h-3.5" />
-          <span>Narrative Sequence (#)</span>
+          <Workflow class="w-3.5 h-3.5 text-primary" />
+          <span>UPDATE Pipe & Edit Trees</span>
         </Button>
         <Button
-          variant={viewMode === "chronological" ? "default" : "ghost"}
+          variant={activeTimelineTab === "stream" ? "default" : "ghost"}
           size="sm"
-          onclick={() => (viewMode = "chronological")}
-          class="h-7 text-xs flex items-center gap-1.5"
+          onclick={() => (activeTimelineTab = "stream")}
+          class="h-7 text-xs flex items-center gap-1.5 font-medium"
         >
-          <Clock class="w-3.5 h-3.5" />
-          <span>Chronological Order (Y)</span>
+          <BookOpen class="w-3.5 h-3.5 text-purple-500" />
+          <span>Stream & Time-Travel</span>
         </Button>
       </div>
 
-      <!-- Toggle State Folding Inspector -->
-      <Button
-        variant={isTimeTravelOpen ? "secondary" : "outline"}
-        size="sm"
-        onclick={() => (isTimeTravelOpen = !isTimeTravelOpen)}
-        class="h-8 text-xs flex items-center gap-1.5"
-      >
-        <History class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-        <span>{isTimeTravelOpen ? "Hide Scrubber" : "Time-Travel Scrubber"}</span>
-      </Button>
+      {#if activeTimelineTab === "stream"}
+        <!-- Dual Index Mode Switcher Button Group -->
+        <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs">
+          <Button
+            variant={viewMode === "narrative" ? "default" : "ghost"}
+            size="sm"
+            onclick={() => (viewMode = "narrative")}
+            class="h-7 text-xs flex items-center gap-1.5"
+          >
+            <BookOpen class="w-3.5 h-3.5" />
+            <span>Narrative (#)</span>
+          </Button>
+          <Button
+            variant={viewMode === "chronological" ? "default" : "ghost"}
+            size="sm"
+            onclick={() => (viewMode = "chronological")}
+            class="h-7 text-xs flex items-center gap-1.5"
+          >
+            <Clock class="w-3.5 h-3.5" />
+            <span>Chrono (Y)</span>
+          </Button>
+        </div>
+
+        <!-- Toggle State Folding Inspector -->
+        <Button
+          variant={isTimeTravelOpen ? "secondary" : "outline"}
+          size="sm"
+          onclick={() => (isTimeTravelOpen = !isTimeTravelOpen)}
+          class="h-8 text-xs flex items-center gap-1.5"
+        >
+          <History class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          <span>{isTimeTravelOpen ? "Hide Scrubber" : "Time-Travel Scrubber"}</span>
+        </Button>
+      {/if}
 
       <!-- Log Event Button -->
       <Button size="sm" onclick={openAddModal} class="h-8 text-xs flex items-center gap-1.5">
@@ -316,11 +347,20 @@
     </div>
   </div>
 
-  <!-- Interactive Time-Travel Sequence Scrubber & State Snapshot Inspector -->
-  {#if isTimeTravelOpen}
-    <Card id="time-travel-fold-inspector" class="border-border bg-card p-5 space-y-4 shadow-sm transition-colors scroll-mt-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-        <div class="flex items-center gap-2.5">
+  <!-- Tab Content: Pipe & Trees Visualizer vs Stream & Scrubber -->
+  {#if activeTimelineTab === "pipe"}
+    <PipeTreeVisualizer
+      bind:selectedEventId={selectedPipeEventId}
+      onSelectEvent={(ev) => {
+        scrubSequence = ev.narrativeSequenceNumber;
+      }}
+    />
+  {:else}
+    <!-- Interactive Time-Travel Sequence Scrubber & State Snapshot Inspector -->
+    {#if isTimeTravelOpen}
+      <Card id="time-travel-fold-inspector" class="border-border bg-card p-5 space-y-4 shadow-sm transition-colors scroll-mt-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+          <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
             <Sliders class="w-4 h-4" />
           </div>
@@ -576,6 +616,7 @@
       {/each}
     {/if}
   </div>
+  {/if}
 
   <!-- Log / Edit Timeline Event Modal -->
   {#if isModalOpen}

@@ -137,7 +137,9 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/projects/{projectId}/entities/{entityId}/revisions` — Explicitly record an authorial revision with revision type (`TYPO_FIX`, `BASELINE_EDIT`, `RETROACTIVE_PLOT_FIX`) and author note.
 - `POST /api/v1/projects/{projectId}/entities/{entityId}/revisions/{revisionId}/revert` — Revert entity to a historical revision state (creates an immutable `REVERT` revision preserving full audit history).
 - `GET /api/v1/projects/{projectId}/entities/{entityId}/coordinate?sequenceNumber={seq}&revisionId={rev}` — Resolve exact deterministic state at any 2D coordinate: $(T_{\text{narrative}}, T_{\text{revision}})$. Returns base revision snapshot folded with all story event mutations up to `sequenceNumber`.
-
+- `GET /api/v1/projects/{projectId}/entities/{entityId}/tree` — Retrieve the non-destructive hanging Edit Tree for an entity.
+- `POST /api/v1/projects/{projectId}/entities/{entityId}/edits` — Branch a new edit node on the entity tree.
+- `POST /api/v1/projects/{projectId}/entities/{entityId}/edits/{editId}/checkout` — Non-destructively switch the active EDIT head to `editId` (child branches are preserved).
 
 ### 3.4 Formulas Engine
 - `POST /api/v1/formulas/evaluate` — Test and evaluate mathematical and logical formulas with sample context.
@@ -146,10 +148,17 @@ Errors return machine-readable problem details. Example validation error (`422 U
   - Context keys are case-insensitive.
 - `POST /api/v1/formulas/validate` — Validate formula syntax and extract referenced variables.
 
-### 3.5 Timeline & Deterministic State Folding
+### 3.5 Timeline, UPDATE Pipe & Hanging EDIT Trees
+- `GET /api/v1/projects/{projectId}/timeline/pipe` — Retrieve the full UPDATE horizontal pipeline containing all chronological narrative events alongside their hanging EDIT trees, active EDIT head pointers, and resolved snapshots.
 - `GET /api/v1/projects/{projectId}/timeline/events` — Retrieve chronological events with pagination.
-- `POST /api/v1/projects/{projectId}/timeline/events` — Append an event with structured mutation effects (`SET`, `INCREMENT`, `DECREMENT`, `APPEND`, `REMOVE`, `TRANSFER`).
-- `GET /api/v1/projects/{projectId}/timeline/state?sequenceNumber={seq}&entityId={id}` — Fold and compute canonical entity state at a given sequence number.
+- `POST /api/v1/projects/{projectId}/timeline/events` — Append an event with structured mutation effects (`SET`, `INCREMENT`, `DECREMENT`, `APPEND`, `REMOVE`, `TRANSFER`). Automatically initializes root edit node `ED0`.
+- `GET /api/v1/projects/{projectId}/timeline/events/{eventId}` — Retrieve individual timeline event.
+- `PUT /api/v1/projects/{projectId}/timeline/events/{eventId}` — Update timeline event.
+- `DELETE /api/v1/projects/{projectId}/timeline/events/{eventId}` — Remove timeline event.
+- `GET /api/v1/projects/{projectId}/timeline/events/{eventId}/tree` — Retrieve the event's hanging EDIT tree DAG.
+- `POST /api/v1/projects/{projectId}/timeline/events/{eventId}/edits` — Branch a new edit node onto the event tree (moves active EDIT head to the new node).
+- `POST /api/v1/projects/{projectId}/timeline/events/{eventId}/edits/{editId}/checkout` — Non-destructively checkout an edit node as active EDIT head (preserves all child branches).
+- `GET /api/v1/projects/{projectId}/timeline/state?seq={seq}` — Fold and compute canonical entity state at a given sequence number.
 
 ### 3.6 World Domain Bridge
 - `POST /api/v1/bridge/ground` — Ground a scene with folded canonical state for referenced entities.

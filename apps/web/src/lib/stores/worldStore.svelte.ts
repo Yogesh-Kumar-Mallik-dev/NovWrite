@@ -225,6 +225,30 @@ export interface BitemporalEntityState {
   }>;
 }
 
+export interface EditNode<T = unknown> {
+  id: string;
+  parentId: string | null;
+  childrenIds: string[];
+  revisionNumber: number;
+  label?: string;
+  authorNote?: string;
+  type: RevisionType;
+  createdAt: string;
+  patch?: unknown;
+  snapshot: T;
+}
+
+export interface EditTree<T = unknown> {
+  rootId: string;
+  activeEditId: string; // Current EDIT Head
+  nodes: Record<string, EditNode<T>>;
+}
+
+export interface TimelineEventWithTree {
+  event: TimelineEventItem;
+  editTree: EditTree<TimelineEventItem>;
+}
+
 const WORLD_STATE_STORAGE_KEY = 'novwrite_world_state_v1';
 
 export class WorldStateStore {
@@ -234,6 +258,8 @@ export class WorldStateStore {
   rules = $state<InvariantRuleItem[]>([]);
   violations = $state<ContinuityViolationItem[]>([]);
   revisions = $state<Record<string, EntityRevision[]>>({});
+  eventEditTrees = $state<Record<string, EditTree<TimelineEventItem>>>({});
+  entityEditTrees = $state<Record<string, EditTree<EntityItem>>>({});
 
   constructor() {
     this.loadFromStorage();
@@ -252,6 +278,8 @@ export class WorldStateStore {
         if (Array.isArray(parsed.rules)) this.rules = parsed.rules;
         if (Array.isArray(parsed.violations)) this.violations = parsed.violations;
         if (parsed.revisions && typeof parsed.revisions === 'object') this.revisions = parsed.revisions;
+        if (parsed.eventEditTrees && typeof parsed.eventEditTrees === 'object') this.eventEditTrees = parsed.eventEditTrees;
+        if (parsed.entityEditTrees && typeof parsed.entityEditTrees === 'object') this.entityEditTrees = parsed.entityEditTrees;
       }
     } catch (e) {
       console.warn('[WorldStore] Failed to load state from localStorage:', e);
@@ -268,6 +296,8 @@ export class WorldStateStore {
         rules: this.rules,
         violations: this.violations,
         revisions: this.revisions,
+        eventEditTrees: this.eventEditTrees,
+        entityEditTrees: this.entityEditTrees,
       };
       localStorage.setItem(WORLD_STATE_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
@@ -282,6 +312,8 @@ export class WorldStateStore {
     this.rules = [];
     this.violations = [];
     this.revisions = {};
+    this.eventEditTrees = {};
+    this.entityEditTrees = {};
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
     }
@@ -878,6 +910,7 @@ export class WorldStateStore {
       createdAt: eventData.createdAt || new Date().toISOString(),
     };
     this.timelineEvents.push(newEvent);
+    this.getEventEditTree(newEvent.id);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
     return newEvent;
@@ -893,6 +926,7 @@ export class WorldStateStore {
       ...this.timelineEvents[idx],
       ...updates,
     };
+    this.addEventEdit(id, this.timelineEvents[idx], "Updated timeline event properties", "BASELINE_EDIT");
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
     return this.timelineEvents[idx];
@@ -902,9 +936,209 @@ export class WorldStateStore {
     const idx = this.timelineEvents.findIndex((e) => e.id === id);
     if (idx === -1) return false;
     this.timelineEvents.splice(idx, 1);
+    delete this.eventEditTrees[id];
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
     return true;
+  }
+
+  // =====================================
+  // Event & Entity Hanging Edit Trees
+  // =====================================
+
+  getEventEditTree(eventId: string): EditTree<TimelineEventItem> {
+    if (!this.eventEditTrees[eventId]) {
+      const ev = this.getTimelineEvent(eventId);
+      const rootId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+      const rootSnapshot: TimelineEventItem = ev
+        ? JSON.parse(JSON.stringify(ev))
+        : {
+            id: eventId,
+            narrativeSequenceNumber: 0,
+            chronologicalOrder: 0,
+            title: "Root Event Draft",
+            description: "",
+            effects: [],
+          };
+
+      const rootNode: EditNode<TimelineEventItem> = {
+        id: rootId,
+        parentId: null,
+        childrenIds: [],
+        revisionNumber: 0,
+        label: "Root Draft (ED0)",
+        authorNote: "Initial event creation",
+        type: "BASELINE_EDIT",
+        createdAt: new Date().toISOString(),
+        snapshot: rootSnapshot,
+      };
+
+      this.eventEditTrees[eventId] = {
+        rootId,
+        activeEditId: rootId,
+        nodes: {
+          [rootId]: rootNode,
+        },
+      };
+      this.saveToStorage();
+    }
+    return this.eventEditTrees[eventId];
+  }
+
+  addEventEdit(
+    eventId: string,
+    snapshot: TimelineEventItem,
+    authorNote?: string,
+    type: RevisionType = "BASELINE_EDIT",
+    targetParentId?: string,
+  ): EditNode<TimelineEventItem> {
+    const tree = this.getEventEditTree(eventId);
+    const parentId = targetParentId || tree.activeEditId;
+    const parentNode = tree.nodes[parentId];
+
+    const newId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+    const totalCount = Object.keys(tree.nodes).length;
+
+    const newNode: EditNode<TimelineEventItem> = {
+      id: newId,
+      parentId: parentNode ? parentId : null,
+      childrenIds: [],
+      revisionNumber: totalCount,
+      label: `Edit #${totalCount} (ED${totalCount})`,
+      authorNote: authorNote?.trim() || undefined,
+      type,
+      createdAt: new Date().toISOString(),
+      snapshot: JSON.parse(JSON.stringify(snapshot)),
+    };
+
+    if (parentNode) {
+      parentNode.childrenIds.push(newId);
+    }
+    tree.nodes[newId] = newNode;
+    tree.activeEditId = newId;
+
+    // Sync active event in timelineEvents array
+    const evIdx = this.timelineEvents.findIndex((e) => e.id === eventId);
+    if (evIdx !== -1) {
+      this.timelineEvents[evIdx] = JSON.parse(JSON.stringify(snapshot));
+      this.recomputeAllEntityFormulas();
+    }
+
+    this.saveToStorage();
+    return newNode;
+  }
+
+  checkoutEventEdit(eventId: string, targetEditId: string): EditNode<TimelineEventItem> | undefined {
+    const tree = this.getEventEditTree(eventId);
+    const targetNode = tree.nodes[targetEditId];
+    if (!targetNode) return undefined;
+
+    // Switch EDIT head non-destructively
+    tree.activeEditId = targetEditId;
+
+    // Sync restored event snapshot into active list
+    const evIdx = this.timelineEvents.findIndex((e) => e.id === eventId);
+    if (evIdx !== -1) {
+      this.timelineEvents[evIdx] = JSON.parse(JSON.stringify(targetNode.snapshot));
+      this.recomputeAllEntityFormulas();
+    }
+
+    this.saveToStorage();
+    return targetNode;
+  }
+
+  getEntityEditTree(entityId: string): EditTree<EntityItem> {
+    if (!this.entityEditTrees[entityId]) {
+      const ent = this.getEntity(entityId);
+      const rootId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+      const rootSnapshot: EntityItem = ent
+        ? JSON.parse(JSON.stringify(ent))
+        : {
+            id: entityId,
+            name: "Entity",
+            blueprintId: "",
+            blueprintName: "",
+            category: "",
+            description: "",
+            properties: {},
+            lastMutatedSeqNumber: 0,
+          };
+
+      const rootNode: EditNode<EntityItem> = {
+        id: rootId,
+        parentId: null,
+        childrenIds: [],
+        revisionNumber: 0,
+        label: "Root Entity Snapshot (ED0)",
+        authorNote: "Initial entity creation",
+        type: "BASELINE_EDIT",
+        createdAt: new Date().toISOString(),
+        snapshot: rootSnapshot,
+      };
+
+      this.entityEditTrees[entityId] = {
+        rootId,
+        activeEditId: rootId,
+        nodes: {
+          [rootId]: rootNode,
+        },
+      };
+      this.saveToStorage();
+    }
+    return this.entityEditTrees[entityId];
+  }
+
+  addEntityEdit(
+    entityId: string,
+    snapshot: EntityItem,
+    authorNote?: string,
+    type: RevisionType = "BASELINE_EDIT",
+    targetParentId?: string,
+  ): EditNode<EntityItem> {
+    const tree = this.getEntityEditTree(entityId);
+    const parentId = targetParentId || tree.activeEditId;
+    const parentNode = tree.nodes[parentId];
+
+    const newId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+    const totalCount = Object.keys(tree.nodes).length;
+
+    const newNode: EditNode<EntityItem> = {
+      id: newId,
+      parentId: parentNode ? parentId : null,
+      childrenIds: [],
+      revisionNumber: totalCount,
+      label: `Edit #${totalCount} (ED${totalCount})`,
+      authorNote: authorNote?.trim() || undefined,
+      type,
+      createdAt: new Date().toISOString(),
+      snapshot: JSON.parse(JSON.stringify(snapshot)),
+    };
+
+    if (parentNode) {
+      parentNode.childrenIds.push(newId);
+    }
+    tree.nodes[newId] = newNode;
+    tree.activeEditId = newId;
+
+    this.saveToStorage();
+    return newNode;
+  }
+
+  checkoutEntityEdit(entityId: string, targetEditId: string): EditNode<EntityItem> | undefined {
+    const tree = this.getEntityEditTree(entityId);
+    const targetNode = tree.nodes[targetEditId];
+    if (!targetNode) return undefined;
+
+    tree.activeEditId = targetEditId;
+
+    const entIdx = this.entities.findIndex((e) => e.id === entityId);
+    if (entIdx !== -1) {
+      this.entities[entIdx] = JSON.parse(JSON.stringify(targetNode.snapshot));
+      this.recomputeAllEntityFormulas();
+    }
+
+    this.saveToStorage();
+    return targetNode;
   }
 
   foldStateAtSequence(
@@ -913,6 +1147,13 @@ export class WorldStateStore {
   ): EntityItem[] {
     const baseEntities: EntityItem[] = JSON.parse(JSON.stringify(this.entities));
     const activeEvents = [...this.timelineEvents]
+      .map((ev) => {
+        const tree = this.eventEditTrees[ev.id];
+        if (tree && tree.nodes[tree.activeEditId]) {
+          return tree.nodes[tree.activeEditId].snapshot;
+        }
+        return ev;
+      })
       .filter((ev) =>
         mode === "narrative"
           ? ev.narrativeSequenceNumber <= targetSeq

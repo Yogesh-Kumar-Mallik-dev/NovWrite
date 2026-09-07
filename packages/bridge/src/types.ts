@@ -292,3 +292,45 @@ export interface BitemporalEntityState {
   }>;
 }
 
+// =====================================
+// Hanging Edit Tree & Pipe Models
+// =====================================
+
+export interface EditNode<T = unknown> {
+  id: string;
+  parentId: string | null;
+  childrenIds: string[];
+  revisionNumber: number;
+  label?: string;
+  authorNote?: string;
+  type: RevisionType;
+  createdAt: string;
+  patch?: unknown;
+  snapshot: T;
+}
+
+export interface EditTree<T = unknown> {
+  rootId: string;
+  activeEditId: string; // Current EDIT Head
+  nodes: Record<string, EditNode<T>>;
+}
+
+export interface TimelineEventWithTree {
+  event: {
+    id: string;
+    narrativeSequenceNumber: number;
+    chronologicalOrder: number;
+    title: string;
+    description?: string;
+    anchorSceneId?: string;
+  };
+  editTree: EditTree<{
+    title: string;
+    description?: string;
+    narrativeSequenceNumber: number;
+    chronologicalOrder: number;
+    effects: unknown[];
+  }>;
+}
+
+

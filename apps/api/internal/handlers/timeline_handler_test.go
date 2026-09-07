@@ -78,3 +78,121 @@ func TestTimelineHandler_EventsAndStateFold(t *testing.T) {
 		t.Fatalf("expected folded mana 500, got %v", props["mana"])
 	}
 }
+
+func TestTimelineHandler_PipeAndEditTreeEndpoints(t *testing.T) {
+	tStore := NewInMemoryTimelineStore()
+	eStore := NewInMemoryEntityStore()
+	handler := NewTimelineHandler(tStore, eStore)
+
+	r := chi.NewRouter()
+	r.Use(httputil.RequestIDMiddleware)
+	r.Use(httputil.APIVersionMiddleware("v1"))
+
+	r.Route("/api/v1/projects/{projectId}/timeline", func(r chi.Router) {
+		r.Get("/pipe", handler.GetPipe)
+		r.Get("/events", handler.ListEvents)
+		r.Post("/events", handler.CreateEvent)
+		r.Get("/events/{eventId}", handler.GetEvent)
+		r.Get("/events/{eventId}/tree", handler.GetEventTree)
+		r.Post("/events/{eventId}/edits", handler.AddEventEdit)
+		r.Post("/events/{eventId}/edits/{editId}/checkout", handler.CheckoutEventEdit)
+	})
+
+	// 1. Create event
+	evPayload := world.TimelineEvent{
+		ID:                      "ev-100",
+		NarrativeSequenceNumber: 100,
+		ChronologicalOrder:      100,
+		Title:                   "Original Event Draft",
+		Effects: []world.EventEffect{
+			{TargetEntity: "ent-1", PropertyKey: "attack", Operation: world.OpIncrement, Value: float64(10)},
+		},
+	}
+	body, _ := json.Marshal(evPayload)
+	reqCreate := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/timeline/events", bytes.NewReader(body))
+	recCreate := httptest.NewRecorder()
+	r.ServeHTTP(recCreate, reqCreate)
+	if recCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 Created, got %d: %s", recCreate.Code, recCreate.Body.String())
+	}
+
+	// 2. Query UPDATE Pipe
+	reqPipe := httptest.NewRequest(http.MethodGet, "/api/v1/projects/p-1/timeline/pipe", nil)
+	recPipe := httptest.NewRecorder()
+	r.ServeHTTP(recPipe, reqPipe)
+	if recPipe.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for pipe, got %d", recPipe.Code)
+	}
+
+	var pipeResp httputil.SingleResponse
+	json.Unmarshal(recPipe.Body.Bytes(), &pipeResp)
+	pipeData := pipeResp.Data.(map[string]interface{})
+	if pipeData["eventsCount"].(float64) != 1 {
+		t.Fatalf("expected 1 event in pipe, got %v", pipeData["eventsCount"])
+	}
+
+	// 3. Add an Edit to the Event (ED1)
+	editReq := map[string]interface{}{
+		"label":      "Edit #1 (ED1)",
+		"authorNote": "Corrected event narrative typo",
+		"type":       "TYPO_FIX",
+		"snapshot": world.TimelineEvent{
+			ID:                      "ev-100",
+			NarrativeSequenceNumber: 100,
+			ChronologicalOrder:      100,
+			Title:                   "Corrected Event Title (ED1)",
+			Effects:                 evPayload.Effects,
+		},
+	}
+	editBody, _ := json.Marshal(editReq)
+	reqEdit := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/timeline/events/ev-100/edits", bytes.NewReader(editBody))
+	recEdit := httptest.NewRecorder()
+	r.ServeHTTP(recEdit, reqEdit)
+	if recEdit.Code != http.StatusCreated {
+		t.Fatalf("expected 201 Created for edit, got %d: %s", recEdit.Code, recEdit.Body.String())
+	}
+
+	var editResp httputil.SingleResponse
+	json.Unmarshal(recEdit.Body.Bytes(), &editResp)
+	editData := editResp.Data.(map[string]interface{})
+	nodeData := editData["node"].(map[string]interface{})
+	ed1ID := nodeData["id"].(string)
+
+	// Tree should have 2 nodes (ED0, ED1) with activeEditId = ED1
+	treeData := editData["editTree"].(map[string]interface{})
+	if treeData["activeEditId"] != ed1ID {
+		t.Fatalf("expected activeEditId to be %s, got %v", ed1ID, treeData["activeEditId"])
+	}
+
+	// 4. Get Event Tree
+	reqTree := httptest.NewRequest(http.MethodGet, "/api/v1/projects/p-1/timeline/events/ev-100/tree", nil)
+	recTree := httptest.NewRecorder()
+	r.ServeHTTP(recTree, reqTree)
+	if recTree.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for tree, got %d", recTree.Code)
+	}
+
+	// 5. Checkout ED0 non-destructively
+	rootID := treeData["rootId"].(string)
+	reqCheckout := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/timeline/events/ev-100/edits/"+rootID+"/checkout", nil)
+	recCheckout := httptest.NewRecorder()
+	r.ServeHTTP(recCheckout, reqCheckout)
+	if recCheckout.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for checkout, got %d: %s", recCheckout.Code, recCheckout.Body.String())
+	}
+
+	var checkoutResp httputil.SingleResponse
+	json.Unmarshal(recCheckout.Body.Bytes(), &checkoutResp)
+	checkoutData := checkoutResp.Data.(map[string]interface{})
+	if checkoutData["activeEditId"] != rootID {
+		t.Fatalf("expected checked out head to be %s, got %v", rootID, checkoutData["activeEditId"])
+	}
+
+	// Verify ED1 was NOT deleted
+	afterTree := checkoutData["editTree"].(map[string]interface{})
+	nodesMap := afterTree["nodes"].(map[string]interface{})
+	if len(nodesMap) != 2 {
+		t.Fatalf("ED1 was deleted! Expected 2 nodes, got %d", len(nodesMap))
+	}
+}
+

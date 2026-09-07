@@ -1,7 +1,7 @@
 /**
  * @file revisionEngine.ts
  * @description Bitemporal & Dual-Axis Entity Revision Engine with infinite reversibility.
- * Supports orthogonal plot progression (T_story) and authorial revision history (T_revision).
+ * Supports the horizontal UPDATE Pipe (event0 -> event1 -> event2) and hanging EDIT Trees per event/entity.
  * Block Standard: BLOCK_WORLD_REVISION_ENGINE_001
  */
 
@@ -11,19 +11,159 @@ import {
   EntityRevisionPatch,
   RevisionType,
   BitemporalEntityState,
+  EditNode,
+  EditTree,
 } from "@novwrite/bridge";
 import { applyEffectToEntityState } from "./effectApplier.js";
 import { TimelineEventHydrated } from "./timelineTypes.js";
 
 export interface InMemoryRevisionStore {
-  entityRevisions: Map<string, EntityRevision[]>; // entityId -> Array of revisions
+  entityRevisions: Map<string, EntityRevision[]>;
+  editTrees: Map<string, EditTree<unknown>>;
+}
+
+/**
+ * EditTreeEngine handles non-destructive branching trees of edits hanging from any entity or event node.
+ */
+export class EditTreeEngine<T = unknown> {
+  private trees: Map<string, EditTree<T>>;
+
+  constructor(initialTrees?: Map<string, EditTree<T>>) {
+    this.trees = initialTrees || new Map<string, EditTree<T>>();
+  }
+
+  public getTree(key: string): EditTree<T> | undefined {
+    return this.trees.get(key);
+  }
+
+  public initTree(
+    key: string,
+    initialSnapshot: T,
+    note: string = "Initial root edit",
+  ): EditNode<T> {
+    const rootId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+    const rootNode: EditNode<T> = {
+      id: rootId,
+      parentId: null,
+      childrenIds: [],
+      revisionNumber: 0,
+      label: "Root Edit (ED0)",
+      authorNote: note,
+      type: "BASELINE_EDIT",
+      createdAt: new Date().toISOString(),
+      snapshot: JSON.parse(JSON.stringify(initialSnapshot)),
+    };
+
+    const tree: EditTree<T> = {
+      rootId,
+      activeEditId: rootId,
+      nodes: {
+        [rootId]: rootNode,
+      },
+    };
+
+    this.trees.set(key, tree);
+    return rootNode;
+  }
+
+  /**
+   * Add a new edit node branching from targetParentId (or active EDIT head by default).
+   * Moves the EDIT head to this newly created node.
+   */
+  public addEdit(
+    key: string,
+    snapshot: T,
+    type: RevisionType = "BASELINE_EDIT",
+    authorNote?: string,
+    targetParentId?: string,
+  ): EditNode<T> {
+    let tree = this.trees.get(key);
+    if (!tree) {
+      return this.initTree(key, snapshot, authorNote || "Initial root edit");
+    }
+
+    const parentId = targetParentId || tree.activeEditId;
+    const parentNode = tree.nodes[parentId];
+    if (!parentNode) {
+      throw new Error(
+        `BLOCK_WORLD_REVISION_ENGINE_001: Parent edit node ${parentId} not found in tree ${key}`,
+      );
+    }
+
+    const newId = `ed-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`;
+    const totalNodesCount = Object.keys(tree.nodes).length;
+
+    const newNode: EditNode<T> = {
+      id: newId,
+      parentId,
+      childrenIds: [],
+      revisionNumber: totalNodesCount,
+      label: `Edit #${totalNodesCount} (ED${totalNodesCount})`,
+      authorNote: authorNote?.trim() || undefined,
+      type,
+      createdAt: new Date().toISOString(),
+      snapshot: JSON.parse(JSON.stringify(snapshot)),
+    };
+
+    parentNode.childrenIds.push(newId);
+    tree.nodes[newId] = newNode;
+    tree.activeEditId = newId; // Move EDIT head to newly created node
+
+    return newNode;
+  }
+
+  /**
+   * Checkout an existing edit node as the active EDIT head without deleting any child branches.
+   */
+  public checkoutHead(key: string, targetEditId: string): EditNode<T> {
+    const tree = this.trees.get(key);
+    if (!tree) {
+      throw new Error(`BLOCK_WORLD_REVISION_ENGINE_001: Tree ${key} not found`);
+    }
+    const targetNode = tree.nodes[targetEditId];
+    if (!targetNode) {
+      throw new Error(
+        `BLOCK_WORLD_REVISION_ENGINE_001: Edit node ${targetEditId} not found in tree ${key}`,
+      );
+    }
+
+    // Set EDIT head non-destructively
+    tree.activeEditId = targetEditId;
+    return targetNode;
+  }
+
+  /**
+   * Return the snapshot at the current active EDIT head.
+   */
+  public getActiveSnapshot(key: string): T | undefined {
+    const tree = this.trees.get(key);
+    if (!tree) return undefined;
+    const activeNode = tree.nodes[tree.activeEditId];
+    return activeNode ? activeNode.snapshot : undefined;
+  }
 }
 
 export class RevisionEngine {
   private revisions: Map<string, EntityRevision[]>;
+  private entityTrees: EditTreeEngine<EntityItem>;
+  private eventTrees: EditTreeEngine<TimelineEventHydrated>;
 
-  constructor(initialStore?: Map<string, EntityRevision[]>) {
+  constructor(
+    initialStore?: Map<string, EntityRevision[]>,
+    entityTrees?: EditTreeEngine<EntityItem>,
+    eventTrees?: EditTreeEngine<TimelineEventHydrated>,
+  ) {
     this.revisions = initialStore || new Map<string, EntityRevision[]>();
+    this.entityTrees = entityTrees || new EditTreeEngine<EntityItem>();
+    this.eventTrees = eventTrees || new EditTreeEngine<TimelineEventHydrated>();
+  }
+
+  public getEntityTreeEngine(): EditTreeEngine<EntityItem> {
+    return this.entityTrees;
+  }
+
+  public getEventTreeEngine(): EditTreeEngine<TimelineEventHydrated> {
+    return this.eventTrees;
   }
 
   /**
@@ -106,7 +246,7 @@ export class RevisionEngine {
   }
 
   /**
-   * Record a new immutable revision for an entity.
+   * Record a new immutable revision for an entity and keep hanging edit tree updated.
    */
   public recordRevision(
     entity: EntityItem,
@@ -136,6 +276,10 @@ export class RevisionEngine {
 
     history.push(revision);
     this.revisions.set(entity.id, history);
+
+    // Sync into entity tree
+    this.entityTrees.addEdit(entity.id, entity, type, authorNote);
+
     return revision;
   }
 
