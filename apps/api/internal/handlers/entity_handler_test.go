@@ -43,6 +43,8 @@ func TestEntityHandler_CRUD_And_Formulas(t *testing.T) {
 	bpStore := NewInMemoryBlueprintStore()
 	entStore := NewInMemoryEntityStore()
 	tlStore := NewInMemoryTimelineStore()
+	projectStore := NewInMemoryProjectStore()
+	projectStore.Save(Project{ID: "p-1", Name: "Project One"})
 
 	// Seed blueprint with formula
 	bp := bpStore.Save("p-1", world.BlueprintDef{
@@ -57,7 +59,7 @@ func TestEntityHandler_CRUD_And_Formulas(t *testing.T) {
 		},
 	})
 
-	handler := NewEntityHandler(entStore, bpStore, tlStore)
+	handler := NewEntityHandler(entStore, bpStore, projectStore, tlStore)
 	router := setupEntityRouter(handler)
 
 	// 1. Create entity with uppercase properties (should normalize to lowercase and compute formula)
@@ -187,7 +189,10 @@ func TestEntityHandler_RevertAndEditTree_Regressions(t *testing.T) {
 	bpStore := NewInMemoryBlueprintStore()
 	entStore := NewInMemoryEntityStore()
 	tlStore := NewInMemoryTimelineStore()
-	handler := NewEntityHandler(entStore, bpStore, tlStore)
+	projectStore := NewInMemoryProjectStore()
+	projectStore.Save(Project{ID: "p-1", Name: "Project One"})
+
+	handler := NewEntityHandler(entStore, bpStore, projectStore, tlStore)
 	router := setupEntityRouter(handler)
 
 	// Seed blueprint
@@ -295,5 +300,97 @@ func TestEntityHandler_RevertAndEditTree_Regressions(t *testing.T) {
 	router.ServeHTTP(rec404, req404)
 	if rec404.Code != http.StatusNotFound {
 		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 404, got %d", rec404.Code)
+	}
+}
+
+// TestEntityHandler_ProjectIsolation_And_Security tests that:
+// 1. Requests to non-existent projects return 404 PROJECT_NOT_FOUND.
+// 2. Entities in Project A are completely invisible to Project B.
+// 3. User authorization (X-User-ID) forbids access when user does not own the project.
+func TestEntityHandler_ProjectIsolation_And_Security(t *testing.T) {
+	bpStore := NewInMemoryBlueprintStore()
+	entStore := NewInMemoryEntityStore()
+	projectStore := NewInMemoryProjectStore()
+	tlStore := NewInMemoryTimelineStore()
+
+	// Seed Project A (owned by user-alpha) and Project B (owned by user-beta)
+	projectStore.Save(Project{ID: "proj-a", OwnerID: "user-alpha", Name: "Project A"})
+	projectStore.Save(Project{ID: "proj-b", OwnerID: "user-beta", Name: "Project B"})
+
+	// Seed Blueprint in Project A
+	bpA := bpStore.Save("proj-a", world.BlueprintDef{
+		ID:             "bp-mage",
+		Name:           "Mage",
+		BlueprintClass: world.ClassFirstClass,
+		Category:       "Magic",
+	})
+
+	// Seed Entity in Project A
+	entStore.Save("proj-a", world.EntityItem{
+		ID:          "ent-gandalf",
+		ProjectID:   "proj-a",
+		BlueprintID: bpA.ID,
+		Name:        "Gandalf",
+		Category:    "Magic",
+	})
+
+	handler := NewEntityHandler(entStore, bpStore, projectStore, tlStore)
+	router := setupEntityRouter(handler)
+
+	// CASE 1: Non-existent Project returns 404 PROJECT_NOT_FOUND
+	reqMissingProj := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-nonexistent/entities", nil)
+	recMissingProj := httptest.NewRecorder()
+	router.ServeHTTP(recMissingProj, reqMissingProj)
+	if recMissingProj.Code != http.StatusNotFound {
+		t.Fatalf("expected HTTP 404 for non-existent project, got %d", recMissingProj.Code)
+	}
+	var probMissing httputil.ProblemDetail
+	json.Unmarshal(recMissingProj.Body.Bytes(), &probMissing)
+	if probMissing.Code != "PROJECT_NOT_FOUND" {
+		t.Fatalf("expected code PROJECT_NOT_FOUND, got %s", probMissing.Code)
+	}
+
+	// CASE 2: Project A entity does NOT appear in Project B
+	reqListB := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-b/entities", nil)
+	recListB := httptest.NewRecorder()
+	router.ServeHTTP(recListB, reqListB)
+	if recListB.Code != http.StatusOK {
+		t.Fatalf("expected HTTP 200 on project B list, got %d", recListB.Code)
+	}
+	var respB httputil.PaginatedResponse
+	json.Unmarshal(recListB.Body.Bytes(), &respB)
+	if respB.Pagination.TotalCount != 0 {
+		t.Fatalf("expected Project B to have 0 entities, got %d (Project Isolation violation)", respB.Pagination.TotalCount)
+	}
+
+	// CASE 3: Fetching Project A entity using Project B path returns 404
+	reqGetCross := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-b/entities/ent-gandalf", nil)
+	recGetCross := httptest.NewRecorder()
+	router.ServeHTTP(recGetCross, reqGetCross)
+	if recGetCross.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 when accessing Project A entity via Project B, got %d", recGetCross.Code)
+	}
+
+	// CASE 4: User Authorization check - user-gamma accessing proj-a returns 403 FORBIDDEN_PROJECT_ACCESS
+	reqForbidden := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-a/entities", nil)
+	reqForbidden.Header.Set("X-User-ID", "user-gamma")
+	recForbidden := httptest.NewRecorder()
+	router.ServeHTTP(recForbidden, reqForbidden)
+	if recForbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected HTTP 403 Forbidden for unauthorized user, got %d", recForbidden.Code)
+	}
+	var probForbidden httputil.ProblemDetail
+	json.Unmarshal(recForbidden.Body.Bytes(), &probForbidden)
+	if probForbidden.Code != "FORBIDDEN_PROJECT_ACCESS" {
+		t.Fatalf("expected FORBIDDEN_PROJECT_ACCESS, got %s", probForbidden.Code)
+	}
+
+	// CASE 5: Authorized user-alpha accessing proj-a succeeds (200 OK)
+	reqAuthOK := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-a/entities", nil)
+	reqAuthOK.Header.Set("X-User-ID", "user-alpha")
+	recAuthOK := httptest.NewRecorder()
+	router.ServeHTTP(recAuthOK, reqAuthOK)
+	if recAuthOK.Code != http.StatusOK {
+		t.Fatalf("expected HTTP 200 for authorized owner, got %d", recAuthOK.Code)
 	}
 }

@@ -163,18 +163,24 @@ func (s *InMemoryTimelineStore) SaveEventTree(projectID, eventID string, tree wo
 type TimelineHandler struct {
 	timelineStore TimelineStore
 	entityStore   EntityStore
+	projectStore  ProjectStore
 }
 
-func NewTimelineHandler(tStore TimelineStore, eStore EntityStore) *TimelineHandler {
+func NewTimelineHandler(tStore TimelineStore, eStore EntityStore, projectStore ...ProjectStore) *TimelineHandler {
 	if tStore == nil {
 		tStore = NewInMemoryTimelineStore()
 	}
 	if eStore == nil {
 		eStore = NewInMemoryEntityStore()
 	}
+	var pStore ProjectStore
+	if len(projectStore) > 0 {
+		pStore = projectStore[0]
+	}
 	return &TimelineHandler{
 		timelineStore: tStore,
 		entityStore:   eStore,
+		projectStore:  pStore,
 	}
 }
 
@@ -182,7 +188,10 @@ func NewTimelineHandler(tStore TimelineStore, eStore EntityStore) *TimelineHandl
 func (h *TimelineHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
 	if projectID == "" {
-		projectID = "default"
+		projectID = r.URL.Query().Get("projectId")
+	}
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	params := httputil.ParsePaginationParams(r)
@@ -233,8 +242,8 @@ func (h *TimelineHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 // GetEvent handles GET /api/v1/projects/{projectId}/timeline/events/{eventId}
 func (h *TimelineHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 
@@ -250,8 +259,8 @@ func (h *TimelineHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 // CreateEvent handles POST /api/v1/projects/{projectId}/timeline/events
 func (h *TimelineHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	var rawEvent world.TimelineEvent
@@ -276,8 +285,8 @@ func (h *TimelineHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 // UpdateEvent handles PUT /api/v1/projects/{projectId}/timeline/events/{eventId}
 func (h *TimelineHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 
@@ -314,8 +323,8 @@ func (h *TimelineHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 // DeleteEvent handles DELETE /api/v1/projects/{projectId}/timeline/events/{eventId}
 func (h *TimelineHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 
@@ -332,8 +341,8 @@ func (h *TimelineHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 // Returns the full UPDATE horizontal pipe with all events, their hanging Edit Trees, and active EDIT heads.
 func (h *TimelineHandler) GetPipe(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	events := h.timelineStore.ListEvents(projectID)
@@ -371,8 +380,8 @@ func (h *TimelineHandler) GetPipe(w http.ResponseWriter, r *http.Request) {
 // GetEventTree handles GET /api/v1/projects/{projectId}/timeline/events/{eventId}/tree
 func (h *TimelineHandler) GetEventTree(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 
@@ -396,8 +405,8 @@ func (h *TimelineHandler) GetEventTree(w http.ResponseWriter, r *http.Request) {
 // Appends a new edit node branching from targetParentId (or active EDIT head) and updates the active head.
 func (h *TimelineHandler) AddEventEdit(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 
@@ -451,8 +460,8 @@ func (h *TimelineHandler) AddEventEdit(w http.ResponseWriter, r *http.Request) {
 // Checks out an edit node non-destructively as the active EDIT head without deleting any child branches.
 func (h *TimelineHandler) CheckoutEventEdit(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	eventID := chi.URLParam(r, "eventId")
 	editID := chi.URLParam(r, "editId")
@@ -497,8 +506,8 @@ func (h *TimelineHandler) CheckoutEventEdit(w http.ResponseWriter, r *http.Reque
 // GetState handles GET /api/v1/projects/{projectId}/timeline/state?seq=100
 func (h *TimelineHandler) GetState(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	seqStr := r.URL.Query().Get("seq")

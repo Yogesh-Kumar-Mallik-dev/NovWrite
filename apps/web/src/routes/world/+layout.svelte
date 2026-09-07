@@ -9,9 +9,12 @@
     AlertOctagon,
     Home,
     Layers,
+    BookOpen,
+    FolderPlus,
   } from 'lucide-svelte';
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import Select from '$lib/components/ui/select.svelte';
+  import { projectStore } from '$lib/stores/projectStore.svelte';
 
   let { children } = $props();
 
@@ -85,6 +88,30 @@
 
   <!-- Workbench Content -->
   <div class="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto">
-    {@render children()}
+    {#if projectStore.isLoaded && !projectStore.activeProject}
+      <div class="max-w-xl mx-auto my-12 p-6 sm:p-8 rounded-xl border border-dashed border-border bg-card/50 text-center space-y-4">
+        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+          <BookOpen class="w-6 h-6" />
+        </div>
+        <div class="space-y-1.5">
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">No Active Project Selected</h2>
+          <p class="text-xs sm:text-sm text-muted-foreground">
+            World Studio blueprints, entities, and timelines belong strictly to a creative novel project. Create a new project or select an existing one to begin building your world.
+          </p>
+        </div>
+        <div class="pt-2">
+          <button
+            type="button"
+            onclick={() => projectStore.openCreateDialog()}
+            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-xs sm:text-sm shadow-sm hover:opacity-90 transition-all min-h-[40px] cursor-pointer"
+          >
+            <FolderPlus class="w-4 h-4" />
+            <span>Create New Project</span>
+          </button>
+        </div>
+      </div>
+    {:else}
+      {@render children()}
+    {/if}
   </div>
 </div>

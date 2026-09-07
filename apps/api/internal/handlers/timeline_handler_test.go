@@ -15,6 +15,8 @@ import (
 func TestTimelineHandler_EventsAndStateFold(t *testing.T) {
 	tStore := NewInMemoryTimelineStore()
 	eStore := NewInMemoryEntityStore()
+	projectStore := NewInMemoryProjectStore()
+	projectStore.Save(Project{ID: "p-1", Name: "Project One"})
 
 	// Seed entity
 	eStore.Save("p-1", world.EntityItem{
@@ -27,7 +29,7 @@ func TestTimelineHandler_EventsAndStateFold(t *testing.T) {
 		},
 	})
 
-	handler := NewTimelineHandler(tStore, eStore)
+	handler := NewTimelineHandler(tStore, eStore, projectStore)
 	r := chi.NewRouter()
 	r.Use(httputil.RequestIDMiddleware)
 	r.Use(httputil.APIVersionMiddleware("v1"))
@@ -82,7 +84,9 @@ func TestTimelineHandler_EventsAndStateFold(t *testing.T) {
 func TestTimelineHandler_PipeAndEditTreeEndpoints(t *testing.T) {
 	tStore := NewInMemoryTimelineStore()
 	eStore := NewInMemoryEntityStore()
-	handler := NewTimelineHandler(tStore, eStore)
+	projectStore := NewInMemoryProjectStore()
+	projectStore.Save(Project{ID: "p-1", Name: "Project One"})
+	handler := NewTimelineHandler(tStore, eStore, projectStore)
 
 	r := chi.NewRouter()
 	r.Use(httputil.RequestIDMiddleware)
@@ -193,6 +197,63 @@ func TestTimelineHandler_PipeAndEditTreeEndpoints(t *testing.T) {
 	nodesMap := afterTree["nodes"].(map[string]interface{})
 	if len(nodesMap) != 2 {
 		t.Fatalf("ED1 was deleted! Expected 2 nodes, got %d", len(nodesMap))
+	}
+}
+
+// TestTimelineHandler_ProjectIsolation_And_Security verifies timeline project isolation & authorization.
+func TestTimelineHandler_ProjectIsolation_And_Security(t *testing.T) {
+	tStore := NewInMemoryTimelineStore()
+	eStore := NewInMemoryEntityStore()
+	projectStore := NewInMemoryProjectStore()
+
+	projectStore.Save(Project{ID: "proj-1", OwnerID: "user-1", Name: "Project 1"})
+	projectStore.Save(Project{ID: "proj-2", OwnerID: "user-2", Name: "Project 2"})
+
+	tStore.AddEvent("proj-1", world.TimelineEvent{
+		ID:                      "ev-battle",
+		ProjectID:               "proj-1",
+		NarrativeSequenceNumber: 1,
+		Title:                   "Battle of Winter",
+	})
+
+	handler := NewTimelineHandler(tStore, eStore, projectStore)
+	r := chi.NewRouter()
+	r.Use(httputil.RequestIDMiddleware)
+	r.Use(httputil.APIVersionMiddleware("v1"))
+
+	r.Route("/api/v1/projects/{projectId}/timeline", func(r chi.Router) {
+		r.Get("/events", handler.ListEvents)
+		r.Get("/events/{eventId}", handler.GetEvent)
+	})
+
+	// Non-existent project returns 404
+	reqMissing := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-none/timeline/events", nil)
+	recMissing := httptest.NewRecorder()
+	r.ServeHTTP(recMissing, reqMissing)
+	if recMissing.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for non-existent project, got %d", recMissing.Code)
+	}
+
+	// Project isolation: proj-2 has 0 events
+	reqList2 := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-2/timeline/events", nil)
+	recList2 := httptest.NewRecorder()
+	r.ServeHTTP(recList2, reqList2)
+	if recList2.Code != http.StatusOK {
+		t.Fatalf("expected 200 for proj-2, got %d", recList2.Code)
+	}
+	var resp2 httputil.PaginatedResponse
+	json.Unmarshal(recList2.Body.Bytes(), &resp2)
+	if resp2.Pagination.TotalCount != 0 {
+		t.Fatalf("expected 0 events in proj-2, got %d", resp2.Pagination.TotalCount)
+	}
+
+	// Forbidden user check
+	reqForbidden := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-1/timeline/events", nil)
+	reqForbidden.Header.Set("X-User-ID", "user-2")
+	recForbidden := httptest.NewRecorder()
+	r.ServeHTTP(recForbidden, reqForbidden)
+	if recForbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden, got %d", recForbidden.Code)
 	}
 }
 

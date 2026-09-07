@@ -188,11 +188,12 @@ func (s *InMemoryEntityStore) SaveEntityTree(projectID, entityID string, tree wo
 type EntityHandler struct {
 	store          EntityStore
 	blueprintStore BlueprintStore
+	projectStore   ProjectStore
 	timelineStore  TimelineStore
 }
 
 // NewEntityHandler creates a new EntityHandler.
-func NewEntityHandler(store EntityStore, bpStore BlueprintStore, tlStore ...TimelineStore) *EntityHandler {
+func NewEntityHandler(store EntityStore, bpStore BlueprintStore, projectStore ProjectStore, tlStore ...TimelineStore) *EntityHandler {
 	if store == nil {
 		store = NewInMemoryEntityStore()
 	}
@@ -208,6 +209,7 @@ func NewEntityHandler(store EntityStore, bpStore BlueprintStore, tlStore ...Time
 	return &EntityHandler{
 		store:          store,
 		blueprintStore: bpStore,
+		projectStore:   projectStore,
 		timelineStore:  tl,
 	}
 }
@@ -219,8 +221,8 @@ func (h *EntityHandler) List(w http.ResponseWriter, r *http.Request) {
 	if projectID == "" {
 		projectID = r.URL.Query().Get("projectId")
 	}
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	params := httputil.ParsePaginationParams(r)
@@ -288,8 +290,8 @@ func (h *EntityHandler) List(w http.ResponseWriter, r *http.Request) {
 // Get handles GET /api/v1/projects/{projectId}/entities/{entityId}
 func (h *EntityHandler) Get(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -306,8 +308,8 @@ func (h *EntityHandler) Get(w http.ResponseWriter, r *http.Request) {
 // Validates against blueprint, normalizes properties, computes formulas deterministically on backend, returns 201 Created.
 func (h *EntityHandler) Create(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	var rawEnt world.EntityItem
@@ -369,8 +371,8 @@ func (h *EntityHandler) Create(w http.ResponseWriter, r *http.Request) {
 // Update handles PUT /api/v1/projects/{projectId}/entities/{entityId}
 func (h *EntityHandler) Update(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -443,8 +445,8 @@ func (h *EntityHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /api/v1/projects/{projectId}/entities/{entityId}
 func (h *EntityHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -460,8 +462,8 @@ func (h *EntityHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // ListRevisions handles GET /api/v1/projects/{projectId}/entities/{entityId}/revisions
 func (h *EntityHandler) ListRevisions(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -499,8 +501,8 @@ func (h *EntityHandler) ListRevisions(w http.ResponseWriter, r *http.Request) {
 // CreateRevision handles POST /api/v1/projects/{projectId}/entities/{entityId}/revisions
 func (h *EntityHandler) CreateRevision(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -581,8 +583,8 @@ func (h *EntityHandler) CreateRevision(w http.ResponseWriter, r *http.Request) {
 // RevertRevision handles POST /api/v1/projects/{projectId}/entities/{entityId}/revisions/{revisionId}/revert
 func (h *EntityHandler) RevertRevision(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 	revisionID := chi.URLParam(r, "revisionId")
@@ -637,8 +639,8 @@ func (h *EntityHandler) RevertRevision(w http.ResponseWriter, r *http.Request) {
 // ResolveCoordinate handles GET /api/v1/projects/{projectId}/entities/{entityId}/coordinate?sequenceNumber={seq}&revisionId={rev}
 func (h *EntityHandler) ResolveCoordinate(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -682,8 +684,8 @@ func (h *EntityHandler) ResolveCoordinate(w http.ResponseWriter, r *http.Request
 // GetTree handles GET /api/v1/projects/{projectId}/entities/{entityId}/tree
 func (h *EntityHandler) GetTree(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -706,8 +708,8 @@ func (h *EntityHandler) GetTree(w http.ResponseWriter, r *http.Request) {
 // AddEdit handles POST /api/v1/projects/{projectId}/entities/{entityId}/edits
 func (h *EntityHandler) AddEdit(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 
@@ -785,8 +787,8 @@ func (h *EntityHandler) AddEdit(w http.ResponseWriter, r *http.Request) {
 // CheckoutEdit handles POST /api/v1/projects/{projectId}/entities/{entityId}/edits/{editId}/checkout
 func (h *EntityHandler) CheckoutEdit(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 	entityID := chi.URLParam(r, "entityId")
 	editID := chi.URLParam(r, "editId")

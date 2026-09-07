@@ -18,6 +18,7 @@ import (
 // Project represents a creative novel universe project in NovWrite.
 type Project struct {
 	ID          string    `json:"id"`
+	OwnerID     string    `json:"ownerId,omitempty"`
 	Name        string    `json:"name"`
 	Description string    `json:"description,omitempty"`
 	Genre       string    `json:"genre,omitempty"`
@@ -101,6 +102,51 @@ func (s *InMemoryProjectStore) Delete(id string) bool {
 	return true
 }
 
+// ValidateProjectAccess verifies that project exists and is owned by authenticated user (if auth provided).
+func ValidateProjectAccess(w http.ResponseWriter, r *http.Request, projectStore ProjectStore, projectID string) (*Project, bool) {
+	if projectID == "" {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/missing-project-id",
+			Title:  "Missing Active Project",
+			Status: http.StatusBadRequest,
+			Detail: "An active Project ID is a hard architectural prerequisite for all novel and world operations.",
+			Code:   "MISSING_PROJECT_ID",
+		})
+		return nil, false
+	}
+
+	if projectStore == nil {
+		return &Project{ID: projectID}, true
+	}
+
+	proj, found := projectStore.Get(projectID)
+	if !found {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/project-not-found",
+			Title:  "Project Not Found",
+			Status: http.StatusNotFound,
+			Detail: fmt.Sprintf("The requested novel Project '%s' does not exist. Novel resources cannot exist without a valid active Project.", projectID),
+			Code:   "PROJECT_NOT_FOUND",
+		})
+		return nil, false
+	}
+
+	// Verify User Ownership if X-User-ID or Auth User is supplied
+	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
+	if userID != "" && proj.OwnerID != "" && proj.OwnerID != userID {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/forbidden-project-access",
+			Title:  "Forbidden Project Access",
+			Status: http.StatusForbidden,
+			Detail: fmt.Sprintf("Authenticated user '%s' does not have ownership or access rights to Project '%s'.", userID, projectID),
+			Code:   "FORBIDDEN_PROJECT_ACCESS",
+		})
+		return nil, false
+	}
+
+	return proj, true
+}
+
 // ProjectHandler handles REST operations for Project collections and items.
 type ProjectHandler struct {
 	store ProjectStore
@@ -115,12 +161,16 @@ func NewProjectHandler(store ProjectStore) *ProjectHandler {
 func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
 	params := httputil.ParsePaginationParams(r)
 	search := strings.ToLower(params.Search)
+	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
 
 	allProjects := h.store.List()
 
-	// Apply search filter
+	// Apply search and user ownership filter
 	filtered := make([]Project, 0, len(allProjects))
 	for _, p := range allProjects {
+		if userID != "" && p.OwnerID != "" && p.OwnerID != userID {
+			continue
+		}
 		if search == "" || strings.Contains(strings.ToLower(p.Name), search) || strings.Contains(strings.ToLower(p.Description), search) || strings.Contains(strings.ToLower(p.Genre), search) {
 			filtered = append(filtered, p)
 		}
@@ -146,6 +196,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Genre       string `json:"genre"`
+		OwnerID     string `json:"ownerId"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -174,7 +225,16 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ownerID := strings.TrimSpace(input.OwnerID)
+	if ownerID == "" {
+		ownerID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+	}
+	if ownerID == "" {
+		ownerID = "default_user"
+	}
+
 	proj := Project{
+		OwnerID:     ownerID,
 		Name:        name,
 		Description: strings.TrimSpace(input.Description),
 		Genre:       strings.TrimSpace(input.Genre),
@@ -187,14 +247,8 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 // Get handles GET /api/v1/projects/{projectId}.
 func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		httputil.RespondNotFound(w, r, "Project", projectID)
-		return
-	}
-
-	proj, found := h.store.Get(projectID)
-	if !found {
-		httputil.RespondNotFound(w, r, "Project", projectID)
+	proj, ok := ValidateProjectAccess(w, r, h.store, projectID)
+	if !ok {
 		return
 	}
 
@@ -204,9 +258,8 @@ func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
 // Update handles PUT /api/v1/projects/{projectId}.
 func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	existing, found := h.store.Get(projectID)
-	if !found {
-		httputil.RespondNotFound(w, r, "Project", projectID)
+	existing, ok := ValidateProjectAccess(w, r, h.store, projectID)
+	if !ok {
 		return
 	}
 
@@ -250,6 +303,11 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /api/v1/projects/{projectId}.
 func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
+	_, ok := ValidateProjectAccess(w, r, h.store, projectID)
+	if !ok {
+		return
+	}
+
 	if !h.store.Delete(projectID) {
 		httputil.RespondNotFound(w, r, "Project", projectID)
 		return

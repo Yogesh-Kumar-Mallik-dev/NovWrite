@@ -36,7 +36,7 @@ func BuildRouter() *chi.Mux {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "tauri://localhost"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID", "Idempotency-Key"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID", "Idempotency-Key", "X-User-ID"},
 		ExposedHeaders:   []string{"Link", "Location", "X-Request-ID", "X-Response-Time", "API-Version", "X-API-Version"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -50,9 +50,9 @@ func BuildRouter() *chi.Mux {
 
 	healthHandler := handlers.NewHealthHandler()
 	projectHandler := handlers.NewProjectHandler(projectStore)
-	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore)
-	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, timelineStore)
-	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore)
+	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore, projectStore)
+	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, projectStore, timelineStore)
+	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore, projectStore)
 	formulaHandler := handlers.NewFormulaHandler()
 	bridgeHandler := handlers.NewWorldBridgeHandler(nil, nil, nil)
 

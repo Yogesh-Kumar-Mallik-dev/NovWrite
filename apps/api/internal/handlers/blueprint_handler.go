@@ -78,6 +78,7 @@ func (s *InMemoryBlueprintStore) Save(projectID string, bp world.BlueprintDef) w
 	if bp.ID == "" {
 		bp.ID = fmt.Sprintf("bp_%d", time.Now().UnixNano())
 	}
+	bp.ProjectID = projectID
 	s.blueprints[projectID][bp.ID] = bp
 	return bp
 }
@@ -99,26 +100,30 @@ func (s *InMemoryBlueprintStore) Delete(projectID, id string) bool {
 
 // BlueprintHandler handles REST operations for Blueprints.
 type BlueprintHandler struct {
-	store BlueprintStore
+	store        BlueprintStore
+	projectStore ProjectStore
 }
 
-// NewBlueprintHandler creates a new BlueprintHandler.
-func NewBlueprintHandler(store BlueprintStore) *BlueprintHandler {
+// NewBlueprintHandler creates a new BlueprintHandler with required ProjectStore.
+func NewBlueprintHandler(store BlueprintStore, projectStore ...ProjectStore) *BlueprintHandler {
 	if store == nil {
 		store = NewInMemoryBlueprintStore()
 	}
-	return &BlueprintHandler{store: store}
+	var pStore ProjectStore
+	if len(projectStore) > 0 {
+		pStore = projectStore[0]
+	}
+	return &BlueprintHandler{
+		store:        store,
+		projectStore: pStore,
+	}
 }
 
 // List handles GET /api/v1/projects/{projectId}/blueprints
-// Supports pagination, search, category filter, sorting, and returns [] on empty query.
 func (h *BlueprintHandler) List(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = r.URL.Query().Get("projectId")
-	}
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	params := httputil.ParsePaginationParams(r)
@@ -181,11 +186,11 @@ func (h *BlueprintHandler) List(w http.ResponseWriter, r *http.Request) {
 // Get handles GET /api/v1/projects/{projectId}/blueprints/{blueprintId}
 func (h *BlueprintHandler) Get(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
-	blueprintID := chi.URLParam(r, "blueprintId")
 
+	blueprintID := chi.URLParam(r, "blueprintId")
 	bp, found := h.store.Get(projectID, blueprintID)
 	if !found {
 		httputil.RespondNotFound(w, r, "Blueprint", blueprintID)
@@ -196,11 +201,10 @@ func (h *BlueprintHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // Create handles POST /api/v1/projects/{projectId}/blueprints
-// Enforces zero-trust validation parity, lowercase machine keys, duplicate key rejection, and returns 201 Created.
 func (h *BlueprintHandler) Create(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
 
 	var rawBp world.BlueprintDef
@@ -234,11 +238,11 @@ func (h *BlueprintHandler) Create(w http.ResponseWriter, r *http.Request) {
 // Update handles PUT /api/v1/projects/{projectId}/blueprints/{blueprintId}
 func (h *BlueprintHandler) Update(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
-	blueprintID := chi.URLParam(r, "blueprintId")
 
+	blueprintID := chi.URLParam(r, "blueprintId")
 	if _, found := h.store.Get(projectID, blueprintID); !found {
 		httputil.RespondNotFound(w, r, "Blueprint", blueprintID)
 		return
@@ -274,11 +278,11 @@ func (h *BlueprintHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /api/v1/projects/{projectId}/blueprints/{blueprintId}
 func (h *BlueprintHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		projectID = "default"
+	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+		return
 	}
-	blueprintID := chi.URLParam(r, "blueprintId")
 
+	blueprintID := chi.URLParam(r, "blueprintId")
 	deleted := h.store.Delete(projectID, blueprintID)
 	if !deleted {
 		httputil.RespondNotFound(w, r, "Blueprint", blueprintID)

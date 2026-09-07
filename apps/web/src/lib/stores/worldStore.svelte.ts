@@ -268,7 +268,7 @@ export class WorldStateStore {
   getStorageKey(): string {
     return this.currentProjectId
       ? `novwrite_world_state_${this.currentProjectId}`
-      : WORLD_STATE_STORAGE_KEY;
+      : "";
   }
 
   setProject(
@@ -291,7 +291,9 @@ export class WorldStateStore {
     }
 
     this.recomputeAllEntityFormulas();
-    this.saveToStorage();
+    if (projectId) {
+      this.saveToStorage();
+    }
   }
 
   seedStarterArchetypes(): void {
@@ -407,13 +409,20 @@ export class WorldStateStore {
     if (typeof window === "undefined" || typeof localStorage === "undefined")
       return;
     try {
-      const storageKey = this.getStorageKey();
-      let raw = localStorage.getItem(storageKey);
-
-      // Fallback: if project-scoped key is empty, check legacy global key
-      if (!raw && !this.currentProjectId) {
-        raw = localStorage.getItem(WORLD_STATE_STORAGE_KEY);
+      if (!this.currentProjectId) {
+        this.blueprints = [];
+        this.entities = [];
+        this.timelineEvents = [];
+        this.rules = [];
+        this.violations = [];
+        this.revisions = {};
+        this.eventEditTrees = {};
+        this.entityEditTrees = {};
+        return;
       }
+
+      const storageKey = this.getStorageKey();
+      const raw = localStorage.getItem(storageKey);
 
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -458,6 +467,7 @@ export class WorldStateStore {
   saveToStorage(): void {
     if (typeof window === "undefined" || typeof localStorage === "undefined")
       return;
+    if (!this.currentProjectId) return;
     try {
       const payload = {
         blueprints: this.blueprints,
@@ -494,8 +504,11 @@ export class WorldStateStore {
     this.eventEditTrees = {};
     this.entityEditTrees = {};
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
-      localStorage.removeItem(this.getStorageKey());
-      localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
+      const key = this.getStorageKey();
+      if (key) {
+        localStorage.removeItem(key);
+      }
+      localStorage.removeItem("novwrite_world_state_v1");
     }
   }
 

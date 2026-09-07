@@ -30,7 +30,10 @@ func setupBlueprintRouter(handler *BlueprintHandler) http.Handler {
 
 func TestBlueprintHandler_CRUD_And_Validation(t *testing.T) {
 	store := NewInMemoryBlueprintStore()
-	handler := NewBlueprintHandler(store)
+	projectStore := NewInMemoryProjectStore()
+	projectStore.Save(Project{ID: "p-1", Name: "Project One"})
+
+	handler := NewBlueprintHandler(store, projectStore)
 	router := setupBlueprintRouter(handler)
 
 	// 1. Test empty list returns [] and 200 OK
@@ -139,5 +142,54 @@ func TestBlueprintHandler_CRUD_And_Validation(t *testing.T) {
 
 	if recGetMissing.Code != http.StatusNotFound {
 		t.Fatalf("expected HTTP 404 Not Found after delete, got %d", recGetMissing.Code)
+	}
+}
+
+// TestBlueprintHandler_ProjectIsolation_And_Security verifies strict project hierarchy and isolation.
+func TestBlueprintHandler_ProjectIsolation_And_Security(t *testing.T) {
+	bpStore := NewInMemoryBlueprintStore()
+	projectStore := NewInMemoryProjectStore()
+
+	projectStore.Save(Project{ID: "proj-1", OwnerID: "user-1", Name: "Project 1"})
+	projectStore.Save(Project{ID: "proj-2", OwnerID: "user-2", Name: "Project 2"})
+
+	bpStore.Save("proj-1", world.BlueprintDef{
+		ID:             "bp-spell",
+		Name:           "Spell",
+		BlueprintClass: world.ClassFirstClass,
+		Category:       "Magic",
+	})
+
+	handler := NewBlueprintHandler(bpStore, projectStore)
+	router := setupBlueprintRouter(handler)
+
+	// Non-existent project returns 404
+	reqMissing := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-none/blueprints", nil)
+	recMissing := httptest.NewRecorder()
+	router.ServeHTTP(recMissing, reqMissing)
+	if recMissing.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for non-existent project, got %d", recMissing.Code)
+	}
+
+	// Project isolation: proj-2 has 0 blueprints
+	reqList2 := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-2/blueprints", nil)
+	recList2 := httptest.NewRecorder()
+	router.ServeHTTP(recList2, reqList2)
+	if recList2.Code != http.StatusOK {
+		t.Fatalf("expected 200 for proj-2, got %d", recList2.Code)
+	}
+	var resp2 httputil.PaginatedResponse
+	json.Unmarshal(recList2.Body.Bytes(), &resp2)
+	if resp2.Pagination.TotalCount != 0 {
+		t.Fatalf("expected 0 blueprints in proj-2, got %d", resp2.Pagination.TotalCount)
+	}
+
+	// Forbidden user check
+	reqForbidden := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-1/blueprints", nil)
+	reqForbidden.Header.Set("X-User-ID", "user-2")
+	recForbidden := httptest.NewRecorder()
+	router.ServeHTTP(recForbidden, reqForbidden)
+	if recForbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden, got %d", recForbidden.Code)
 	}
 }
