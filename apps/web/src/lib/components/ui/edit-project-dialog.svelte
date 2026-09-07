@@ -4,7 +4,7 @@
   import Card from "$lib/components/ui/card.svelte";
   import Field from "$lib/components/ui/field.svelte";
   import { projectStore } from "$lib/stores/projectStore.svelte";
-  import { Pencil, Check } from "lucide-svelte";
+  import { Pencil, Check, Trash2 } from "lucide-svelte";
 
   interface Props {
     open?: boolean;
@@ -42,6 +42,14 @@
     projectStore.closeEditDialog();
     errorMsg = null;
     if (onClose) onClose();
+  }
+
+  function handleDeleteClick() {
+    const proj = projectStore.editingProject;
+    if (!proj) return;
+    const targetId = proj.id;
+    handleClose();
+    projectStore.openDeleteDialog(targetId);
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -164,6 +172,24 @@
               class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60 resize-y"
             ></textarea>
           </Field>
+
+          <!-- Danger Zone: Project Deletion -->
+          <div class="p-3 rounded-lg bg-destructive/5 border border-destructive/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            <div class="space-y-0.5">
+              <span class="text-xs font-bold text-destructive block">Danger Zone</span>
+              <span class="text-[11px] text-muted-foreground block">Permanently erase this novel universe, entities, and timeline.</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onclick={handleDeleteClick}
+              class="h-8 px-3 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5 shrink-0 w-full sm:w-auto"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              <span>Delete Project...</span>
+            </Button>
+          </div>
 
           <!-- Dialog Footer Actions -->
           <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border/80">

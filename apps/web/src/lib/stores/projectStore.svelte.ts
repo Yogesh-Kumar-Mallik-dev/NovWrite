@@ -31,6 +31,8 @@ export class ProjectStateStore {
   isCreateDialogOpen = $state<boolean>(false);
   isEditDialogOpen = $state<boolean>(false);
   editingProjectId = $state<string | null>(null);
+  isDeleteDialogOpen = $state<boolean>(false);
+  deletingProjectId = $state<string | null>(null);
 
   // Pure derived getter for currently active project
   activeProject = $derived.by(() => {
@@ -41,6 +43,13 @@ export class ProjectStateStore {
   // Pure derived getter for currently edited project
   editingProject = $derived.by(() => {
     const targetId = this.editingProjectId || this.activeProjectId;
+    if (!targetId) return null;
+    return this.projects.find((p) => p.id === targetId) || null;
+  });
+
+  // Pure derived getter for currently deleting project
+  deletingProject = $derived.by(() => {
+    const targetId = this.deletingProjectId || this.activeProjectId;
     if (!targetId) return null;
     return this.projects.find((p) => p.id === targetId) || null;
   });
@@ -188,12 +197,24 @@ export class ProjectStateStore {
     this.editingProjectId = null;
   }
 
+  openDeleteDialog(projectId?: string): void {
+    this.deletingProjectId = projectId || this.activeProjectId;
+    this.isDeleteDialogOpen = true;
+  }
+
+  closeDeleteDialog(): void {
+    this.isDeleteDialogOpen = false;
+    this.deletingProjectId = null;
+  }
+
   clearAllProjects(): void {
     this.projects = [];
     this.activeProjectId = null;
     this.editingProjectId = null;
+    this.deletingProjectId = null;
     this.isEditDialogOpen = false;
     this.isCreateDialogOpen = false;
+    this.isDeleteDialogOpen = false;
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       localStorage.removeItem(PROJECTS_STORAGE_KEY);
       localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);

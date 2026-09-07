@@ -10,6 +10,7 @@
     FolderPlus,
     Folder,
     Pencil,
+    Trash2,
   } from "lucide-svelte";
   import {
     Card,
@@ -79,6 +80,16 @@
         >
           <FolderPlus class="w-3.5 h-3.5 text-primary" />
           <span>New Project</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => projectStore.openDeleteDialog()}
+          class="text-xs gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+          title="Delete Project"
+        >
+          <Trash2 class="w-3.5 h-3.5" />
+          <span>Delete</span>
         </Button>
       </div>
     </div>

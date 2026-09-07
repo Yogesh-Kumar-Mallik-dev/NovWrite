@@ -19,6 +19,7 @@
   import ProjectSwitcher from "$lib/components/ui/project-switcher.svelte";
   import CreateProjectDialog from "$lib/components/ui/create-project-dialog.svelte";
   import EditProjectDialog from "$lib/components/ui/edit-project-dialog.svelte";
+  import DeleteProjectDialog from "$lib/components/ui/delete-project-dialog.svelte";
   import Toaster from "$lib/components/ui/toaster.svelte";
 
   let { children } = $props();
@@ -245,5 +246,6 @@
   <!-- Global Modals & Notifications -->
   <CreateProjectDialog />
   <EditProjectDialog />
+  <DeleteProjectDialog />
   <Toaster />
 </div>

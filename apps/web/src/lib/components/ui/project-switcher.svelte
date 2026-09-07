@@ -9,6 +9,7 @@
     BookOpen,
     Plus,
     Pencil,
+    Trash2,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -31,6 +32,10 @@
 
   function handleOpenEdit() {
     projectStore.openEditDialog();
+  }
+
+  function handleOpenDelete() {
+    projectStore.openDeleteDialog();
   }
 </script>
 
@@ -108,6 +113,13 @@
           >
             <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
             <span>Edit Project Settings...</span>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onclick={handleOpenDelete}
+            class="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
+          >
+            <Trash2 class="w-3.5 h-3.5" />
+            <span>Delete Project...</span>
           </DropdownMenu.Item>
         {/if}
 
@@ -196,6 +208,13 @@
             >
               <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
               <span>Edit Project Settings</span>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onclick={handleOpenDelete}
+              class="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 rounded-md cursor-pointer"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              <span>Delete Project...</span>
             </DropdownMenu.Item>
           {/if}
 
