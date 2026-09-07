@@ -84,11 +84,37 @@ timeline
                : Mobile-First Layout Architecture (2-Tier Sub-Header Strip, Auto-Fit Grids, Top Pagination)
                : Svelte 5 Native Bidirectional Transitions (fade, scale, fly) & Motion Accessibility
                : Single-Icon Purple Theme Toggle & Global Scrollbar Suppression
+    2026-09-07 : Version 2.8 (Simplified Project Creation Flow & Clean Slate Default)
+               : Freeform String Genre Input across DB, Go Backend, TypeScript Types & UI
+               : Complete Removal of Starter Archetype Seeding & Scaffolding Selection
+               : Responsive Single-Column Modal Layout with Zero-Cross Action Trays
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.8] — 2026-09-07
+
+**Scope:** Simplified Project Creation Flow, Freeform Genre Text Input & Pure Clean Slate World Architecture  
+**Target Documents:** [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added & Refactored
+
+- **Free-Form Genre & Universe Setting String Input (`CreateProjectDialog.svelte`, `projectStore.svelte.ts`, `projectEngine.ts`):**
+  - Replaced the constrained dropdown with a standard text input supporting arbitrary genre descriptions (e.g. `Xianxia / Cultivation`, `Dark Fantasy`, `Sci-Fi`, `Cyberpunk`, `Post-Apocalyptic`, custom hybrid genres).
+  - Unconstrained backend validation allowing string input up to 100 characters with whitespace trimming.
+  - Full stack parity across PostgreSQL schema (`String? @db.VarChar(100)`), Go handler models, TypeScript interfaces, and validation engines.
+- **Pure Clean Slate Universe Scaffolding Guarantee (`worldStore.svelte.ts`):**
+  - Removed "Initial Blueprint Architecture" selector and eliminated starter archetype seeding (`seedStarterArchetypes`).
+  - Newly created projects initialize 100% clean with 0 blueprints, 0 entities, 0 timeline events, and 0 rules.
+  - Authors define custom blueprints and schemas dynamically inside the workspace.
+- **Streamlined Modal Form Rhythm & Responsiveness:**
+  - Compact, natural vertical form rhythm (Title -> Genre -> Synopsis -> Action Tray).
+  - Eliminates visual gaps and maintains responsive mobile-first stacking.
+  - Tested with comprehensive unit tests for arbitrary genres and clean state initialization.
+
+---
 
 ### [Version 2.7] — 2026-09-07
 

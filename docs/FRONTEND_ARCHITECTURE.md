@@ -572,7 +572,6 @@ To guarantee predictable memory consumption, instantaneous query response times,
 
 ### 18.3. Modal Creation & Scaffolding Workflow (`CreateProjectDialog.svelte`)
 
-- Supports custom Novel Title, Genre classification (Xianxia, LitRPG, Sci-Fi, etc.), and Universe Synopsis.
-- Scaffolding templates:
-  - **Clean Slate (Default):** Starts completely blank with 0 blueprints for full authorial freedom.
-  - **Starter Archetypes:** Pre-seeds foundational Character and Relic archetypes equipped with mathematical combat power formulas.
+- Supports custom Novel Title, arbitrary freeform Genre & Universe Setting text input (e.g. Xianxia / Cultivation, Dark Fantasy, Sci-Fi, Custom hybrids), and Universe Synopsis.
+- **Pure Clean Slate Guarantee:** Every newly created project starts 100% clean with zero predefined blueprints, schemas, or default entity bloat. Authorial universe architecture is designed directly within the workspace.
+

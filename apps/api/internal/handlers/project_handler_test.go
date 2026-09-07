@@ -162,3 +162,46 @@ func TestProjectHandler_Lifecycle(t *testing.T) {
 		t.Fatalf("expected status 404 Not Found after deletion, got %d", rec.Code)
 	}
 }
+
+func TestProjectHandler_ArbitraryGenreStrings(t *testing.T) {
+	store := NewInMemoryProjectStore()
+	handler := NewProjectHandler(store)
+	router := setupProjectRouter(handler)
+
+	customGenres := []string{
+		"Cyberpunk / Neo-Noir",
+		"Dark Fantasy",
+		"Post-Apocalyptic",
+		"Historical Fantasy",
+		"Experimental Hybrid Space Opera",
+	}
+
+	for _, genre := range customGenres {
+		createBody := map[string]string{
+			"name":  "Project " + genre,
+			"genre": genre,
+		}
+		bodyBytes, _ := json.Marshal(createBody)
+
+		req := httptest.NewRequest("POST", "/api/v1/projects", bytes.NewReader(bodyBytes))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("failed to create project with genre '%s', status: %d", genre, rec.Code)
+		}
+
+		var singleResp struct {
+			Data Project `json:"data"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &singleResp); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if singleResp.Data.Genre != genre {
+			t.Errorf("expected genre '%s', got '%s'", genre, singleResp.Data.Genre)
+		}
+	}
+}
+

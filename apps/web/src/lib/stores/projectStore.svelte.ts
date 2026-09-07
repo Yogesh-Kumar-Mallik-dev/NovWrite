@@ -19,7 +19,6 @@ export interface CreateProjectParams {
   name: string;
   description?: string;
   genre?: string;
-  starterTemplate?: "clean" | "starter";
 }
 
 const PROJECTS_STORAGE_KEY = "novwrite_projects_v1";

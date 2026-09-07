@@ -64,6 +64,26 @@ describe("BLOCK_TEST_WEB_PROJECT_ENGINE_001: Novel Project Validation and Scaffo
     assert.equal(res.sanitized.genre, "General Fiction");
   });
 
+  it("should support arbitrary custom freeform genre strings", () => {
+    const customGenres = [
+      "Cyberpunk",
+      "Dark Fantasy",
+      "Post-Apocalyptic",
+      "Historical Fantasy",
+      "Space Opera / Hard Sci-Fi",
+      "Custom Grimdark Cultivation LitRPG Hybrid",
+    ];
+
+    for (const g of customGenres) {
+      const res = validateProjectInput({
+        name: "Custom Project",
+        genre: g,
+      });
+      assert.equal(res.valid, true);
+      assert.equal(res.sanitized?.genre, g);
+    }
+  });
+
   it("should generate formatted project IDs with proj- prefix", () => {
     const id1 = generateProjectId();
     const id2 = generateProjectId();

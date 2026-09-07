@@ -271,138 +271,16 @@ export class WorldStateStore {
       : "";
   }
 
-  setProject(
-    projectId: string | null,
-    starterTemplate?: "clean" | "starter",
-  ): void {
+  setProject(projectId: string | null): void {
     if (this.currentProjectId) {
       this.saveToStorage();
     }
     this.currentProjectId = projectId;
     this.loadFromStorage();
-
-    // If starting a new project with starter archetypes and store is currently empty
-    if (
-      projectId &&
-      this.blueprints.length === 0 &&
-      starterTemplate === "starter"
-    ) {
-      this.seedStarterArchetypes();
-    }
-
     this.recomputeAllEntityFormulas();
     if (projectId) {
       this.saveToStorage();
     }
-  }
-
-  seedStarterArchetypes(): void {
-    const charBp: BlueprintDef = {
-      id: `bp-char-${Date.now().toString(16)}`,
-      name: "Cultivator Archetype",
-      blueprintClass: "FIRST_CLASS",
-      category: "Characters",
-      description:
-        "Foundational protagonist and martial cultivator archetype with realm progression.",
-      fields: [
-        {
-          id: `f-${Date.now().toString(16)}-1`,
-          name: "gender",
-          label: "Gender Identity",
-          fieldType: "ENUM",
-          options: ["Male", "Female", "Dual-Yin-Yang", "Celestial"],
-          defaultValue: "Male",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-2`,
-          name: "cultivation_major_realm",
-          label: "Major Realm Tier",
-          fieldType: "NUMBER",
-          min: 1,
-          max: 9,
-          step: 1,
-          defaultValue: 1,
-          unit: "Tier",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-3`,
-          name: "cultivation_minor_realm",
-          label: "Minor Realm Stage",
-          fieldType: "NUMBER",
-          min: 1,
-          max: 9,
-          step: 1,
-          defaultValue: 1,
-          unit: "Stage",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-4`,
-          name: "base_attack",
-          label: "Base Attack Power",
-          fieldType: "NUMBER",
-          min: 10,
-          max: 999999,
-          defaultValue: 100,
-          unit: "Atk",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-5`,
-          name: "base_defence",
-          label: "Base Defensive Resilience",
-          fieldType: "NUMBER",
-          min: 5,
-          max: 999999,
-          defaultValue: 50,
-          unit: "Def",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-6`,
-          name: "total_combat_power",
-          label: "Total Combat Power",
-          fieldType: "FORMULA",
-          formulaExpression:
-            "(cultivation_major_realm * 100) + (cultivation_minor_realm * 10) + base_attack - base_defence",
-        },
-      ],
-    };
-
-    const relicBp: BlueprintDef = {
-      id: `bp-relic-${Date.now().toString(16)}`,
-      name: "Sacred Relic & Weapon",
-      blueprintClass: "FIRST_CLASS",
-      category: "Relics & Armaments",
-      description:
-        "Heavenly treasures, enchanted artifacts, and spirit swords.",
-      fields: [
-        {
-          id: `f-${Date.now().toString(16)}-7`,
-          name: "rarity_grade",
-          label: "Artifact Grade",
-          fieldType: "ENUM",
-          options: ["Mortal", "Earth", "Heaven", "Immortal", "Divine"],
-          defaultValue: "Earth",
-          required: true,
-        },
-        {
-          id: `f-${Date.now().toString(16)}-8`,
-          name: "power_rating",
-          label: "Artifact Power Rating",
-          fieldType: "NUMBER",
-          min: 1,
-          max: 50000,
-          defaultValue: 500,
-          unit: "Pts",
-          required: true,
-        },
-      ],
-    };
-
-    this.blueprints = [charBp, relicBp];
   }
 
   loadFromStorage(): void {
