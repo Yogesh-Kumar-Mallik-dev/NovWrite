@@ -86,8 +86,8 @@ timeline
 
 ### [Version 2.5] — 2026-09-07
 
-**Scope:** Standardized 10-Item Frontend Pagination, NovWriteApiClient, Pure Array Paginator & Blueprint-Tuned Dynamic Entity Tables  
-**Target Documents:** [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+**Scope:** Standardized 10-Item Frontend Pagination, Blueprint-Scoped Dynamic Entity Tables, Core Responsive Philosophy & Mobile-First Structural Adaptation Standards  
+**Target Documents:** [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`.agents/rules/mobile_first_responsive.md`](file:///home/yogesh/Projects/NovWrite/.agents/rules/mobile_first_responsive.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md)
 
 #### Added
 
@@ -98,12 +98,16 @@ timeline
   - Uniform **10 items per page** standard applied across all frontend table and list views.
   - Interactive **Previous Page** and **Next Page** buttons with subtle Chevron icons and accessible disabled states.
   - Live item range telemetry (`Showing X–Y of Z items`) and zero-badge page indicator (`Page X / Y`).
+  - **Top Pagination Placement Invariant:** Placed **ABOVE** table/list content to prevent Cumulative Layout Shift (CLS) on page size changes.
   - Implemented across Universe Entities (`/world/entities`), Blueprints & Schemas (`/world/schemas`), Timeline Stream (`/world/timeline`), Invariant Rules (`/world/rules`), and Continuity Audit Violations (`/world/audit`).
 - **Blueprint-Scoped Dynamic Entity Table Architecture (`/world/entities`):**
   - **Elimination of Global Filter Clutter:** Removed the redundant "All Blueprint Archetypes" and "All Categories" dropdown filters to prevent mixed column mismatches and empty cell artifacts across unrelated archetypes.
   - **Archetype-Scoped View:** Each table view is dedicated to a selected 1st-Class Blueprint Archetype, automatically defaulting to the first available blueprint.
   - **Blueprint-Tuned Column Selection:** Core columns streamlined to `name`, `description`, `lastMutatedSeqNumber`, while dynamic and computed formula columns dynamically adapt to the selected blueprint's schema fields.
   - Per-blueprint column preferences stored and restored independently in `localStorage`.
+- **Official Responsive & Mobile-First Design System Governance:**
+  - Codified Rule 13 (_Core Responsive Philosophy & Layout Robustness_), Rule 14 (_Mobile-First Adaptation — Do NOT Force Desktop UI_), and Rule 15 (_Standardized 10-Item Pagination & Layout Jump Prevention_) in [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md) and [`.agents/rules/mobile_first_responsive.md`](file:///home/yogesh/Projects/NovWrite/.agents/rules/mobile_first_responsive.md).
+  - Codified the Zero-Horizontal-Overflow Invariant (`scrollWidth > innerWidth`), minimum touch targets ($36\text{px}$–$44\text{px}$), viewport-safe modals, and genuine mobile interaction patterns (slide-over drawers, mobile entity card lists, tabbed inspectors).
 
 ---
 

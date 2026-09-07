@@ -71,3 +71,29 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
     - **Deterministic Backend Formula Recomputation**: Formulas must be parsed, validated, and computed deterministically on the backend (`formula_engine.go` & `formulaEngine.ts`). Never trust client-provided numbers.
     - **100% Bits UI Select Dropdown Usage**: Every single dropdown selector in the web app must use the official `Select` primitive from `shadcn-svelte` / `Bits UI`.
     - **Post-Save Navigation Redirect**: Blueprint and Entity creation/edit forms must always navigate the user back to `/world/schemas` or `/world/entities` upon successful save.
+13. **Core Responsive Philosophy & Layout Robustness**:
+    - **No Device-Specific Query Chasing**: Do not add random breakpoints for specific phone models. Every component must be fluidly usable at arbitrary container and viewport sizes (from 280px foldables up to 4K ultrawide monitors and 200% font zoom).
+    - **Zero Root Horizontal Overflow**: Root page-level horizontal overflow (`scrollWidth > innerWidth`) is **strictly forbidden**. Any component requiring extensive width (e.g. data tables, narrative pipe tracks) must be wrapped in an isolated horizontal container (`overflow-x-auto w-full min-w-0`).
+    - **Viewport-Safe Modals & Dialogs**: All modals, sheets, and dialogs must be constrained to `max-h-[min(90dvh,800px)] overflow-y-auto` with internal scrolling to prevent action buttons and headers from being clipped on short viewports (e.g., 1280×600 laptop or 844×390 mobile landscape).
+    - **Touch Targets & Fluid Spacing**: Minimum 36px–44px touch targets for all interactive controls on mobile.
+14. **Mobile-First Adaptation — Do NOT Force Desktop UI**:
+    - **No "Squeezing" Desktop UI**: Responsive design is **NOT** taking desktop layouts and squeezing text/buttons until they fit on mobile. When a desktop interaction pattern becomes unsuitable for a small screen, you **MUST use the appropriate mobile-specific interaction pattern instead**.
+    - **Intentional Structural Interaction Mappings**:
+      - _Desktop Persistent Nav / Sidebar_ $\to$ _Mobile Hamburger `[☰]` + Slide-Over Drawer/Sheet_.
+      - _Desktop Multi-Item Subnav_ $\to$ _Breadcrumb + Mobile Section Dropdown (`Select`)_.
+      - _Desktop Wide Multi-Column Table_ $\to$ _Dedicated Mobile Entity Card List_ (with key attributes preview, live formula chips, and full-width touch actions) + optional table toggle.
+      - _Desktop Multi-Column Form Grid_ $\to$ _Single-Column Stacked Form_ with generous vertical touch spacing.
+      - _Desktop Side-by-Side Dual-Axis Split_ $\to$ _Mobile Segmented Tabbed Inspector_ (`[Revisions]` vs `[Coordinates & State]`).
+      - _Desktop Horizontal Action Button Trays_ $\to$ _Stacked Primary Full-Width Action_ above secondary actions.
+    - **Strict Architectural Preference Order**:
+      1. Fluidly resize it if it remains usable
+      2. Reflow/wrap it if that remains usable
+      3. Change the layout structure (e.g. 2-col to 1-col stack)
+      4. Replace desktop interaction with a mobile-specific interaction (e.g. table $\to$ touch cards; split panels $\to$ mobile tabs)
+      5. Move secondary actions into an overflow menu (`[⋮]` or sheet)
+      6. Collapse navigation into a drawer/sheet
+      7. Stack content vertically
+      8. Use isolated horizontal scrolling ONLY when the content genuinely requires it
+15. **Standardized 10-Item Pagination & Layout Jump Prevention**:
+    - **Standard 10-Item Page Size**: All GET endpoints, list views, timeline feeds, and table datasets must be paginated in 10-item chunks with standardized metadata (`page`, `pageSize: 10`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`).
+    - **Top Pagination Bar Location**: Pagination controls MUST be positioned **ABOVE** tables/lists rather than below, preventing cumulative layout shifts (CLS) and UI jumps when record heights vary across pages.

@@ -467,3 +467,89 @@ The frontend test suite ([`apps/web`](file:///home/yogesh/Projects/NovWrite/apps
 - **Store Tests:** Svelte 5 Runes store reactivity, entity formula caching, and revision checkout operations (`worldStore.test.ts`).
 - **Component Tests:** `PipeTreeVisualizer.test.ts`, `JsonEditor.test.ts`, and archetype carousel interaction tests.
 - **Automated Execution:** Tested automatically as Phase 4 in [`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) and typechecked via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+
+---
+
+## 15. Core Responsive Philosophy & Layout Robustness
+
+NovWrite avoids device-query fragmentation by anchoring layout styling in container fluid dynamics and structural invariants:
+
+### 15.1. The Zero-Horizontal-Overflow Invariant
+
+- **Root Protection:** Under no circumstances should `document.documentElement.scrollWidth > window.innerWidth`.
+- **Flex Child Sizing:** Every flex child that renders truncated text, badges, or code blocks must declare `min-w-0` to avoid flex child blowout past parent boundaries.
+- **Isolated Horizontal Overflow Containers:** Naturally wide components (such as the Data Table, DAG Visualizers, and CodeMirror editors) must be wrapped in isolated horizontal scroll containers (`overflow-x-auto w-full min-w-0 max-w-full`).
+
+### 15.2. Viewport-Safe Modal & Dialog Architecture
+
+- All modals, sheets, and dialogs must fit inside the active viewport: `max-h-[min(90dvh,800px)] w-[min(95vw,600px)]`.
+- Modal footers and headers remain pinned, while body content scrolls internally (`overflow-y-auto min-h-0`).
+- Touch targets must adhere to a minimum physical threshold of $36\text{px} \times 36\text{px}$ (compact) to $44\text{px} \times 44\text{px}$ (standard mobile).
+
+---
+
+## 16. Mobile-First Structural Adaptation & Interaction Architecture
+
+Responsive design in NovWrite is NOT about compressing desktop layouts into narrow mobile views. When desktop interaction patterns degrade on small viewports, components pivot to dedicated mobile interaction structures:
+
+```text
+┌──────────────────────────────────────┬──────────────────────────────────────┐
+│ DESKTOP PATTERN                      │ DEDICATED MOBILE PATTERN             │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ Persistent Multi-level Sidebar       │ Hamburger [☰] + Slide-over Drawer    │
+│ Horizontal Subnav Tab Strip          │ Breadcrumb Header + Select Dropdown  │
+│ Multi-column Data Table              │ Mobile Entity Card List + Toggle     │
+│ Multi-column Side-by-Side Form       │ Single-column Vertical Stack         │
+│ Side-by-Side Entity Inspector Pane   │ Full-width Segmented Tabbed Sheet    │
+│ Horizontal Action Toolbar Tray       │ Full-width Primary CTA + Sub-actions │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+### 16.1. Mobile Navigation & Breadcrumb Dropdown Pattern
+
+- On screens $<768\text{px}$, persistent sidebars collapse into a slide-over sheet triggered by a top-left hamburger `[☰]` button.
+- Sub-navigation bars with more than 3 tabs convert to a native `<Select>` or dropdown menu displaying the active section name next to the breadcrumbs.
+
+### 16.2. Table vs Card List Adaptation
+
+- Complex data grids render an interactive card view on small screens where each entity card presents the title, archetype badge, key metadata metrics, and a quick-action trigger.
+- Users can toggle between Card and Table modes when inspecting dense datasets on mobile devices.
+
+### 16.3. Adaptation Preference Hierarchy
+
+When adapting UI components across viewport boundaries, the following priority order is strictly enforced:
+
+1. Pure CSS Fluid Layouts (`flex-wrap`, `minmax`, CSS Grid `auto-fit`)
+2. CSS `gap` and `padding` scaling via responsive tokens (`p-3 md:p-6`)
+3. Semantic HTML Wrapping & Text Truncation (`truncate`, `break-words`)
+4. Intentional View Modes (Card vs. Table view toggle)
+5. Component-Level Structural Breakpoints (`hidden md:flex`)
+6. Progressive Disclosure (Expandable accordions, collapsible panels)
+7. Mobile Drawers / Modals (replacing permanent side panels)
+8. Isolated Scrolling (last resort, strictly bounded to table or graph sub-regions)
+
+---
+
+## 17. Standardized 10-Item Pagination & Layout Jump Prevention Architecture
+
+To guarantee predictable memory consumption, instantaneous query response times, and stable rendering:
+
+### 17.1. Standard 10-Item Page Sizing
+
+- All list endpoints and data views default to a page chunk size of $10$ items (`pageSize = 10`).
+- Standard query parameters across REST APIs: `?page=1&limit=10`.
+- Standard API response contract:
+  ```json
+  {
+    "data": [ ... ],
+    "total": 42,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 5
+  }
+  ```
+
+### 17.2. Anti-Layout-Jump Placement: Top Pagination Bar
+
+- **Positioning Rule:** Pagination counters and navigation buttons (`[‹ Previous]` / `[Next ›]`) must be positioned **ABOVE** the data table or card container.
+- **Rationale:** Placing pagination controls solely at the bottom of dynamic lists causes drastic vertical jumps (Cumulative Layout Shift) when transitioning between pages of varying item heights or when reaching the last page with fewer items. The top pagination bar provides an anchored, flicker-free navigation landmark.

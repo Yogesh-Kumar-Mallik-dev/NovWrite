@@ -2,39 +2,21 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Local signed commits (`git commit -S`) are standard.
-- **Architectural Baseline:** Version 2.4 (Comprehensive Monorepo Test Coverage & Regression Suite across Bridge, Data Service, Go API, and Web Studio).
+- **Architectural Baseline:** Version 2.5 (Standardized 10-Item Frontend Pagination, Dynamic Blueprint Tables, Core Responsive Philosophy, and Official Mobile-First Standards).
 - **Recent Accomplishments:**
-  - **Comprehensive Codebase Test Audit & Regression Hardening**:
-    - **Go API Backend (`apps/api`)**:
-      - Added `health_handler_test.go` verifying `/healthz`, `/livez`, `/readyz` probe endpoints (`BLOCK_TEST_API_HEALTH_001`).
-      - Added `middleware_test.go` testing Request ID generation/preservation, Response Time telemetry, Security Headers, API Versioning, and RFC 7807 Panic Recovery (`BLOCK_TEST_HTTP_MIDDLEWARE_001`).
-      - Refactored `BuildRouter()` and added `server_test.go` verifying route tree mounts, RFC 7807 404/405 error handlers, and CORS integration (`BLOCK_TEST_API_SERVER_001`).
-      - Added regression tests to `entity_handler_test.go` for revision reverts, hanging edit trees, and missing resource errors (`BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001`).
-      - Added tests to `world_bridge_test.go` for Scene Grounding and Entity Mentions RPC endpoints (`BLOCK_TEST_WORLD_BRIDGE_GROUNDING_001`).
-      - Added regression tests to `formula_engine_test.go` for math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`), nested `IF` conditions, and negative math (`BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001`).
-    - **TypeScript Bridge Contracts (`packages/bridge`)**:
-      - Added comprehensive test suites in `bridge.test.ts` for `validateEntityRevision`, `validateBitemporalCoordinateQuery`, `EditTreeSchema`, `EditNodeSchema`, `BitemporalEntityStateSchema`, `ValueTypeOptionSchema`, `EntityItemSchema`, and error rejection branches.
-    - **TypeScript Data Service (`apps/data-service`)**:
-      - Added regression tests in `revisionEngine.test.ts` for revert loops (reverting a revert), non-existent edit node checkout error handling, and property deletion tracking.
-    - **SvelteKit Web Studio (`apps/web`)**:
-      - Added `utils.test.ts` testing `cn()` class merging and conflict resolution (`BLOCK_TEST_WEB_UTILS_001`).
-      - Added regression tests in `formulaEngine.test.ts` for nested `IF` logic, unary minus with negative multipliers, and deep dot-notation property resolution.
-      - Added regression tests in `tableConfig.test.ts` for missing properties, null fallbacks, and array formatting.
-    - **Test Runner (`test.sh`)**:
-      - Updated `test.sh` to run all 5 test and typecheck phases across all 4 monorepo packages.
+  - **Standardized 10-Item Pagination & Dynamic Blueprint Tables**:
+    - Built typed frontend API client layer (`NovWriteApiClient`) and pure array paginator (`paginateArray`) in `apps/web/src/lib/api/apiClient.ts`.
+    - Created reusable 10-item `<Pagination />` component with Previous/Next controls, item range counter, zero-badge page indicator, and top-anchored layout placement.
+    - Integrated top pagination across Universe Entities (`/world/entities`), Schemas (`/world/schemas`), Timeline (`/world/timeline`), Rules (`/world/rules`), and Audit (`/world/audit`).
+    - Streamlined `/world/entities` table to archetype-scoped dynamic column views, eliminating redundant global filter clutter.
+  - **Official Governance & Rule Formalization**:
+    - Created official Antigravity rule definition in `.agents/rules/mobile_first_responsive.md` (`always_on`).
+    - Codified Rule 13 (_Core Responsive Philosophy & Layout Robustness_), Rule 14 (_Mobile-First Adaptation — Do NOT Force Desktop UI_), and Rule 15 (_Standardized 10-Item Pagination & Layout Jump Prevention_) in `agents.md`.
+    - Added Sections 5, 6, 7 and expanded Section 8 (checks 10–14) in `frontend_design_descisions.md`.
+    - Updated `docs/FRONTEND_ARCHITECTURE.md` with Sections 15, 16, and 17.
+    - Updated `changes.md` with Version 2.5 details.
   - **Verification Completed**:
     - `./check.sh`: Monorepo typecheck passed cleanly with 0 errors across all packages.
     - `./test.sh`: 100% test pass rate across `@novwrite/bridge` (12/12), `@novwrite/data-service` (40/40), Go API backend (all packages passing), `@novwrite/web` (14/14), and web typechecks.
-  - **Comprehensive Project Documentation Overhaul**:
-    - Updated [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md) with UPDATE Pipe & Hanging EDIT Trees DAG, REST API standards, and 5-Phase test runner.
-    - Updated [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md) with REST API best practices, telemetry middleware, RFC 7807 problem details, UPDATE pipe engine, and 5-phase test architecture.
-    - Updated [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md) with 3-tier header visual hierarchy, `PipeTreeVisualizer`, strict schema invariance, and frontend test architecture.
-    - Updated [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md) with `entity_revisions`, `edit_trees`, and `edit_nodes` table schemas and indexes.
-    - Updated [`docs/MVP_PHASED_PLAN.md`](file:///home/yogesh/Projects/NovWrite/docs/MVP_PHASED_PLAN.md) with Phases W6 to W9.
-    - Updated [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md) and [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md) with monorepo paths, lifecycle scripts, and 5-phase test commands.
-    - Updated [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md) with Decisions 8, 9, 10.
-    - Updated [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md) and [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md) with Version 2.4 baseline and subsystem specs.
-    - Updated [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md) with 3-tier header hierarchy, `PipeTreeVisualizer`, and schema invariance.
-    - Updated [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md) with Version 2.3 and 2.4 changelog entries.
 - **Next Steps:**
-  - Proceed with next milestone features while maintaining 100% test coverage and block ID standards.
+  - Maintain 100% test coverage and block ID standards across all upcoming milestones.

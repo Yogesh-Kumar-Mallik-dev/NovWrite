@@ -167,7 +167,68 @@ This document records the design preferences, framework choices, and UI/UX conve
 
 ---
 
-## 5. AI UI/UX Anti-Patterns Checklist
+## 5. Core Responsive Philosophy: Fluid Layouts & Viewport Resilience
+
+### 5.1. Philosophy
+
+- Do NOT approach responsiveness as "add more Tailwind breakpoints for more devices."
+- Target: **"Every component should remain usable and visually correct for any reasonable viewport/container size."**
+- Core principles:
+  1. **Fluid layouts** (`w-full`, `max-w-[min(..., 100%)]`, dynamic clamp typography and editor heights).
+  2. **Container-aware components** and auto-fit grids (`grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))]`).
+  3. **Small number of structural breakpoints** (`sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`) representing genuine interaction shifts.
+  4. **Content-driven sizing** rather than hardcoded pixel widths.
+  5. **Defensive overflow & flex wrapping** (`min-w-0`, `flex-wrap gap-2`, `truncate`).
+  6. **Zero Root Horizontal Overflow**: `scrollWidth > innerWidth` must never occur on the root viewport.
+  7. **Isolated Horizontal Scrolling**: Tables and complex visualizers scroll strictly inside bounded containers (`overflow-x-auto w-full min-w-0`).
+  8. **Viewport-Safe Modals & Dialogs**: All modals/dialogs must be constrained to `max-h-[min(90dvh,800px)] overflow-y-auto` with internal scrolling to prevent action button clipping on short screens (e.g. 1280×600 laptop or 844×390 mobile landscape).
+  9. **Safe Area Cover**: Always include `viewport-fit=cover` in meta viewport for notch and foldable display support.
+
+---
+
+## 6. Mobile-First Adaptation: Do NOT Force Desktop UI
+
+### 6.1. Philosophy
+
+Do NOT interpret "responsive" as: _"Take the desktop layout and squeeze everything until it fits on mobile."_
+
+When a desktop interaction pattern becomes unsuitable for a small screen, deploy the **appropriate mobile-specific interaction pattern instead**. The application must have genuinely different UI structures when necessary.
+
+### 6.2. Structural Interaction Mappings
+
+| Surface                    | Desktop UI (≥ 768px / md)                                                                 | Mobile UI (< 768px / md)                                                                                                                                               |
+| :------------------------- | :---------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Global Navigation**      | Persistent horizontal top bar with studio switchers & project telemetry.                  | **Hamburger `[☰]` (min 44px) + Slide-Over Drawer/Sheet** with project context, workspaces, and sub-links.                                                             |
+| **Sub-Header Navigation**  | Horizontal tab pills list across the top.                                                 | **Breadcrumb + Mobile Section Dropdown (`Select`)** for 1-tap switching without horizontal scrolling.                                                                  |
+| **Data Tables**            | Full wide tabular grid (`<Table>`) with blueprint-tuned dynamic columns & sticky headers. | **Dedicated Mobile Entity Card List** (with icon, name, category pill, `#Seq` badge, live formula chips, and full-width touch actions) + optional Table view switcher. |
+| **Workbench Toolbars**     | Multi-item horizontal toolbar.                                                            | **Prominent full-width search** + Compact Action/View switcher row + primary `+ Create` button.                                                                        |
+| **Form Layouts**           | Multi-column side-by-side attribute grid.                                                 | **Single-column stacked form** with generous vertical spacing and min 44px touch targets.                                                                              |
+| **Complex Inspectors**     | Side-by-side 12-column dual-axis inspector.                                               | **Mobile Segmented Tabbed Inspector** (`[Authorial Revisions (N)]` vs `[Plot Coordinates & State]`).                                                                   |
+| **Action Trays & Footers** | Right-aligned horizontal button row `[Cancel] [Save] [Delete]`.                           | **Stacked Primary Action** (full-width `[Save Changes]`) above secondary actions (`[Delete]`, `[Cancel]`).                                                             |
+
+### 6.3. Preference Order for Small Viewports
+
+1. Fluidly resize it if it remains usable
+2. Reflow / wrap it if that remains usable
+3. Change the layout structure (e.g. 2-col to 1-col stack)
+4. Replace desktop interaction with a mobile-specific interaction (e.g. table $\to$ touch cards; split panels $\to$ mobile tabs)
+5. Move secondary actions into an overflow menu (`[⋮]` or sheet)
+6. Collapse navigation into a drawer / sheet
+7. Stack content vertically
+8. Use isolated horizontal scrolling ONLY when the content genuinely requires it
+
+---
+
+## 7. Standardized 10-Item Pagination & Layout Jump Prevention UX
+
+1. **Standard 10-Item Page Size**: All GET endpoints, entities registries, timeline streams, and schemas lists MUST be paginated into standard 10-item pages.
+2. **Top Pagination Header Bar**: Pagination controls (Showing range, `[Previous]`, `Page X / Y`, `[Next]`) MUST be positioned **ABOVE** the table/card list container.
+   - Placing pagination above the data ensures users can navigate pages without having the pagination bar jump up and down dynamically based on varying record heights or counts.
+3. **Zero Layout Shifts**: Heights and pagination boundaries must be deterministic.
+
+---
+
+## 8. AI UI/UX Anti-Patterns Checklist
 
 All AI coding agents must proactively audit against this checklist before submitting UI changes:
 
@@ -180,3 +241,8 @@ All AI coding agents must proactively audit against this checklist before submit
 7. **Did you verify error screens have chrome stripped and word wrapping enabled?** $\to$ Check full isolation on 404/500 routes.
 8. **Did you include arbitrary unmanaged custom properties in Entity Editor?** $\to$ Eradicate; enforce strict Blueprint schema invariance.
 9. **Did you respect the 3-Tier Visual Hierarchy in Entity Editor?** $\to$ Ensure Tier 1 (Navigation), Tier 2 (Identity), and Tier 3 (Actions) are clearly separated.
+10. **Did you squeeze desktop UI instead of deploying mobile interaction patterns?** $\to$ Deploy Hamburger/Drawer, Mobile Cards, Single-Column Forms, and Tabbed Inspectors.
+11. **Did you cause root page-level horizontal overflow (`scrollWidth > innerWidth`)?** $\to$ Wrap wide content in `overflow-x-auto w-full min-w-0`.
+12. **Did you place pagination below tables where it jumps?** $\to$ Place pagination bar above the table/card list container.
+13. **Are modals missing `max-h-[min(90dvh,800px)] overflow-y-auto`?** $\to$ Ensure dialogs are bounded and internally scrollable.
+14. **Are touch targets smaller than 36px–44px on mobile?** $\to$ Ensure all interactive buttons and inputs meet mobile touch target requirements.
