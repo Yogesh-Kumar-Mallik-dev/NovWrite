@@ -31,14 +31,25 @@
 
 {#if !projectStore.activeProject && projectStore.projects.length === 0}
   <!-- Zero Projects Empty State: Direct Create Action -->
-  <button
-    type="button"
-    onclick={handleOpenCreate}
-    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors cursor-pointer {className}"
-  >
-    <Plus class="w-3.5 h-3.5" />
-    <span>Create Project</span>
-  </button>
+  {#if isMobile}
+    <button
+      type="button"
+      onclick={handleOpenCreate}
+      class="w-full flex items-center justify-center gap-2 h-9 px-3 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs transition-colors cursor-pointer {className}"
+    >
+      <Plus class="w-4 h-4" />
+      <span>Create Project</span>
+    </button>
+  {:else}
+    <button
+      type="button"
+      onclick={handleOpenCreate}
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors cursor-pointer {className}"
+    >
+      <Plus class="w-3.5 h-3.5" />
+      <span>Create Project</span>
+    </button>
+  {/if}
 {:else}
   <!-- Desktop / Header Dropdown Switcher -->
   {#if !isMobile}
@@ -94,8 +105,8 @@
     </DropdownMenu.Root>
   {:else}
     <!-- Mobile Drawer Project Card & Switcher -->
-    <div class="p-3 my-2 rounded-lg bg-muted/60 border border-border flex flex-col gap-2 {className}">
-      <div class="flex items-center justify-between">
+    <div class="p-2.5 rounded-lg bg-muted/40 border border-border/80 flex flex-col gap-1.5 {className}">
+      <div class="flex items-center justify-between px-0.5">
         <span class="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/80">Active Project</span>
         <button
           type="button"
@@ -109,18 +120,18 @@
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
-          class="w-full flex items-center justify-between px-2.5 py-2 rounded-md bg-card border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
+          class="w-full flex items-center justify-between h-8 px-2.5 rounded-md bg-card border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
         >
           <div class="flex items-center gap-2 min-w-0">
-            <Folder class="w-4 h-4 text-primary shrink-0" />
-            <span class="truncate font-bold text-foreground">
+            <Folder class="w-3.5 h-3.5 text-primary shrink-0" />
+            <span class="truncate font-semibold text-foreground">
               {projectStore.activeProject?.name || "No Project Selected"}
             </span>
           </div>
-          <ChevronDown class="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <ChevronDown class="w-3 h-3 text-muted-foreground shrink-0" />
         </DropdownMenu.Trigger>
 
-        <DropdownMenu.Content class="w-[min(80vw,280px)] p-1 bg-popover border-border text-foreground shadow-xl z-50">
+        <DropdownMenu.Content class="w-[min(75vw,270px)] p-1 bg-popover border-border text-foreground shadow-xl z-50">
           <DropdownMenu.Group>
             <DropdownMenu.GroupHeading class="text-[10px] uppercase font-bold tracking-wider text-muted-foreground px-2 py-1">
               Switch Project
@@ -135,7 +146,7 @@
                   : 'hover:bg-muted'}"
               >
                 <div class="flex flex-col min-w-0 pr-2">
-                  <span class="truncate">{proj.name}</span>
+                  <span class="truncate font-medium">{proj.name}</span>
                   {#if proj.genre}
                     <span class="text-[10px] text-muted-foreground truncate">{proj.genre}</span>
                   {/if}
