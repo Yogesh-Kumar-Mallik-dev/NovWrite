@@ -9,6 +9,7 @@
     Sparkles,
     FolderPlus,
     Folder,
+    Pencil,
   } from "lucide-svelte";
   import {
     Card,
@@ -60,15 +61,26 @@
           {projectStore.activeProject.genre || "Creative Project"} · {projectStore.activeProject.description || "World Studio Workspace"}
         </p>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onclick={() => projectStore.openCreateDialog()}
-        class="text-xs gap-1.5"
-      >
-        <FolderPlus class="w-3.5 h-3.5 text-primary" />
-        <span>New Project</span>
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => projectStore.openEditDialog()}
+          class="text-xs gap-1.5"
+        >
+          <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
+          <span>Edit Project</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => projectStore.openCreateDialog()}
+          class="text-xs gap-1.5"
+        >
+          <FolderPlus class="w-3.5 h-3.5 text-primary" />
+          <span>New Project</span>
+        </Button>
+      </div>
     </div>
   {/if}
 

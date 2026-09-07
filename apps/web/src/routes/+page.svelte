@@ -6,6 +6,7 @@
     Sparkles,
     Folder,
     FolderPlus,
+    Pencil,
   } from "lucide-svelte";
   import {
     Card,
@@ -44,6 +45,15 @@
           <Folder class="w-3.5 h-3.5 text-primary" />
           <span>Active Novel: <strong class="font-bold">{projectStore.activeProject.name}</strong></span>
           <span class="text-muted-foreground">({projectStore.activeProject.genre || "Fiction"})</span>
+          <button
+            type="button"
+            onclick={() => projectStore.openEditDialog()}
+            class="ml-1 p-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-xs"
+            title="Edit Project Settings"
+            aria-label="Edit Project Settings"
+          >
+            <Pencil class="w-3 h-3" />
+          </button>
         </div>
       {:else}
         <Button

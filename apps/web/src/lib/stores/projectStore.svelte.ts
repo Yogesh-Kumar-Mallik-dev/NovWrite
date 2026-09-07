@@ -29,11 +29,20 @@ export class ProjectStateStore {
   activeProjectId = $state<string | null>(null);
   isLoaded = $state<boolean>(false);
   isCreateDialogOpen = $state<boolean>(false);
+  isEditDialogOpen = $state<boolean>(false);
+  editingProjectId = $state<string | null>(null);
 
   // Pure derived getter for currently active project
   activeProject = $derived.by(() => {
     if (!this.activeProjectId) return null;
     return this.projects.find((p) => p.id === this.activeProjectId) || null;
+  });
+
+  // Pure derived getter for currently edited project
+  editingProject = $derived.by(() => {
+    const targetId = this.editingProjectId || this.activeProjectId;
+    if (!targetId) return null;
+    return this.projects.find((p) => p.id === targetId) || null;
   });
 
   constructor() {
@@ -128,9 +137,18 @@ export class ProjectStateStore {
     const idx = this.projects.findIndex((p) => p.id === projectId);
     if (idx === -1) return false;
 
+    const trimmedName = updates.name !== undefined ? updates.name.trim() : undefined;
+    if (trimmedName !== undefined && !trimmedName) {
+      throw new Error("Project name cannot be empty.");
+    }
+
     this.projects[idx] = {
       ...this.projects[idx],
-      ...updates,
+      ...(trimmedName !== undefined ? { name: trimmedName } : {}),
+      ...(updates.description !== undefined
+        ? { description: updates.description.trim() }
+        : {}),
+      ...(updates.genre !== undefined ? { genre: updates.genre.trim() } : {}),
       updatedAt: new Date().toISOString(),
     };
     this.saveToStorage();
@@ -160,9 +178,22 @@ export class ProjectStateStore {
     this.isCreateDialogOpen = false;
   }
 
+  openEditDialog(projectId?: string): void {
+    this.editingProjectId = projectId || this.activeProjectId;
+    this.isEditDialogOpen = true;
+  }
+
+  closeEditDialog(): void {
+    this.isEditDialogOpen = false;
+    this.editingProjectId = null;
+  }
+
   clearAllProjects(): void {
     this.projects = [];
     this.activeProjectId = null;
+    this.editingProjectId = null;
+    this.isEditDialogOpen = false;
+    this.isCreateDialogOpen = false;
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       localStorage.removeItem(PROJECTS_STORAGE_KEY);
       localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);

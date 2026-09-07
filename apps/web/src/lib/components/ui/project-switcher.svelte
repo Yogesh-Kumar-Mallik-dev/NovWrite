@@ -8,6 +8,7 @@
     Check,
     BookOpen,
     Plus,
+    Pencil,
   } from "lucide-svelte";
   import Button from "$lib/components/ui/button.svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
@@ -26,6 +27,10 @@
 
   function handleOpenCreate() {
     projectStore.openCreateDialog();
+  }
+
+  function handleOpenEdit() {
+    projectStore.openEditDialog();
   }
 </script>
 
@@ -96,6 +101,16 @@
 
         <DropdownMenu.Separator class="my-1 bg-border" />
 
+        {#if projectStore.activeProject}
+          <DropdownMenu.Item
+            onclick={handleOpenEdit}
+            class="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted rounded-md cursor-pointer"
+          >
+            <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Edit Project Settings...</span>
+          </DropdownMenu.Item>
+        {/if}
+
         <DropdownMenu.Item
           onclick={handleOpenCreate}
           class="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/10 rounded-md cursor-pointer"
@@ -110,14 +125,26 @@
     <div class="p-2.5 rounded-lg bg-muted/40 border border-border/80 flex flex-col gap-1.5 {className}">
       <div class="flex items-center justify-between px-0.5">
         <span class="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/80">Active Project</span>
-        <button
-          type="button"
-          onclick={handleOpenCreate}
-          class="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
-        >
-          <Plus class="w-3 h-3" />
-          <span>New</span>
-        </button>
+        <div class="flex items-center gap-2">
+          {#if projectStore.activeProject}
+            <button
+              type="button"
+              onclick={handleOpenEdit}
+              class="text-[11px] font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 cursor-pointer"
+            >
+              <Pencil class="w-3 h-3" />
+              <span>Edit</span>
+            </button>
+          {/if}
+          <button
+            type="button"
+            onclick={handleOpenCreate}
+            class="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
+          >
+            <Plus class="w-3 h-3" />
+            <span>New</span>
+          </button>
+        </div>
       </div>
 
       <DropdownMenu.Root>
@@ -161,6 +188,16 @@
           </DropdownMenu.Group>
 
           <DropdownMenu.Separator class="my-1 bg-border" />
+
+          {#if projectStore.activeProject}
+            <DropdownMenu.Item
+              onclick={handleOpenEdit}
+              class="flex items-center gap-2 px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted rounded-md cursor-pointer"
+            >
+              <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Edit Project Settings</span>
+            </DropdownMenu.Item>
+          {/if}
 
           <DropdownMenu.Item
             onclick={handleOpenCreate}
