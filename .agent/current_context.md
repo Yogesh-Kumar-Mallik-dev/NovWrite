@@ -13,8 +13,7 @@
     - Added zero-project blocker empty state in World Studio workbench with direct creation CTA.
   - **Theme Toggle Single-Icon Redesign**:
     - Replaced dual-icon toggle with a single-icon button displaying strictly `Moon` (light mode) or `Sun` (dark mode) in application purple (`text-primary`).
-  - **Database Hardening & Clean Reset**:
-    - Made `EventEffect.projectId` non-nullable foreign key with cascade deletion.
-    - Executed `./flush_db.sh` cleanly resetting PostgreSQL and Redis.
+  - **UI/UX Cleanup**:
+    - Purged leftover `/dev/communication-hub` and removed the Diagnostics link from the mobile slide-over navigation drawer.
 - **Next Steps:**
   - Proceed with novel manuscript and prose studio development while maintaining strict project isolation and 100% test coverage.
