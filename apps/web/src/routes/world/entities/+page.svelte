@@ -18,6 +18,8 @@
     MapPin,
     Eye,
     Tag,
+    LayoutGrid,
+    Table as TableIcon,
   } from 'lucide-svelte';
   import { Button, Input, Select, ConfirmDialog, EmptyState, Pagination } from '$lib/components/ui';
   import { toast } from '$lib/stores/toastStore.svelte';
@@ -53,6 +55,16 @@
   let searchQuery = $state('');
   let blueprintFilter = $state('');
   let showColumnCustomizer = $state(false);
+
+  // View layout: 'cards' (mobile card list) | 'table' (desktop table)
+  let viewLayout = $state<'cards' | 'table'>('cards');
+
+  // Set default layout based on screen width on mount
+  $effect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      viewLayout = 'table';
+    }
+  });
 
   // Pagination State (Page size 10)
   let currentPage = $state(1);
@@ -246,13 +258,8 @@
     <div class="space-y-3">
       <Card class="p-3.5 border-border bg-card/75">
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-          <!-- Blueprint Archetype Selector -->
-          <div class="sm:col-span-5">
-            <Select options={blueprintOptions} bind:value={blueprintFilter} />
-          </div>
-
-          <!-- Search Input -->
-          <div class="relative sm:col-span-4">
+          <!-- Search Input (Prominent on Mobile) -->
+          <div class="relative sm:col-span-4 order-1 sm:order-2">
             <Search class="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
             <Input
               bind:value={searchQuery}
@@ -261,16 +268,54 @@
             />
           </div>
 
-          <!-- Column Visibility Customizer Toggle Button -->
-          <div class="sm:col-span-3 flex justify-end">
+          <!-- Blueprint Archetype Selector -->
+          <div class="sm:col-span-4 order-2 sm:order-1">
+            <Select options={blueprintOptions} bind:value={blueprintFilter} />
+          </div>
+
+          <!-- Controls: View Mode & Column Customizer -->
+          <div class="sm:col-span-4 flex items-center justify-between sm:justify-end gap-2 order-3">
+            <!-- View Mode Switcher (Cards vs Table) -->
+            <div class="inline-flex rounded-lg bg-muted p-0.5 border border-border text-xs shrink-0">
+              <button
+                type="button"
+                onclick={() => (viewLayout = 'cards')}
+                class={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition cursor-pointer ${
+                  viewLayout === 'cards'
+                    ? 'bg-card text-foreground font-semibold shadow-2xs border border-border/80'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Card List View (Mobile-Optimized)"
+                aria-label="Card View"
+              >
+                <LayoutGrid class="w-3.5 h-3.5" />
+                <span class="hidden xs:inline text-[11px]">Cards</span>
+              </button>
+              <button
+                type="button"
+                onclick={() => (viewLayout = 'table')}
+                class={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition cursor-pointer ${
+                  viewLayout === 'table'
+                    ? 'bg-card text-foreground font-semibold shadow-2xs border border-border/80'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Tabular Grid View"
+                aria-label="Table View"
+              >
+                <TableIcon class="w-3.5 h-3.5" />
+                <span class="hidden xs:inline text-[11px]">Table</span>
+              </button>
+            </div>
+
+            <!-- Column Visibility Customizer Toggle Button -->
             <Button
               variant={showColumnCustomizer ? 'default' : 'outline'}
               size="sm"
-              class="w-full h-9 text-xs flex items-center justify-center gap-1.5"
+              class="h-9 text-xs flex items-center gap-1.5 shrink-0"
               onclick={() => (showColumnCustomizer = !showColumnCustomizer)}
             >
               <SlidersHorizontal class="w-3.5 h-3.5 text-primary" />
-              <span>Columns ({visibleColumns.length}/{availableColumns.length})</span>
+              <span>Cols ({visibleColumns.length})</span>
             </Button>
           </div>
         </div>
@@ -286,12 +331,12 @@
                 <span>Customize Columns: {activeBlueprint?.name || 'Blueprint'}</span>
               </div>
               <p class="text-[11px] text-muted-foreground">
-                Configure exactly which dynamic attributes, formulas, and references appear in this table. Preferences are preserved per blueprint.
+                Configure exactly which dynamic attributes, formulas, and references appear in this view. Preferences are preserved per blueprint.
               </p>
             </div>
 
             <!-- Quick Action Buttons -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
@@ -434,7 +479,7 @@
       {/if}
     </div>
 
-    <!-- Entities Table with Shadcn UI Table -->
+    <!-- Entities Container: Cards View (Mobile-First) OR Tabular View -->
     <Card class="border-border bg-card overflow-hidden shadow-xs">
       <!-- Top Pagination Header Bar (prevents layout jumps during browsing) -->
       {#if filteredEntities.length > 0}
@@ -451,54 +496,152 @@
         />
       {/if}
 
-      <div class="overflow-x-auto w-full">
-        <Table class="w-full text-left text-xs min-w-[750px]">
-          <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
-            <TableRow class="hover:bg-transparent border-border">
-              {#each visibleColumns as col}
-                <TableHead class="px-4 py-3 text-muted-foreground font-semibold whitespace-nowrap">
-                  <div class="flex items-center gap-1.5">
-                    {#if col.category === 'formula'}
-                      <Calculator class="w-3.5 h-3.5 text-amber-500" />
-                    {:else if col.fieldType === 'ENUM'}
-                      <ListFilter class="w-3.5 h-3.5 text-primary" />
-                    {:else if col.fieldType === 'VALUE_TYPE'}
-                      <Sparkles class="w-3.5 h-3.5 text-primary" />
-                    {:else if col.fieldType === 'BLUEPRINT_REF'}
-                      <Link2 class="w-3.5 h-3.5 text-cyan-500" />
-                    {:else if col.fieldType === 'ARRAY_REF'}
-                      <Link2 class="w-3.5 h-3.5 text-purple-400" />
-                    {:else if col.fieldType === 'ARRAY'}
-                      <Tag class="w-3.5 h-3.5 text-indigo-400" />
-                    {:else if col.fieldType === 'NUMBER'}
-                      <Hash class="w-3.5 h-3.5 text-emerald-500" />
-                    {/if}
-                    <span>{col.label}</span>
-                  </div>
-                </TableHead>
-              {/each}
-              <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold w-[120px] whitespace-nowrap">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+      {#if filteredEntities.length === 0}
+        <EmptyState
+          icon={Boxes}
+          title={worldStore.entities.length === 0 ? "No Entities Instantiated" : `No ${activeBlueprint?.name || 'Matching'} Entities`}
+          description={worldStore.entities.length === 0
+            ? "Bring your story universe to life by instantiating characters, weapons, and celestial locations."
+            : `No entities match the current search query for ${activeBlueprint?.name || 'this archetype'}.`}
+          actionText={worldStore.entities.length === 0 ? "+ Instantiate First Entity" : "Clear Search"}
+          actionHref={worldStore.entities.length === 0 ? `/world/entities/create?blueprintId=${blueprintFilter}` : undefined}
+          onAction={worldStore.entities.length === 0 ? undefined : () => { searchQuery = ''; }}
+          class="border-0 rounded-none bg-transparent py-12"
+        />
+      {:else if viewLayout === 'cards'}
+        <!-- MOBILE-FIRST ENTITY CARD GRID (Touch-friendly, high readability) -->
+        <div class="p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {#each paginatedResult.data as entity (entity.id)}
+            {@const IconComp = getEntityIcon(entity.category)}
+            <div class="p-4 rounded-xl border border-border bg-card/90 shadow-2xs hover:border-primary/40 transition-colors flex flex-col justify-between gap-3 min-w-0">
+              <!-- Card Header -->
+              <div class="space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                  <a
+                    href={`/world/entities/${entity.id}`}
+                    class="flex items-center gap-2.5 font-bold text-sm text-foreground hover:text-primary transition-colors min-w-0 group"
+                  >
+                    <div class="p-2 rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <IconComp class="w-4 h-4" />
+                    </div>
+                    <span class="truncate">{entity.name}</span>
+                  </a>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-muted/80 text-muted-foreground shrink-0 border border-border/60">
+                    #{entity.lastMutatedSeqNumber}
+                  </span>
+                </div>
 
-          <TableBody class="divide-y divide-border/60">
-            {#if filteredEntities.length === 0}
-              <TableRow class="hover:bg-transparent">
-                <TableCell colspan={visibleColumns.length + 1} class="p-0 border-0">
-                  <EmptyState
-                    icon={Boxes}
-                    title={worldStore.entities.length === 0 ? "No Entities Instantiated" : `No ${activeBlueprint?.name || 'Matching'} Entities`}
-                    description={worldStore.entities.length === 0
-                      ? "Bring your story universe to life by instantiating characters, weapons, and celestial locations."
-                      : `No entities match the current search query for ${activeBlueprint?.name || 'this archetype'}.`}
-                    actionText={worldStore.entities.length === 0 ? "+ Instantiate First Entity" : "Clear Search"}
-                    actionHref={worldStore.entities.length === 0 ? `/world/entities/create?blueprintId=${blueprintFilter}` : undefined}
-                    onAction={worldStore.entities.length === 0 ? undefined : () => { searchQuery = ''; }}
-                    class="border-0 rounded-none bg-transparent py-12"
-                  />
-                </TableCell>
+                <!-- Archetype and Category Metadata -->
+                <div class="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                  <span class="px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-semibold text-[11px] border border-border/80">
+                    {entity.blueprintName}
+                  </span>
+                  <span class="text-muted-foreground/60">·</span>
+                  <span class="capitalize text-[11px]">{entity.category}</span>
+                </div>
+
+                {#if entity.description}
+                  <p class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {entity.description}
+                  </p>
+                {/if}
+
+                <!-- Dynamic Properties & Formulas Preview Badges -->
+                <div class="pt-2 border-t border-border/60 flex flex-wrap gap-1.5">
+                  {#each visibleColumns.filter((c) => c.category !== 'core') as col}
+                    {@const cellInfo = formatTableCellValue(col.id, entity, activeBlueprint)}
+                    {#if cellInfo.text && cellInfo.text !== '—'}
+                      {#if cellInfo.isFormula}
+                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-[11px] font-mono font-bold">
+                          <Calculator class="w-3 h-3 text-amber-500 shrink-0" />
+                          <span>{col.label}: {cellInfo.text}</span>
+                        </div>
+                      {:else if col.fieldType === 'BLUEPRINT_REF' && typeof entity.properties?.[col.id.replace('prop:', '')] === 'string'}
+                        {@const refEntity = worldStore.getEntity(entity.properties[col.id.replace('prop:', '')])}
+                        {#if refEntity}
+                          <a
+                            href={`/world/entities/${refEntity.id}`}
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-[11px] font-medium hover:bg-cyan-500/20"
+                          >
+                            <Link2 class="w-2.5 h-2.5 text-cyan-500" />
+                            <span>{col.label}: {refEntity.name}</span>
+                          </a>
+                        {/if}
+                      {:else if col.fieldType === 'ARRAY_REF' && Array.isArray(entity.properties?.[col.id.replace('prop:', '')])}
+                        {@const refIds = entity.properties[col.id.replace('prop:', '')]}
+                        {#if refIds.length > 0}
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 text-[11px]">
+                            <Link2 class="w-2.5 h-2.5 text-purple-500" />
+                            <span>{col.label}: {refIds.length} ref(s)</span>
+                          </span>
+                        {/if}
+                      {:else}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/70 text-foreground text-[11px] border border-border/60">
+                          <span class="text-muted-foreground mr-1">{col.label}:</span> {cellInfo.text}
+                        </span>
+                      {/if}
+                    {/if}
+                  {/each}
+                </div>
+              </div>
+
+              <!-- Card Actions Footer (≥ 40px touch targets for mobile) -->
+              <div class="pt-2 border-t border-border flex items-center justify-between gap-2">
+                <Button
+                  href={`/world/entities/${entity.id}`}
+                  variant="outline"
+                  size="sm"
+                  class="flex-1 h-9 text-xs gap-1.5 font-medium"
+                >
+                  <Edit3 class="w-3.5 h-3.5" />
+                  <span>Inspect Entity</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onclick={() => handleDelete(entity.id, entity.name)}
+                  class="h-9 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  aria-label="Delete Entity"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <!-- DESKTOP TABULAR GRID (Horizontally scrollable container) -->
+        <div class="overflow-x-auto w-full">
+          <Table class="w-full text-left text-xs min-w-[750px]">
+            <TableHeader class="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
+              <TableRow class="hover:bg-transparent border-border">
+                {#each visibleColumns as col}
+                  <TableHead class="px-4 py-3 text-muted-foreground font-semibold whitespace-nowrap">
+                    <div class="flex items-center gap-1.5">
+                      {#if col.category === 'formula'}
+                        <Calculator class="w-3.5 h-3.5 text-amber-500" />
+                      {:else if col.fieldType === 'ENUM'}
+                        <ListFilter class="w-3.5 h-3.5 text-primary" />
+                      {:else if col.fieldType === 'VALUE_TYPE'}
+                        <Sparkles class="w-3.5 h-3.5 text-primary" />
+                      {:else if col.fieldType === 'BLUEPRINT_REF'}
+                        <Link2 class="w-3.5 h-3.5 text-cyan-500" />
+                      {:else if col.fieldType === 'ARRAY_REF'}
+                        <Link2 class="w-3.5 h-3.5 text-purple-400" />
+                      {:else if col.fieldType === 'ARRAY'}
+                        <Tag class="w-3.5 h-3.5 text-indigo-400" />
+                      {:else if col.fieldType === 'NUMBER'}
+                        <Hash class="w-3.5 h-3.5 text-emerald-500" />
+                      {/if}
+                      <span>{col.label}</span>
+                    </div>
+                  </TableHead>
+                {/each}
+                <TableHead class="px-4 py-3 text-right text-muted-foreground font-semibold w-[120px] whitespace-nowrap">Actions</TableHead>
               </TableRow>
-            {:else}
+            </TableHeader>
+
+            <TableBody class="divide-y divide-border/60">
               {#each paginatedResult.data as entity (entity.id)}
                 {@const IconComp = getEntityIcon(entity.category)}
                 <TableRow class="hover:bg-muted/40 transition-colors border-border">
@@ -620,10 +763,10 @@
                   </TableCell>
                 </TableRow>
               {/each}
-            {/if}
-          </TableBody>
-        </Table>
-      </div>
+            </TableBody>
+          </Table>
+        </div>
+      {/if}
     </Card>
   {/if}
 

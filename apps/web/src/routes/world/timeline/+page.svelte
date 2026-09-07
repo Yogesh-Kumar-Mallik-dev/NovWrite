@@ -295,69 +295,71 @@
       </p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full sm:w-auto">
       <!-- Main Visual View Switcher (Pipe & Trees vs Stream & Scrubber) -->
-      <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs">
+      <div class="grid grid-cols-2 sm:inline-flex rounded-lg bg-muted p-1 border border-border text-xs w-full sm:w-auto">
         <Button
           variant={activeTimelineTab === "pipe" ? "default" : "ghost"}
           size="sm"
           onclick={() => (activeTimelineTab = "pipe")}
-          class="h-7 text-xs flex items-center gap-1.5 font-medium"
+          class="h-8 sm:h-7 text-xs flex items-center justify-center gap-1.5 font-medium cursor-pointer"
         >
           <Workflow class="w-3.5 h-3.5 text-primary" />
-          <span>UPDATE Pipe & Edit Trees</span>
+          <span class="truncate">UPDATE Pipe</span>
         </Button>
         <Button
           variant={activeTimelineTab === "stream" ? "default" : "ghost"}
           size="sm"
           onclick={() => (activeTimelineTab = "stream")}
-          class="h-7 text-xs flex items-center gap-1.5 font-medium"
+          class="h-8 sm:h-7 text-xs flex items-center justify-center gap-1.5 font-medium cursor-pointer"
         >
           <BookOpen class="w-3.5 h-3.5 text-purple-500" />
-          <span>Stream & Time-Travel</span>
+          <span class="truncate">Stream & Scrubber</span>
         </Button>
       </div>
 
-      {#if activeTimelineTab === "stream"}
-        <!-- Dual Index Mode Switcher Button Group -->
-        <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs">
-          <Button
-            variant={viewMode === "narrative" ? "default" : "ghost"}
-            size="sm"
-            onclick={() => (viewMode = "narrative")}
-            class="h-7 text-xs flex items-center gap-1.5"
-          >
-            <BookOpen class="w-3.5 h-3.5" />
-            <span>Narrative (#)</span>
-          </Button>
-          <Button
-            variant={viewMode === "chronological" ? "default" : "ghost"}
-            size="sm"
-            onclick={() => (viewMode = "chronological")}
-            class="h-7 text-xs flex items-center gap-1.5"
-          >
-            <Clock class="w-3.5 h-3.5" />
-            <span>Chrono (Y)</span>
-          </Button>
-        </div>
+      <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+        {#if activeTimelineTab === "stream"}
+          <!-- Dual Index Mode Switcher Button Group -->
+          <div class="grid grid-cols-2 sm:inline-flex rounded-lg bg-muted p-1 border border-border text-xs flex-1 sm:flex-none">
+            <Button
+              variant={viewMode === "narrative" ? "default" : "ghost"}
+              size="sm"
+              onclick={() => (viewMode = "narrative")}
+              class="h-8 sm:h-7 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <BookOpen class="w-3.5 h-3.5" />
+              <span>Narrative</span>
+            </Button>
+            <Button
+              variant={viewMode === "chronological" ? "default" : "ghost"}
+              size="sm"
+              onclick={() => (viewMode = "chronological")}
+              class="h-8 sm:h-7 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Clock class="w-3.5 h-3.5" />
+              <span>Chrono</span>
+            </Button>
+          </div>
 
-        <!-- Toggle State Folding Inspector -->
-        <Button
-          variant={isTimeTravelOpen ? "secondary" : "outline"}
-          size="sm"
-          onclick={() => (isTimeTravelOpen = !isTimeTravelOpen)}
-          class="h-8 text-xs flex items-center gap-1.5"
-        >
-          <History class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-          <span>{isTimeTravelOpen ? "Hide Scrubber" : "Time-Travel Scrubber"}</span>
+          <!-- Toggle State Folding Inspector -->
+          <Button
+            variant={isTimeTravelOpen ? "secondary" : "outline"}
+            size="sm"
+            onclick={() => (isTimeTravelOpen = !isTimeTravelOpen)}
+            class="h-8 text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <History class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span>{isTimeTravelOpen ? "Hide Scrubber" : "Scrubber"}</span>
+          </Button>
+        {/if}
+
+        <!-- Log Event Button -->
+        <Button size="sm" onclick={openAddModal} class="h-8 text-xs flex items-center justify-center gap-1.5 flex-1 sm:flex-none cursor-pointer">
+          <Plus class="w-3.5 h-3.5" />
+          <span>Log Event</span>
         </Button>
-      {/if}
-
-      <!-- Log Event Button -->
-      <Button size="sm" onclick={openAddModal} class="h-8 text-xs flex items-center gap-1.5">
-        <Plus class="w-3.5 h-3.5" />
-        <span>Log Timeline Event</span>
-      </Button>
+      </div>
     </div>
   </div>
 

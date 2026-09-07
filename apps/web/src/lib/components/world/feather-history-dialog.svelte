@@ -51,6 +51,7 @@
   let targetSeqNumber = $state<number>(0);
   let showRevertConfirm = $state(false);
   let revisionToRevert = $state<EntityRevision | null>(null);
+  let mobileTab = $state<'revisions' | 'coordinates'>('revisions');
 
   // Initialize selected revision to latest when opened
   $effect(() => {
@@ -168,14 +169,42 @@
         </Button>
       </div>
 
+      <!-- Mobile Tab Switcher (< 768px) -->
+      <div class="md:hidden flex border-b border-border bg-muted/40 p-1.5 gap-1.5 shrink-0">
+        <button
+          type="button"
+          onclick={() => (mobileTab = 'revisions')}
+          class={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            mobileTab === 'revisions'
+              ? 'bg-card text-foreground shadow-2xs border border-border font-bold'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <History class="w-3.5 h-3.5 text-primary" />
+          <span>Revisions ({revisions.length})</span>
+        </button>
+        <button
+          type="button"
+          onclick={() => (mobileTab = 'coordinates')}
+          class={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            mobileTab === 'coordinates'
+              ? 'bg-card text-foreground shadow-2xs border border-border font-bold'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Sliders class="w-3.5 h-3.5 text-primary" />
+          <span>Coordinates (Seq #{targetSeqNumber})</span>
+        </button>
+      </div>
+
       <!-- Main Dual-Axis Viewport -->
       <div class="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
         <!-- Left Panel: Revision Barbs Stack (Y-Axis) -->
         <div
-          class="col-span-1 md:col-span-5 lg:col-span-4 border-b md:border-b-0 md:border-r border-border flex flex-col bg-muted/20 max-h-[35dvh] md:max-h-none overflow-hidden"
+          class="{mobileTab === 'revisions' ? 'flex' : 'hidden'} md:flex col-span-1 md:col-span-5 lg:col-span-4 border-b md:border-b-0 md:border-r border-border flex-col bg-muted/20 overflow-hidden h-full"
         >
           <div
-            class="p-3 border-b border-border flex items-center justify-between bg-card/40"
+            class="p-3 border-b border-border flex items-center justify-between bg-card/40 shrink-0"
           >
             <div class="flex items-center gap-2 text-xs font-semibold text-foreground">
               <History class="w-4 h-4 text-muted-foreground" />
@@ -197,8 +226,10 @@
                 {@const isSelected = activeRevision?.id === rev.id}
                 <button
                   type="button"
-                  onclick={() => (selectedRevisionId = rev.id)}
-                  class="w-full text-left p-3 rounded-lg border transition-all relative {isSelected
+                  onclick={() => {
+                    selectedRevisionId = rev.id;
+                  }}
+                  class="w-full text-left p-3 rounded-lg border transition-all relative cursor-pointer {isSelected
                     ? 'bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20'
                     : 'bg-card border-border hover:border-primary/50 hover:bg-card/80'}"
                 >
@@ -251,9 +282,9 @@
         </div>
 
         <!-- Right Panel: Dual-Axis Inspector & Coordinate State (X-Axis) -->
-        <div class="col-span-1 md:col-span-7 lg:col-span-8 flex flex-col overflow-hidden bg-background">
+        <div class="{mobileTab === 'coordinates' ? 'flex' : 'hidden'} md:flex col-span-1 md:col-span-7 lg:col-span-8 flex-col overflow-hidden bg-background h-full">
           <!-- Top Bar: Narrative Plot Sequence Scrubber (X-Axis) -->
-          <div class="p-3 sm:p-4 border-b border-border bg-card/30">
+          <div class="p-3 sm:p-4 border-b border-border bg-card/30 shrink-0">
             <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
               <div class="flex items-center gap-2">
                 <Sliders class="w-4 h-4 text-primary shrink-0" />

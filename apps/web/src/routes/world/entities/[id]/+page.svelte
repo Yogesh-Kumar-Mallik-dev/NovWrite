@@ -659,15 +659,15 @@
     </div>
 
     <!-- Level 3: Action Toolbar & Editor Controls -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-2 rounded-xl border border-border">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-muted/40 p-2 sm:p-2.5 rounded-xl border border-border">
       <!-- Left: Editor Mode (Segmented Toggle) & Tools -->
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Mode Switcher -->
-        <div class="inline-flex rounded-lg bg-background p-0.5 border border-border text-xs gap-0.5 shadow-2xs">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+        <!-- Mode Switcher (Full-width on mobile) -->
+        <div class="grid grid-cols-2 sm:inline-flex rounded-lg bg-background p-0.5 border border-border text-xs gap-0.5 shadow-2xs w-full sm:w-auto">
           <button
             type="button"
             onclick={switchToFormMode}
-            class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+            class={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
               editorMode === 'form'
                 ? 'bg-secondary text-secondary-foreground shadow-2xs border border-border font-bold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
@@ -679,7 +679,7 @@
           <button
             type="button"
             onclick={switchToJsonMode}
-            class={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
+            class={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer ${
               editorMode === 'json'
                 ? 'bg-secondary text-secondary-foreground shadow-2xs border border-border font-bold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
@@ -693,37 +693,39 @@
         <div class="h-4 w-px bg-border hidden sm:block"></div>
 
         <!-- Auxiliary Tools -->
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={() => (featherHistoryOpen = true)}
-          class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground"
-        >
-          <GitBranch class="w-3.5 h-3.5 text-primary" />
-          <span>History ({worldStore.getEntityRevisions(entity.id).length})</span>
-        </Button>
-
-        {#if blueprint}
+        <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
           <Button
-            href={`/world/schemas/${blueprint.id}`}
-            target="_blank"
             variant="outline"
             size="sm"
-            class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground"
+            onclick={() => (featherHistoryOpen = true)}
+            class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground justify-center"
           >
-            <Edit3 class="w-3.5 h-3.5 text-primary" />
-            <span>Schema Definition</span>
+            <GitBranch class="w-3.5 h-3.5 text-primary" />
+            <span>History ({worldStore.getEntityRevisions(entity.id).length})</span>
           </Button>
-        {/if}
+
+          {#if blueprint}
+            <Button
+              href={`/world/schemas/${blueprint.id}`}
+              target="_blank"
+              variant="outline"
+              size="sm"
+              class="h-8 gap-1.5 text-xs shadow-2xs border-border bg-background hover:bg-muted text-foreground justify-center truncate"
+            >
+              <Edit3 class="w-3.5 h-3.5 text-primary" />
+              <span class="truncate">Schema</span>
+            </Button>
+          {/if}
+        </div>
       </div>
 
       <!-- Right: Primary Save Action -->
-      <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+      <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/60">
         <Button
           variant="default"
           size="sm"
           onclick={handleSaveEntity}
-          class="h-8 gap-1.5 px-4 text-xs font-semibold shadow-xs"
+          class="w-full sm:w-auto h-9 sm:h-8 gap-1.5 px-4 text-xs font-semibold shadow-xs justify-center cursor-pointer"
         >
           <Check class="w-3.5 h-3.5" />
           <span>Save Changes</span>
@@ -1553,20 +1555,25 @@
       {/if}
     {/if}
 
-    <!-- Bottom Save & Delete Actions -->
-    <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
+    <!-- Bottom Save & Delete Actions (Mobile-First Stacking & Desktop Row) -->
+    <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border">
       <Button
         variant="outline"
         size="sm"
         onclick={() => (deleteConfirmOpen = true)}
-        class="text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+        class="w-full sm:w-auto h-9 sm:h-8 text-destructive hover:bg-destructive/10 hover:border-destructive/30 justify-center"
       >
         <Trash2 class="w-3.5 h-3.5" />
         <span>Delete Entity</span>
       </Button>
 
-      <div class="flex items-center gap-2">
-        <Button variant="default" size="sm" onclick={handleSaveEntity}>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <Button
+          variant="default"
+          size="sm"
+          onclick={handleSaveEntity}
+          class="w-full sm:w-auto h-9 sm:h-8 justify-center font-semibold"
+        >
           <Check class="w-3.5 h-3.5" />
           <span>Save Changes</span>
         </Button>
