@@ -55,3 +55,4 @@ class ToastStore {
 }
 
 export const toast = new ToastStore();
+export const toastStore = toast;

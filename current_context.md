@@ -2,21 +2,28 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Local signed commits (`git commit -S`) are standard.
-- **Architectural Baseline:** Version 2.5 (Standardized 10-Item Frontend Pagination, Dynamic Blueprint Tables, Core Responsive Philosophy, and Official Mobile-First Standards).
+- **Architectural Baseline:** Version 2.6 (Creative Novel Multi-Project Architecture, Theme Toggle Harmonization, Go REST Project Endpoints & Clean-Slate Flush Utility).
 - **Recent Accomplishments:**
-  - **Standardized 10-Item Pagination & Dynamic Blueprint Tables**:
-    - Built typed frontend API client layer (`NovWriteApiClient`) and pure array paginator (`paginateArray`) in `apps/web/src/lib/api/apiClient.ts`.
-    - Created reusable 10-item `<Pagination />` component with Previous/Next controls, item range counter, zero-badge page indicator, and top-anchored layout placement.
-    - Integrated top pagination across Universe Entities (`/world/entities`), Schemas (`/world/schemas`), Timeline (`/world/timeline`), Rules (`/world/rules`), and Audit (`/world/audit`).
-    - Streamlined `/world/entities` table to archetype-scoped dynamic column views, eliminating redundant global filter clutter.
-  - **Official Governance & Rule Formalization**:
-    - Created official Antigravity rule definition in `.agents/rules/mobile_first_responsive.md` (`always_on`).
-    - Codified Rule 13 (_Core Responsive Philosophy & Layout Robustness_), Rule 14 (_Mobile-First Adaptation — Do NOT Force Desktop UI_), and Rule 15 (_Standardized 10-Item Pagination & Layout Jump Prevention_) in `agents.md`.
-    - Added Sections 5, 6, 7 and expanded Section 8 (checks 10–14) in `frontend_design_descisions.md`.
-    - Updated `docs/FRONTEND_ARCHITECTURE.md` with Sections 15, 16, and 17.
-    - Updated `changes.md` with Version 2.5 details.
+  - **Creative Novel Multi-Project Management & Onboarding**:
+    - Created `projectStore.svelte.ts` managing user projects, active project pointer, and localStorage persistence (`BLOCK_PROJECT_STORE_RUNE_001`).
+    - Built pure `projectEngine.ts` validation and ID generation utilities with unit tests in `projectEngine.test.ts` (`BLOCK_TEST_WEB_PROJECT_ENGINE_001`).
+    - Implemented `ProjectSwitcher.svelte` supporting seamless desktop header dropdowns and mobile drawer project selection.
+    - Implemented `CreateProjectDialog.svelte` supporting novel title, genre taxonomy, universe synopsis, and starter blueprint scaffolding.
+    - Updated `worldStore.svelte.ts` to partition world data per project with automatic starter blueprint scaffolding.
+    - Removed all hardcoded project strings from navigation and replaced with dynamic project switcher.
+    - Added clean onboarding CTA banners in Home Hub and World Studio when zero projects exist.
+  - **Theme Toggle Dual-Mode Color Harmonization**:
+    - Refined `theme-toggle.svelte` to embed theme-colored active icons inside the sliding thumb (`Moon` in primary purple for Dark mode; `Sun` in warm amber for Light mode).
+    - Polished track contrast and smooth spring transition physics.
+  - **Go Backend Project REST API**:
+    - Created `project_handler.go` with thread-safe `InMemoryProjectStore`, 10-item pagination, and RFC 7807 problem details (`BLOCK_API_PROJECT_HANDLER_001`).
+    - Created `project_handler_test.go` with 100% test coverage (`BLOCK_TEST_PROJECT_HANDLER_001`).
+    - Mounted `/api/v1/projects` endpoints in `main.go`.
+  - **Clean-Slate Database & Redis Flush Utility**:
+    - Created standalone script [`./flush_db.sh`](file:///home/yogesh/Projects/NovWrite/flush_db.sh) to flush Redis cache and reset PostgreSQL tables via Prisma.
+    - Successfully executed flush to provide a clean slate for fresh user testing.
   - **Verification Completed**:
-    - `./check.sh`: Monorepo typecheck passed cleanly with 0 errors across all packages.
-    - `./test.sh`: 100% test pass rate across `@novwrite/bridge` (12/12), `@novwrite/data-service` (40/40), Go API backend (all packages passing), `@novwrite/web` (14/14), and web typechecks.
+    - `./check.sh`: Monorepo typecheck passed with 0 errors and 0 warnings.
+    - `./test.sh`: 100% test pass rate across `@novwrite/bridge`, `@novwrite/data-service` (40/40), Go API backend, and `@novwrite/web` (23/23).
 - **Next Steps:**
-  - Maintain 100% test coverage and block ID standards across all upcoming milestones.
+  - Continue implementing prose editor scenes and manuscript tree while maintaining 100% test pass rates.

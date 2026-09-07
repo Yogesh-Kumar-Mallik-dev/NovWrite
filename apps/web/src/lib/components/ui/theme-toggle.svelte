@@ -32,31 +32,33 @@
   onclick={handleToggle}
   onkeydown={handleKeyDown}
   class={cn(
-    "relative inline-flex items-center rounded-full border border-border transition-colors duration-200 cursor-pointer select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background shrink-0",
-    isDark ? "bg-muted/80 hover:bg-muted" : "bg-muted hover:bg-muted/90",
+    "relative inline-flex items-center rounded-full border border-border transition-colors duration-200 cursor-pointer select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background shrink-0 bg-muted hover:bg-muted/80",
     size === "sm" && "h-6 w-11 px-0.5",
     size === "md" && "h-7 w-13 px-0.5",
     size === "lg" && "h-8 w-15 px-1",
     className
   )}
 >
-  <!-- Inactive icon in track: only the non-active target icon is visible -->
-  {#if isDark}
-    <!-- Dark is active: only the inactive Sun icon is visible -->
-    <span class="absolute left-1.5 flex items-center justify-center text-amber-500 transition-opacity duration-200 pointer-events-none">
-      <Sun class={cn(size === "sm" ? "size-3.5" : size === "md" ? "size-4" : "size-4.5")} />
-    </span>
-  {:else}
-    <!-- Light is active: only the inactive Moon icon is visible -->
-    <span class="absolute right-1.5 flex items-center justify-center text-primary transition-opacity duration-200 pointer-events-none">
-      <Moon class={cn(size === "sm" ? "size-3.5" : size === "md" ? "size-4" : "size-4.5")} />
-    </span>
-  {/if}
-
-  <!-- Sliding Thumb -->
+  <!-- Inactive track icon (shows the opposite mode target) -->
   <span
     class={cn(
-      "relative z-10 flex items-center justify-center rounded-full bg-background border border-border shadow-xs text-foreground transition-transform duration-200 ease-in-out",
+      "absolute flex items-center justify-center transition-opacity duration-200 pointer-events-none",
+      isDark
+        ? "left-1.5 text-amber-500/70"
+        : "right-1.5 text-muted-foreground/60"
+    )}
+  >
+    {#if isDark}
+      <Sun class={cn(size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
+    {:else}
+      <Moon class={cn(size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
+    {/if}
+  </span>
+
+  <!-- Sliding Thumb (Carries active mode icon in theme colors) -->
+  <span
+    class={cn(
+      "relative z-10 flex items-center justify-center rounded-full bg-card border border-border shadow-xs transition-transform duration-200 ease-in-out",
       size === "sm" && "size-5",
       size === "md" && "size-6",
       size === "lg" && "size-6",
@@ -68,7 +70,13 @@
             : "translate-x-7"
         : "translate-x-0"
     )}
-  ></span>
+  >
+    {#if isDark}
+      <Moon class={cn("text-primary shrink-0", size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
+    {:else}
+      <Sun class={cn("text-amber-500 shrink-0", size === "sm" ? "size-3" : size === "md" ? "size-3.5" : "size-4")} />
+    {/if}
+  </span>
 </button>
 
 

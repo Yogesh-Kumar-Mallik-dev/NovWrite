@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { Users, LayoutTemplate, Clock, ShieldCheck, AlertOctagon, ArrowRight, Sparkles } from 'lucide-svelte';
+  import {
+    Users,
+    LayoutTemplate,
+    Clock,
+    ShieldCheck,
+    AlertOctagon,
+    ArrowRight,
+    Sparkles,
+    FolderPlus,
+    Folder,
+  } from "lucide-svelte";
   import {
     Card,
     CardHeader,
@@ -7,13 +17,65 @@
     CardDescription,
     CardFooter,
   } from "$lib/components/ui/card";
+  import Button from "$lib/components/ui/button.svelte";
+  import { projectStore } from "$lib/stores/projectStore.svelte";
 </script>
 
 <div class="max-w-5xl mx-auto space-y-6 transition-colors">
+  <!-- Active Project Header / Onboarding Hero -->
+  {#if !projectStore.activeProject}
+    <div class="p-6 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="space-y-1 max-w-xl">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+            <Sparkles class="w-3 h-3" />
+            <span>Getting Started</span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-bold text-foreground">
+            Welcome to NovWrite World Studio
+          </h2>
+          <p class="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Create your first novel project workspace to begin designing 1st & 2nd-class blueprints, instantiating entities, and tracking causal timeline events.
+          </p>
+        </div>
+        <Button
+          onclick={() => projectStore.openCreateDialog()}
+          class="bg-primary text-primary-foreground font-semibold text-xs gap-1.5 shrink-0"
+        >
+          <FolderPlus class="w-4 h-4" />
+          <span>Create Your First Project</span>
+        </Button>
+      </div>
+    </div>
+  {:else}
+    <div class="flex items-center justify-between gap-3 pb-2 border-b border-border/70 flex-wrap">
+      <div>
+        <div class="flex items-center gap-2">
+          <Folder class="w-4 h-4 text-primary" />
+          <h2 class="text-xl font-bold tracking-tight text-foreground">
+            {projectStore.activeProject.name}
+          </h2>
+        </div>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          {projectStore.activeProject.genre || "Creative Project"} · {projectStore.activeProject.description || "World Studio Workspace"}
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => projectStore.openCreateDialog()}
+        class="text-xs gap-1.5"
+      >
+        <FolderPlus class="w-3.5 h-3.5 text-primary" />
+        <span>New Project</span>
+      </Button>
+    </div>
+  {/if}
+
   <div>
-    <h2 class="text-xl font-bold tracking-tight text-foreground">World Studio Hub</h2>
-    <p class="text-sm text-muted-foreground mt-1">
-      Manage universe entities, 1st & 2nd-class blueprints, causal timeline events, and invariant continuity rules.
+    <h3 class="text-base font-bold tracking-tight text-foreground">World Studio Workbenches</h3>
+    <p class="text-xs text-muted-foreground mt-0.5">
+      Select a domain workbench to inspect and manage dynamic lore specifications.
     </p>
   </div>
 

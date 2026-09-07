@@ -3,6 +3,9 @@
     BookOpen,
     Globe2,
     ArrowRight,
+    Sparkles,
+    Folder,
+    FolderPlus,
   } from "lucide-svelte";
   import {
     Card,
@@ -11,6 +14,8 @@
     CardDescription,
     CardFooter,
   } from "$lib/components/ui/card";
+  import Button from "$lib/components/ui/button.svelte";
+  import { projectStore } from "$lib/stores/projectStore.svelte";
 </script>
 
 <div class="flex-1 p-4 sm:p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
@@ -31,6 +36,26 @@
     <p class="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
       Professional fictional universe design studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing.
     </p>
+
+    <!-- Active Project Banner / Zero Project CTA -->
+    <div class="pt-2 flex items-center justify-center">
+      {#if projectStore.activeProject}
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted border border-border text-xs font-medium text-foreground">
+          <Folder class="w-3.5 h-3.5 text-primary" />
+          <span>Active Novel: <strong class="font-bold">{projectStore.activeProject.name}</strong></span>
+          <span class="text-muted-foreground">({projectStore.activeProject.genre || "Fiction"})</span>
+        </div>
+      {:else}
+        <Button
+          size="sm"
+          onclick={() => projectStore.openCreateDialog()}
+          class="bg-primary text-primary-foreground font-semibold text-xs gap-1.5 shadow-sm"
+        >
+          <FolderPlus class="w-4 h-4" />
+          <span>Create Your First Novel Project</span>
+        </Button>
+      {/if}
+    </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">

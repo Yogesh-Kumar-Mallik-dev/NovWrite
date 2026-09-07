@@ -244,6 +244,7 @@ export interface TimelineEventWithTree {
 const WORLD_STATE_STORAGE_KEY = "novwrite_world_state_v1";
 
 export class WorldStateStore {
+  currentProjectId = $state<string | null>(null);
   blueprints = $state<BlueprintDef[]>([]);
   entities = $state<EntityItem[]>([]);
   timelineEvents = $state<TimelineEventItem[]>([]);
@@ -254,34 +255,200 @@ export class WorldStateStore {
   entityEditTrees = $state<Record<string, EditTree<EntityItem>>>({});
 
   constructor() {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      const activeId = localStorage.getItem("novwrite_active_project_id_v1");
+      if (activeId) {
+        this.currentProjectId = activeId;
+      }
+    }
     this.loadFromStorage();
     this.recomputeAllEntityFormulas();
+  }
+
+  getStorageKey(): string {
+    return this.currentProjectId
+      ? `novwrite_world_state_${this.currentProjectId}`
+      : WORLD_STATE_STORAGE_KEY;
+  }
+
+  setProject(
+    projectId: string | null,
+    starterTemplate?: "clean" | "starter",
+  ): void {
+    if (this.currentProjectId) {
+      this.saveToStorage();
+    }
+    this.currentProjectId = projectId;
+    this.loadFromStorage();
+
+    // If starting a new project with starter archetypes and store is currently empty
+    if (
+      projectId &&
+      this.blueprints.length === 0 &&
+      starterTemplate === "starter"
+    ) {
+      this.seedStarterArchetypes();
+    }
+
+    this.recomputeAllEntityFormulas();
+    this.saveToStorage();
+  }
+
+  seedStarterArchetypes(): void {
+    const charBp: BlueprintDef = {
+      id: `bp-char-${Date.now().toString(16)}`,
+      name: "Cultivator Archetype",
+      blueprintClass: "FIRST_CLASS",
+      category: "Characters",
+      description:
+        "Foundational protagonist and martial cultivator archetype with realm progression.",
+      fields: [
+        {
+          id: `f-${Date.now().toString(16)}-1`,
+          name: "gender",
+          label: "Gender Identity",
+          fieldType: "ENUM",
+          options: ["Male", "Female", "Dual-Yin-Yang", "Celestial"],
+          defaultValue: "Male",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-2`,
+          name: "cultivation_major_realm",
+          label: "Major Realm Tier",
+          fieldType: "NUMBER",
+          min: 1,
+          max: 9,
+          step: 1,
+          defaultValue: 1,
+          unit: "Tier",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-3`,
+          name: "cultivation_minor_realm",
+          label: "Minor Realm Stage",
+          fieldType: "NUMBER",
+          min: 1,
+          max: 9,
+          step: 1,
+          defaultValue: 1,
+          unit: "Stage",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-4`,
+          name: "base_attack",
+          label: "Base Attack Power",
+          fieldType: "NUMBER",
+          min: 10,
+          max: 999999,
+          defaultValue: 100,
+          unit: "Atk",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-5`,
+          name: "base_defence",
+          label: "Base Defensive Resilience",
+          fieldType: "NUMBER",
+          min: 5,
+          max: 999999,
+          defaultValue: 50,
+          unit: "Def",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-6`,
+          name: "total_combat_power",
+          label: "Total Combat Power",
+          fieldType: "FORMULA",
+          formulaExpression:
+            "(cultivation_major_realm * 100) + (cultivation_minor_realm * 10) + base_attack - base_defence",
+        },
+      ],
+    };
+
+    const relicBp: BlueprintDef = {
+      id: `bp-relic-${Date.now().toString(16)}`,
+      name: "Sacred Relic & Weapon",
+      blueprintClass: "FIRST_CLASS",
+      category: "Relics & Armaments",
+      description:
+        "Heavenly treasures, enchanted artifacts, and spirit swords.",
+      fields: [
+        {
+          id: `f-${Date.now().toString(16)}-7`,
+          name: "rarity_grade",
+          label: "Artifact Grade",
+          fieldType: "ENUM",
+          options: ["Mortal", "Earth", "Heaven", "Immortal", "Divine"],
+          defaultValue: "Earth",
+          required: true,
+        },
+        {
+          id: `f-${Date.now().toString(16)}-8`,
+          name: "power_rating",
+          label: "Artifact Power Rating",
+          fieldType: "NUMBER",
+          min: 1,
+          max: 50000,
+          defaultValue: 500,
+          unit: "Pts",
+          required: true,
+        },
+      ],
+    };
+
+    this.blueprints = [charBp, relicBp];
   }
 
   loadFromStorage(): void {
     if (typeof window === "undefined" || typeof localStorage === "undefined")
       return;
     try {
-      const raw = localStorage.getItem(WORLD_STATE_STORAGE_KEY);
+      const storageKey = this.getStorageKey();
+      let raw = localStorage.getItem(storageKey);
+
+      // Fallback: if project-scoped key is empty, check legacy global key
+      if (!raw && !this.currentProjectId) {
+        raw = localStorage.getItem(WORLD_STATE_STORAGE_KEY);
+      }
+
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.blueprints))
-          this.blueprints = parsed.blueprints;
-        if (Array.isArray(parsed.entities)) this.entities = parsed.entities;
-        if (Array.isArray(parsed.timelineEvents))
-          this.timelineEvents = parsed.timelineEvents;
-        if (Array.isArray(parsed.rules)) this.rules = parsed.rules;
-        if (Array.isArray(parsed.violations))
-          this.violations = parsed.violations;
-        if (parsed.revisions && typeof parsed.revisions === "object")
-          this.revisions = parsed.revisions;
-        if (parsed.eventEditTrees && typeof parsed.eventEditTrees === "object")
-          this.eventEditTrees = parsed.eventEditTrees;
-        if (
-          parsed.entityEditTrees &&
-          typeof parsed.entityEditTrees === "object"
-        )
-          this.entityEditTrees = parsed.entityEditTrees;
+        this.blueprints = Array.isArray(parsed.blueprints)
+          ? parsed.blueprints
+          : [];
+        this.entities = Array.isArray(parsed.entities) ? parsed.entities : [];
+        this.timelineEvents = Array.isArray(parsed.timelineEvents)
+          ? parsed.timelineEvents
+          : [];
+        this.rules = Array.isArray(parsed.rules) ? parsed.rules : [];
+        this.violations = Array.isArray(parsed.violations)
+          ? parsed.violations
+          : [];
+        this.revisions =
+          parsed.revisions && typeof parsed.revisions === "object"
+            ? parsed.revisions
+            : {};
+        this.eventEditTrees =
+          parsed.eventEditTrees && typeof parsed.eventEditTrees === "object"
+            ? parsed.eventEditTrees
+            : {};
+        this.entityEditTrees =
+          parsed.entityEditTrees && typeof parsed.entityEditTrees === "object"
+            ? parsed.entityEditTrees
+            : {};
+      } else {
+        this.blueprints = [];
+        this.entities = [];
+        this.timelineEvents = [];
+        this.rules = [];
+        this.violations = [];
+        this.revisions = {};
+        this.eventEditTrees = {};
+        this.entityEditTrees = {};
       }
     } catch (e) {
       console.warn("[WorldStore] Failed to load state from localStorage:", e);
@@ -302,9 +469,18 @@ export class WorldStateStore {
         eventEditTrees: this.eventEditTrees,
         entityEditTrees: this.entityEditTrees,
       };
-      localStorage.setItem(WORLD_STATE_STORAGE_KEY, JSON.stringify(payload));
+      localStorage.setItem(this.getStorageKey(), JSON.stringify(payload));
     } catch (e) {
       console.warn("[WorldStore] Failed to save state to localStorage:", e);
+    }
+  }
+
+  deleteProjectData(projectId: string): void {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.removeItem(`novwrite_world_state_${projectId}`);
+    }
+    if (this.currentProjectId === projectId) {
+      this.clearState();
     }
   }
 
@@ -318,6 +494,7 @@ export class WorldStateStore {
     this.eventEditTrees = {};
     this.entityEditTrees = {};
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.removeItem(this.getStorageKey());
       localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
     }
   }

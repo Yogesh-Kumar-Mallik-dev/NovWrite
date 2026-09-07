@@ -454,5 +454,24 @@ NovWrite enforces a mandatory 5-phase test and verification pipeline ([`./test.s
 1. **Phase 1 (`@novwrite/bridge`):** Verifies typed RPC contracts, Zod schemas, error normalizers, and mock adapters.
 2. **Phase 2 (`@novwrite/data-service`):** Verifies schema validation, property normalization, AST formula engine, and timeline state fold engine.
 3. **Phase 3 (`apps/api`):** Executes Go unit and integration tests across domain packages (`shared`, `middleware`, `universe`, `timeline`, `continuity`).
-4. **Phase 4 (`@novwrite/web`):** Executes Vitest component and store tests (`worldStore`, `formulaEngine`, `PipeTreeVisualizer`, `JsonEditor`).
+4. **Phase 4 (`@novwrite/web`):** Executes Vitest component, utility, and project store tests (`worldStore`, `projectEngine`, `formulaEngine`, `PipeTreeVisualizer`, `JsonEditor`).
 5. **Phase 5 (Diagnostic Typecheck):** Runs `svelte-check` and `tsc --noEmit` across all workspace packages via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+
+---
+
+## 12. Creative Novel Project Management & Clean-Slate Database Flush Utility
+
+### 12.1. REST Creative Novel Projects Endpoints (`apps/api`)
+
+- `GET /api/v1/projects` — Paginated list of creative novel projects (`pageSize = 10`) with full-text search.
+- `POST /api/v1/projects` — Instantiate a new isolated project universe with name, description, and genre tags.
+- `GET /api/v1/projects/{projectId}` — Retrieve project metadata and configuration.
+- `PUT /api/v1/projects/{projectId}` — Update project title, synopsis, and genre classification.
+- `DELETE /api/v1/projects/{projectId}` — Delete project and cascade deletion across scoped blueprints, entities, and timeline events.
+
+### 12.2. Clean-Slate Database & Redis Flush Utility (`./flush_db.sh`)
+
+- Standalone executable script [`./flush_db.sh`](file:///home/yogesh/Projects/NovWrite/flush_db.sh) executing:
+  1. Redis cache flush (`FLUSHALL`) via docker/local connection.
+  2. PostgreSQL schema reset (`prisma db push --force-reset --accept-data-loss`).
+  3. Clean slate guarantee for new user onboarding and fresh testing environments.

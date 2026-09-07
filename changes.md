@@ -73,16 +73,41 @@ timeline
                : Standardized Pagination Envelopes & Empty Query Guarantees
                : RFC 7807 Problem Details & Container Health Probes
                : 5-Phase Monorepo Test Runner (66+ Unit & Component Tests)
-    2026-09-07 : Version 2.5 (Standardized 10-Item Frontend Pagination & Blueprint-Scoped Dynamic Entity Tables)
-               : Frontend NovWriteApiClient & Pure Array Paginator (apiClient.ts)
-               : Reusable 10-Item <Pagination /> Component with Prev/Next Controls
-               : Removal of Global Archetype/Category Clutter from Entity Table
-               : Blueprint-Tuned Dynamic Column & Formula Selection
+    2026-09-07 : Version 2.6 (Creative Novel Multi-Project Architecture, Theme Toggle Alignment & Clean Slate Flush)
+               : Multi-Project Creation, Switching & Isolated Workspaces (projectStore.svelte.ts)
+               : Interactive <ProjectSwitcher /> & <CreateProjectDialog />
+               : Theme Toggle Dual-Mode Color Harmonization (Sun & Moon Tokens)
+               : Go Backend REST /api/v1/projects Endpoints & Tests
+               : Clean-Slate Database & Redis Flush Utility (flush_db.sh)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.6] — 2026-09-07
+
+**Scope:** Multi-Project Creation & Workspace Switching, Theme Toggle Harmonization, Go Project REST API & Clean-Slate Flush Utility  
+**Target Documents:** [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added
+
+- **Reactive Multi-Project Management System (`apps/web`):**
+  - **`projectStore.svelte.ts`:** Svelte 5 Runes store managing projects array, active project pointer, and localStorage persistence (`novwrite_projects_v1`).
+  - **`ProjectSwitcher.svelte`:** Desktop and mobile drawer project selector with active checkmarks and `+ New Novel Project...` action.
+  - **`CreateProjectDialog.svelte`:** Modal dialog supporting Novel Title, Genre selector, Synopsis, and Starting Architecture (Clean Slate vs Starter Archetypes).
+  - **Project-Scoped World Store:** `worldStore.svelte.ts` partitions blueprints, entities, timeline events, and rules per project.
+  - **Zero-Project Onboarding States:** Context-aware onboarding banners in World Studio and Home Hub guiding authors to instantiate their first novel.
+- **Theme Toggle Dual-Mode Color Harmonization (`theme-toggle.svelte`):**
+  - Harmonized active theme icon inside the sliding thumb (`Moon` in primary purple in Dark mode; `Sun` in warm amber in Light mode).
+  - Balanced inactive target icon in the track with high-contrast, theme-tokenized colors.
+- **Go Backend REST Creative Projects Endpoints (`apps/api`):**
+  - `GET /api/v1/projects` with standard 10-item pagination and search filtering.
+  - `POST /api/v1/projects` with name validation and RFC 7807 problem details.
+  - `GET /api/v1/projects/{projectId}`, `PUT /api/v1/projects/{projectId}`, `DELETE /api/v1/projects/{projectId}`.
+  - Comprehensive unit test suite in `project_handler_test.go` (`BLOCK_TEST_PROJECT_HANDLER_001`).
+- **Clean-Slate Database & Redis Flush Utility ([`./flush_db.sh`](file:///home/yogesh/Projects/NovWrite/flush_db.sh)):**
+  - Flushes Redis 7.2 cache (`FLUSHALL`) and resets PostgreSQL schema with Prisma (`prisma db push --force-reset --accept-data-loss`).
 
 ### [Version 2.5] — 2026-09-07
 

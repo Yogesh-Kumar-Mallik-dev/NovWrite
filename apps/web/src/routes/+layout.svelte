@@ -16,6 +16,8 @@
   } from "lucide-svelte";
   import { page } from "$app/state";
   import ThemeToggle from "$lib/components/ui/theme-toggle.svelte";
+  import ProjectSwitcher from "$lib/components/ui/project-switcher.svelte";
+  import CreateProjectDialog from "$lib/components/ui/create-project-dialog.svelte";
   import Toaster from "$lib/components/ui/toaster.svelte";
 
   let { children } = $props();
@@ -105,11 +107,9 @@
         </div>
       </div>
 
-      <!-- Right: Telemetry & Theme Toggle -->
-      <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-        <span class="text-xs text-muted-foreground font-mono hidden lg:inline"
-          >Project: Chronicles of Aethelgard</span
-        >
+      <!-- Right: Project Switcher & Theme Toggle -->
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <ProjectSwitcher />
         <ThemeToggle size="sm" />
       </div>
     </nav>
@@ -155,11 +155,8 @@
             </button>
           </div>
 
-          <!-- Project Context Badge -->
-          <div class="py-2.5 px-3 my-3 rounded-lg bg-muted/50 border border-border/70 text-xs font-mono text-muted-foreground">
-            <span class="block text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">Active Project</span>
-            <span class="font-bold text-foreground truncate block">Chronicles of Aethelgard</span>
-          </div>
+          <!-- Active Project Switcher -->
+          <ProjectSwitcher isMobile={true} />
 
           <!-- Drawer Navigation Links -->
           <div class="flex-1 overflow-y-auto space-y-4 py-1">
@@ -255,6 +252,7 @@
     {@render children()}
   </main>
 
-  <!-- Global Toast Notifications -->
+  <!-- Global Modals & Notifications -->
+  <CreateProjectDialog />
   <Toaster />
 </div>

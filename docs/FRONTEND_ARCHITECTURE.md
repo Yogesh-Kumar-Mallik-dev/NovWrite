@@ -553,3 +553,26 @@ To guarantee predictable memory consumption, instantaneous query response times,
 
 - **Positioning Rule:** Pagination counters and navigation buttons (`[‹ Previous]` / `[Next ›]`) must be positioned **ABOVE** the data table or card container.
 - **Rationale:** Placing pagination controls solely at the bottom of dynamic lists causes drastic vertical jumps (Cumulative Layout Shift) when transitioning between pages of varying item heights or when reaching the last page with fewer items. The top pagination bar provides an anchored, flicker-free navigation landmark.
+
+---
+
+## 18. Multi-Project Architecture, ProjectSwitcher & Creative Onboarding
+
+### 18.1. Reactive Multi-Project State Store (`projectStore.svelte.ts`)
+
+- Manages user novel projects (`ProjectItem[]`), active project selection (`activeProjectId`), and persistent storage (`novwrite_projects_v1`).
+- Provides clean isolation across different fictional universes, ensuring authors can write multiple distinct novels and world canons without data cross-contamination.
+
+### 18.2. Interactive Project Switcher (`ProjectSwitcher.svelte`)
+
+- Embedded in both top desktop navigation and the mobile slide-over drawer.
+- Shows active novel title with folder icon and interactive dropdown selector with active checkmarks.
+- Includes `+ New Novel Project...` action triggering the creation workflow.
+- Renders an immediate `[+ Create Project]` CTA when zero projects exist.
+
+### 18.3. Modal Creation & Scaffolding Workflow (`CreateProjectDialog.svelte`)
+
+- Supports custom Novel Title, Genre classification (Xianxia, LitRPG, Sci-Fi, etc.), and Universe Synopsis.
+- Scaffolding templates:
+  - **Clean Slate (Default):** Starts completely blank with 0 blueprints for full authorial freedom.
+  - **Starter Archetypes:** Pre-seeds foundational Character and Relic archetypes equipped with mathematical combat power formulas.

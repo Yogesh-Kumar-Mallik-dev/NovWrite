@@ -43,11 +43,13 @@ func BuildRouter() *chi.Mux {
 	}))
 
 	// Initial Stores & Handlers
+	projectStore := handlers.NewInMemoryProjectStore()
 	blueprintStore := handlers.NewInMemoryBlueprintStore()
 	entityStore := handlers.NewInMemoryEntityStore()
 	timelineStore := handlers.NewInMemoryTimelineStore()
 
 	healthHandler := handlers.NewHealthHandler()
+	projectHandler := handlers.NewProjectHandler(projectStore)
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore)
 	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, timelineStore)
 	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore)
@@ -77,6 +79,15 @@ func BuildRouter() *chi.Mux {
 			r.Post("/ground", bridgeHandler.HandleSceneGrounding)
 			r.Post("/audit", bridgeHandler.HandleContinuityAudit)
 			r.Post("/mentions", bridgeHandler.HandleEntityMentions)
+		})
+
+		// Creative Novel Projects Management
+		r.Route("/projects", func(r chi.Router) {
+			r.Get("/", projectHandler.List)
+			r.Post("/", projectHandler.Create)
+			r.Get("/{projectId}", projectHandler.Get)
+			r.Put("/{projectId}", projectHandler.Update)
+			r.Delete("/{projectId}", projectHandler.Delete)
 		})
 
 		// Project-Scoped World Domain Resources
