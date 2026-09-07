@@ -20,6 +20,10 @@ flowchart TB
         W3["Phase W3: State Fold Engine & Invariant Rules"]
         W4["Phase W4: Dedicated Page-Based World Studio Suite"]
         W5["Phase W5: World Bridge Server & Seeder Integration"]
+        W6["Phase W6: UPDATE Pipe & Hanging EDIT Trees DAG"]
+        W7["Phase W7: 3-Tier Visual Hierarchy & Schema Invariance"]
+        W8["Phase W8: RESTful API Standardization & Telemetry"]
+        W9["Phase W9: 5-Phase Monorepo Test Suite & Hardening"]
     end
 
     subgraph NovelBranch ["Novel Branch (Prose Studio & Editor)"]
@@ -36,9 +40,9 @@ flowchart TB
     end
 
     F1 --> F2 --> F3 --> F4 --> F5
-    F3 --> W1 --> W2 --> W3 --> W4 --> W5
+    F3 --> W1 --> W2 --> W3 --> W4 --> W5 --> W6 --> W7 --> W8 --> W9
     F3 --> N1 --> N2 --> N3 --> N4 --> N5
-    W5 --> I1
+    W9 --> I1
     N5 --> I1
     I1 --> I2
 ```
@@ -49,15 +53,15 @@ flowchart TB
 
 To ensure velocity, code quality, and maintainability, strict boundaries are enforced. Features marked **Out of Scope** MUST NOT be implemented in MVP.
 
-| Domain              | In Scope for MVP                                                                                                       | Out of Scope (YAGNI / Post-MVP)                                                             |
-| :------------------ | :--------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| **World Engine**    | 1st & 2nd class blueprints, dynamic enums, formula evaluator, event sourcing delta logs, state fold engine, invariants | Complex external rule DSL compilers, multi-branch alternate timeline mergers, 3D world maps |
-| **World Studio UI** | Dedicated page routes (`/`, `/create`, `/[id]`) for Entities, Blueprints, Systems; Zero-Badge modern design            | Drag-and-drop node physics graphs, visual particle trees, character avatar image generators |
-| **Novel Engine**    | Projects, Volumes, Chapters, Scenes, TipTap/Lexical markdown canvas, `@entity` mention extraction                      | CRDT collaborative simultaneous character-by-character typing (OT/Yjs)                      |
-| **Collaboration**   | Role hierarchy (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, etc.), Redis 60s scene lease locks, lock break override          | Live audio chat, peer-to-peer WebRTC video rooms, fine-grained paragraph-level locking      |
-| **Platform Admin**  | User MFA reset endpoint, account unlock, simulated Stripe refund action, audit log table                               | Automated fraud detection ML pipelines, multi-currency conversion engines                   |
-| **Cross-Domain**    | `@novwrite/bridge` typed RPC/SSE contracts, `/dev/communication-hub` diagnostic inspector                              | GraphQL federation gateways, distributed mesh proxies                                       |
-| **Developer DX**    | **One-Click Dev Test Data Seeder (`POST /api/v1/dev/seed` + UI button)**                                               | Complex third-party mocking SaaS platforms                                                  |
+| Domain              | In Scope for MVP                                                                                                                                                                                                      | Out of Scope (YAGNI / Post-MVP)                                                             |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| **World Engine**    | 1st & 2nd class blueprints, dynamic enums, formula evaluator, event sourcing delta logs, state fold engine, UPDATE Pipe & Hanging EDIT Trees DAG, bitemporal resolution, zero-trust backend parity, REST v1 standards | Complex external rule DSL compilers, multi-branch alternate timeline mergers, 3D world maps |
+| **World Studio UI** | Dedicated page routes (`/`, `/create`, `/[id]`) for Entities, Blueprints, Systems; 3-Tier Header Visual Hierarchy; PipeTreeVisualizer; Zero-Badge modern design; CodeMirror 6 JSON Workbench                          | Drag-and-drop node physics graphs, visual particle trees, character avatar image generators |
+| **Novel Engine**    | Projects, Volumes, Chapters, Scenes, TipTap/Lexical markdown canvas, `@entity` mention extraction                                                                                                                     | CRDT collaborative simultaneous character-by-character typing (OT/Yjs)                      |
+| **Collaboration**   | Role hierarchy (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, etc.), Redis 60s scene lease locks, lock break override                                                                                                         | Live audio chat, peer-to-peer WebRTC video rooms, fine-grained paragraph-level locking      |
+| **Platform Admin**  | User MFA reset endpoint, account unlock, simulated Stripe refund action, audit log table                                                                                                                              | Automated fraud detection ML pipelines, multi-currency conversion engines                   |
+| **Cross-Domain**    | `@novwrite/bridge` typed RPC/SSE contracts, `/dev/communication-hub` diagnostic inspector                                                                                                                             | GraphQL federation gateways, distributed mesh proxies                                       |
+| **Developer DX**    | **One-Click Dev Test Data Seeder (`POST /api/v1/dev/seed` + UI button)**                                                                                                                                              | Complex third-party mocking SaaS platforms                                                  |
 
 ---
 

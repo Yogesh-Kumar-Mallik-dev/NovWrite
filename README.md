@@ -19,6 +19,16 @@ The central design principle: **The author's world state—not an AI model's mem
 
 ## 2. Core Features
 
+- **The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Engine**:
+  - **The UPDATE Pipe (Plot Axis / $T_{\text{story}}$)**: Sequential horizontal pipeline representing chronological narrative events (`event0 ---> event1 ---> event2 ---> event3 ---> event4`).
+  - **Hanging EDIT Trees (Authorial Revision DAG)**: Every event and entity possesses a vertical tree of immutable revision nodes (`ED0 -> ED1 -> ED2 -> ED3 ...`) with non-destructive checkouts. Reverting to an earlier node does not erase newer drafts—they remain branches of the parent node with infinite branching support.
+  - **Bitemporal Coordinate Resolution**: Deterministically resolves exact world state at any dual-axis coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
+  - **Interactive PipeTree Visualizer**: Dedicated UI component (`PipeTreeVisualizer`) rendering the glowing horizontal timeline conduit alongside vertical hanging branch graphs with live EDIT head pointers (`[⚡ ACTIVE EDIT HEAD]`).
+- **RESTful API Standardization & Best Practices**:
+  - **Versioning & Telemetry**: Explicit `/api/v1/` routes with `API-Version`, `X-Request-ID`, and `X-Response-Time` tracing headers.
+  - **Standardized Pagination & Empty Query Guarantees**: Predictable pagination metadata envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`). Empty queries are guaranteed to return HTTP 200 OK with `"data": []` (never `null`).
+  - **RFC 7807 Problem Details**: All errors return structured `application/problem+json` envelopes with field-level validation breakdowns.
+  - **Container & Orchestration Probes**: Built-in `/healthz`, `/livez`, and `/readyz` endpoints.
 - **First-Class & Second-Class Blueprint System**: Complete freedom to create universes from scratch.
   - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible universe actors in the timeline (Characters, Sacred Relics, Realms, Factions, Sects) with full causal mutation history.
   - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) referenced across entities.
@@ -30,7 +40,7 @@ The central design principle: **The author's world state—not an AI model's mem
 - **Event & State-Change Engine**: Events are modeled as explicit state mutations with causal history.
 - **Evidence-Based Continuity Warnings**: When new prose contradicts established canon (e.g. dead character appearing, item in wrong inventory, realm violation), NovWrite highlights the contradiction, cites the historical events responsible, and provides one-click resolutions.
 - **Grounded AI Assistant**: AI operations (drafting, scene analysis, entity extraction) operate on structured story state and retrieval context rather than ungrounded hallucination.
-- **Graceful Lifecycle Orchestration**: 1-click dev server (`./dev.sh`), build (`./build.sh`), typecheck (`./check.sh`), test runner (`./test.sh`), and database flusher (`./flush_db.sh`).
+- **Graceful Lifecycle Orchestration & 5-Phase Test Runner**: 1-click dev server (`./dev.sh`), build (`./build.sh`), typecheck (`./check.sh`), unified 5-phase test runner (`./test.sh`), and database flusher (`./flush_db.sh`).
 
 ---
 

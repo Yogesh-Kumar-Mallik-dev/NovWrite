@@ -1,8 +1,8 @@
 # Database Architecture Specification
 
-**Status:** Locked Baseline (Version 2.2 - First & Second Class Blueprints, Relational Entity Graph, ARRAY/ARRAY_REF, Formula Evaluation & State Sourcing)  
+**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, Entity Revisions, Bitemporal Coordinates & REST Envelopes)  
 **Engine:** PostgreSQL 18 with `pgvector` extension  
-**ORM / Data Access:** TypeScript Data Service (`services/data/` / `apps/data-service/`) using Prisma ORM & Coarse-Grained gRPC
+**ORM / Data Access:** TypeScript Data Service (`apps/data-service/`) using Prisma ORM & Coarse-Grained gRPC
 
 ---
 
@@ -46,9 +46,14 @@ erDiagram
     Entity ||--o{ EntityRelationship : participates
     Entity ||--o{ EventEffect : mutates
     Entity ||--o{ EntityEmbedding : generates
+    Entity ||--o{ EntityRevision : tracks
+    Entity ||--o| EditTree : hangs
 
     Event ||--o{ EventEffect : causes
+    Event ||--o| EditTree : hangs
     Scene ||--o{ Event : anchors
+
+    EditTree ||--o{ EditNode : contains
 
     ContinuityRule ||--o{ RuleViolation : detects
     Scene ||--o{ RuleViolation : flags
@@ -265,6 +270,52 @@ CREATE TABLE entity_relationships (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_relationship UNIQUE (project_id, source_entity_id, target_entity_id, relationship_type)
 );
+
+-- Immutable Authorial Entity Revisions (Feather & Web Model)
+CREATE TABLE entity_revisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    revision_number INT NOT NULL,
+    revision_type VARCHAR(50) NOT NULL, -- BASELINE_EDIT, TYPO_FIX, RETROACTIVE_PLOT_FIX, REVERT
+    author_note TEXT,
+    snapshot_name VARCHAR(255) NOT NULL,
+    snapshot_description TEXT,
+    snapshot_properties JSONB NOT NULL DEFAULT '{}'::jsonb,
+    snapshot_formulas JSONB NOT NULL DEFAULT '{}'::jsonb,
+    delta_patch JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_entity_revision UNIQUE (entity_id, revision_number)
+);
+
+-- UPDATE Pipe & Hanging EDIT Trees DAG Containers
+CREATE TABLE edit_trees (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    target_type VARCHAR(50) NOT NULL, -- ENTITY, TIMELINE_EVENT
+    target_id UUID NOT NULL,
+    root_node_id UUID,
+    active_edit_id UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_target_tree UNIQUE (project_id, target_type, target_id)
+);
+
+-- Hanging EDIT Tree Nodes (Immutable DAG with Infinite Branching Support)
+CREATE TABLE edit_nodes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tree_id UUID NOT NULL REFERENCES edit_trees(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES edit_nodes(id) ON DELETE SET NULL,
+    edit_label VARCHAR(100) NOT NULL, -- e.g. "ED0", "ED1", "ED2", "ED3"
+    revision_type VARCHAR(50) NOT NULL, -- BASELINE_EDIT, TYPO_FIX, RETROACTIVE_PLOT_FIX, REVERT
+    author_note TEXT,
+    snapshot_data JSONB NOT NULL,
+    delta_patch JSONB NOT NULL DEFAULT '{}'::jsonb,
+    children_ids UUID[] NOT NULL DEFAULT '{}',
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 ```
 
 ### 3.3. Event Sourcing & Timeline Mutations
@@ -389,6 +440,9 @@ CREATE INDEX idx_scenes_chapter_order ON scenes(chapter_id, order_index);
 CREATE INDEX idx_blueprints_project_class ON blueprints(project_id, blueprint_class);
 CREATE INDEX idx_blueprint_fields_bp ON blueprint_fields(blueprint_id, order_index);
 CREATE INDEX idx_entities_project_bp ON entities(project_id, blueprint_id);
+CREATE INDEX idx_entity_revisions_entity_rev ON entity_revisions(entity_id, revision_number);
+CREATE INDEX idx_edit_trees_target ON edit_trees(project_id, target_type, target_id);
+CREATE INDEX idx_edit_nodes_tree_parent ON edit_nodes(tree_id, parent_id);
 CREATE INDEX idx_events_project_narrative ON events(project_id, narrative_sequence);
 CREATE INDEX idx_event_effects_entity_event ON event_effects(entity_id, event_id);
 CREATE INDEX idx_rule_violations_scene_resolved ON rule_violations(scene_id, is_resolved);
@@ -396,6 +450,8 @@ CREATE INDEX idx_rule_violations_scene_resolved ON rule_violations(scene_id, is_
 -- JSONB GIN Indexes for high-speed dynamic attribute filtering
 CREATE INDEX idx_entities_properties_gin ON entities USING gin (properties jsonb_path_ops);
 CREATE INDEX idx_entities_computed_gin ON entities USING gin (computed_formulas jsonb_path_ops);
+CREATE INDEX idx_entity_revisions_props_gin ON entity_revisions USING gin (snapshot_properties jsonb_path_ops);
+CREATE INDEX idx_edit_nodes_snapshot_gin ON edit_nodes USING gin (snapshot_data jsonb_path_ops);
 CREATE INDEX idx_event_effects_new_val_gin ON event_effects USING gin (new_value jsonb_path_ops);
 
 -- HNSW Vector Indexes for cosine similarity search

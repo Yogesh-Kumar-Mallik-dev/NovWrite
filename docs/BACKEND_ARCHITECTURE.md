@@ -1,10 +1,10 @@
 # Backend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.0 - Blueprint vs. Entity Paradigm, Relational Entity Graphs, Formula Engine & State Fold Architecture)  
-**Primary Application Engine:** Go 1.23+ (`api/`, `backend/`)  
-**Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`services/data/`)  
-**Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`)  
-**Client API Transport:** REST HTTP & Server-Sent Events (SSE) via Chi Router
+**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 5-Phase Monorepo Test Runner)  
+**Primary Application Engine:** Go 1.23+ (`apps/api/`)  
+**Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`apps/data-service/`)  
+**Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`) & `@novwrite/bridge`  
+**Client API Transport:** REST HTTP (OpenAPI 3.1) & Server-Sent Events (SSE) via Chi Router
 
 ---
 
@@ -55,20 +55,30 @@ flowchart TB
 
 ## 2. Layer Responsibilities & Isolation Rules
 
-### 2.1. Go Application API Layer (`api/`, `backend/`)
+### 2.1. Go Application API Layer (`apps/api/`)
 
-- **HTTP Routing & Middleware:** Chi-based routing, JWT/session authentication, project tenancy scoping, rate limiting, and request correlation tracing.
+- **HTTP Routing, Telemetry & Middleware:**
+  - Standardized REST routing using Chi router with strict `/api/v1/` route prefixes.
+  - Automatic `API-Version: 1.0`, `X-Request-ID`, and `X-Response-Time` tracing headers.
+  - Standardized pagination metadata envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`).
+  - Strict empty query non-null `[]` guarantees (returns `200 OK` with `"data": []`, never `null`).
+  - Container and orchestration health probes: `/healthz`, `/livez`, `/readyz`.
+  - JWT/session authentication, project tenancy scoping, and rate limiting.
+- **The UPDATE Pipe & Hanging EDIT Trees Engine (`timeline`, `universe`):**
+  - **Narrative Timeline Conduit ($T_{\text{story}}$)**: Sequential plot axis carrying narrative sequence numbers and chronological timestamps (`event0 ---> event1 ---> event2 ...`).
+  - **Authorial Revision DAG ($T_{\text{revision}}$)**: Vertical hanging tree (`EditTree<T>`) for every event and entity containing immutable revision nodes (`ED0 -> ED1 -> ED2 ...`).
+  - **Non-Destructive Checkout**: Checking out an earlier revision does not erase later drafts—they remain valid branches of the parent node with infinite branching support.
+  - **Bitemporal Coordinate Resolution**: Deterministically resolves exact world state at any dual-axis coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
 - **Universe & Blueprint Engine (`universe`):**
   - Manages **1st-Class Blueprints** (Entity Archetypes: Characters, Weapons, Sanctuaries, Factions) and **2nd-Class Blueprints** (Sub-Schemas & Gauges: Cultivation Ranks, Affection Scales, Power Matrices).
   - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including pure categorical enums (`ENUM`), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), freeform arrays (`ARRAY`), blueprint references (`BLUEPRINT_REF`), and blueprint array references (`ARRAY_REF`).
   - **Zero-Trust Validation & Sanitization:** Automatically forces lowercase machine keys (`strings.ToLower`), rejects duplicate field keys (`DUPLICATE_FIELD_KEY`), executes field type slate wipe (strips stale bounds/options/formulas), and normalizes entity property keys.
   - **Server-Side AST Formula Engine (`formula_engine.go`):** Executes full recursive descent AST formula parsing and deterministic calculation server-side during entity persistence and event mutation. Never trusts client-sent formula values.
 - **Prose & Novel Engine (`novel`):** Managing scene markdown, word count telemetry, chapter hierarchies, entity mentions, and collaborative 60-second heartbeat scene locks (`scene_leases`).
-- **Timeline & State Fold Engine (`timeline`):** Pure deterministic event folding, point-in-time state reconstruction, and historical snapshot generation over ordered `EventEffect` sequences.
 - **Continuity & Rules Engine (`continuity`):** Invariant rule execution, predicate evaluation against folded state, relational link validation, and explainable violation traceback generation.
 - **AI Context Gateway (`ai`):** Assembling grounded prompts from canonical state and `pgvector` similarity, streaming model completions via SSE.
 
-### 2.2. TypeScript Data Service (`services/data/` / `apps/data-service/`)
+### 2.2. TypeScript Data Service (`apps/data-service/`)
 
 - **Isolation Scope:** Encapsulates direct database queries, migrations, and Prisma ORM client operations.
 - **Domain Engine Parity:** Houses dual-engine TypeScript implementations of Schema Engine (`schemaEngine.ts`), Property Validator (`propertyValidator.ts`), State Fold Engine (`stateFoldEngine.ts`), Timeline Engine (`timelineEngine.ts`), and AST Formula Engine (`formulaEngine.ts`) maintaining 100% parity with the Go backend.
@@ -79,19 +89,25 @@ flowchart TB
   - `EvaluateEntityFormulas(projectId, entityId, propertiesJson)`
   - `SearchVectorGrounding(projectId, queryEmbedding, limit)`
 
+### 2.3. Shared Contract & Communication Bridge (`packages/bridge/`)
+
+- **Bridge Contract Layer (`@novwrite/bridge`):** Houses typed RPC contracts, Zod schemas, and client adapters for inter-service and dev diagnostics communication (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
+- **Isolated Dev Hub (`/dev/communication-hub`):** Developer-only single-page diagnostic dashboard to inspect real-time inter-space traffic, detect payload discrepancies, and simulate mock responses.
+
 ---
 
 ## 3. Go Domain Module Architecture
 
-Each domain module in `backend/` follows strict Dependency Injection (DI) with interfaces:
+Each domain module in `apps/api/internal/` follows strict Dependency Injection (DI) with interfaces:
 
 ```text
-backend/
-├── shared/                       # Shared error types, logger, ID generators
+apps/api/internal/
+├── shared/                       # Shared error types, logger, ID generators, RFC 7807 problem details
+├── middleware/                   # Telemetry (Request ID, Response Time, API-Version), Auth, CORS
 ├── identity/                     # Users, auth tokens, workspace tenancy, MFA
 ├── novel/                        # Novel, chapter, scene, prose operations, scene leases
-├── universe/                     # Blueprints (1st/2nd Class), fields, entities, formulas, relations
-├── timeline/                     # Events, event effects, state snapshots, fold engine
+├── universe/                     # Blueprints (1st/2nd Class), fields, entities, formulas, revisions, relations
+├── timeline/                     # Events, event effects, state snapshots, fold engine, edit trees
 ├── continuity/                   # Invariant rules, predicate evaluator, violation generator
 └── ai/                           # Prompt builder, model clients (Gemini/Anthropic/OpenAI), SSE streamer
 ```
@@ -315,19 +331,35 @@ message EvaluateFormulasResponse {
 
 ---
 
-## 7. Error Handling Standard (RFC 7807 Problem Details)
+## 7. REST API Standards, Telemetry & RFC 7807 Problem Details
+
+### 7.1. Global REST Standards & Telemetry Middleware
+
+All HTTP endpoints adhere to modern REST best practices:
+
+- **Explicit Routing & Versioning:** Every domain route begins with `/api/v1/` and responds with the `API-Version: 1.0` header.
+- **Request Tracing & Metrics:** Every inbound request is assigned a unique UUID in `X-Request-ID` and profiled with millisecond execution latency returned in `X-Response-Time`.
+- **Standardized Pagination Envelopes:** List queries wrap records in `{ data: [...], meta: {...}, pagination: { page, pageSize, totalCount, totalPages, hasNextPage, hasPreviousPage } }`.
+- **Empty Query Guarantees:** A search or query returning 0 records **always returns HTTP 200 OK with `"data": []` and `"totalCount": 0`** (never `null` or 404).
+- **Probes for Container Orchestration:**
+  - `GET /healthz`: Summary health status.
+  - `GET /livez`: Fast liveness probe.
+  - `GET /readyz`: Database & Redis dependency readiness probe.
+
+### 7.2. RFC 7807 Problem Details (`application/problem+json`)
 
 All HTTP error responses adhere to `application/problem+json`:
 
 ```json
 {
-  "type": "https://novwrite.app/errors/continuity-violation",
-  "title": "Continuity Invariant Violation",
+  "type": "https://novwrite.io/errors/validation-error",
+  "title": "Validation Failed",
   "status": 422,
   "detail": "BLOCK_CONTINUITY_EVAL_004: Character 'Elder Han' is claimed alive in Scene 42, but was marked deceased in Event 'Fall of Cloud Sect' (Seq: 18).",
   "instance": "/api/v1/projects/proj-123/scenes/scene-42/validate",
-  "block_id": "BLOCK_CONTINUITY_EVAL_004",
-  "invalid_params": [
+  "code": "SCHEMA_VALIDATION_ERROR",
+  "timestamp": "2026-09-07T05:00:00.000000Z",
+  "invalidParams": [
     {
       "name": "character_status",
       "reason": "Entity status deceased cannot invoke martial art techniques"
@@ -400,3 +432,27 @@ Platform Administrators (`is_platform_admin = true`) access a dedicated operatio
 - `POST /api/v1/platform/users/{userId}/unlock` — Clear brute-force account lockout.
 - `POST /api/v1/platform/billing/refunds` — Issue partial/full Stripe refunds and adjust customer subscription tiers.
 - `POST /api/v1/platform/support/repair-project-snapshots` — Trigger deterministic snapshot rebuild for corrupted universes upon user support request.
+
+---
+
+## 11. 5-Phase Monorepo Test Architecture & Regression Pipeline
+
+NovWrite enforces a mandatory 5-phase test and verification pipeline ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)) executing across the entire monorepo:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│             5-PHASE TEST RUNNER (./test.sh)            │
+├─────────┬──────────────────────────┬───────────────────┤
+│ Phase 1 │ @novwrite/bridge         │ 12 Unit Tests     │
+│ Phase 2 │ @novwrite/data-service   │ 40 Unit Tests     │
+│ Phase 3 │ apps/api (Go Backend)    │ Go Test Suite     │
+│ Phase 4 │ @novwrite/web (Frontend) │ 14 Vitest Tests   │
+│ Phase 5 │ SvelteKit & TS Types     │ Diagnostic Check  │
+└─────────┴──────────────────────────┴───────────────────┘
+```
+
+1. **Phase 1 (`@novwrite/bridge`):** Verifies typed RPC contracts, Zod schemas, error normalizers, and mock adapters.
+2. **Phase 2 (`@novwrite/data-service`):** Verifies schema validation, property normalization, AST formula engine, and timeline state fold engine.
+3. **Phase 3 (`apps/api`):** Executes Go unit and integration tests across domain packages (`shared`, `middleware`, `universe`, `timeline`, `continuity`).
+4. **Phase 4 (`@novwrite/web`):** Executes Vitest component and store tests (`worldStore`, `formulaEngine`, `PipeTreeVisualizer`, `JsonEditor`).
+5. **Phase 5 (Diagnostic Typecheck):** Runs `svelte-check` and `tsc --noEmit` across all workspace packages via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).

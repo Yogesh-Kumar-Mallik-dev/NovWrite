@@ -1,7 +1,7 @@
 # NovWrite Platform Architecture
 
-**Status:** Technical Specification Baseline (Version 2.2 - Zero-Trust Validation Parity, Deterministic AST Formulas, Array Fields & Graceful Lifecycle Scripts)  
-**Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, and deployment.
+**Status:** Technical Specification Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, RESTful API Standards & 5-Phase Monorepo Test Suite)  
+**Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, REST standards, and deployment.
 
 ---
 
@@ -14,15 +14,18 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 1. **Canon Over AI Memory:** Fictional state is persisted in an authoritative database, not held implicitly inside an LLM's context window.
 2. **Explicit State Over Implicit Assumptions:** Character attributes, locations, items, affiliations, and relationships are stored as structured state.
 3. **Events as State Transitions:** World mutations occur exclusively through recorded events (e.g. `Battle of Xian`, `Artifact Transfer`, `Breakthrough`).
-4. **Blueprint (Class) vs. Entity (Object) Paradigm:** Clear separation between structural blueprints/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas) and concrete instantiated universe objects.
-5. **Categorical ENUM, Weighted VALUE_TYPE, ARRAY & ARRAY_REF:** Pure string categorical choices (`ENUM`), dual-valued weighted options (`VALUE_TYPE`), freeform string lists (`ARRAY`), and entity references (`ARRAY_REF`) feed directly into safe AST formula parsers for live calculations.
-6. **Zero-Trust Backend Validation Parity:** Backend never trusts frontend formatting; forces lowercase machine keys (`.toLowerCase()`, `strings.ToLower`), rejects duplicate keys, executes field type slate wipe, and normalizes entity property keys.
-7. **Deterministic Server-Side AST Formula Engine:** Safe AST expression evaluators (`formula_engine.go` & `formulaEngine.ts`) compute all formula fields deterministically on the backend during entity mutation.
-8. **CodeMirror 6 JSON Workbench & Bi-Directional State:** First-class color-coded JSON editing with automatic word-wrapping, syntax diagnostics, and bi-directional reactive synchronization with visual form fields.
-9. **Full-Screen Isolated Error Canvases:** Centralized SvelteKit error architecture (`+error.svelte`) routing 404 and 500 exceptions to dedicated, chrome-free canvases with word-wrapped JSON diagnostic traces.
-10. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
-11. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
-12. **Dedicated Page-Based Routing, Zero-Badge Policy & Bits UI Selects:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`), clean slate dynamic field initialization, 100% Bits UI Select dropdown usage, and automatic post-save redirection.
+4. **The UPDATE Pipe & Hanging EDIT Trees DAG Engine:** Narrative timeline conduit ($T_{\text{story}}$) vs vertical hanging revision DAG ($T_{\text{revision}}$) with non-destructive checkouts, infinite branching, and bitemporal coordinate resolution $(T_{\text{narrative}}, T_{\text{revision}})$.
+5. **Blueprint (Class) vs. Entity (Object) Paradigm:** Clear separation between structural blueprints/templates (1st-Class Archetypes vs. 2nd-Class Sub-Schemas) and concrete instantiated universe objects.
+6. **Categorical ENUM, Weighted VALUE_TYPE, ARRAY & ARRAY_REF:** Pure string categorical choices (`ENUM`), dual-valued weighted options (`VALUE_TYPE`), freeform string lists (`ARRAY`), and entity references (`ARRAY_REF`) feed directly into safe AST formula parsers for live calculations.
+7. **Zero-Trust Backend Validation Parity:** Backend never trusts frontend formatting; forces lowercase machine keys (`.toLowerCase()`, `strings.ToLower`), rejects duplicate keys, executes field type slate wipe, and normalizes entity property keys.
+8. **Deterministic Server-Side AST Formula Engine:** Safe AST expression evaluators (`formula_engine.go` & `formulaEngine.ts`) compute all formula fields deterministically on the backend during entity mutation.
+9. **CodeMirror 6 JSON Workbench & Bi-Directional State:** First-class color-coded JSON editing with automatic word-wrapping, syntax diagnostics, and bi-directional reactive synchronization with visual form fields.
+10. **Full-Screen Isolated Error Canvases:** Centralized SvelteKit error architecture (`+error.svelte`) routing 404 and 500 exceptions to dedicated, chrome-free canvases with word-wrapped JSON diagnostic traces.
+11. **Explainable Continuity Warnings:** Any continuity violation detected points directly to the historical events establishing the current state and offers concrete resolution actions.
+12. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
+13. **Dedicated Page-Based Routing, 3-Tier Hierarchy & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`), clean slate dynamic field initialization, 100% Bits UI Select dropdown usage, 3-tier header visual hierarchy, and automatic post-save redirection.
+14. **RESTful API Standards & Telemetry:** Explicit `/api/v1/` routes, `API-Version`, `X-Request-ID`, `X-Response-Time`, standardized pagination envelopes, guaranteed non-null `[]` empty queries, and container probes (`/healthz`, `/livez`, `/readyz`).
+15. **5-Phase Monorepo Test Architecture:** Automated test and regression pipeline covering contracts, domain engines, Go backend, SvelteKit components/stores, and monorepo diagnostics ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)).
 
 ---
 
@@ -121,3 +124,56 @@ flowchart TB
 │     attack * mastery - defence * def_mastery           │
 └────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 5. The UPDATE Pipe & Hanging EDIT Trees DAG Architecture
+
+NovWrite introduces an orthogonal dual-axis revision paradigm:
+
+```text
+======================= THE UPDATE PIPE (Plot Axis / T_story) =======================
+  [ Event 0 ] ════════► [ Event 1 ] ════════► [ Event 2 ] ════════► [ Event 3 ]
+       │                     │                     │                     │
+       ▼                     ▼                     ▼                     ▼
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│  Edit Tree 0 │      │  Edit Tree 1 │      │  Edit Tree 2 │      │  Edit Tree 3 │
+│  ED0 (Head)  │      │  ED0 -> ED1  │      │     ED0      │      │  ED0 -> ED1  │
+└──────────────┘      └──────────────┘      │      │       │      └──────────────┘
+                                            │     ED1      │
+                                            │      │       │
+                                            │     ED2      │
+                                            │      │       │
+                                            │     ED3 ◄───[ACTIVE EDIT HEAD]
+                                            │    /   \     │
+                                            │  ED4   ED5   │  (Infinite Branching DAG)
+                                            └──────────────┘
+```
+
+- **The UPDATE Pipe ($T_{\text{story}}$):** The horizontal chronological story pipeline (`event0 ---> event1 ---> event2 ...`).
+- **Hanging EDIT Trees ($T_{\text{revision}}$):** Vertical revision DAG hanging under each event and entity.
+- **Non-Destructive Checkout:** Reverting to `ED3` moves the active EDIT head pointer without deleting `ED4`. Adding `ED5` creates a branch from `ED3` (`[ED4, ED5]`).
+- **Bitemporal Resolution:** Resolves exact universe state at any 2D coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
+
+---
+
+## 6. RESTful API Best Practices & Telemetry
+
+- **Explicit Versioning & Path Standard:** Routes strictly formatted as `/api/v1/...` with `API-Version: 1.0`.
+- **Request Tracing:** Automatic `X-Request-ID` and `X-Response-Time` latency headers on all responses.
+- **Standardized Pagination:** Predictable envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`).
+- **Empty Query Non-Null Guarantees:** 0 matching records returns `200 OK` with `"data": []` and `"totalCount": 0` (never `null`).
+- **RFC 7807 Problem Details:** Error responses return `application/problem+json` with machine-readable error codes and field-level invalid parameters.
+- **Container Probes:** Standardized `/healthz`, `/livez`, and `/readyz` endpoints.
+
+---
+
+## 7. 5-Phase Monorepo Test Architecture
+
+NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)):
+
+1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, and error normalizers (12 unit tests).
+2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, AST formula engine, and state fold engine (40 unit tests).
+3. **Phase 3 (`apps/api`):** Go backend unit and integration test suite.
+4. **Phase 4 (`@novwrite/web`):** Vitest frontend component and store tests (`PipeTreeVisualizer`, `worldStore`, `formulaEngine`).
+5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).

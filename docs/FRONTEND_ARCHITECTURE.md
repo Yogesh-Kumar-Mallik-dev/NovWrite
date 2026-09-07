@@ -1,6 +1,6 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.2 - Blueprint vs. Entity Paradigm, Zero-Trust Parity, ARRAY/ARRAY_REF, Dynamic Formula Engine, Archetype Carousel & Dedicated Page Routes)  
+**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, 3-Tier Visual Hierarchy, Strict Schema Invariance, REST Standards & 5-Phase Test Suite)  
 **Web & Desktop Framework:** SvelteKit 2 with Svelte 5 (Runes Mode) & Tauri 2  
 **Mobile Framework:** React Native with Expo (SDK 52+, Expo Router)  
 **Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (`bits-ui` in `zinc` on Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
@@ -410,3 +410,60 @@ In Svelte 5, derived values (`$derived`) must be strictly pure functions. Callin
 ### 10.2. Synchronous Initial Form State
 
 To eliminate flickering, empty input states, and race conditions during SSR and client page navigation, edit pages (`/world/entities/[id]`, `/world/schemas/[id]`) compute their initial form state synchronously via `getInitialEntityState()` before mounting rather than relying on delayed asynchronous effects.
+
+---
+
+## 11. Entity Editor 3-Tier Visual Hierarchy Standard
+
+The Entity Editor header layout ([`apps/web/src/routes/world/entities/[id]/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/world/entities/[id]/+page.svelte)) resolves toolbar crowding through a strictly tiered 3-level vertical hierarchy:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ TIER 1: LOCATION & CONTEXT (Breadcrumbs & Parent Hierarchy)                     │
+│ ‹ All Entities  /  World Studio  ›  Entities  ›  Eldrin the Spellblade          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ TIER 2: IDENTITY BANNER (Entity Archetype & Metadata)                           │
+│ [ICON]  Eldrin the Spellblade                                                   │
+│         Cultivator · Template: Protagonist Archetype · Sequence #12             │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ TIER 3: UTILITIES & ACTIONS TOOLBAR (Modes & Operations)                        │
+│ [ Visual Form | Raw JSON ]  [ ⚡ Feather History (3) ]  [ ↗ Schema ]  [ Save ]    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Tier 1 (Location & Navigation):** Clean breadcrumb path with back-link (`‹ All Entities`) establishing spatial context without competing with actions.
+2. **Tier 2 (Identity Banner):** Prominent entity name, archetype icon, category descriptor, template link, and causal mutation sequence number.
+3. **Tier 3 (Utilities & Actions Toolbar):** Segmented view-mode control (`Visual Form` vs `Raw JSON`), Feather History revision drawer trigger button with active edit counter, schema quick-jump button, and primary `Save Changes` call-to-action.
+
+---
+
+## 12. UPDATE Pipe & Hanging EDIT Trees Visualizer (`PipeTreeVisualizer.svelte`)
+
+The UPDATE Pipe and Hanging EDIT Trees UI component ([`PipeTreeVisualizer.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/pipe-tree-visualizer/pipe-tree-visualizer.svelte)) visualizes the dual-axis narrative vs authorial revision model:
+
+- **Horizontal Plot Axis (The UPDATE Pipe):** Renders the chronological narrative conduit (`event0 ---> event1 ---> event2 ---> event3`) with sequence numbers and causal badges.
+- **Vertical Authorial Revision Trees:** Hanging vertical branch DAGs under each pipe node displaying revision nodes (`ED0 -> ED1 -> ED2 ...`).
+- **Live Active EDIT Head Indicator:** Highlights the current active checkout node with `[⚡ ACTIVE EDIT HEAD]` pill indicator.
+- **Interactive Non-Destructive Checkout:** Clicking any past node non-destructively moves the active head without deleting newer revisions.
+- **Infinite Branching Graph:** Multiple child nodes branch side-by-side with clear connecting SVG connector rails.
+
+---
+
+## 13. Strict Schema Invariance & Eradication of Arbitrary Instance Properties
+
+To protect data integrity, prevent schema drift, and eliminate runtime bugs:
+
+- **Strict Blueprint Conformance:** Entities strictly adhere to their assigned Blueprint schema.
+- **Eradication of Arbitrary Custom Properties:** The legacy "Custom & Extended Object Properties" section is completely prohibited from the Entity Editor. Authors must not attach unvalidated ad-hoc key-value pairs.
+- **Schema-First Evolution:** To add new fields, authors update the Blueprint schema directly in `/world/schemas/[id]`. This guarantees zero-trust backend validation parity, formula interoperability, and automatic migration across all instances.
+
+---
+
+## 14. Frontend Testing & Verification Architecture
+
+The frontend test suite ([`apps/web`](file:///home/yogesh/Projects/NovWrite/apps/web)) uses Vitest and Testing Library:
+
+- **Unit Tests:** AST formula engine evaluation (`formulaEngine.test.ts`), bitemporal coordinate resolution, and schema validation.
+- **Store Tests:** Svelte 5 Runes store reactivity, entity formula caching, and revision checkout operations (`worldStore.test.ts`).
+- **Component Tests:** `PipeTreeVisualizer.test.ts`, `JsonEditor.test.ts`, and archetype carousel interaction tests.
+- **Automated Execution:** Tested automatically as Phase 4 in [`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) and typechecked via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).

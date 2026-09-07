@@ -51,28 +51,53 @@ Key environment variables:
 docker compose -f deploy/compose.yaml up -d postgres redis
 ```
 
-### 4.2 Initialize Prisma Schema
+### 4.2 Initialize Prisma Schema & Build Contracts
 
 ```bash
-cd services/data
-pnpm install
-pnpm prisma migrate dev
-pnpm prisma generate
+# Generate Prisma Client and push schemas
+pnpm --filter @novwrite/data-service db:generate
+pnpm --filter @novwrite/data-service db:push
+
+# Build shared bridge contracts
+pnpm --filter @novwrite/bridge build
 ```
 
-### 4.3 Launch Services
+### 4.3 1-Click Orchestration Scripts
 
-- **Data Service (gRPC):**
+NovWrite provides dedicated lifecycle scripts in the repository root:
+
+```bash
+# 1-Click Graceful Development Server (starts DB, Redis, API, Data Service, Web)
+./dev.sh
+
+# 1-Click Monorepo Build (builds all packages and Go binaries)
+./build.sh
+
+# 1-Click Monorepo Typecheck (verifies bridge, data-service, and web diagnostics)
+./check.sh
+
+# 1-Click 5-Phase Monorepo Test Runner (runs 66+ tests across all tiers)
+./test.sh
+
+# Complete Database & Cache Reset (cleans PostgreSQL tables and Redis)
+./flush_db.sh
+```
+
+### 4.4 Granular Service Launch (Manual)
+
+If running services individually:
+
+- **TypeScript Data Service:**
   ```bash
-  cd services/data && pnpm dev
+  pnpm --filter @novwrite/data-service dev
   ```
-- **Go Backend API:**
+- **Go API Backend Server:**
   ```bash
-  go run ./api/cmd/server
+  cd apps/api && go run ./cmd/server
   ```
-- **Web Client:**
+- **SvelteKit Web Frontend:**
   ```bash
-  cd frontend/web && pnpm dev
+  pnpm --filter @novwrite/web dev
   ```
 
 ---
@@ -83,8 +108,10 @@ When contributing code or building features:
 
 1. **Strict Single-Change Policy**: Only make one atomic change per task (one feature, one refactor, or one fix). Reject multi-change requests.
 2. **Commit Standard**: Write commit messages matching `<type>(<domain>): <expression>` (e.g. `feat(universe): add stage ladder validator`).
-3. **Block-Based Code Formatting**:
+3. **Signed Commits**: Always sign commits using `git commit -S -m "..."`.
+4. **Block-Based Code Formatting**:
    - Begin logical blocks with comment headers explaining purpose and expected outputs.
    - Use early returns to keep logic flat and maintainable.
-   - Attach unique block IDs to all error logs and return messages for instant troubleshooting.
-4. **Context Tracking**: Maintain active state in `current_context.md`.
+   - Attach unique block IDs (`BLOCK_<DOMAIN>_<ACTION>_<ID>`) to all error logs and return messages.
+5. **Zero-Badge UI Policy**: Badges and pill tags are prohibited on the frontend. Use semantic icons, action buttons, accessible breadcrumbs, and slide drawers.
+6. **Context Tracking**: Maintain active state in [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md).

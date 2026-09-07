@@ -144,6 +144,27 @@ This document records the design preferences, framework choices, and UI/UX conve
 - **Chrome Removal**: Remove all top development bars, main navigation bars, and studio switchers on error pages.
 - **Spacing**: Ample vertical breathing room (`space-y-10 md:space-y-12`, `py-16 md:py-24`) between badge, hero number, description, buttons, and diagnostic inspector.
 
+### 4.8. Entity Editor 3-Tier Visual Hierarchy Layout Standard
+
+- **Rule**: The header of the Entity Editor (`/world/entities/[id]`) must strictly follow a 3-tier vertical hierarchy:
+  - **Tier 1 (Location & Navigation)**: Breadcrumbs path (`‹ All Entities / World Studio › Entities › {entity.name}`) providing location without competing with actions.
+  - **Tier 2 (Identity Banner)**: Prominent entity name, archetype icon, template link, category, and sequence number.
+  - **Tier 3 (Utilities & Actions Toolbar)**: View mode segmented controls (`Visual Form` vs `Raw JSON`), Feather History revision drawer trigger with live revision count (`⚡ Feather History (N)`), schema jump button, and primary `Save Changes` button.
+
+### 4.9. UPDATE Pipe & Hanging EDIT Trees Visualizer (`PipeTreeVisualizer.svelte`)
+
+- **Rule**: Always render dual-axis revision history using the interactive `PipeTreeVisualizer` component.
+- **Visual Design**:
+  - Horizontal narrative pipeline conduit with glowing connecting lines.
+  - Vertical branch nodes with tree-connector rails.
+  - Clear `[⚡ ACTIVE EDIT HEAD]` pill indicator on the active node.
+  - Interactive non-destructive checkout on node click.
+
+### 4.10. Strict Schema Invariance & Eradication of Arbitrary Instance Properties
+
+- **Rule**: The Entity Editor must **never display an unmanaged "Custom & Extended Object Properties" section**.
+- **Blueprint-First**: All entity attributes must be governed by the Blueprint schema. To add or modify fields, users edit the Blueprint in `/world/schemas/[id]`. This prevents schema drift and maintains zero-trust validation parity.
+
 ---
 
 ## 5. AI UI/UX Anti-Patterns Checklist
@@ -157,3 +178,5 @@ All AI coding agents must proactively audit against this checklist before submit
 5. **Did you test live formula reactivity?** $\to$ Ensure dynamic formulas re-evaluate seamlessly on state modifications.
 6. **Did you ensure getters called in `$derived` are side-effect free?** $\to$ Never mutate `$state` inside derivations.
 7. **Did you verify error screens have chrome stripped and word wrapping enabled?** $\to$ Check full isolation on 404/500 routes.
+8. **Did you include arbitrary unmanaged custom properties in Entity Editor?** $\to$ Eradicate; enforce strict Blueprint schema invariance.
+9. **Did you respect the 3-Tier Visual Hierarchy in Entity Editor?** $\to$ Ensure Tier 1 (Navigation), Tier 2 (Identity), and Tier 3 (Actions) are clearly separated.

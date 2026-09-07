@@ -63,3 +63,29 @@ This document records the core design principles, trade-offs, and technical deci
 - **Context:** Coupling novel drafting logic directly to dynamic worldbuilding engines leads to architectural spaghetti, cross-domain test fragility, and merge conflicts between writers and lore engineers. Cross-domain communication errors are difficult to diagnose when distributed arbitrarily across endpoints.
 - **Decision:** Divide development into two strictly isolated fronts on dedicated git branches (`novel` and `world`). Prohibit direct cross-domain imports or raw database joins between prose and lore. Route all inter-space interactions through a dedicated, strictly typed Communication Layer (`@novwrite/bridge`), backed by a centralized Single-Page Diagnostic Console (`/dev/communication-hub`) to capture, debug, mock, and resolve all cross-domain communication errors in one place.
 - **Consequences:** Accelerates parallel engineering velocity, enforces complete boundary isolation, simplifies debugging of cross-space communication errors, and provides seamless mocking for frontend teams.
+
+---
+
+## Decision 8: The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Model
+
+- **Context:** Entities in a novel undergo two distinct types of change: chronological narrative progression along the plot timeline ($T_{\text{story}}$) and vertical authorial drafting revisions/edits ($T_{\text{revision}}$) like fixing typos or retroactive lore tweaks. Treating both as a flat linear history causes destructive overwrites or timeline paradoxes.
+- **Decision:** Model the narrative timeline as a horizontal conduit (The UPDATE Pipe: `event0 ---> event1 ---> event2 ...`) and authorial revisions as hanging vertical DAG trees (`EditTree<T>`: `ED0 -> ED1 -> ED2 ...`). Reverting to an earlier revision non-destructively moves the active EDIT head pointer without deleting newer drafts, allowing infinite child branching. Deterministically resolve universe state at any 2D coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
+- **Consequences:** Writers can freely experiment with alternative entity descriptions, undo typo fixes, or branch drafting lines without ever risking permanent loss of previous draft states.
+
+---
+
+## Decision 9: Zero-Trust Backend Validation Parity & Clean Slate Architecture
+
+- **Context:** Relying solely on client-side form sanitization results in broken state when bad payloads bypass the frontend, uppercase keys cause formula lookup misses, or field type changes leave stale bounds or options in JSONB storage.
+- **Decision:** Implement strict zero-trust parity across both Go (`apps/api`) and TypeScript (`apps/data-service`). Automatically coerce field machine keys to lowercase (`strings.ToLower`, `.toLowerCase()`), reject duplicate keys (`DUPLICATE_FIELD_KEY`), wipe incompatible configuration upon field type modification, and execute deterministic AST formula evaluation server-side.
+- **Consequences:** Guarantees absolute database schema consistency, eliminates formula evaluation drift, and ensures robust API resilience against malformed requests.
+
+---
+
+## Decision 10: 3-Tier Visual Hierarchy & Strict Schema Invariance in Entity Editor
+
+- **Context:** Crowding navigation breadcrumbs, entity metadata, editor view toggles, revision histories, and save buttons into a single horizontal bar creates visual dissonance. Allowing arbitrary unmanaged instance properties creates schema drift and bypasses validation.
+- **Decision:**
+  1. Structure the Entity Editor header into a 3-tier vertical hierarchy: Tier 1 (Breadcrumb Location), Tier 2 (Identity Banner & Archetype Metadata), and Tier 3 (Utility Toolbar with Form/JSON switch, Feather History drawer trigger, and Save call-to-action).
+  2. Enforce strict Schema Invariance by completely eradicating arbitrary ad-hoc instance properties in favor of formal Blueprint schema fields.
+- **Consequences:** Delivers a clear, distraction-free workbench interface while preventing data corruption from unvalidated loose properties.

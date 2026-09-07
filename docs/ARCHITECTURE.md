@@ -157,5 +157,29 @@ Every major domain is partitioned into a dedicated 3-tier route structure:
 | `/world/audit`    | Continuity Health              | Universe violation tracker and one-click canon reconciler                                                                                                  |
 
 - **Zero-Badge Policy:** Strict prohibition of badges/pill tags across all views. Replaced with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
+- **3-Tier Header Visual Hierarchy:** Entity Editor header is divided into Tier 1 (Navigation & Breadcrumbs), Tier 2 (Identity Banner & Archetype metadata), and Tier 3 (Utility Toolbar with Form/JSON switch, Feather History drawer trigger, and primary Save action).
 - **Archetype Carousel:** Horizontal scroll deck on `/world/entities/create` with always-visible side navigation buttons (disabled, hover, active states), single-card stepping, no cutoffs, and hidden scrollbars.
 - **Communication Bridge Separation:** `@novwrite/bridge` messaging diagnostics are restricted to `/dev/communication-hub`.
+
+---
+
+## 4. RESTful API Best Practices & Telemetry
+
+- **Explicit Route Versioning:** All production endpoints are scoped under `/api/v1/...` and return `API-Version: 1.0`.
+- **Telemetry & Tracing:** Responses automatically include `X-Request-ID` and execution latency `X-Response-Time`.
+- **Standardized Pagination:** Collection queries use standard pagination envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`).
+- **Empty Query Non-Null Guarantees:** 0-result queries return `200 OK` with `"data": []` and `"totalCount": 0` (never `null`).
+- **RFC 7807 Problem Details:** Errors return `application/problem+json` envelopes with field-level breakdowns.
+- **Container Probes:** Standardized `/healthz`, `/livez`, and `/readyz` endpoints.
+
+---
+
+## 5. 5-Phase Monorepo Test Architecture
+
+NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)):
+
+1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, and error normalizers (12 unit tests).
+2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, AST formula engine, and state fold engine (40 unit tests).
+3. **Phase 3 (`apps/api`):** Go backend unit and integration test suite.
+4. **Phase 4 (`@novwrite/web`):** Vitest frontend component and store tests (`PipeTreeVisualizer`, `worldStore`, `formulaEngine`).
+5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).

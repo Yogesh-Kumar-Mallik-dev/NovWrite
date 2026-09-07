@@ -64,16 +64,24 @@ pnpm --filter @novwrite/data-service db:studio
 ## 4. Testing & Verification
 
 ```bash
-# Run all Go backend unit tests
-cd apps/api && go test -v ./...
+# 1-Click 5-Phase Monorepo Test Runner (bridge -> data-service -> Go backend -> web tests -> typecheck)
+./test.sh
 
-# Run @novwrite/bridge contract tests
+# Phase 1: Run @novwrite/bridge contract tests
 pnpm --filter @novwrite/bridge test
 
-# Run @novwrite/data-service unit tests
+# Phase 2: Run @novwrite/data-service domain & formula tests
 pnpm --filter @novwrite/data-service test
 
-# Check SvelteKit frontend diagnostics
+# Phase 3: Run all Go backend unit and integration tests
+cd apps/api && go test -v ./...
+
+# Phase 4: Run @novwrite/web Vitest frontend component & store tests
+pnpm --filter @novwrite/web test
+
+# Phase 5: Check SvelteKit frontend & monorepo diagnostics
+./check.sh
+# or individual:
 pnpm --filter @novwrite/web check
 ```
 
@@ -82,7 +90,7 @@ pnpm --filter @novwrite/web check
 ## 5. Code Formatting & Quality
 
 ```bash
-# Automatically format code repository-wide
+# Automatically format all files repository-wide
 pnpm prettier --write .
 
 # Go code formatting and vet check

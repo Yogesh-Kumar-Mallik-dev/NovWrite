@@ -63,11 +63,70 @@ timeline
                : Array & Array Reference Field Types (ARRAY, ARRAY_REF)
                : 100% Bits UI Select Dropdowns & Post-Save Route Redirections
                : Graceful Monorepo Lifecycle Scripts (dev.sh, build.sh, check.sh, test.sh, flush_db.sh)
+    2026-09-07 : Version 2.3 (The UPDATE Pipe & Hanging EDIT Trees DAG)
+               : Horizontal Story Axis vs Vertical Revision Trees
+               : Non-Destructive Checkouts & Infinite Branching
+               : 3-Tier Visual Hierarchy & Strict Schema Invariance
+               : Smooth Rounded-Corner Favicon & Web App Metadata
+    2026-09-07 : Version 2.4 (REST API Standardization & 5-Phase Monorepo Test Runner)
+               : Explicit /api/v1/ Routes, API-Version & Telemetry Headers
+               : Standardized Pagination Envelopes & Empty Query Guarantees
+               : RFC 7807 Problem Details & Container Health Probes
+               : 5-Phase Monorepo Test Runner (66+ Unit & Component Tests)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.4] — 2026-09-07
+
+**Scope:** Comprehensive RESTful API Standardization, Pagination Envelopes, Telemetry Headers, RFC 7807 Problem Details & 5-Phase Monorepo Test Runner  
+**Target Documents:** [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md), [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/MVP_PHASED_PLAN.md`](file:///home/yogesh/Projects/NovWrite/docs/MVP_PHASED_PLAN.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`agents.md`](file:///home/yogesh/Projects/NovWrite/agents.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md)
+
+#### Added
+
+- **RESTful API Standardization & Middleware Telemetry (`apps/api`):**
+  - **Explicit Versioning & Prefixing:** Standardized all production endpoints on `/api/v1/...` with `API-Version: 1.0` response header.
+  - **Telemetry & Tracing:** Built-in middleware attaching UUID `X-Request-ID` and execution latency `X-Response-Time` to all HTTP responses.
+  - **Standardized Pagination Envelopes:** Collection queries wrap records in `{ data: [...], meta: {...}, pagination: { page, pageSize, totalCount, totalPages, hasNextPage, hasPreviousPage } }`.
+  - **Empty Query Guarantees:** 0-result searches or filtered queries return `HTTP 200 OK` with `"data": []` and `"totalCount": 0` (never `null` or 404).
+  - **RFC 7807 Problem Details:** All API errors return `application/problem+json` with structured error schemas and field-level validation breakdowns.
+  - **Container & Orchestration Probes:** Added `/healthz` (summary), `/livez` (liveness), and `/readyz` (DB/Redis readiness) endpoints.
+- **5-Phase Monorepo Test Runner & Regression Hardening ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)):**
+  - **Phase 1 (`@novwrite/bridge`):** 12 unit tests verifying RPC contracts, Zod schemas, error normalizers, and mock adapters.
+  - **Phase 2 (`@novwrite/data-service`):** 40 unit tests verifying schema validation, property normalization, AST formula engine, and state fold engine.
+  - **Phase 3 (`apps/api`):** Go test suite covering domain packages (`shared`, `middleware`, `universe`, `timeline`, `continuity`).
+  - **Phase 4 (`@novwrite/web`):** 14 Vitest tests covering `worldStore`, `formulaEngine`, and `PipeTreeVisualizer` components.
+  - **Phase 5 (Diagnostic Typecheck):** Strict monorepo-wide typechecking via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh) (0 errors).
+
+---
+
+### [Version 2.3] — 2026-09-07
+
+**Scope:** The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Revision Engine, Entity Editor 3-Tier Visual Hierarchy, Strict Schema Invariance & Rounded Favicon Branding  
+**Target Documents:** [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`frontend_design_descisions.md`](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added
+
+- **The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Engine:**
+  - **Horizontal Narrative Conduit ($T_{\text{story}}$):** Chronological story events (`event0 ---> event1 ---> event2 ...`) carrying sequence numbers and state snapshots.
+  - **Vertical Hanging Revision DAGs ($T_{\text{revision}}$):** Independent `EditTree<T>` DAGs for every entity and event containing immutable revision nodes (`ED0 -> ED1 -> ED2 ...`).
+  - **Non-Destructive Checkout & Infinite Branching:** Checking out an earlier revision moves the active EDIT head pointer without deleting newer drafts. Branching creates multiple child nodes from any revision.
+  - **Bitemporal Coordinate Resolution:** Deterministically resolves exact world state at any dual-axis coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
+  - **Interactive PipeTree Visualizer (`PipeTreeVisualizer.svelte`):** UI component rendering the glowing narrative timeline alongside vertical hanging tree graphs with live `[⚡ ACTIVE EDIT HEAD]` indicator.
+- **Entity Editor 3-Tier Visual Hierarchy Standard (`/world/entities/[id]`):**
+  - **Tier 1 (Location & Navigation):** Clean breadcrumb trail (`‹ All Entities / World Studio › Entities › {entity.name}`).
+  - **Tier 2 (Identity Banner):** Prominent entity name, archetype icon, category descriptor, template link, and sequence number.
+  - **Tier 3 (Utilities & Actions Toolbar):** Segmented control (`Visual Form` vs `Raw JSON`), Feather History drawer trigger button with active edit counter, schema jump button, and primary `Save Changes` button.
+- **Strict Schema Invariance & Eradication of Arbitrary Properties:**
+  - Completely removed the unmanaged "Custom & Extended Object Properties" section from the Entity Editor.
+  - Mandated that all entity attributes be governed by formal Blueprint schemas to preserve validation parity and prevent data corruption.
+- **Favicon & Web App Branding:**
+  - High-resolution SVG/PNG rounded-corner favicon (`favicon.svg`, `favicon.png`, `apple-touch-icon.png`).
+  - Web application metadata, viewport configuration, and OpenGraph/Twitter social cards in `app.html`.
+
+---
 
 ### [Version 2.2] — 2026-09-07
 
