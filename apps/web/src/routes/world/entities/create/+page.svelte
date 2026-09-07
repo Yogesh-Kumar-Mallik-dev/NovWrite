@@ -139,6 +139,8 @@
               subProps[subF.name] = getDefaultOptionValue(subF.options);
             } else if (subF.fieldType === 'BOOLEAN') {
               subProps[subF.name] = 'false';
+            } else if (subF.fieldType === 'ARRAY' || subF.fieldType === 'ARRAY_REF') {
+              subProps[subF.name] = Array.isArray(subF.defaultValue) ? subF.defaultValue : [];
             } else {
               subProps[subF.name] = '';
             }
@@ -1256,27 +1258,27 @@
 
   <!-- SECTION 5: Live Evaluated Mathematical Formulas (Sandbox) -->
   {#if Object.keys(liveComputedFormulas).length > 0}
-    <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs">
-      <div class="flex items-center justify-between">
+    <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs min-w-0 overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
         <h3 class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2">
-          <Calculator class="w-4 h-4 text-amber-500" />
+          <Calculator class="w-4 h-4 text-amber-500 shrink-0" />
           <span>Live Evaluated Mathematical Formulas</span>
         </h3>
-        <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
+        <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20 shrink-0">
           Auto-evaluates instantly as you adjust any option above
         </span>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
-          <div class="p-4 rounded-lg bg-muted/50 border border-amber-500/30 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-medium text-foreground">{fData.label}</span>
-              <div class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-mono text-base font-bold shadow-xs">
+          <div class="p-4 rounded-lg bg-muted/50 border border-amber-500/30 space-y-2 min-w-0 overflow-hidden">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+              <span class="text-xs font-medium text-foreground truncate">{fData.label}</span>
+              <div class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-mono text-base font-bold shadow-xs shrink-0">
                 <span>{fData.formatted}</span>
               </div>
             </div>
-            <div class="text-[11px] font-mono text-muted-foreground pt-1" title={fData.expr}>
+            <div class="text-[11px] font-mono text-muted-foreground pt-1 break-all leading-relaxed" title={fData.expr}>
               Formula: {fData.expr}
             </div>
           </div>

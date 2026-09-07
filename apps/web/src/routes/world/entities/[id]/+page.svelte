@@ -74,11 +74,11 @@
       if (field.fieldType === 'BLUEPRINT_REF') {
         const target = worldStore.getBlueprint(field.targetBlueprintId);
         if (target && target.blueprintClass === 'SECOND_CLASS') {
-          if (!result[field.name] || typeof result[field.name] !== 'object') {
+          if (!result[field.name] || typeof result[field.name] !== 'object' || Array.isArray(result[field.name])) {
             result[field.name] = {};
           }
           for (const subF of target.fields) {
-            if (result[field.name][subF.name] === undefined) {
+            if (result[field.name][subF.name] === undefined || result[field.name][subF.name] === null) {
               if (subF.defaultValue !== undefined) {
                 result[field.name][subF.name] = subF.defaultValue;
               } else if (subF.fieldType === 'NUMBER') {
@@ -93,17 +93,33 @@
                   typeof first === 'object' ? first.value : first;
               } else if (subF.fieldType === 'BOOLEAN') {
                 result[field.name][subF.name] = 'false';
-              } else {
+              } else if (subF.fieldType === 'ARRAY' || subF.fieldType === 'ARRAY_REF') {
+                result[field.name][subF.name] = [];
+              } else if (subF.fieldType !== 'FORMULA') {
                 result[field.name][subF.name] = '';
               }
+            } else if ((subF.fieldType === 'ARRAY' || subF.fieldType === 'ARRAY_REF') && !Array.isArray(result[field.name][subF.name])) {
+              result[field.name][subF.name] = typeof result[field.name][subF.name] === 'string' && result[field.name][subF.name].trim()
+                ? [result[field.name][subF.name]]
+                : [];
             }
           }
         } else {
-          if (result[field.name] === undefined) {
+          if (result[field.name] === undefined || result[field.name] === null) {
             result[field.name] = field.defaultValue || '';
           }
         }
-      } else if (result[field.name] === undefined) {
+      } else if (field.fieldType === 'ARRAY' || field.fieldType === 'ARRAY_REF') {
+        if (!Array.isArray(result[field.name])) {
+          if (Array.isArray(field.defaultValue)) {
+            result[field.name] = [...field.defaultValue];
+          } else if (typeof result[field.name] === 'string' && result[field.name].trim()) {
+            result[field.name] = [result[field.name]];
+          } else {
+            result[field.name] = [];
+          }
+        }
+      } else if (result[field.name] === undefined || result[field.name] === null) {
         if (field.defaultValue !== undefined) {
           result[field.name] = field.defaultValue;
         } else if (field.fieldType === 'NUMBER') {
@@ -647,28 +663,28 @@
     />
   </div>
 {:else}
-  <div class="max-w-4xl mx-auto space-y-7 pb-20">
+  <div class="max-w-4xl mx-auto space-y-7 pb-20 w-full min-w-0">
     <!-- Breadcrumb -->
     <Breadcrumb
       items={[
         { label: 'World Studio', href: '/world' },
-        { label: 'Universe Entities', href: '/world/entities' },
+        { label: 'Entities', href: '/world/entities' },
         { label: entity.name },
       ]}
     />
 
     <!-- Header & Mode Switcher -->
     <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4"
+      class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4"
     >
-      <div class="space-y-1">
-        <div class="flex items-center gap-2">
-          <div class="p-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary">
+      <div class="space-y-1 min-w-0 flex-1">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="p-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary shrink-0">
             <ArchetypeIcon class="w-5 h-5" />
           </div>
-          <h2 class="text-xl font-bold tracking-tight text-foreground">{entity.name}</h2>
+          <h2 class="text-xl font-bold tracking-tight text-foreground truncate">{entity.name}</h2>
         </div>
-        <div class="flex items-center gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
           <span class="text-primary font-medium">{entity.blueprintName}</span>
           <span class="text-muted-foreground/60">·</span>
           <span class="text-muted-foreground">{entity.category}</span>
@@ -679,7 +695,7 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
         <!-- View / Editor Mode Switcher -->
         <div class="inline-flex rounded-lg bg-muted p-1 border border-border text-xs gap-1">
           <button
@@ -760,12 +776,12 @@
 
     {#if editorMode === 'json'}
       <!-- MODE 1: RAW JSON OBJECT INSPECTOR & EDITOR -->
-      <Card class="p-6 space-y-4 border-primary/40 bg-card shadow-sm">
+      <Card class="p-6 space-y-4 border-primary/40 bg-card shadow-sm min-w-0 overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-          <div class="space-y-0.5">
+          <div class="space-y-0.5 min-w-0">
             <div class="flex items-center gap-2">
-              <Code class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider">
+              <Code class="w-4 h-4 text-primary shrink-0" />
+              <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider truncate">
                 Raw Universe Entity Document (JSON Schema)
               </h3>
             </div>
@@ -774,7 +790,7 @@
             </p>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 shrink-0 flex-wrap">
             {#if jsonParseError}
               <span
                 class="text-[11px] font-mono px-2 py-0.5 rounded bg-destructive/15 border border-destructive/30 text-destructive font-semibold"
@@ -832,7 +848,7 @@
 
         {#if jsonParseError}
           <div
-            class="p-3 rounded bg-destructive/10 border border-destructive/30 text-xs font-mono text-destructive"
+            class="p-3 rounded bg-destructive/10 border border-destructive/30 text-xs font-mono text-destructive break-all"
           >
             <strong>JSON Parse Error:</strong> {jsonParseError}
           </div>
@@ -847,22 +863,22 @@
     {:else}
       <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
       <!-- PRIMARY IDENTITY CARD -->
-      <Card class="p-6 space-y-4 border-border bg-card">
-        <div class="flex items-center justify-between border-b border-border pb-3">
+      <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
           <h3
-            class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
+            class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2 min-w-0"
           >
-            <ArchetypeIcon class="w-4 h-4 text-primary" />
-            <span>{archetypeContext.archetypeLabel} Core Identity</span>
+            <ArchetypeIcon class="w-4 h-4 text-primary shrink-0" />
+            <span class="truncate">{archetypeContext.archetypeLabel} Core Identity</span>
           </h3>
           <span
-            class="text-[11px] text-primary font-medium px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20"
+            class="text-[11px] text-primary font-medium px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20 shrink-0 self-start sm:self-auto"
           >
             Archetype: {entity.blueprintName}
           </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <Field id="entity-name" label={archetypeContext.nameLabel} required>
             <Input
               id="entity-name"
@@ -881,7 +897,7 @@
             />
           </Field>
 
-          <Field id="entity-bp" label="Blueprint Archetype">
+          <Field id="entity-bp" label="Blueprint Archetype" class="sm:col-span-2 md:col-span-1">
             <Input
               id="entity-bp"
               value={entity.blueprintName}
@@ -901,16 +917,15 @@
           />
         </Field>
       </Card>
-      <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
 
       <!-- Dynamic Template Attributes (Direct Fields from Blueprint) -->
       {#if blueprint && directFields.length > 0}
-        <Card class="p-6 space-y-5 border-border bg-card">
+        <Card class="p-6 space-y-5 border-border bg-card min-w-0 overflow-hidden">
           <div class="border-b border-border pb-3">
             <h3
               class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
             >
-              <Sparkles class="w-4 h-4 text-primary" />
+              <Sparkles class="w-4 h-4 text-primary shrink-0" />
               <span>Dynamic Template Attributes ({blueprint.name})</span>
             </h3>
             <p class="text-xs text-muted-foreground mt-0.5">
@@ -923,23 +938,23 @@
               <!-- ENUM / VALUE_TYPE FIELD -->
               {#if field.fieldType === 'ENUM' || field.fieldType === 'VALUE_TYPE'}
                 <div
-                  class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2"
+                  class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2 min-w-0 overflow-hidden"
                 >
-                  <div class="flex items-center justify-between">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 min-w-0">
                     <Label
-                      class="text-xs font-medium text-foreground flex items-center gap-1.5"
+                      class="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate"
                     >
                       {#if field.fieldType === 'VALUE_TYPE'}
-                        <Sparkles class="w-3.5 h-3.5 text-primary" />
+                        <Sparkles class="w-3.5 h-3.5 text-primary shrink-0" />
                       {:else}
-                        <ListFilter class="w-3.5 h-3.5 text-primary" />
+                        <ListFilter class="w-3.5 h-3.5 text-primary shrink-0" />
                       {/if}
-                      <span>{field.label}</span>
-                      <span class="text-[10px] font-mono text-muted-foreground"
+                      <span class="truncate">{field.label}</span>
+                      <span class="text-[10px] font-mono text-muted-foreground shrink-0"
                         >({field.name})</span
                       >
                     </Label>
-                    <span class="text-[10px] font-mono text-muted-foreground">
+                    <span class="text-[10px] font-mono text-muted-foreground shrink-0">
                       Current Value: <strong class="text-foreground"
                         >{properties[field.name] ?? '—'}</strong
                       >
@@ -947,7 +962,7 @@
                   </div>
 
                   {#if field.description}
-                    <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                    <p class="text-[11px] text-muted-foreground break-words">{field.description}</p>
                   {/if}
 
                   <div class="space-y-2">
@@ -1003,26 +1018,26 @@
 
                 <!-- NUMBER FIELD -->
               {:else if field.fieldType === 'NUMBER'}
-                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
-                  <div class="flex items-center justify-between">
+                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5 min-w-0 overflow-hidden">
+                  <div class="flex items-center justify-between gap-1.5 min-w-0">
                     <Label
-                      class="text-xs font-medium text-foreground flex items-center gap-1.5"
+                      class="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate"
                     >
-                      <Hash class="w-3.5 h-3.5 text-emerald-500" />
-                      <span>{field.label}</span>
-                      {#if field.unit}<span class="text-muted-foreground font-mono"
+                      <Hash class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span class="truncate">{field.label}</span>
+                      {#if field.unit}<span class="text-muted-foreground font-mono shrink-0"
                           >({field.unit})</span
                         >{/if}
                     </Label>
                     {#if field.min !== undefined && field.max !== undefined}
-                      <span class="text-[10px] font-mono text-muted-foreground"
+                      <span class="text-[10px] font-mono text-muted-foreground shrink-0"
                         >[{field.min} - {field.max}]</span
                       >
                     {/if}
                   </div>
 
                   {#if field.description}
-                    <p class="text-[10px] text-muted-foreground">{field.description}</p>
+                    <p class="text-[10px] text-muted-foreground break-words">{field.description}</p>
                   {/if}
 
                   <Input
@@ -1037,51 +1052,52 @@
 
                 <!-- ARRAY FIELD (e.g. Titles, Attack Techniques, Aliases) -->
               {:else if field.fieldType === 'ARRAY'}
+                {@const currentArray = Array.isArray(properties[field.name]) ? properties[field.name] : []}
                 <div
-                  class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2"
+                  class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 col-span-1 md:col-span-2 min-w-0 overflow-hidden"
                 >
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between gap-2 min-w-0">
                     <Label
-                      class="text-xs font-medium text-foreground flex items-center gap-1.5"
+                      class="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate"
                     >
-                      <ListFilter class="w-3.5 h-3.5 text-indigo-500" />
-                      <span>{field.label}</span>
-                      <span class="text-[10px] font-mono text-muted-foreground"
+                      <ListFilter class="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span class="truncate">{field.label}</span>
+                      <span class="text-[10px] font-mono text-muted-foreground shrink-0"
                         >({field.name})</span
                       >
                     </Label>
-                    <span class="text-[10px] font-mono text-muted-foreground">
-                      {(properties[field.name] || []).length} items
+                    <span class="text-[10px] font-mono text-muted-foreground shrink-0">
+                      {currentArray.length} items
                     </span>
                   </div>
 
                   {#if field.description}
-                    <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                    <p class="text-[11px] text-muted-foreground break-words">{field.description}</p>
                   {/if}
 
                   <!-- Tag list / chip display -->
                   <div class="space-y-2">
                     <div
-                      class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input"
+                      class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input min-w-0"
                     >
-                      {#if !properties[field.name] || properties[field.name].length === 0}
+                      {#if currentArray.length === 0}
                         <span class="text-xs text-muted-foreground italic"
                           >No items added yet. Type below and press Enter or click Add.</span
                         >
                       {:else}
-                        {#each properties[field.name] as item, itemIdx}
+                        {#each currentArray as item, itemIdx}
                           <span
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 font-medium"
+                            class="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 font-medium break-all"
                           >
-                            <span>{item}</span>
+                            <span class="break-all">{item}</span>
                             <button
                               type="button"
                               onclick={() => {
-                                properties[field.name] = properties[field.name].filter(
+                                properties[field.name] = currentArray.filter(
                                   (_: string, idx: number) => idx !== itemIdx
                                 );
                               }}
-                              class="hover:text-destructive cursor-pointer"
+                              class="hover:text-destructive cursor-pointer shrink-0"
                             >
                               <X class="w-3 h-3" />
                             </button>
@@ -1103,7 +1119,7 @@
                             const val = e.currentTarget.value.trim();
                             if (val) {
                               properties[field.name] = [
-                                ...(properties[field.name] || []),
+                                ...currentArray,
                                 val,
                               ];
                               e.currentTarget.value = '';
@@ -1122,7 +1138,7 @@
                           ) as HTMLInputElement;
                           if (input && input.value.trim()) {
                             properties[field.name] = [
-                              ...(properties[field.name] || []),
+                              ...currentArray,
                               input.value.trim(),
                             ];
                             input.value = '';
@@ -1138,9 +1154,8 @@
 
                 <!-- BOOLEAN FIELD -->
               {:else if field.fieldType === 'BOOLEAN'}
-                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
-                  <span class="block text-xs font-medium text-foreground">{field.label}</span
-                  >
+                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5 min-w-0 overflow-hidden">
+                  <span class="block text-xs font-medium text-foreground truncate">{field.label}</span>
                   <Select
                     bind:value={properties[field.name]}
                     options={[
@@ -1152,11 +1167,10 @@
 
                 <!-- STRING FIELD -->
               {:else}
-                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5">
-                  <span class="block text-xs font-medium text-foreground">{field.label}</span
-                  >
+                <div class="p-3.5 rounded-lg border border-border bg-muted/40 space-y-1.5 min-w-0 overflow-hidden">
+                  <span class="block text-xs font-medium text-foreground truncate">{field.label}</span>
                   {#if field.description}
-                    <p class="text-[10px] text-muted-foreground">{field.description}</p>
+                    <p class="text-[10px] text-muted-foreground break-words">{field.description}</p>
                   {/if}
                   <Input bind:value={properties[field.name]} class="text-xs" />
                 </div>
@@ -1173,7 +1187,7 @@
             <h3
               class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
             >
-              <Layers class="w-4 h-4 text-cyan-500" />
+              <Layers class="w-4 h-4 text-cyan-500 shrink-0" />
               <span>Sub-Blueprint Systems & Scales (2nd-Class Schemas)</span>
             </h3>
             <span class="text-[11px] text-cyan-500 font-mono">Nested Sub-Systems</span>
@@ -1182,26 +1196,28 @@
           {#each subBlueprintRefFields as field}
             {@const targetBp = worldStore.getBlueprint(field.targetBlueprintId)}
             {#if targetBp}
-              {@const subFormula = properties[field.name]
+              {@const subFormula = properties[field.name] && typeof properties[field.name] === 'object'
                 ? getSubBlueprintComputedFormula(
                     targetBp,
                     field.name,
                     properties[field.name]
                   )
                 : null}
-              <Card class="p-5 border-cyan-500/30 bg-card space-y-4 shadow-xs">
+              <Card class="p-5 border-cyan-500/30 bg-card space-y-4 shadow-xs min-w-0 overflow-hidden">
                 <div
                   class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3"
                 >
-                  <div class="space-y-0.5">
+                  <div class="space-y-0.5 min-w-0">
                     <div
-                      class="flex items-center gap-2 text-xs font-bold text-cyan-600 dark:text-cyan-400"
+                      class="flex items-center gap-2 text-xs font-bold text-cyan-600 dark:text-cyan-400 min-w-0 truncate"
                     >
-                      <Link2 class="w-4 h-4 text-cyan-500" />
-                      <span>{field.label}</span>
-                      <span class="text-muted-foreground font-mono">({field.name})</span>
+                      <Link2 class="w-4 h-4 text-cyan-500 shrink-0" />
+                      <span class="truncate">{field.label}</span>
+                      <span class="text-muted-foreground font-mono shrink-0">({field.name})</span>
                     </div>
-                    <p class="text-[11px] text-muted-foreground">{targetBp.description}</p>
+                    {#if targetBp.description}
+                      <p class="text-[11px] text-muted-foreground break-words">{targetBp.description}</p>
+                    {/if}
                   </div>
 
                   <div class="flex items-center gap-2 shrink-0">
@@ -1224,14 +1240,17 @@
                 </div>
 
                 <!-- Nested Fields Form -->
-                {#if !properties[field.name]}
+                {#if !properties[field.name] || typeof properties[field.name] !== 'object'}
                   <div class="p-3 rounded bg-muted/40 text-xs text-muted-foreground">
                     Sub-system not initialized. Click below to initialize with defaults.
                     <Button
                       size="sm"
                       variant="outline"
                       class="mt-2 text-xs"
-                      onclick={() => (properties[field.name] = {})}
+                      onclick={() => {
+                        properties[field.name] = {};
+                        properties = ensureAllPropertiesExist(properties, blueprint);
+                      }}
                     >
                       Initialize {field.label}
                     </Button>
@@ -1241,18 +1260,18 @@
                     {#each targetBp.fields as subF}
                       {#if subF.fieldType !== 'FORMULA'}
                         <div
-                          class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border"
+                          class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border min-w-0 overflow-hidden"
                         >
-                          <div class="flex items-center justify-between">
-                            <span class="block text-[11px] font-medium text-foreground">
+                          <div class="flex items-center justify-between gap-1.5 min-w-0">
+                            <span class="block text-[11px] font-medium text-foreground truncate">
                               {subF.label}
                               {#if subF.unit}<span
-                                  class="text-muted-foreground font-mono"
+                                  class="text-muted-foreground font-mono shrink-0"
                                   >({subF.unit})</span
                                 >{/if}
                             </span>
                             {#if subF.min !== undefined && subF.max !== undefined}
-                              <span class="text-[9px] font-mono text-muted-foreground"
+                              <span class="text-[9px] font-mono text-muted-foreground shrink-0"
                                 >[{subF.min}-{subF.max}]</span
                               >
                             {/if}
@@ -1329,17 +1348,17 @@
 
                   {#if subFormula}
                     <div
-                      class="p-2.5 rounded bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between text-xs"
+                      class="p-2.5 rounded bg-cyan-500/10 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs min-w-0 overflow-hidden"
                     >
-                      <span class="text-cyan-600 dark:text-cyan-300 font-medium"
+                      <span class="text-cyan-600 dark:text-cyan-300 font-medium shrink-0"
                         >{subFormula.label}:</span
                       >
-                      <div class="flex items-center gap-2 font-mono">
-                        <span class="text-[10px] text-cyan-600/80 dark:text-cyan-400/80"
+                      <div class="flex items-center gap-2 font-mono min-w-0">
+                        <span class="text-[10px] text-cyan-600/80 dark:text-cyan-400/80 truncate" title={subFormula.expr}
                           >{subFormula.expr}</span
                         >
                         <span
-                          class="px-2 py-0.5 rounded bg-cyan-500/20 font-bold text-cyan-700 dark:text-cyan-200"
+                          class="px-2 py-0.5 rounded bg-cyan-500/20 font-bold text-cyan-700 dark:text-cyan-200 shrink-0"
                           >{subFormula.formatted}</span
                         >
                       </div>
@@ -1354,20 +1373,20 @@
 
       <!-- SECTION 4: 1st-Class Relational Entity Links & Multi-References -->
       {#if relationalEntityRefFields.length > 0 || arrayRefFields.length > 0}
-        <Card class="p-6 space-y-4 border-border bg-card">
-          <div class="flex items-center justify-between border-b border-border pb-3">
+        <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <h3
                 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
               >
-                <Link2 class="w-4 h-4 text-primary" />
+                <Link2 class="w-4 h-4 text-primary shrink-0" />
                 <span>1st-Class Relational Entity Connections & Multi-References</span>
               </h3>
               <p class="text-xs text-muted-foreground mt-0.5">
                 Connect this entity to other 1st-class entity objects (e.g. character owning weapons, learned martial techniques, belonging to factions).
               </p>
             </div>
-            <span class="text-[11px] text-primary font-mono">Entity Graph Links</span>
+            <span class="text-[11px] text-primary font-mono shrink-0">Entity Graph Links</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1379,23 +1398,23 @@
                     (e: any) => e.blueprintId === targetBp.id && e.id !== entity.id
                   )
                 : worldStore.entities.filter((e: any) => e.id !== entity.id)}
-              <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5">
-                <div class="flex items-center justify-between">
+              <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-2.5 min-w-0 overflow-hidden">
+                <div class="flex items-center justify-between gap-2 min-w-0">
                   <Label
-                    class="text-xs font-medium text-foreground flex items-center gap-1.5"
+                    class="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate"
                   >
-                    <Link2 class="w-3.5 h-3.5 text-primary" />
-                    <span>{field.label}</span>
+                    <Link2 class="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span class="truncate">{field.label}</span>
                   </Label>
                   <span
-                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary"
+                    class="text-[10px] font-mono px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary shrink-0"
                   >
                     Target: {targetBp ? targetBp.name : '1st-Class Entity'}
                   </span>
                 </div>
 
                 {#if field.description}
-                  <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                  <p class="text-[11px] text-muted-foreground break-words">{field.description}</p>
                 {/if}
 
                 <div class="space-y-2">
@@ -1412,7 +1431,7 @@
 
                   {#if candidateEntities.length > 0}
                     <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span class="text-[10px] text-muted-foreground mr-1"
+                      <span class="text-[10px] text-muted-foreground mr-1 font-medium"
                         >Quick Link:</span
                       >
                       <button
@@ -1453,40 +1472,40 @@
                     (e: any) => e.blueprintId === targetBp.id && e.id !== entity.id
                   )
                 : worldStore.entities.filter((e: any) => e.id !== entity.id)}
-              {@const selectedIds = properties[field.name] || []}
+              {@const selectedIds = Array.isArray(properties[field.name]) ? properties[field.name] : []}
               {@const unselectedCandidates = candidateEntities.filter((e: any) => !selectedIds.includes(e.id))}
-              <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-3 col-span-1 md:col-span-2">
-                <div class="flex items-center justify-between">
-                  <Label class="text-xs font-medium text-foreground flex items-center gap-1.5">
-                    <Link2 class="w-3.5 h-3.5 text-cyan-500" />
-                    <span>{field.label}</span>
-                    <span class="text-[10px] font-mono text-muted-foreground">({field.name})</span>
+              <div class="p-4 rounded-lg border border-border bg-muted/40 space-y-3 col-span-1 md:col-span-2 min-w-0 overflow-hidden">
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                  <Label class="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 truncate">
+                    <Link2 class="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                    <span class="truncate">{field.label}</span>
+                    <span class="text-[10px] font-mono text-muted-foreground shrink-0">({field.name})</span>
                   </Label>
-                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400">
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 shrink-0">
                     Multi-Ref: {targetBp ? targetBp.name : '1st-Class Entity'} ({selectedIds.length} linked)
                   </span>
                 </div>
 
                 {#if field.description}
-                  <p class="text-[11px] text-muted-foreground">{field.description}</p>
+                  <p class="text-[11px] text-muted-foreground break-words">{field.description}</p>
                 {/if}
 
                 <!-- Selected linked entities chips -->
                 <div class="space-y-2">
-                  <div class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input">
+                  <div class="flex flex-wrap items-center gap-1.5 min-h-[36px] p-2 rounded-md bg-background border border-input min-w-0">
                     {#if selectedIds.length === 0}
                       <span class="text-xs text-muted-foreground italic">No linked entities attached. Select from the dropdown below to add.</span>
                     {:else}
                       {#each selectedIds as linkedId}
                         {@const linkedEnt = worldStore.entities.find((e: any) => e.id === linkedId)}
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-700 dark:text-cyan-300 font-medium">
-                          <span>{linkedEnt ? linkedEnt.name : linkedId}</span>
+                        <span class="inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-700 dark:text-cyan-300 font-medium break-all">
+                          <span class="break-all">{linkedEnt ? linkedEnt.name : linkedId}</span>
                           <button
                             type="button"
                             onclick={() => {
-                              properties[field.name] = properties[field.name].filter((id: string) => id !== linkedId);
+                              properties[field.name] = selectedIds.filter((id: string) => id !== linkedId);
                             }}
-                            class="hover:text-destructive cursor-pointer"
+                            class="hover:text-destructive cursor-pointer shrink-0"
                           >
                             <X class="w-3 h-3" />
                           </button>
@@ -1526,13 +1545,13 @@
 
       <!-- Custom / Extended Properties Section -->
       {#if customPropertyKeys.length > 0 || !blueprint}
-        <Card class="p-6 space-y-4 border-border bg-card">
-          <div class="flex items-center justify-between border-b border-border pb-3">
+        <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <h3
                 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
               >
-                <Sliders class="w-4 h-4 text-primary" />
+                <Sliders class="w-4 h-4 text-primary shrink-0" />
                 <span>Custom & Extended Object Properties</span>
               </h3>
               <p class="text-xs text-muted-foreground mt-0.5">
@@ -1543,7 +1562,7 @@
               variant="outline"
               size="sm"
               onclick={() => (showAddCustomPropModal = true)}
-              class="h-7 text-xs flex items-center gap-1"
+              class="h-7 text-xs flex items-center gap-1 shrink-0"
             >
               <Plus class="w-3 h-3" />
               <span>Add Property</span>
@@ -1554,16 +1573,16 @@
             {#each customPropertyKeys as propKey}
               {@const propVal = properties[propKey]}
               <div
-                class="p-3.5 rounded-lg bg-muted/40 border border-border space-y-2 relative group"
+                class="p-3.5 rounded-lg bg-muted/40 border border-border space-y-2 relative group min-w-0 overflow-hidden"
               >
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono font-bold text-foreground"
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                  <span class="text-xs font-mono font-bold text-foreground truncate" title={propKey}
                     >{propKey}</span
                   >
                   <button
                     type="button"
                     onclick={() => handleRemoveCustomProperty(propKey)}
-                    class="text-muted-foreground hover:text-destructive transition p-1 cursor-pointer"
+                    class="text-muted-foreground hover:text-destructive transition p-1 cursor-pointer shrink-0"
                     title="Delete Property"
                   >
                     <Trash2 class="w-3 h-3" />
@@ -1606,16 +1625,16 @@
 
       <!-- Live Evaluated Mathematical Formulas Banner -->
       {#if Object.keys(liveComputedFormulas).length > 0}
-        <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs">
-          <div class="flex items-center justify-between">
+        <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs min-w-0 overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <h3
               class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2"
             >
-              <Calculator class="w-4 h-4 text-amber-500" />
+              <Calculator class="w-4 h-4 text-amber-500 shrink-0" />
               <span>Live Evaluated Mathematical Formulas</span>
             </h3>
             <span
-              class="text-[10px] text-amber-600 dark:text-amber-400 font-mono bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20"
+              class="text-[10px] text-amber-600 dark:text-amber-400 font-mono bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20 shrink-0"
             >
               Auto-evaluates instantly as you adjust any option above
             </span>
@@ -1624,18 +1643,18 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {#each Object.entries(liveComputedFormulas) as [fKey, fData]}
               <div
-                class="p-4 rounded-lg bg-muted/50 border border-amber-500/30 space-y-2"
+                class="p-4 rounded-lg bg-muted/50 border border-amber-500/30 space-y-2 min-w-0 overflow-hidden"
               >
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-medium text-foreground">{fData.label}</span>
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                  <span class="text-xs font-medium text-foreground truncate">{fData.label}</span>
                   <div
-                    class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-mono text-base font-bold shadow-xs"
+                    class="flex items-center gap-1.5 px-3 py-1 rounded bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300 font-mono text-base font-bold shadow-xs shrink-0"
                   >
                     <span>{fData.formatted}</span>
                   </div>
                 </div>
                 <div
-                  class="text-[11px] font-mono text-muted-foreground pt-1"
+                  class="text-[11px] font-mono text-muted-foreground pt-1 break-all leading-relaxed"
                   title={fData.expr}
                 >
                   Formula: {fData.expr}
