@@ -45,7 +45,10 @@ describe("Backend Validation Parity & Zero-Trust Schema/Entity Sanitization", ()
     assert.strictEqual(res.valid, true);
     assert.strictEqual(res.sanitizedBlueprint?.name, "Hero Blueprint");
     assert.strictEqual(res.sanitizedBlueprint?.fields[0].name, "attack_power");
-    assert.strictEqual(res.sanitizedBlueprint?.fields[1].name, "special_titles");
+    assert.strictEqual(
+      res.sanitizedBlueprint?.fields[1].name,
+      "special_titles",
+    );
   });
 
   it("BLOCK_TEST_VALIDATION_PARITY_001: should reject duplicate field machine keys in Blueprint", () => {
@@ -173,7 +176,7 @@ describe("Backend Validation Parity & Zero-Trust Schema/Entity Sanitization", ()
       blueprintId: bp.id,
       properties: {
         Base_Attack: 100, // Mixed casing
-        MULTIPLIER: 2.5,  // Uppercase
+        MULTIPLIER: 2.5, // Uppercase
       },
     };
 
@@ -182,7 +185,10 @@ describe("Backend Validation Parity & Zero-Trust Schema/Entity Sanitization", ()
     assert.strictEqual(res.sanitizedEntity?.properties["base_attack"], 100);
     assert.strictEqual(res.sanitizedEntity?.properties["multiplier"], 2.5);
     // Backend computed formulas
-    assert.strictEqual(res.sanitizedEntity?.computedFormulas?.["total_dps"], 300);
+    assert.strictEqual(
+      res.sanitizedEntity?.computedFormulas?.["total_dps"],
+      300,
+    );
   });
 
   it("BLOCK_TEST_VALIDATION_PARITY_001: should evaluate complex formulas with IF, CLAMP, MIN, MAX, and logical operators", () => {
@@ -207,7 +213,9 @@ describe("Backend Validation Parity & Zero-Trust Schema/Entity Sanitization", ()
     assert.strictEqual(res3.success, true);
     assert.strictEqual(res3.value, 80);
 
-    const extracted = extractFormulaVariables("IF(a > 0 && b <= 10, c.val + d, 0)");
+    const extracted = extractFormulaVariables(
+      "IF(a > 0 && b <= 10, c.val + d, 0)",
+    );
     assert.deepStrictEqual(extracted.sort(), ["a", "b", "c.val", "d"].sort());
   });
 });

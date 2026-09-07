@@ -118,7 +118,8 @@ describe("BLOCK_WORLD_FORMULA_ENGINE_001: Formula Parsing & Math Evaluator", () 
     assert.strictEqual(res.value, 500);
 
     // Dot notation property access e.g. cultivation_realm.power
-    const formulaWithDot = "cultivation_realm.power * special_Physique + attack";
+    const formulaWithDot =
+      "cultivation_realm.power * special_Physique + attack";
     const resDot = evaluateFormula(formulaWithDot, context);
     assert.strictEqual(resDot.success, true);
     assert.strictEqual(resDot.value, 500);
@@ -134,5 +135,35 @@ describe("BLOCK_WORLD_FORMULA_ENGINE_001: Formula Parsing & Math Evaluator", () 
     const divZero = evaluateFormula("100 / 0");
     assert.strictEqual(divZero.success, false);
     assert.match(divZero.error || "", /division by zero/i);
+  });
+
+  it("should evaluate nested IF expressions and negative math correctly (regression)", () => {
+    const nestedExpr = "IF(level > 10, IF(rank >= 5, 500, 250), 100)";
+    assert.strictEqual(
+      evaluateFormula(nestedExpr, { level: 15, rank: 6 }).value,
+      500,
+    );
+    assert.strictEqual(
+      evaluateFormula(nestedExpr, { level: 15, rank: 2 }).value,
+      250,
+    );
+    assert.strictEqual(
+      evaluateFormula(nestedExpr, { level: 5, rank: 10 }).value,
+      100,
+    );
+
+    const negExpr = "-50 + 20 * -2";
+    assert.strictEqual(evaluateFormula(negExpr).value, -90);
+
+    const deepDot = "sect.elder.rank * 10 + sect.elder.bonus";
+    const deepContext = {
+      sect: {
+        elder: {
+          rank: 3,
+          bonus: 50,
+        },
+      },
+    };
+    assert.strictEqual(evaluateFormula(deepDot, deepContext).value, 80);
   });
 });

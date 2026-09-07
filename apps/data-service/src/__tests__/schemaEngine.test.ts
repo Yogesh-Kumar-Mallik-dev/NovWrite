@@ -239,14 +239,29 @@ describe("Dynamic Entity Schema & Property Validation Engine", () => {
     };
 
     // Array input
-    const resArr = validateSingleProperty(titlesProp, ["Dragon Slayer", "Sword Saint", "Grand Elder"]);
+    const resArr = validateSingleProperty(titlesProp, [
+      "Dragon Slayer",
+      "Sword Saint",
+      "Grand Elder",
+    ]);
     assert.strictEqual(resArr.valid, true);
-    assert.deepStrictEqual(resArr.coercedVal, ["Dragon Slayer", "Sword Saint", "Grand Elder"]);
+    assert.deepStrictEqual(resArr.coercedVal, [
+      "Dragon Slayer",
+      "Sword Saint",
+      "Grand Elder",
+    ]);
 
     // Comma-separated string input
-    const resStr = validateSingleProperty(titlesProp, "Void Walker, Flame Sovereign, Star Monarch");
+    const resStr = validateSingleProperty(
+      titlesProp,
+      "Void Walker, Flame Sovereign, Star Monarch",
+    );
     assert.strictEqual(resStr.valid, true);
-    assert.deepStrictEqual(resStr.coercedVal, ["Void Walker", "Flame Sovereign", "Star Monarch"]);
+    assert.deepStrictEqual(resStr.coercedVal, [
+      "Void Walker",
+      "Flame Sovereign",
+      "Star Monarch",
+    ]);
 
     // Empty input fallback
     const resEmpty = validateSingleProperty(titlesProp, "");

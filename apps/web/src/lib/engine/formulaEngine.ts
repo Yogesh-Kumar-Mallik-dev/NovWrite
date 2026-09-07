@@ -246,7 +246,10 @@ export function resolveContextValue(
       if ("power" in direct && typeof direct.power === "number") {
         return direct.power;
       }
-      if ("numeric_value" in direct && typeof direct.numeric_value === "number") {
+      if (
+        "numeric_value" in direct &&
+        typeof direct.numeric_value === "number"
+      ) {
         return direct.numeric_value;
       }
       if ("value" in direct) {
@@ -276,7 +279,10 @@ export function resolveContextValue(
     if ("power" in current && typeof current.power === "number") {
       return current.power;
     }
-    if ("numeric_value" in current && typeof current.numeric_value === "number") {
+    if (
+      "numeric_value" in current &&
+      typeof current.numeric_value === "number"
+    ) {
       return current.numeric_value;
     }
     if ("value" in current) {

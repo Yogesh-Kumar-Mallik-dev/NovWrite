@@ -213,7 +213,8 @@ export async function seedDevelopmentUniverse(
         slug: "cultivation-rank-mastery",
         blueprintClass: "SECOND_CLASS",
         category: "Sub-Systems & Gauges",
-        description: "Martial cultivation realms from Qi Condensation to Immortal Ascension.",
+        description:
+          "Martial cultivation realms from Qi Condensation to Immortal Ascension.",
       },
     });
 
@@ -237,7 +238,8 @@ export async function seedDevelopmentUniverse(
         slug: "cultivator-protagonist",
         blueprintClass: "FIRST_CLASS",
         category: "Characters",
-        description: "Primary humanoid sentient beings, martial cultivators, and divine heroes.",
+        description:
+          "Primary humanoid sentient beings, martial cultivators, and divine heroes.",
       },
     });
   }

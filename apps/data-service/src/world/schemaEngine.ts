@@ -110,7 +110,8 @@ export class DynamicSchemaEngine {
       projectId: created.projectId,
       name: created.name,
       slug: created.slug,
-      blueprintClass: (created.blueprintClass as BlueprintClass) || "FIRST_CLASS",
+      blueprintClass:
+        (created.blueprintClass as BlueprintClass) || "FIRST_CLASS",
       category: created.category,
       description: created.description,
       iconName: created.iconName,
@@ -141,7 +142,13 @@ export class DynamicSchemaEngine {
     category: any,
     description?: string,
   ): Promise<EntityTypeDef> {
-    const bp = await this.createBlueprint(projectId, name, "FIRST_CLASS", String(category), description);
+    const bp = await this.createBlueprint(
+      projectId,
+      name,
+      "FIRST_CLASS",
+      String(category),
+      description,
+    );
     return {
       ...bp,
       properties: bp.fields.map((f) => ({
@@ -178,8 +185,14 @@ export class DynamicSchemaEngine {
         projectId,
         blueprintId,
         entityTypeId: blueprintId,
-        name: field.name.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, ""),
-        key: field.name.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, ""),
+        name: field.name
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_\.]/g, ""),
+        key: field.name
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_\.]/g, ""),
         label: field.label || field.name,
         fieldType: field.fieldType,
         propertyType: field.fieldType,
@@ -222,15 +235,27 @@ export class DynamicSchemaEngine {
   ): Promise<DynamicPropertyDef> {
     let fieldType: BlueprintFieldType = "STRING";
     const pt = property.propertyType || property.fieldType;
-    if (pt === "NUMBER" || pt === "BOOLEAN" || pt === "ENUM" || pt === "VALUE_TYPE" || pt === "ARRAY" || pt === "BLUEPRINT_REF" || pt === "ARRAY_REF" || pt === "FORMULA") {
+    if (
+      pt === "NUMBER" ||
+      pt === "BOOLEAN" ||
+      pt === "ENUM" ||
+      pt === "VALUE_TYPE" ||
+      pt === "ARRAY" ||
+      pt === "BLUEPRINT_REF" ||
+      pt === "ARRAY_REF" ||
+      pt === "FORMULA"
+    ) {
       fieldType = pt;
     } else if (pt === "ENUM_SINGLE" || pt === "ENUM_MULTI") {
       fieldType = "ENUM";
     } else if (pt === "ENTITY_REF") {
       fieldType = "BLUEPRINT_REF";
-    } else if (pt === "ARRAY_STRING" as any) {
+    } else if (pt === ("ARRAY_STRING" as any)) {
       fieldType = "ARRAY";
-    } else if (pt === "BLUEPRINT_REF_ARRAY" as any || pt === "ENTITY_REF_ARRAY" as any) {
+    } else if (
+      pt === ("BLUEPRINT_REF_ARRAY" as any) ||
+      pt === ("ENTITY_REF_ARRAY" as any)
+    ) {
       fieldType = "ARRAY_REF";
     }
 
@@ -339,24 +364,26 @@ export class DynamicSchemaEngine {
         include: { fields: true, properties: true },
       });
       if (record) {
-        const fields = (record.fields || record.properties || []).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          label: p.label || p.name,
-          fieldType: p.fieldType || p.propertyType || "STRING",
-          propertyType: p.fieldType || p.propertyType || "STRING",
-          options: p.options || p.validation?.allowedValues,
-          targetBlueprintId: p.targetBlueprintId,
-          min: p.minVal ?? p.validation?.min,
-          max: p.maxVal ?? p.validation?.max,
-          step: p.stepVal,
-          unit: p.unit,
-          formulaExpression: p.formulaExpression,
-          isRequired: p.isRequired ?? p.validation?.required ?? false,
-          orderIndex: p.orderIndex ?? 0,
-          validation: p.validation,
-          defaultValue: p.defaultValue,
-        }));
+        const fields = (record.fields || record.properties || []).map(
+          (p: any) => ({
+            id: p.id,
+            name: p.name,
+            label: p.label || p.name,
+            fieldType: p.fieldType || p.propertyType || "STRING",
+            propertyType: p.fieldType || p.propertyType || "STRING",
+            options: p.options || p.validation?.allowedValues,
+            targetBlueprintId: p.targetBlueprintId,
+            min: p.minVal ?? p.validation?.min,
+            max: p.maxVal ?? p.validation?.max,
+            step: p.stepVal,
+            unit: p.unit,
+            formulaExpression: p.formulaExpression,
+            isRequired: p.isRequired ?? p.validation?.required ?? false,
+            orderIndex: p.orderIndex ?? 0,
+            validation: p.validation,
+            defaultValue: p.defaultValue,
+          }),
+        );
         return validateEntityProperties(fields, properties);
       }
     }

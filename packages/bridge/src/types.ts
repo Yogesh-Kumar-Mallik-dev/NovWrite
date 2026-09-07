@@ -214,10 +214,7 @@ export interface DevSeedResponse {
 // =====================================
 
 export type RevisionType =
-  | "TYPO_FIX"
-  | "BASELINE_EDIT"
-  | "RETROACTIVE_PLOT_FIX"
-  | "REVERT";
+  "TYPO_FIX" | "BASELINE_EDIT" | "RETROACTIVE_PLOT_FIX" | "REVERT";
 
 export interface EntityRevisionPatch {
   name?: { before: string; after: string };
@@ -268,7 +265,7 @@ export interface BitemporalCoordinateQuery {
   entityId: string;
   projectId?: string;
   targetSequenceNumber?: number; // T_narrative (Plot Time)
-  targetRevisionId?: string;     // T_revision (Authorial Revision)
+  targetRevisionId?: string; // T_revision (Authorial Revision)
 }
 
 export interface BitemporalEntityState {
@@ -332,5 +329,3 @@ export interface TimelineEventWithTree {
     effects: unknown[];
   }>;
 }
-
-

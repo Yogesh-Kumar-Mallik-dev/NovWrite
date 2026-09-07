@@ -37,7 +37,10 @@ function setNestedProperty(
 /**
  * Gets a value from a potentially nested dot-notation path inside an object.
  */
-function getNestedProperty(obj: Record<string, unknown>, path: string): unknown {
+function getNestedProperty(
+  obj: Record<string, unknown>,
+  path: string,
+): unknown {
   const keys = path.split(".");
   let current: any = obj;
   for (const k of keys) {
@@ -63,7 +66,9 @@ export function applyEffectToEntityState(
     }
 
     case "INCREMENT": {
-      const currentVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
+      const currentVal = Number(
+        getNestedProperty(currentState, propertyKey) ?? 0,
+      );
       const incVal = Number(value);
       if (isNaN(incVal)) {
         throw new Error(
@@ -74,7 +79,9 @@ export function applyEffectToEntityState(
     }
 
     case "DECREMENT": {
-      const currentVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
+      const currentVal = Number(
+        getNestedProperty(currentState, propertyKey) ?? 0,
+      );
       const decVal = Number(value);
       if (isNaN(decVal)) {
         throw new Error(
@@ -120,11 +127,17 @@ export function applyEffectToEntityState(
     }
 
     case "TRANSFER": {
-      const existingVal = Number(getNestedProperty(currentState, propertyKey) ?? 0);
+      const existingVal = Number(
+        getNestedProperty(currentState, propertyKey) ?? 0,
+      );
       if (typeof value === "object" && value !== null) {
         const transfer = value as TransferPayload;
         if (typeof transfer.amount === "number") {
-          return setNestedProperty(currentState, propertyKey, existingVal - transfer.amount);
+          return setNestedProperty(
+            currentState,
+            propertyKey,
+            existingVal - transfer.amount,
+          );
         } else if (transfer.item !== undefined) {
           const list = Array.isArray(existingVal) ? (existingVal as any[]) : [];
           const nextList = list.filter(
@@ -133,7 +146,11 @@ export function applyEffectToEntityState(
           return setNestedProperty(currentState, propertyKey, nextList);
         }
       } else if (typeof value === "number") {
-        return setNestedProperty(currentState, propertyKey, existingVal - value);
+        return setNestedProperty(
+          currentState,
+          propertyKey,
+          existingVal - value,
+        );
       }
       return currentState;
     }

@@ -30,6 +30,11 @@ func setupEntityRouter(eHandler *EntityHandler) http.Handler {
 		r.Post("/{entityId}/revisions", eHandler.CreateRevision)
 		r.Post("/{entityId}/revisions/{revisionId}/revert", eHandler.RevertRevision)
 		r.Get("/{entityId}/coordinate", eHandler.ResolveCoordinate)
+
+		// Hanging Edit Tree
+		r.Get("/{entityId}/tree", eHandler.GetTree)
+		r.Post("/{entityId}/edits", eHandler.AddEdit)
+		r.Post("/{entityId}/edits/{editId}/checkout", eHandler.CheckoutEdit)
 	})
 	return r
 }
@@ -173,5 +178,122 @@ func TestEntityHandler_CRUD_And_Formulas(t *testing.T) {
 
 	if recDel.Code != http.StatusNoContent {
 		t.Fatalf("expected HTTP 204 No Content, got %d", recDel.Code)
+	}
+}
+
+// Block Standard: BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001
+// Purpose: Regression tests for RevertRevision, Hanging Edit Tree endpoints, and error handling branches.
+func TestEntityHandler_RevertAndEditTree_Regressions(t *testing.T) {
+	bpStore := NewInMemoryBlueprintStore()
+	entStore := NewInMemoryEntityStore()
+	tlStore := NewInMemoryTimelineStore()
+	handler := NewEntityHandler(entStore, bpStore, tlStore)
+	router := setupEntityRouter(handler)
+
+	// Seed blueprint
+	bpStore.Save("p-1", world.BlueprintDef{
+		ID:             "bp-knight",
+		Name:           "Knight",
+		BlueprintClass: world.ClassFirstClass,
+		Category:       "Knight",
+		Fields: []world.DynamicFieldDef{
+			{ID: "f-honor", Name: "honor", Label: "Honor", FieldType: world.TypeNumber},
+		},
+	})
+
+	// Seed entity
+	ent := entStore.Save("p-1", world.EntityItem{
+		ID:          "ent-lancelot",
+		Name:        "Lancelot",
+		BlueprintID: "bp-knight",
+		Category:    "Knight",
+		Description: "First Knight",
+		Properties: map[string]interface{}{
+			"honor": float64(100),
+		},
+	})
+	rev0 := entStore.RecordRevision("p-1", world.EntityRevision{
+		ID:             "rev-0",
+		EntityID:       ent.ID,
+		RevisionNumber: 0,
+		Type:           world.RevTypeBaselineEdit,
+		AuthorNote:     "Initial Knight",
+		Snapshot:       ent,
+	})
+
+	// 1. Mutate and record rev1
+	entModified := ent
+	entModified.Properties["honor"] = float64(20)
+	entStore.Save("p-1", entModified)
+	entStore.RecordRevision("p-1", world.EntityRevision{
+		ID:             "rev-1",
+		EntityID:       ent.ID,
+		RevisionNumber: 1,
+		Type:           world.RevTypeBaselineEdit,
+		AuthorNote:     "Fallen Honor",
+		Snapshot:       entModified,
+	})
+
+	// 2. Revert back to rev0
+	revertReq := struct {
+		AuthorNote string `json:"authorNote"`
+	}{
+		AuthorNote: "Restoring honorable state",
+	}
+	revertBody, _ := json.Marshal(revertReq)
+	reqRevert := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/entities/"+ent.ID+"/revisions/"+rev0.ID+"/revert", bytes.NewReader(revertBody))
+	recRevert := httptest.NewRecorder()
+	router.ServeHTTP(recRevert, reqRevert)
+
+	if recRevert.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 200 on revert, got %d. Body: %s", recRevert.Code, recRevert.Body.String())
+	}
+
+	// 3. Edit tree endpoints: GetTree, AddEdit, CheckoutEdit
+	reqTree := httptest.NewRequest(http.MethodGet, "/api/v1/projects/p-1/entities/"+ent.ID+"/tree", nil)
+	recTree := httptest.NewRecorder()
+	router.ServeHTTP(recTree, reqTree)
+	if recTree.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 200 on get tree, got %d", recTree.Code)
+	}
+
+	// Add Edit
+	addEditReq := struct {
+		Entity     world.EntityItem   `json:"entity"`
+		Type       world.RevisionType `json:"type"`
+		AuthorNote string             `json:"authorNote"`
+	}{
+		Entity:     ent,
+		Type:       world.RevTypeTypoFix,
+		AuthorNote: "Fine-tune branch",
+	}
+	addEditBody, _ := json.Marshal(addEditReq)
+	reqAddEdit := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/entities/"+ent.ID+"/edits", bytes.NewReader(addEditBody))
+	recAddEdit := httptest.NewRecorder()
+	router.ServeHTTP(recAddEdit, reqAddEdit)
+	if recAddEdit.Code != http.StatusCreated {
+		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 201 on add edit, got %d", recAddEdit.Code)
+	}
+
+	var editResp httputil.SingleResponse
+	json.Unmarshal(recAddEdit.Body.Bytes(), &editResp)
+	editDataMap, _ := editResp.Data.(map[string]interface{})
+	nodeMap, _ := editDataMap["node"].(map[string]interface{})
+	newEditID, _ := nodeMap["id"].(string)
+
+	// Checkout Edit
+	reqCheckout := httptest.NewRequest(http.MethodPost, "/api/v1/projects/p-1/entities/"+ent.ID+"/edits/"+newEditID+"/checkout", nil)
+	recCheckout := httptest.NewRecorder()
+	router.ServeHTTP(recCheckout, reqCheckout)
+	if recCheckout.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 200 on checkout, got %d", recCheckout.Code)
+	}
+
+	// 4. Regression: 404 for non-existent entity
+	req404 := httptest.NewRequest(http.MethodGet, "/api/v1/projects/p-1/entities/non-existent-ent", nil)
+	rec404 := httptest.NewRecorder()
+	router.ServeHTTP(rec404, req404)
+	if rec404.Code != http.StatusNotFound {
+		t.Fatalf("BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001: expected HTTP 404, got %d", rec404.Code)
 	}
 }

@@ -202,7 +202,8 @@ export class RevisionEngine {
     }
 
     // Property diffs
-    const propsChanged: Record<string, { before: unknown; after: unknown }> = {};
+    const propsChanged: Record<string, { before: unknown; after: unknown }> =
+      {};
     const allPropKeys = new Set([
       ...Object.keys(before.properties || {}),
       ...Object.keys(after.properties || {}),
@@ -222,14 +223,19 @@ export class RevisionEngine {
 
     // Formulas diffs
     if (before.computedFormulas || after.computedFormulas) {
-      const formulasChanged: Record<string, { before: number; after: number }> = {};
+      const formulasChanged: Record<string, { before: number; after: number }> =
+        {};
       const allFormulaKeys = new Set([
         ...Object.keys(before.computedFormulas || {}),
         ...Object.keys(after.computedFormulas || {}),
       ]);
       for (const key of allFormulaKeys) {
-        const bVal = before.computedFormulas ? before.computedFormulas[key] : undefined;
-        const aVal = after.computedFormulas ? after.computedFormulas[key] : undefined;
+        const bVal = before.computedFormulas
+          ? before.computedFormulas[key]
+          : undefined;
+        const aVal = after.computedFormulas
+          ? after.computedFormulas[key]
+          : undefined;
         if (bVal !== aVal && (bVal !== undefined || aVal !== undefined)) {
           formulasChanged[key] = {
             before: bVal ?? 0,
@@ -254,7 +260,8 @@ export class RevisionEngine {
     authorNote?: string,
   ): EntityRevision {
     const history = this.revisions.get(entity.id) || [];
-    const parentRevision = history.length > 0 ? history[history.length - 1] : null;
+    const parentRevision =
+      history.length > 0 ? history[history.length - 1] : null;
 
     const patch = this.computePatch(
       parentRevision ? parentRevision.snapshot : null,
@@ -293,7 +300,9 @@ export class RevisionEngine {
   ): { restoredEntity: EntityItem; revision: EntityRevision } {
     const history = this.revisions.get(entityId);
     if (!history || history.length === 0) {
-      throw new Error(`BLOCK_WORLD_REVISION_ENGINE_001: No revision history found for entity ${entityId}`);
+      throw new Error(
+        `BLOCK_WORLD_REVISION_ENGINE_001: No revision history found for entity ${entityId}`,
+      );
     }
 
     const targetRev = history.find((r) => r.id === targetRevisionId);
@@ -303,8 +312,12 @@ export class RevisionEngine {
       );
     }
 
-    const restoredEntity: EntityItem = JSON.parse(JSON.stringify(targetRev.snapshot));
-    const note = authorNote || `Reverted to revision #${targetRev.revisionNumber} (${targetRev.id})`;
+    const restoredEntity: EntityItem = JSON.parse(
+      JSON.stringify(targetRev.snapshot),
+    );
+    const note =
+      authorNote ||
+      `Reverted to revision #${targetRev.revisionNumber} (${targetRev.id})`;
     const revertRevision = this.recordRevision(restoredEntity, "REVERT", note);
 
     return {

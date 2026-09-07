@@ -25,7 +25,10 @@ export const ValueTypeOptionSchema = z.object({
   value: z.preprocess(
     (val) =>
       typeof val === "string"
-        ? val.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_")
+        ? val
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_\.]/g, "_")
         : val,
     z.string().min(1),
   ),
@@ -39,7 +42,10 @@ export const DynamicFieldDefSchema = z.object({
   name: z.preprocess(
     (val) =>
       typeof val === "string"
-        ? val.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "")
+        ? val
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_\.]/g, "")
         : val,
     z.string().min(1),
   ),
@@ -71,7 +77,8 @@ export const BlueprintDefSchema = z.object({
       return new Set(names).size === names.length;
     },
     {
-      message: "Duplicate field machine keys are not allowed in a blueprint schema",
+      message:
+        "Duplicate field machine keys are not allowed in a blueprint schema",
     },
   ),
   isBuiltIn: z.boolean().optional(),
@@ -242,8 +249,12 @@ export const EntityRevisionPatchSchema = z.object({
   name: z.object({ before: z.string(), after: z.string() }).optional(),
   description: z.object({ before: z.string(), after: z.string() }).optional(),
   category: z.object({ before: z.string(), after: z.string() }).optional(),
-  propertiesChanged: z.record(z.object({ before: z.unknown(), after: z.unknown() })).optional(),
-  formulasChanged: z.record(z.object({ before: z.number(), after: z.number() })).optional(),
+  propertiesChanged: z
+    .record(z.object({ before: z.unknown(), after: z.unknown() }))
+    .optional(),
+  formulasChanged: z
+    .record(z.object({ before: z.number(), after: z.number() }))
+    .optional(),
 });
 
 export const EntityRevisionSchema = z.object({
@@ -327,5 +338,3 @@ export const EditTreeSchema = z.object({
   activeEditId: z.string(),
   nodes: z.record(EditNodeSchema),
 });
-
-

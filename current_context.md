@@ -1,25 +1,29 @@
 # Current Context
 
-- **Active Branch:** `world` (and mirrored to `main` and `novel`).
-- **Execution Constraints:** **Local signed commits (`git commit -S`) are standard.**
-- **Architectural Baseline:** **Version 2.3 (UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Revision Engine, Non-Destructive Checkouts, Infinite Branching, REST Best Practices, Zero-Trust Backend Validation Parity)**.
+- **Active Branch:** `world` (synchronized with `main` and `novel`).
+- **Execution Constraints:** Local signed commits (`git commit -S`) are standard.
+- **Architectural Baseline:** Version 2.4 (Comprehensive Monorepo Test Coverage & Regression Suite across Bridge, Data Service, Go API, and Web Studio).
 - **Recent Accomplishments:**
-  - **The UPDATE Pipe & Hanging EDIT Trees Architecture**:
-    - **Go API Backend (`apps/api/internal/world/*`, `apps/api/internal/handlers/*`)**:
-      - Implemented `EditNode` and `EditTree` engine (`revision_engine.go`) supporting non-destructive tree checkouts and infinite branching (`AddEditNode`, `CheckoutEditHead`, `GetActiveEditNode`).
-      - Added UPDATE Pipe endpoint `GET /api/v1/projects/{projectId}/timeline/pipe` returning narrative timeline events with their hanging Edit Trees and active EDIT heads.
-      - Added event and entity Edit Tree endpoints: `GET/POST /timeline/events/{id}/tree`, `POST /timeline/events/{id}/edits`, `POST /timeline/events/{id}/edits/{editId}/checkout`, `GET/POST /entities/{id}/tree`, `POST /entities/{id}/edits`, `POST /entities/{id}/edits/{editId}/checkout`.
-      - Comprehensive unit tests passing in `revision_engine_test.go` and `timeline_handler_test.go`.
-    - **TypeScript Data Service & Bridge (`packages/bridge`, `apps/data-service`)**:
-      - `EditNode<T>`, `EditTree<T>`, and `TimelineEventWithTree` contracts and Zod schemas in `@novwrite/bridge`.
-      - `EditTreeEngine<T>` and `RevisionEngine` in `@novwrite/data-service` with unit tests covering infinite branching and non-destructive checkout (`revisionEngine.test.ts`).
+  - **Comprehensive Codebase Test Audit & Regression Hardening**:
+    - **Go API Backend (`apps/api`)**:
+      - Added `health_handler_test.go` verifying `/healthz`, `/livez`, `/readyz` probe endpoints (`BLOCK_TEST_API_HEALTH_001`).
+      - Added `middleware_test.go` testing Request ID generation/preservation, Response Time telemetry, Security Headers, API Versioning, and RFC 7807 Panic Recovery (`BLOCK_TEST_HTTP_MIDDLEWARE_001`).
+      - Refactored `BuildRouter()` and added `server_test.go` verifying route tree mounts, RFC 7807 404/405 error handlers, and CORS integration (`BLOCK_TEST_API_SERVER_001`).
+      - Added regression tests to `entity_handler_test.go` for revision reverts, hanging edit trees, and missing resource errors (`BLOCK_TEST_ENTITY_HANDLER_REGRESSION_001`).
+      - Added tests to `world_bridge_test.go` for Scene Grounding and Entity Mentions RPC endpoints (`BLOCK_TEST_WORLD_BRIDGE_GROUNDING_001`).
+      - Added regression tests to `formula_engine_test.go` for math functions (`CLAMP`, `MIN`, `MAX`, `SQRT`, `POW`), nested `IF` conditions, and negative math (`BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001`).
+    - **TypeScript Bridge Contracts (`packages/bridge`)**:
+      - Added comprehensive test suites in `bridge.test.ts` for `validateEntityRevision`, `validateBitemporalCoordinateQuery`, `EditTreeSchema`, `EditNodeSchema`, `BitemporalEntityStateSchema`, `ValueTypeOptionSchema`, `EntityItemSchema`, and error rejection branches.
+    - **TypeScript Data Service (`apps/data-service`)**:
+      - Added regression tests in `revisionEngine.test.ts` for revert loops (reverting a revert), non-existent edit node checkout error handling, and property deletion tracking.
     - **SvelteKit Web Studio (`apps/web`)**:
-      - Implemented `PipeTreeVisualizer` (`pipe-tree-visualizer.svelte`) rendering the horizontal glowing UPDATE timeline conduit alongside vertical hanging EDIT trees with SVG branch connections, active EDIT head indicators (`[⚡ ACTIVE EDIT HEAD]`), non-destructive checkout actions, branch creators, and delta diff inspectors.
-      - Integrated `PipeTreeVisualizer` into `/world/timeline` with smooth tab toggles between UPDATE Pipe & Edit Trees and Causal Stream & Time-Travel Scrubber.
-      - Updated `WorldStateStore` with persistent `eventEditTrees` and `entityEditTrees` with deterministic state folding.
+      - Added `utils.test.ts` testing `cn()` class merging and conflict resolution (`BLOCK_TEST_WEB_UTILS_001`).
+      - Added regression tests in `formulaEngine.test.ts` for nested `IF` logic, unary minus with negative multipliers, and deep dot-notation property resolution.
+      - Added regression tests in `tableConfig.test.ts` for missing properties, null fallbacks, and array formatting.
+    - **Test Runner (`test.sh`)**:
+      - Updated `test.sh` to run all 5 test and typecheck phases across all 4 monorepo packages.
   - **Verification Completed**:
     - `./check.sh`: Monorepo typecheck passed cleanly with 0 errors across all packages.
-    - `./test.sh`: 100% passing across `@novwrite/bridge` (6/6), `@novwrite/data-service` (39/39), Go API backend (all unit tests), and `@novwrite/web` (0 svelte-check diagnostics).
+    - `./test.sh`: 100% test pass rate across `@novwrite/bridge` (12/12), `@novwrite/data-service` (40/40), Go API backend (all packages passing), `@novwrite/web` (14/14), and web typechecks.
 - **Next Steps:**
-  - Synchronize across `world`, `main`, and `novel` branches with GPG-signed git commits.
-
+  - Maintain 100% test coverage and block ID standards on all future features.

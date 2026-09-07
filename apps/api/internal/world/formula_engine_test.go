@@ -83,3 +83,40 @@ func TestFormulaEngine_CaseInsensitiveVariables(t *testing.T) {
 		t.Errorf("expected 1000, got %v", val)
 	}
 }
+
+// Block Standard: BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001
+// Purpose: Regression tests for CLAMP, MIN, MAX, SQRT, POW, nested IF conditions, and unary operators.
+func TestFormulaEngine_MathFunctions_And_NestedLogic_Regressions(t *testing.T) {
+	// 1. Math functions (CLAMP, SQRT, POW, MAX, MIN)
+	val1, err := EvaluateFormula("CLAMP(150, 10, 100) + SQRT(64) + POW(2, 4)", nil)
+	if err != nil {
+		t.Fatalf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: failed to evaluate math functions: %v", err)
+	}
+	// 100 + 8 + 16 = 124
+	if val1 != 124.0 {
+		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected 124, got %v", val1)
+	}
+
+	// 2. Nested IF expressions
+	nestedExpr := "IF(level > 10, IF(rank >= 5, 500, 250), 100)"
+	valHigh, err := EvaluateFormula(nestedExpr, map[string]interface{}{"level": 15.0, "rank": 6.0})
+	if err != nil || valHigh != 500.0 {
+		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected 500 for high level/rank, got %v (err: %v)", valHigh, err)
+	}
+
+	valMid, err := EvaluateFormula(nestedExpr, map[string]interface{}{"level": 15.0, "rank": 2.0})
+	if err != nil || valMid != 250.0 {
+		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected 250 for mid rank, got %v (err: %v)", valMid, err)
+	}
+
+	valLow, err := EvaluateFormula(nestedExpr, map[string]interface{}{"level": 5.0, "rank": 10.0})
+	if err != nil || valLow != 100.0 {
+		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected 100 for low level, got %v (err: %v)", valLow, err)
+	}
+
+	// 3. Unary minus & negative values
+	valNeg, err := EvaluateFormula("-50 + 20 * -2", nil)
+	if err != nil || valNeg != -90.0 {
+		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected -90 for negative math, got %v (err: %v)", valNeg, err)
+	}
+}

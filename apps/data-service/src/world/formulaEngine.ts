@@ -19,13 +19,7 @@ export interface FormulaValidationResult {
 }
 
 type TokenType =
-  | "NUMBER"
-  | "IDENTIFIER"
-  | "OPERATOR"
-  | "LPAREN"
-  | "RPAREN"
-  | "COMMA"
-  | "EOF";
+  "NUMBER" | "IDENTIFIER" | "OPERATOR" | "LPAREN" | "RPAREN" | "COMMA" | "EOF";
 
 interface Token {
   type: TokenType;
@@ -112,8 +106,34 @@ function tokenize(formula: string): Token[] {
 }
 
 const knownFunctions = new Set([
-  "MIN", "MAX", "CLAMP", "FLOOR", "CEIL", "ROUND", "ABS", "SQRT", "POW", "MOD", "IF", "AND", "OR", "NOT",
-  "min", "max", "clamp", "floor", "ceil", "round", "abs", "sqrt", "pow", "mod", "if", "and", "or", "not",
+  "MIN",
+  "MAX",
+  "CLAMP",
+  "FLOOR",
+  "CEIL",
+  "ROUND",
+  "ABS",
+  "SQRT",
+  "POW",
+  "MOD",
+  "IF",
+  "AND",
+  "OR",
+  "NOT",
+  "min",
+  "max",
+  "clamp",
+  "floor",
+  "ceil",
+  "round",
+  "abs",
+  "sqrt",
+  "pow",
+  "mod",
+  "if",
+  "and",
+  "or",
+  "not",
 ]);
 
 export function extractFormulaVariables(formula: string): string[] {
@@ -196,7 +216,10 @@ export function resolveContextValue(
       if ("power" in direct && typeof direct.power === "number") {
         return direct.power;
       }
-      if ("numeric_value" in direct && typeof direct.numeric_value === "number") {
+      if (
+        "numeric_value" in direct &&
+        typeof direct.numeric_value === "number"
+      ) {
         return direct.numeric_value;
       }
       if ("value" in direct) {
@@ -225,7 +248,10 @@ export function resolveContextValue(
     if ("power" in current && typeof current.power === "number") {
       return current.power;
     }
-    if ("numeric_value" in current && typeof current.numeric_value === "number") {
+    if (
+      "numeric_value" in current &&
+      typeof current.numeric_value === "number"
+    ) {
       return current.numeric_value;
     }
     if ("value" in current) {

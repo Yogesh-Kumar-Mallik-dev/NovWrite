@@ -52,6 +52,7 @@ The NovWrite API implements industry-standard REST best practices:
 ### 2.2 Paginated Resource Envelope (`200 OK`)
 
 Supported Query Parameters:
+
 - `page`: Page number (1-indexed, default `1`).
 - `pageSize` or `limit`: Items per page (clamped between `1` and `100`, default `20`).
 - `search`: Case-insensitive substring search filter.
@@ -116,11 +117,13 @@ Errors return machine-readable problem details. Example validation error (`422 U
 ## 3. Endpoints Reference (`/api/v1/...`)
 
 ### 3.1 Health & Liveness Probes
+
 - `GET /healthz` — System health summary.
 - `GET /livez` — Kubernetes/process liveness probe.
 - `GET /readyz` — Database and dependency readiness probe.
 
 ### 3.2 Blueprints (Schemas)
+
 - `GET /api/v1/projects/{projectId}/blueprints` — List blueprints with pagination, search, and category filters.
 - `POST /api/v1/projects/{projectId}/blueprints` — Create a new blueprint schema. Machine keys are automatically normalized to lowercase; duplicate keys are rejected with 422. Returns `201 Created` with `Location` header.
 - `GET /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Retrieve blueprint schema.
@@ -128,6 +131,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `DELETE /api/v1/projects/{projectId}/blueprints/{blueprintId}` — Remove blueprint schema (`204 No Content`).
 
 ### 3.3 Entities & Bitemporal Revisions (The Feather & Web Model)
+
 - `GET /api/v1/projects/{projectId}/entities` — List entities with pagination, `blueprintId`, and `category` filters.
 - `POST /api/v1/projects/{projectId}/entities` — Create an entity. Formulas are deterministically evaluated and populated on the backend. Automatically records Revision #0 (`BASELINE_EDIT`). Returns `201 Created` with `Location` header.
 - `GET /api/v1/projects/{projectId}/entities/{entityId}` — Retrieve entity instance.
@@ -142,6 +146,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/projects/{projectId}/entities/{entityId}/edits/{editId}/checkout` — Non-destructively switch the active EDIT head to `editId` (child branches are preserved).
 
 ### 3.4 Formulas Engine
+
 - `POST /api/v1/formulas/evaluate` — Test and evaluate mathematical and logical formulas with sample context.
   - Supported functions: `IF(cond, t, f)`, `CLAMP(val, min, max)`, `MIN(a, b)`, `MAX(a, b)`, `ABS(x)`, `ROUND(x)`, `FLOOR(x)`, `CEIL(x)`, `SQRT(x)`, `POW(x, y)`.
   - Supported operators: `+`, `-`, `*`, `/`, `%`, `>`, `<`, `>=`, `<=`, `==`, `!=`, `&&`, `||`, `!`.
@@ -149,6 +154,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/formulas/validate` — Validate formula syntax and extract referenced variables.
 
 ### 3.5 Timeline, UPDATE Pipe & Hanging EDIT Trees
+
 - `GET /api/v1/projects/{projectId}/timeline/pipe` — Retrieve the full UPDATE horizontal pipeline containing all chronological narrative events alongside their hanging EDIT trees, active EDIT head pointers, and resolved snapshots.
 - `GET /api/v1/projects/{projectId}/timeline/events` — Retrieve chronological events with pagination.
 - `POST /api/v1/projects/{projectId}/timeline/events` — Append an event with structured mutation effects (`SET`, `INCREMENT`, `DECREMENT`, `APPEND`, `REMOVE`, `TRANSFER`). Automatically initializes root edit node `ED0`.
@@ -161,6 +167,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `GET /api/v1/projects/{projectId}/timeline/state?seq={seq}` — Fold and compute canonical entity state at a given sequence number.
 
 ### 3.6 World Domain Bridge
+
 - `POST /api/v1/bridge/ground` — Ground a scene with folded canonical state for referenced entities.
 - `POST /api/v1/bridge/audit` — Audit draft prose actions against invariant rules (e.g. deceased entity taking actions, numeric bounds underflow).
 - `POST /api/v1/bridge/mentions` — Fast autocomplete query for universe entities with category filtering.
@@ -172,6 +179,7 @@ Errors return machine-readable problem details. Example validation error (`422 U
 The Go backend communicates with the TypeScript Prisma Data Service over internal gRPC defined in `proto/data/v1/data_service.proto`.
 
 ### Coarse-Grained RPC Methods:
+
 - `rpc GetNovelState(GetNovelStateRequest) returns (GetNovelStateResponse)`
 - `rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse)`
 - `rpc GetTimeline(GetTimelineRequest) returns (GetTimelineResponse)`

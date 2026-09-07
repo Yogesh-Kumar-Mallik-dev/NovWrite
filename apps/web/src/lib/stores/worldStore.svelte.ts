@@ -87,12 +87,7 @@ export interface EntityItem {
 // =====================================
 
 export type EffectOperation =
-  | "SET"
-  | "INCREMENT"
-  | "DECREMENT"
-  | "APPEND"
-  | "REMOVE"
-  | "TRANSFER";
+  "SET" | "INCREMENT" | "DECREMENT" | "APPEND" | "REMOVE" | "TRANSFER";
 
 export interface TimelineEffectItem {
   id?: string;
@@ -179,10 +174,7 @@ export interface ContinuityViolationItem {
 // =====================================
 
 export type RevisionType =
-  | "TYPO_FIX"
-  | "BASELINE_EDIT"
-  | "RETROACTIVE_PLOT_FIX"
-  | "REVERT";
+  "TYPO_FIX" | "BASELINE_EDIT" | "RETROACTIVE_PLOT_FIX" | "REVERT";
 
 export interface EntityRevisionPatch {
   name?: { before: string; after: string };
@@ -249,7 +241,7 @@ export interface TimelineEventWithTree {
   editTree: EditTree<TimelineEventItem>;
 }
 
-const WORLD_STATE_STORAGE_KEY = 'novwrite_world_state_v1';
+const WORLD_STATE_STORAGE_KEY = "novwrite_world_state_v1";
 
 export class WorldStateStore {
   blueprints = $state<BlueprintDef[]>([]);
@@ -267,27 +259,38 @@ export class WorldStateStore {
   }
 
   loadFromStorage(): void {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    if (typeof window === "undefined" || typeof localStorage === "undefined")
+      return;
     try {
       const raw = localStorage.getItem(WORLD_STATE_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.blueprints)) this.blueprints = parsed.blueprints;
+        if (Array.isArray(parsed.blueprints))
+          this.blueprints = parsed.blueprints;
         if (Array.isArray(parsed.entities)) this.entities = parsed.entities;
-        if (Array.isArray(parsed.timelineEvents)) this.timelineEvents = parsed.timelineEvents;
+        if (Array.isArray(parsed.timelineEvents))
+          this.timelineEvents = parsed.timelineEvents;
         if (Array.isArray(parsed.rules)) this.rules = parsed.rules;
-        if (Array.isArray(parsed.violations)) this.violations = parsed.violations;
-        if (parsed.revisions && typeof parsed.revisions === 'object') this.revisions = parsed.revisions;
-        if (parsed.eventEditTrees && typeof parsed.eventEditTrees === 'object') this.eventEditTrees = parsed.eventEditTrees;
-        if (parsed.entityEditTrees && typeof parsed.entityEditTrees === 'object') this.entityEditTrees = parsed.entityEditTrees;
+        if (Array.isArray(parsed.violations))
+          this.violations = parsed.violations;
+        if (parsed.revisions && typeof parsed.revisions === "object")
+          this.revisions = parsed.revisions;
+        if (parsed.eventEditTrees && typeof parsed.eventEditTrees === "object")
+          this.eventEditTrees = parsed.eventEditTrees;
+        if (
+          parsed.entityEditTrees &&
+          typeof parsed.entityEditTrees === "object"
+        )
+          this.entityEditTrees = parsed.entityEditTrees;
       }
     } catch (e) {
-      console.warn('[WorldStore] Failed to load state from localStorage:', e);
+      console.warn("[WorldStore] Failed to load state from localStorage:", e);
     }
   }
 
   saveToStorage(): void {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+    if (typeof window === "undefined" || typeof localStorage === "undefined")
+      return;
     try {
       const payload = {
         blueprints: this.blueprints,
@@ -301,7 +304,7 @@ export class WorldStateStore {
       };
       localStorage.setItem(WORLD_STATE_STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
-      console.warn('[WorldStore] Failed to save state to localStorage:', e);
+      console.warn("[WorldStore] Failed to save state to localStorage:", e);
     }
   }
 
@@ -314,7 +317,7 @@ export class WorldStateStore {
     this.revisions = {};
     this.eventEditTrees = {};
     this.entityEditTrees = {};
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       localStorage.removeItem(WORLD_STATE_STORAGE_KEY);
     }
   }
@@ -453,7 +456,11 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE")) return false;
+    if (
+      !field ||
+      (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE")
+    )
+      return false;
     if (!field.options) field.options = [];
     field.options.push(option);
     this.recomputeAllEntityFormulas();
@@ -470,7 +477,14 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    if (
+      !field ||
+      (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") ||
+      !field.options ||
+      optionIndex < 0 ||
+      optionIndex >= field.options.length
+    )
+      return false;
     field.options[optionIndex] = updatedOption;
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
@@ -485,7 +499,14 @@ export class WorldStateStore {
     const bp = this.getBlueprint(blueprintId);
     if (!bp) return false;
     const field = bp.fields.find((f) => f.id === fieldId || f.name === fieldId);
-    if (!field || (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") || !field.options || optionIndex < 0 || optionIndex >= field.options.length) return false;
+    if (
+      !field ||
+      (field.fieldType !== "ENUM" && field.fieldType !== "VALUE_TYPE") ||
+      !field.options ||
+      optionIndex < 0 ||
+      optionIndex >= field.options.length
+    )
+      return false;
     field.options.splice(optionIndex, 1);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
@@ -515,10 +536,14 @@ export class WorldStateStore {
 
     newEntity.computedFormulas = this.evaluateEntityFormulas(newEntity, bp);
     this.entities.push(newEntity);
-    
+
     // Automatically record initial baseline revision
-    this.recordEntityRevision(newEntity, "BASELINE_EDIT", "Initial entity creation");
-    
+    this.recordEntityRevision(
+      newEntity,
+      "BASELINE_EDIT",
+      "Initial entity creation",
+    );
+
     this.saveToStorage();
     return newEntity;
   }
@@ -533,7 +558,9 @@ export class WorldStateStore {
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return undefined;
 
-    const previousSnapshot: EntityItem = JSON.parse(JSON.stringify(this.entities[idx]));
+    const previousSnapshot: EntityItem = JSON.parse(
+      JSON.stringify(this.entities[idx]),
+    );
 
     this.entities[idx] = {
       ...this.entities[idx],
@@ -549,7 +576,11 @@ export class WorldStateStore {
     );
 
     // Automatically record edit revision
-    this.recordEntityRevision(this.entities[idx], revisionType, authorNote || "Updated entity properties");
+    this.recordEntityRevision(
+      this.entities[idx],
+      revisionType,
+      authorNote || "Updated entity properties",
+    );
 
     this.saveToStorage();
     return this.entities[idx];
@@ -569,7 +600,10 @@ export class WorldStateStore {
   // Bitemporal & Dual-Axis Revision Methods
   // =====================================
 
-  computeEntityPatch(before: EntityItem | null, after: EntityItem): EntityRevisionPatch {
+  computeEntityPatch(
+    before: EntityItem | null,
+    after: EntityItem,
+  ): EntityRevisionPatch {
     const patch: EntityRevisionPatch = {};
     if (!before) {
       patch.name = { before: "", after: after.name };
@@ -584,14 +618,24 @@ export class WorldStateStore {
       patch.name = { before: before.name, after: after.name };
     }
     if ((before.description || "") !== (after.description || "")) {
-      patch.description = { before: before.description || "", after: after.description || "" };
+      patch.description = {
+        before: before.description || "",
+        after: after.description || "",
+      };
     }
     if ((before.category || "") !== (after.category || "")) {
-      patch.category = { before: before.category || "", after: after.category || "" };
+      patch.category = {
+        before: before.category || "",
+        after: after.category || "",
+      };
     }
 
-    const propsChanged: Record<string, { before: unknown; after: unknown }> = {};
-    const allKeys = new Set([...Object.keys(before.properties || {}), ...Object.keys(after.properties || {})]);
+    const propsChanged: Record<string, { before: unknown; after: unknown }> =
+      {};
+    const allKeys = new Set([
+      ...Object.keys(before.properties || {}),
+      ...Object.keys(after.properties || {}),
+    ]);
     for (const k of allKeys) {
       const bVal = before.properties ? before.properties[k] : undefined;
       const aVal = after.properties ? after.properties[k] : undefined;
@@ -604,11 +648,19 @@ export class WorldStateStore {
     }
 
     if (before.computedFormulas || after.computedFormulas) {
-      const formulasChanged: Record<string, { before: number; after: number }> = {};
-      const allFKeys = new Set([...Object.keys(before.computedFormulas || {}), ...Object.keys(after.computedFormulas || {})]);
+      const formulasChanged: Record<string, { before: number; after: number }> =
+        {};
+      const allFKeys = new Set([
+        ...Object.keys(before.computedFormulas || {}),
+        ...Object.keys(after.computedFormulas || {}),
+      ]);
       for (const k of allFKeys) {
-        const bVal = before.computedFormulas ? before.computedFormulas[k] : undefined;
-        const aVal = after.computedFormulas ? after.computedFormulas[k] : undefined;
+        const bVal = before.computedFormulas
+          ? before.computedFormulas[k]
+          : undefined;
+        const aVal = after.computedFormulas
+          ? after.computedFormulas[k]
+          : undefined;
         if (bVal !== aVal && (bVal !== undefined || aVal !== undefined)) {
           formulasChanged[k] = { before: bVal ?? 0, after: aVal ?? 0 };
         }
@@ -631,7 +683,10 @@ export class WorldStateStore {
     }
     const history = this.revisions[entity.id];
     const parent = history.length > 0 ? history[history.length - 1] : null;
-    const patch = this.computeEntityPatch(parent ? parent.snapshot : null, entity);
+    const patch = this.computeEntityPatch(
+      parent ? parent.snapshot : null,
+      entity,
+    );
 
     const revision: EntityRevision = {
       id: `rev-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
@@ -662,7 +717,9 @@ export class WorldStateStore {
     if (!target) return undefined;
 
     const restored: EntityItem = JSON.parse(JSON.stringify(target.snapshot));
-    const note = authorNote || `Reverted to revision #${target.revisionNumber} (${target.id})`;
+    const note =
+      authorNote ||
+      `Reverted to revision #${target.revisionNumber} (${target.id})`;
     const rev = this.recordEntityRevision(restored, "REVERT", note);
 
     const idx = this.entities.findIndex((e) => e.id === entityId);
@@ -698,10 +755,14 @@ export class WorldStateStore {
     }
 
     const snapshot = baseRevision ? baseRevision.snapshot : ent;
-    let computedProps: Record<string, any> = JSON.parse(JSON.stringify(snapshot.properties || {}));
+    let computedProps: Record<string, any> = JSON.parse(
+      JSON.stringify(snapshot.properties || {}),
+    );
 
     const activeEvents = [...this.timelineEvents]
-      .filter((ev) => targetSeq === 0 || ev.narrativeSequenceNumber <= targetSeq)
+      .filter(
+        (ev) => targetSeq === 0 || ev.narrativeSequenceNumber <= targetSeq,
+      )
       .sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
 
     const activeMutations: BitemporalEntityState["activeMutations"] = [];
@@ -726,17 +787,22 @@ export class WorldStateStore {
               curr[finalKey] = eff.value;
               break;
             case "INCREMENT":
-              curr[finalKey] = (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
+              curr[finalKey] =
+                (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
               break;
             case "DECREMENT":
-              curr[finalKey] = (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
+              curr[finalKey] =
+                (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
               break;
             case "APPEND":
               if (Array.isArray(curr[finalKey])) curr[finalKey].push(eff.value);
               else curr[finalKey] = [eff.value];
               break;
             case "REMOVE":
-              if (Array.isArray(curr[finalKey])) curr[finalKey] = curr[finalKey].filter((x: any) => x !== eff.value);
+              if (Array.isArray(curr[finalKey]))
+                curr[finalKey] = curr[finalKey].filter(
+                  (x: any) => x !== eff.value,
+                );
               break;
           }
 
@@ -784,7 +850,10 @@ export class WorldStateStore {
 
     // Enrich context with dual-valued value_type/enum options and resolved references
     for (const field of blueprint.fields) {
-      if ((field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") && field.options) {
+      if (
+        (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
+        field.options
+      ) {
         const rawVal = entity.properties[field.name];
         if (rawVal !== undefined && rawVal !== null) {
           const matchingOpt = field.options.find((opt) => {
@@ -803,14 +872,21 @@ export class WorldStateStore {
             };
           }
         }
-      } else if (field.fieldType === "BLUEPRINT_REF" && field.targetBlueprintId) {
+      } else if (
+        field.fieldType === "BLUEPRINT_REF" &&
+        field.targetBlueprintId
+      ) {
         const targetBp = this.getBlueprint(field.targetBlueprintId);
         if (targetBp && targetBp.blueprintClass === "SECOND_CLASS") {
           const subProps = entity.properties[field.name];
           if (subProps && typeof subProps === "object") {
             const enrichedSub: Record<string, any> = { ...subProps };
             for (const subF of targetBp.fields) {
-              if ((subF.fieldType === "ENUM" || subF.fieldType === "VALUE_TYPE") && subF.options) {
+              if (
+                (subF.fieldType === "ENUM" ||
+                  subF.fieldType === "VALUE_TYPE") &&
+                subF.options
+              ) {
                 const subRawVal = subProps[subF.name];
                 if (subRawVal !== undefined && subRawVal !== null) {
                   const subMatchingOpt = subF.options.find((opt) => {
@@ -818,7 +894,8 @@ export class WorldStateStore {
                     return opt.value === subRawVal || opt.label === subRawVal;
                   });
                   if (subMatchingOpt && typeof subMatchingOpt === "object") {
-                    const numVal = subMatchingOpt.numericValue ?? subMatchingOpt.power ?? 0;
+                    const numVal =
+                      subMatchingOpt.numericValue ?? subMatchingOpt.power ?? 0;
                     enrichedSub[subF.name] = {
                       label: subMatchingOpt.label,
                       value: subMatchingOpt.value,
@@ -835,7 +912,9 @@ export class WorldStateStore {
         } else if (targetBp && targetBp.blueprintClass === "FIRST_CLASS") {
           const targetEntityId = entity.properties[field.name];
           if (targetEntityId && typeof targetEntityId === "string") {
-            const linkedEntity = this.entities.find((e) => e.id === targetEntityId);
+            const linkedEntity = this.entities.find(
+              (e) => e.id === targetEntityId,
+            );
             if (linkedEntity) {
               context[field.name] = {
                 ...linkedEntity.properties,
@@ -859,7 +938,9 @@ export class WorldStateStore {
       } else if (field.fieldType === "ARRAY_REF") {
         const arr = entity.properties[field.name];
         if (Array.isArray(arr)) {
-          const resolved = arr.map((id) => this.entities.find((e) => e.id === id)).filter(Boolean);
+          const resolved = arr
+            .map((id) => this.entities.find((e) => e.id === id))
+            .filter(Boolean);
           context[field.name] = resolved;
           context[`${field.name}_count`] = resolved.length;
         } else {
@@ -903,7 +984,9 @@ export class WorldStateStore {
     return this.timelineEvents.find((e) => e.id === id);
   }
 
-  addTimelineEvent(eventData: Omit<TimelineEventItem, "id">): TimelineEventItem {
+  addTimelineEvent(
+    eventData: Omit<TimelineEventItem, "id">,
+  ): TimelineEventItem {
     const newEvent: TimelineEventItem = {
       ...eventData,
       id: `ev-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
@@ -926,7 +1009,12 @@ export class WorldStateStore {
       ...this.timelineEvents[idx],
       ...updates,
     };
-    this.addEventEdit(id, this.timelineEvents[idx], "Updated timeline event properties", "BASELINE_EDIT");
+    this.addEventEdit(
+      id,
+      this.timelineEvents[idx],
+      "Updated timeline event properties",
+      "BASELINE_EDIT",
+    );
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
     return this.timelineEvents[idx];
@@ -1028,7 +1116,10 @@ export class WorldStateStore {
     return newNode;
   }
 
-  checkoutEventEdit(eventId: string, targetEditId: string): EditNode<TimelineEventItem> | undefined {
+  checkoutEventEdit(
+    eventId: string,
+    targetEditId: string,
+  ): EditNode<TimelineEventItem> | undefined {
     const tree = this.getEventEditTree(eventId);
     const targetNode = tree.nodes[targetEditId];
     if (!targetNode) return undefined;
@@ -1039,7 +1130,9 @@ export class WorldStateStore {
     // Sync restored event snapshot into active list
     const evIdx = this.timelineEvents.findIndex((e) => e.id === eventId);
     if (evIdx !== -1) {
-      this.timelineEvents[evIdx] = JSON.parse(JSON.stringify(targetNode.snapshot));
+      this.timelineEvents[evIdx] = JSON.parse(
+        JSON.stringify(targetNode.snapshot),
+      );
       this.recomputeAllEntityFormulas();
     }
 
@@ -1124,7 +1217,10 @@ export class WorldStateStore {
     return newNode;
   }
 
-  checkoutEntityEdit(entityId: string, targetEditId: string): EditNode<EntityItem> | undefined {
+  checkoutEntityEdit(
+    entityId: string,
+    targetEditId: string,
+  ): EditNode<EntityItem> | undefined {
     const tree = this.getEntityEditTree(entityId);
     const targetNode = tree.nodes[targetEditId];
     if (!targetNode) return undefined;
@@ -1145,7 +1241,9 @@ export class WorldStateStore {
     targetSeq: number,
     mode: "narrative" | "chronological" = "narrative",
   ): EntityItem[] {
-    const baseEntities: EntityItem[] = JSON.parse(JSON.stringify(this.entities));
+    const baseEntities: EntityItem[] = JSON.parse(
+      JSON.stringify(this.entities),
+    );
     const activeEvents = [...this.timelineEvents]
       .map((ev) => {
         const tree = this.eventEditTrees[ev.id];
@@ -1212,7 +1310,9 @@ export class WorldStateStore {
             break;
           case "REMOVE":
             if (Array.isArray(curr[finalKey])) {
-              curr[finalKey] = curr[finalKey].filter((x: any) => x !== eff.value);
+              curr[finalKey] = curr[finalKey].filter(
+                (x: any) => x !== eff.value,
+              );
             }
             break;
         }
@@ -1345,7 +1445,9 @@ export class WorldStateStore {
       const weaponEnt = this.entities.find(
         (e: EntityItem) => e.category === "Relics & Armaments",
       );
-      const charEnt = this.entities.find((e: EntityItem) => e.category === "Characters");
+      const charEnt = this.entities.find(
+        (e: EntityItem) => e.category === "Characters",
+      );
       if (weaponEnt && charEnt) {
         charEnt.properties.bound_weapon = weaponEnt.id;
         weaponEnt.properties.current_wielder = charEnt.id;
@@ -1362,7 +1464,9 @@ export class WorldStateStore {
   }
 
   dismissViolation(id: string): boolean {
-    const idx = this.violations.findIndex((v: ContinuityViolationItem) => v.id === id);
+    const idx = this.violations.findIndex(
+      (v: ContinuityViolationItem) => v.id === id,
+    );
     if (idx === -1) return false;
     this.violations.splice(idx, 1);
     this.saveToStorage();

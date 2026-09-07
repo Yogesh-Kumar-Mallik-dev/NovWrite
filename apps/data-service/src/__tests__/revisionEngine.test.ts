@@ -33,7 +33,11 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
 
   it("BLOCK_TEST_REVISION_ENGINE_001: should record initial revision and compute full baseline patch", () => {
     const engine = new RevisionEngine();
-    const rev0 = engine.recordRevision(initialEntity, "BASELINE_EDIT", "Initial character profile");
+    const rev0 = engine.recordRevision(
+      initialEntity,
+      "BASELINE_EDIT",
+      "Initial character profile",
+    );
 
     assert.equal(rev0.revisionNumber, 0);
     assert.equal(rev0.parentRevisionId, null);
@@ -45,20 +49,31 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
 
   it("BLOCK_TEST_REVISION_ENGINE_001: should track TYPO_FIX and BASELINE_EDIT revisions with precise deltas", () => {
     const engine = new RevisionEngine();
-    const rev0 = engine.recordRevision(initialEntity, "BASELINE_EDIT", "Initial profile");
+    const rev0 = engine.recordRevision(
+      initialEntity,
+      "BASELINE_EDIT",
+      "Initial profile",
+    );
 
     // Rev 1: Typo fix in description
     const entityRev1: EntityItem = {
       ...initialEntity,
       description: "Young swordsman from the Northern Frostlands",
     };
-    const rev1 = engine.recordRevision(entityRev1, "TYPO_FIX", "Fixed typo in origin description");
+    const rev1 = engine.recordRevision(
+      entityRev1,
+      "TYPO_FIX",
+      "Fixed typo in origin description",
+    );
 
     assert.equal(rev1.revisionNumber, 1);
     assert.equal(rev1.parentRevisionId, rev0.id);
     assert.equal(rev1.type, "TYPO_FIX");
     assert.equal(rev1.patch.description?.before, "Young swordsman from North");
-    assert.equal(rev1.patch.description?.after, "Young swordsman from the Northern Frostlands");
+    assert.equal(
+      rev1.patch.description?.after,
+      "Young swordsman from the Northern Frostlands",
+    );
 
     // Rev 2: Baseline stat adjustment (eyes to Blue, strength to 15)
     const entityRev2: EntityItem = {
@@ -72,7 +87,11 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
         combat_power: 27,
       },
     };
-    const rev2 = engine.recordRevision(entityRev2, "BASELINE_EDIT", "Changed eye color and buffed base strength");
+    const rev2 = engine.recordRevision(
+      entityRev2,
+      "BASELINE_EDIT",
+      "Changed eye color and buffed base strength",
+    );
 
     assert.equal(rev2.revisionNumber, 2);
     assert.equal(rev2.parentRevisionId, rev1.id);
@@ -89,14 +108,22 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
 
   it("BLOCK_TEST_REVISION_ENGINE_001: should support infinite reversibility via immutable REVERT revisions", () => {
     const engine = new RevisionEngine();
-    const rev0 = engine.recordRevision(initialEntity, "BASELINE_EDIT", "Initial profile");
+    const rev0 = engine.recordRevision(
+      initialEntity,
+      "BASELINE_EDIT",
+      "Initial profile",
+    );
 
     const entityRev1: EntityItem = {
       ...initialEntity,
       name: "Eldrin the Vanguard",
       properties: { ...initialEntity.properties, strength: 50 },
     };
-    const rev1 = engine.recordRevision(entityRev1, "BASELINE_EDIT", "Overpowered boost");
+    const rev1 = engine.recordRevision(
+      entityRev1,
+      "BASELINE_EDIT",
+      "Overpowered boost",
+    );
 
     // Revert back to rev0
     const { restoredEntity, revision: rev2 } = engine.revertToRevision(
@@ -120,13 +147,25 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
 
   it("BLOCK_TEST_REVISION_ENGINE_001: should resolve deterministic bitemporal state at (T_narrative, T_revision)", () => {
     const engine = new RevisionEngine();
-    const rev0 = engine.recordRevision(initialEntity, "BASELINE_EDIT", "Rev 0: Base Eldrin (Strength: 10, Eyes: Green)");
+    const rev0 = engine.recordRevision(
+      initialEntity,
+      "BASELINE_EDIT",
+      "Rev 0: Base Eldrin (Strength: 10, Eyes: Green)",
+    );
 
     const entityRev1: EntityItem = {
       ...initialEntity,
-      properties: { ...initialEntity.properties, eyes: "Azure Blue", strength: 14 },
+      properties: {
+        ...initialEntity.properties,
+        eyes: "Azure Blue",
+        strength: 14,
+      },
     };
-    const rev1 = engine.recordRevision(entityRev1, "BASELINE_EDIT", "Rev 1: Visual tweak (Strength: 14, Eyes: Azure Blue)");
+    const rev1 = engine.recordRevision(
+      entityRev1,
+      "BASELINE_EDIT",
+      "Rev 1: Visual tweak (Strength: 14, Eyes: Azure Blue)",
+    );
 
     // Plot Events (Narrative Time Axis)
     const events: TimelineEventHydrated[] = [
@@ -198,7 +237,10 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
     const coord4 = engine.resolveAtCoordinate(eldrinId, 50, rev1.id, events);
     assert.equal(coord4.properties.strength, 19);
     assert.equal(coord4.properties.status, "INJURED");
-    assert.deepEqual(coord4.properties.titles, ["Apprentice", "One-Armed Swordsman"]);
+    assert.deepEqual(coord4.properties.titles, [
+      "Apprentice",
+      "One-Armed Swordsman",
+    ]);
     assert.equal(coord4.appliedEventsCount, 3);
   });
 
@@ -208,57 +250,97 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
     const event2Key = "ev-2";
 
     // 1. Initial event edit: ED1
-    const ed1 = treeEngine.initTree(event2Key, {
-      id: "ev-2",
-      projectId: "proj-1",
-      title: "Battle of Dragon Peak",
-      narrativeSequenceNumber: 20,
-      chronologicalOrder: 20,
-      createdAt: new Date(),
-      effects: [],
-    }, "ED1: Initial draft");
+    const ed1 = treeEngine.initTree(
+      event2Key,
+      {
+        id: "ev-2",
+        projectId: "proj-1",
+        title: "Battle of Dragon Peak",
+        narrativeSequenceNumber: 20,
+        chronologicalOrder: 20,
+        createdAt: new Date(),
+        effects: [],
+      },
+      "ED1: Initial draft",
+    );
 
     assert.equal(ed1.revisionNumber, 0);
     assert.equal(ed1.parentId, null);
 
     // 2. Add ED2 from ED1
-    const ed2 = treeEngine.addEdit(event2Key, {
-      id: "ev-2",
-      projectId: "proj-1",
-      title: "Battle of Dragon Peak (Fierce)",
-      narrativeSequenceNumber: 20,
-      chronologicalOrder: 20,
-      createdAt: new Date(),
-      effects: [],
-    }, "TYPO_FIX", "ED2: Tuned title");
+    const ed2 = treeEngine.addEdit(
+      event2Key,
+      {
+        id: "ev-2",
+        projectId: "proj-1",
+        title: "Battle of Dragon Peak (Fierce)",
+        narrativeSequenceNumber: 20,
+        chronologicalOrder: 20,
+        createdAt: new Date(),
+        effects: [],
+      },
+      "TYPO_FIX",
+      "ED2: Tuned title",
+    );
     assert.equal(ed2.parentId, ed1.id);
 
     // 3. Add ED3 from ED2
-    const ed3 = treeEngine.addEdit(event2Key, {
-      id: "ev-2",
-      projectId: "proj-1",
-      title: "Battle of Dragon Peak (Climax)",
-      narrativeSequenceNumber: 20,
-      chronologicalOrder: 20,
-      createdAt: new Date(),
-      effects: [{ id: "eff-10", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "hp", operation: "DECREMENT", value: 50 }],
-    }, "BASELINE_EDIT", "ED3: Added HP damage effect");
+    const ed3 = treeEngine.addEdit(
+      event2Key,
+      {
+        id: "ev-2",
+        projectId: "proj-1",
+        title: "Battle of Dragon Peak (Climax)",
+        narrativeSequenceNumber: 20,
+        chronologicalOrder: 20,
+        createdAt: new Date(),
+        effects: [
+          {
+            id: "eff-10",
+            eventId: "ev-2",
+            targetEntity: eldrinId,
+            propertyKey: "hp",
+            operation: "DECREMENT",
+            value: 50,
+          },
+        ],
+      },
+      "BASELINE_EDIT",
+      "ED3: Added HP damage effect",
+    );
     assert.equal(ed3.parentId, ed2.id);
 
     // 4. Add ED4 from ED3 -> ED1 -> ED2 -> ED3 -> ED4 (EDIT head is on ED4)
-    const ed4 = treeEngine.addEdit(event2Key, {
-      id: "ev-2",
-      projectId: "proj-1",
-      title: "Battle of Dragon Peak (Cataclysm)",
-      narrativeSequenceNumber: 20,
-      chronologicalOrder: 20,
-      createdAt: new Date(),
-      effects: [{ id: "eff-11", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "hp", operation: "DECREMENT", value: 100 }],
-    }, "BASELINE_EDIT", "ED4: Increased damage to 100");
+    const ed4 = treeEngine.addEdit(
+      event2Key,
+      {
+        id: "ev-2",
+        projectId: "proj-1",
+        title: "Battle of Dragon Peak (Cataclysm)",
+        narrativeSequenceNumber: 20,
+        chronologicalOrder: 20,
+        createdAt: new Date(),
+        effects: [
+          {
+            id: "eff-11",
+            eventId: "ev-2",
+            targetEntity: eldrinId,
+            propertyKey: "hp",
+            operation: "DECREMENT",
+            value: 100,
+          },
+        ],
+      },
+      "BASELINE_EDIT",
+      "ED4: Increased damage to 100",
+    );
 
     let tree = treeEngine.getTree(event2Key)!;
     assert.equal(tree.activeEditId, ed4.id);
-    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Cataclysm)");
+    assert.equal(
+      treeEngine.getActiveSnapshot(event2Key)?.title,
+      "Battle of Dragon Peak (Cataclysm)",
+    );
 
     // 5. Non-destructive revert: Checkout ED3 as EDIT head
     // ED4 must NOT be deleted; it remains a child of ED3
@@ -267,28 +349,93 @@ describe("Bitemporal & Dual-Axis Entity Revision Engine", () => {
     tree = treeEngine.getTree(event2Key)!;
     assert.equal(tree.activeEditId, ed3.id);
     assert.equal(tree.nodes[ed3.id].childrenIds.includes(ed4.id), true);
-    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Climax)");
+    assert.equal(
+      treeEngine.getActiveSnapshot(event2Key)?.title,
+      "Battle of Dragon Peak (Climax)",
+    );
 
     // 6. Add new branch ED5 from ED3 -> ED3 now has TWO children (ED4 and ED5), and EDIT head moves to ED5
-    const ed5 = treeEngine.addEdit(event2Key, {
-      id: "ev-2",
-      projectId: "proj-1",
-      title: "Battle of Dragon Peak (Tactical Retreat)",
-      narrativeSequenceNumber: 20,
-      chronologicalOrder: 20,
-      createdAt: new Date(),
-      effects: [{ id: "eff-12", eventId: "ev-2", targetEntity: eldrinId, propertyKey: "status", operation: "SET", value: "RETREATING" }],
-    }, "RETROACTIVE_PLOT_FIX", "ED5: Alternate plot branch - retreat instead of damage", ed3.id);
+    const ed5 = treeEngine.addEdit(
+      event2Key,
+      {
+        id: "ev-2",
+        projectId: "proj-1",
+        title: "Battle of Dragon Peak (Tactical Retreat)",
+        narrativeSequenceNumber: 20,
+        chronologicalOrder: 20,
+        createdAt: new Date(),
+        effects: [
+          {
+            id: "eff-12",
+            eventId: "ev-2",
+            targetEntity: eldrinId,
+            propertyKey: "status",
+            operation: "SET",
+            value: "RETREATING",
+          },
+        ],
+      },
+      "RETROACTIVE_PLOT_FIX",
+      "ED5: Alternate plot branch - retreat instead of damage",
+      ed3.id,
+    );
 
     tree = treeEngine.getTree(event2Key)!;
     assert.equal(tree.activeEditId, ed5.id);
     assert.equal(tree.nodes[ed3.id].childrenIds.length, 2);
     assert.deepEqual(tree.nodes[ed3.id].childrenIds, [ed4.id, ed5.id]);
-    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Tactical Retreat)");
+    assert.equal(
+      treeEngine.getActiveSnapshot(event2Key)?.title,
+      "Battle of Dragon Peak (Tactical Retreat)",
+    );
 
     // 7. Verify we can switch back to ED4 at any time
     treeEngine.checkoutHead(event2Key, ed4.id);
-    assert.equal(treeEngine.getActiveSnapshot(event2Key)?.title, "Battle of Dragon Peak (Cataclysm)");
+    assert.equal(
+      treeEngine.getActiveSnapshot(event2Key)?.title,
+      "Battle of Dragon Peak (Cataclysm)",
+    );
+  });
+
+  it("BLOCK_TEST_REVISION_ENGINE_001: should handle revert-of-revert loops and throw on non-existent checkout", () => {
+    const engine = new RevisionEngine();
+    const rev0 = engine.recordRevision(
+      initialEntity,
+      "BASELINE_EDIT",
+      "Initial",
+    );
+
+    const entity1: EntityItem = { ...initialEntity, name: "Eldrin II" };
+    const rev1 = engine.recordRevision(
+      entity1,
+      "BASELINE_EDIT",
+      "Renamed to II",
+    );
+
+    // Revert 1: Revert back to rev0
+    const { restoredEntity: r1, revision: rev2 } = engine.revertToRevision(
+      eldrinId,
+      rev0.id,
+      "Back to rev0",
+    );
+    assert.equal(r1.name, "Eldrin");
+    assert.equal(rev2.type, "REVERT");
+
+    // Revert 2: Revert back to rev1 (reverting a revert)
+    const { restoredEntity: r2, revision: rev3 } = engine.revertToRevision(
+      eldrinId,
+      rev1.id,
+      "Back to rev1",
+    );
+    assert.equal(r2.name, "Eldrin II");
+    assert.equal(rev3.type, "REVERT");
+    assert.equal(rev3.revisionNumber, 3);
+
+    // Tree Engine error check
+    const treeEngine = engine.getEventTreeEngine();
+    assert.throws(
+      () => treeEngine.checkoutHead("non-existent-event", "some-node-id"),
+      /BLOCK_WORLD_REVISION_ENGINE_001/,
+    );
   });
 });
-

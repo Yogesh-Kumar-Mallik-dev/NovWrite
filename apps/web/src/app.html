@@ -6,25 +6,60 @@
     <title>NovWrite — Fictional Universe & Prose Authoring Studio</title>
 
     <!-- Essential SEO Metadata -->
-    <meta name="description" content="NovWrite is a professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, dual-axis revision trees, and continuity verification." />
-    <meta name="keywords" content="NovWrite, novel writing, world building, authoring studio, continuity engine, fictional universe, bitemporal revisions, timeline event sourcing, AST formulas, plot timeline" />
+    <meta
+      name="description"
+      content="NovWrite is a professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, dual-axis revision trees, and continuity verification."
+    />
+    <meta
+      name="keywords"
+      content="NovWrite, novel writing, world building, authoring studio, continuity engine, fictional universe, bitemporal revisions, timeline event sourcing, AST formulas, plot timeline"
+    />
     <meta name="author" content="NovWrite Team" />
     <meta name="application-name" content="NovWrite" />
     <meta name="robots" content="index, follow" />
 
     <!-- Favicon & Touch Icons -->
-    <link rel="icon" type="image/x-icon" href="%sveltekit.assets%/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="%sveltekit.assets%/favicon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="%sveltekit.assets%/favicon.ico"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="%sveltekit.assets%/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="%sveltekit.assets%/favicon-16x16.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="%sveltekit.assets%/favicon.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%sveltekit.assets%/apple-touch-icon.png"
+    />
     <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="NovWrite Studio" />
-    <meta property="og:title" content="NovWrite — Fictional Universe & Prose Authoring Studio" />
-    <meta property="og:description" content="Professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing." />
+    <meta
+      property="og:title"
+      content="NovWrite — Fictional Universe & Prose Authoring Studio"
+    />
+    <meta
+      property="og:description"
+      content="Professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing."
+    />
     <meta property="og:image" content="%sveltekit.assets%/og-image.png" />
     <meta property="og:image:width" content="1254" />
     <meta property="og:image:height" content="1254" />
@@ -32,29 +67,48 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="NovWrite — Fictional Universe & Prose Authoring Studio" />
-    <meta name="twitter:description" content="Professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing." />
+    <meta
+      name="twitter:title"
+      content="NovWrite — Fictional Universe & Prose Authoring Studio"
+    />
+    <meta
+      name="twitter:description"
+      content="Professional fictional universe design and novel authoring studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing."
+    />
     <meta name="twitter:image" content="%sveltekit.assets%/og-image.png" />
 
     <!-- Theme & Mobile Capabilities -->
-    <meta name="theme-color" content="#8b5cf6" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#7c3aed" media="(prefers-color-scheme: light)" />
+    <meta
+      name="theme-color"
+      content="#8b5cf6"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta
+      name="theme-color"
+      content="#7c3aed"
+      media="(prefers-color-scheme: light)"
+    />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="NovWrite" />
 
     <script>
       (function () {
         try {
-          var savedTheme = localStorage.getItem('novwrite-theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (savedTheme === 'light' || (!savedTheme && !prefersDark)) {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.classList.add('light');
+          var savedTheme = localStorage.getItem("novwrite-theme");
+          var prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          if (savedTheme === "light" || (!savedTheme && !prefersDark)) {
+            document.documentElement.classList.remove("dark");
+            document.documentElement.classList.add("light");
           } else {
-            document.documentElement.classList.add('dark');
-            document.documentElement.classList.remove('light');
+            document.documentElement.classList.add("dark");
+            document.documentElement.classList.remove("light");
           }
         } catch (e) {}
       })();

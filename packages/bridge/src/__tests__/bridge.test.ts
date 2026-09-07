@@ -14,8 +14,15 @@ import {
   validateSceneGroundingRequest,
   validateContinuityAuditRequest,
   validateEntityMentionQuery,
+  validateEntityRevision,
+  validateBitemporalCoordinateQuery,
   DynamicFieldDefSchema,
   BlueprintDefSchema,
+  EntityItemSchema,
+  ValueTypeOptionSchema,
+  EditTreeSchema,
+  EditNodeSchema,
+  BitemporalEntityStateSchema,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -87,6 +94,20 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     );
   });
 
+  it("BLOCK_TEST_BRIDGE_001: should reject invalid ContinuityAuditRequest with block ID", () => {
+    const invalidAudit = {
+      projectId: "not-a-uuid",
+      sceneId: "not-a-uuid",
+      sequenceNumber: -1,
+      draftEvents: [],
+    };
+
+    assert.throws(
+      () => validateContinuityAuditRequest(invalidAudit),
+      /BLOCK_COMM_BRIDGE_CONTRACT_001/,
+    );
+  });
+
   it("BLOCK_TEST_BRIDGE_001: should query entity autocomplete mentions", async () => {
     const query = {
       projectId: DEMO_PROJECT_ID,
@@ -101,6 +122,18 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     assert.strictEqual(
       res.matches[0].currentRealmOrStatus,
       "Foundation Establishment",
+    );
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should reject invalid EntityMentionQuery with block ID", () => {
+    const invalidQuery = {
+      projectId: "invalid-uuid",
+      queryToken: "", // empty query token violates min(1)
+    };
+
+    assert.throws(
+      () => validateEntityMentionQuery(invalidQuery),
+      /BLOCK_COMM_BRIDGE_CONTRACT_001/,
     );
   });
 
@@ -123,9 +156,103 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
         category: "Entity",
         fields: [
           { id: "f-1", name: "health", label: "Health", fieldType: "NUMBER" },
-          { id: "f-2", name: "Health", label: "Health Duplicate", fieldType: "NUMBER" },
+          {
+            id: "f-2",
+            name: "Health",
+            label: "Health Duplicate",
+            fieldType: "NUMBER",
+          },
         ],
       });
     }, /Duplicate field machine keys/);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should sanitize ValueTypeOption value to lowercase machine key", () => {
+    const parsed = ValueTypeOptionSchema.parse({
+      label: "Qi Condensation Peak",
+      value: "Qi_Condensation_Peak",
+      power: 99.5,
+    });
+    assert.strictEqual(parsed.value, "qi_condensation_peak");
+    assert.strictEqual(parsed.power, 99.5);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should validate EntityItemSchema correctly", () => {
+    const entity = EntityItemSchema.parse({
+      id: "ent-1",
+      blueprintId: "bp-character",
+      name: "Arthur",
+      properties: {
+        attack: 100,
+        realm: "Foundation",
+      },
+      computedFormulas: {
+        combat_power: 300,
+      },
+      lastMutatedSeqNumber: 5,
+    });
+    assert.strictEqual(entity.name, "Arthur");
+    assert.strictEqual(entity.computedFormulas?.combat_power, 300);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should validate EntityRevision and BitemporalCoordinateQuery contracts", () => {
+    const validRev = {
+      id: "rev-1",
+      entityId: "ent-1",
+      parentRevisionId: null,
+      revisionNumber: 0,
+      createdAt: new Date().toISOString(),
+      type: "BASELINE_EDIT",
+      patch: {
+        name: { before: "Old", after: "New" },
+      },
+      snapshot: {
+        id: "ent-1",
+        blueprintId: "bp-1",
+        name: "New",
+        properties: {},
+      },
+    };
+    const parsedRev = validateEntityRevision(validRev);
+    assert.strictEqual(parsedRev.type, "BASELINE_EDIT");
+
+    const validCoord = {
+      entityId: "ent-1",
+      targetSequenceNumber: 10,
+      targetRevisionId: "rev-1",
+    };
+    const parsedCoord = validateBitemporalCoordinateQuery(validCoord);
+    assert.strictEqual(parsedCoord.targetSequenceNumber, 10);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should validate EditTreeSchema and EditNodeSchema structures", () => {
+    const validTree = {
+      rootId: "node-0",
+      activeEditId: "node-1",
+      nodes: {
+        "node-0": {
+          id: "node-0",
+          parentId: null,
+          childrenIds: ["node-1"],
+          revisionNumber: 0,
+          type: "BASELINE_EDIT",
+          createdAt: new Date().toISOString(),
+          snapshot: { id: "ent-1", name: "Base" },
+        },
+        "node-1": {
+          id: "node-1",
+          parentId: "node-0",
+          childrenIds: [],
+          revisionNumber: 1,
+          type: "TYPO_FIX",
+          createdAt: new Date().toISOString(),
+          snapshot: { id: "ent-1", name: "Base Fixed" },
+        },
+      },
+    };
+
+    const parsedTree = EditTreeSchema.parse(validTree);
+    assert.strictEqual(parsedTree.activeEditId, "node-1");
+    assert.strictEqual(Object.keys(parsedTree.nodes).length, 2);
   });
 });

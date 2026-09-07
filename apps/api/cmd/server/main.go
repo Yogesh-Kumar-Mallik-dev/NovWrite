@@ -20,16 +20,7 @@ import (
 
 // Block Standard: BLOCK_API_SERVER_MAIN_001
 
-func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	env := os.Getenv("ENVIRONMENT")
-	if env == "" {
-		env = "development"
-	}
-
+func BuildRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	// Global Middlewares (Observability, Security, Tracing, Recovery)
@@ -150,6 +141,21 @@ func main() {
 			Code:   "METHOD_NOT_ALLOWED",
 		})
 	})
+
+	return r
+}
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	env := os.Getenv("ENVIRONMENT")
+	if env == "" {
+		env = "development"
+	}
+
+	r := BuildRouter()
 
 	addr := fmt.Sprintf(":%s", port)
 	server := &http.Server{

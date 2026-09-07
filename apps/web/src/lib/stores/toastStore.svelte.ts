@@ -11,7 +11,12 @@ export interface ToastItem {
 class ToastStore {
   items = $state<ToastItem[]>([]);
 
-  add(type: ToastType, title: string, description?: string, duration: number = 4000) {
+  add(
+    type: ToastType,
+    title: string,
+    description?: string,
+    duration: number = 4000,
+  ) {
     const id = crypto.randomUUID();
     const item: ToastItem = { id, type, title, description, duration };
     this.items.push(item);

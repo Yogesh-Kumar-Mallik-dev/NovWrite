@@ -13,10 +13,7 @@ import {
   BlueprintClass,
   EntityItem,
 } from "./schemaTypes.js";
-import {
-  evaluateFormula,
-  validateFormulaSyntax,
-} from "./formulaEngine.js";
+import { evaluateFormula, validateFormulaSyntax } from "./formulaEngine.js";
 
 const UUID_REGEX =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -42,7 +39,10 @@ export function validateSingleProperty(
 
   // Handle undefined / null: use defaultValue if available
   if (val === undefined || val === null) {
-    if (legacyDef.defaultValue !== undefined && legacyDef.defaultValue !== null) {
+    if (
+      legacyDef.defaultValue !== undefined &&
+      legacyDef.defaultValue !== null
+    ) {
       val = legacyDef.defaultValue;
     } else if (isRequired) {
       return {
@@ -185,7 +185,9 @@ export function validateSingleProperty(
       });
 
       if (!isValid && allowed.length > 0) {
-        const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
+        const allowedLabels = allowed.map((o) =>
+          typeof o === "string" ? o : o.label,
+        );
         return {
           valid: false,
           error: {
@@ -216,7 +218,9 @@ export function validateSingleProperty(
       });
 
       if (!matched && allowed.length > 0) {
-        const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
+        const allowedLabels = allowed.map((o) =>
+          typeof o === "string" ? o : o.label,
+        );
         return {
           valid: false,
           error: {
@@ -248,7 +252,9 @@ export function validateSingleProperty(
         });
 
         if (!match && allowed.length > 0) {
-          const allowedLabels = allowed.map((o) => (typeof o === "string" ? o : o.label));
+          const allowedLabels = allowed.map((o) =>
+            typeof o === "string" ? o : o.label,
+          );
           return {
             valid: false,
             error: {
@@ -259,7 +265,9 @@ export function validateSingleProperty(
             },
           };
         }
-        coerced.push(typeof match === "object" && match !== null ? match.value : strItem);
+        coerced.push(
+          typeof match === "object" && match !== null ? match.value : strItem,
+        );
       }
       return { valid: true, coercedVal: coerced };
     }
@@ -277,10 +285,18 @@ export function validateSingleProperty(
         try {
           const parsed = JSON.parse(val);
           if (Array.isArray(parsed)) {
-            return { valid: true, coercedVal: parsed.map((item) => String(item).trim()).filter(Boolean) };
+            return {
+              valid: true,
+              coercedVal: parsed
+                .map((item) => String(item).trim())
+                .filter(Boolean),
+            };
           }
         } catch {}
-        const coerced = val.split(",").map((s) => s.trim()).filter(Boolean);
+        const coerced = val
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         return { valid: true, coercedVal: coerced };
       }
       return { valid: true, coercedVal: [] };
@@ -288,7 +304,13 @@ export function validateSingleProperty(
 
     case "BLUEPRINT_REF":
     case "ENTITY_REF" as any: {
-      if (typeof val === "string" && (UUID_REGEX.test(val) || val.startsWith("e-") || val.startsWith("bp-") || val.startsWith("ent-"))) {
+      if (
+        typeof val === "string" &&
+        (UUID_REGEX.test(val) ||
+          val.startsWith("e-") ||
+          val.startsWith("bp-") ||
+          val.startsWith("ent-"))
+      ) {
         return { valid: true, coercedVal: val };
       }
       if (typeof val === "object" && val !== null) {
@@ -320,10 +342,16 @@ export function validateSingleProperty(
           if (Array.isArray(parsed)) {
             listVal = parsed;
           } else {
-            listVal = val.split(",").map((s) => s.trim()).filter(Boolean);
+            listVal = val
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
           }
         } catch {
-          listVal = val.split(",").map((s) => s.trim()).filter(Boolean);
+          listVal = val
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
         }
       } else if (val) {
         listVal = [val];
@@ -334,7 +362,11 @@ export function validateSingleProperty(
         if (!item) continue;
         if (typeof item === "string") {
           coerced.push(item.trim());
-        } else if (typeof item === "object" && item !== null && (item as any).id) {
+        } else if (
+          typeof item === "object" &&
+          item !== null &&
+          (item as any).id
+        ) {
           coerced.push((item as any).id);
         } else {
           coerced.push(String(item));
@@ -420,7 +452,8 @@ export function validateAndSanitizeBlueprint(bp: BlueprintDef): {
     errors.push({
       propertyKey: "name",
       code: "BLUEPRINT_NAME_REQUIRED",
-      message: "BLOCK_WORLD_DYNAMIC_SCHEMA_002: Blueprint name cannot be empty.",
+      message:
+        "BLOCK_WORLD_DYNAMIC_SCHEMA_002: Blueprint name cannot be empty.",
     });
   }
 
@@ -433,9 +466,16 @@ export function validateAndSanitizeBlueprint(bp: BlueprintDef): {
 
   for (let idx = 0; idx < (bp.fields || []).length; idx++) {
     const f = bp.fields[idx];
-    let key = (f.name || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "");
+    let key = (f.name || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_\.]/g, "");
     if (!key) {
-      key = (f.label || "").trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\.]/g, "");
+      key = (f.label || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_\.]/g, "");
     }
     if (!key) {
       errors.push({
@@ -474,13 +514,20 @@ export function validateAndSanitizeBlueprint(bp: BlueprintDef): {
         const opts = (f.options || []).map((o: any) => {
           if (typeof o === "string") {
             const trimmed = o.trim();
-            return { label: trimmed, value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_") };
+            return {
+              label: trimmed,
+              value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_"),
+            };
           }
           const lbl = (o.label || o.value || "").trim();
-          const val = (o.value || o.label || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_");
+          const val = (o.value || o.label || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_\.]/g, "_");
           return { label: lbl, value: val };
         });
-        cleanField.options = opts.length > 0 ? opts : [{ label: "Default", value: "default" }];
+        cleanField.options =
+          opts.length > 0 ? opts : [{ label: "Default", value: "default" }];
         break;
       }
 
@@ -488,14 +535,37 @@ export function validateAndSanitizeBlueprint(bp: BlueprintDef): {
         const opts = (f.options || []).map((o: any) => {
           if (typeof o === "string") {
             const trimmed = o.trim();
-            return { label: trimmed, value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_"), power: 0, numericValue: 0 };
+            return {
+              label: trimmed,
+              value: trimmed.toLowerCase().replace(/[^a-z0-9_\.]/g, "_"),
+              power: 0,
+              numericValue: 0,
+            };
           }
           const lbl = (o.label || o.value || "").trim();
-          const val = (o.value || o.label || "").trim().toLowerCase().replace(/[^a-z0-9_\.]/g, "_");
-          const pwr = typeof o.power === "number" ? o.power : (typeof o.numericValue === "number" ? o.numericValue : 0);
+          const val = (o.value || o.label || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_\.]/g, "_");
+          const pwr =
+            typeof o.power === "number"
+              ? o.power
+              : typeof o.numericValue === "number"
+                ? o.numericValue
+                : 0;
           return { label: lbl, value: val, power: pwr, numericValue: pwr };
         });
-        cleanField.options = opts.length > 0 ? opts : [{ label: "Default", value: "default", power: 0, numericValue: 0 }];
+        cleanField.options =
+          opts.length > 0
+            ? opts
+            : [
+                {
+                  label: "Default",
+                  value: "default",
+                  power: 0,
+                  numericValue: 0,
+                },
+              ];
         break;
       }
 
@@ -618,7 +688,10 @@ export function validateAndSanitizeEntity(
   const computedFormulas: Record<string, number> = {};
   for (const f of bp.fields) {
     if (f.fieldType === "FORMULA" && f.formulaExpression) {
-      const evalRes = evaluateFormula(f.formulaExpression, valRes.coercedProperties);
+      const evalRes = evaluateFormula(
+        f.formulaExpression,
+        valRes.coercedProperties,
+      );
       computedFormulas[f.name] =
         evalRes.success && evalRes.value !== undefined ? evalRes.value : 0;
     }
