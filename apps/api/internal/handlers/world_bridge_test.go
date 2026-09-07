@@ -85,18 +85,20 @@ func TestWorldBridgeHandler_AuditContradiction(t *testing.T) {
 		t.Fatalf("expected HTTP 200, got %d", rec.Code)
 	}
 
-	var resp world.ContinuityAuditResponse
+	var resp struct {
+		Data world.ContinuityAuditResponse `json:"data"`
+	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to unmarshal response: %v", err)
 	}
 
-	if resp.Status != "VIOLATION_DETECTED" {
-		t.Fatalf("expected VIOLATION_DETECTED, got %s", resp.Status)
+	if resp.Data.Status != "VIOLATION_DETECTED" {
+		t.Fatalf("expected VIOLATION_DETECTED, got %s", resp.Data.Status)
 	}
-	if len(resp.Violations) != 1 {
-		t.Fatalf("expected 1 violation, got %d", len(resp.Violations))
+	if len(resp.Data.Violations) != 1 {
+		t.Fatalf("expected 1 violation, got %d", len(resp.Data.Violations))
 	}
-	if resp.Violations[0].Code != "INVARIANT_STATE_ILLEGAL_ACTION" {
-		t.Fatalf("expected INVARIANT_STATE_ILLEGAL_ACTION, got %s", resp.Violations[0].Code)
+	if resp.Data.Violations[0].Code != "INVARIANT_STATE_ILLEGAL_ACTION" {
+		t.Fatalf("expected INVARIANT_STATE_ILLEGAL_ACTION, got %s", resp.Data.Violations[0].Code)
 	}
 }

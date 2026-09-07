@@ -114,12 +114,28 @@ type BlueprintDef struct {
 	IsBuiltIn      bool              `json:"isBuiltIn,omitempty"`
 }
 
+// EntityItem represents a concrete instantiated universe object.
+type EntityItem struct {
+	ID                   string                 `json:"id"`
+	ProjectID            string                 `json:"projectId,omitempty"`
+	BlueprintID          string                 `json:"blueprintId"`
+	Name                 string                 `json:"name"`
+	Aliases              []string               `json:"aliases,omitempty"`
+	Category             string                 `json:"category,omitempty"`
+	Description          string                 `json:"description,omitempty"`
+	Properties           map[string]interface{} `json:"properties"`
+	ComputedFormulas     map[string]float64     `json:"computedFormulas,omitempty"`
+	Status               string                 `json:"status,omitempty"`
+	LastMutatedSeqNumber int                    `json:"lastMutatedSeqNumber,omitempty"`
+}
+
 // PropertyValidationError represents a schema validation failure.
 type PropertyValidationError struct {
-	PropertyKey string      `json:"propertyKey"`
-	Code        string      `json:"code"`
-	Message     string      `json:"message"`
-	Value       interface{} `json:"value,omitempty"`
+	PropertyKey   string      `json:"propertyKey"`
+	Code          string      `json:"code"`
+	Message       string      `json:"message"`
+	ReceivedValue interface{} `json:"receivedValue,omitempty"`
+	Value         interface{} `json:"value,omitempty"`
 }
 
 // ValidateSingleProperty validates an individual property value against its definition.
@@ -647,4 +663,14 @@ func ValidateAndSanitizeEntity(
 	}
 
 	return coercedProps, computedFormulas, errs
+}
+
+// ValidateAndSanitizeEntityItem validates an EntityItem against a blueprint and recomputes all formulas.
+func ValidateAndSanitizeEntityItem(bp BlueprintDef, entity EntityItem) (*EntityItem, []*PropertyValidationError) {
+	coercedProps, computedFormulas, errs := ValidateAndSanitizeEntity(bp, entity.Name, entity.Properties)
+	sanitized := entity
+	sanitized.Name = strings.TrimSpace(entity.Name)
+	sanitized.Properties = coercedProps
+	sanitized.ComputedFormulas = computedFormulas
+	return &sanitized, errs
 }
