@@ -181,12 +181,6 @@
   let jsonParseError = $state<string | null>(null);
   let saveMessage = $state<string | null>(null);
 
-  // New Custom Property Drafter (for arbitrary object properties)
-  let showAddCustomPropModal = $state(false);
-  let newPropKey = $state('');
-  let newPropType = $state<'string' | 'number' | 'boolean' | 'json'>('string');
-  let newPropValue = $state('');
-
   // Synchronize state when entity changes or on route param change
   $effect(() => {
     const currentId = entityId;
@@ -436,18 +430,6 @@
       : []
   );
 
-  // Identify any custom properties present in properties that are not in the blueprint definition
-  const customPropertyKeys = $derived.by(() => {
-    if (!properties) return [];
-    const schemaFieldNames = new Set<string>();
-    if (blueprint) {
-      for (const f of blueprint.fields) {
-        schemaFieldNames.add(f.name);
-      }
-    }
-    return Object.keys(properties).filter((k) => !schemaFieldNames.has(k));
-  });
-
   function getFullEntityJson(): string {
     return JSON.stringify(
       {
@@ -539,46 +521,6 @@
       jsonParseError = null;
       toast.info('Reset JSON', 'Entity properties reverted to last saved state.');
     }
-  }
-
-  function handleAddCustomProperty() {
-    const key = newPropKey.trim().toLowerCase().replace(/[^a-z0-9_\.]/g, '');
-    if (!key) {
-      toast.error('Validation Error', 'Property key is required.');
-      return;
-    }
-    if (properties[key] !== undefined) {
-      toast.error('Validation Error', `Property "${key}" already exists.`);
-      return;
-    }
-
-    let parsedVal: any = newPropValue;
-    if (newPropType === 'number') {
-      parsedVal = Number(newPropValue) || 0;
-    } else if (newPropType === 'boolean') {
-      parsedVal = newPropValue === 'true';
-    } else if (newPropType === 'json') {
-      try {
-        parsedVal = JSON.parse(newPropValue || '{}');
-      } catch {
-        parsedVal = {};
-      }
-    }
-
-    properties[key] = parsedVal;
-    jsonEditorContent = JSON.stringify(properties, null, 2);
-    toast.success('Property Added', `Custom property "${key}" attached to entity.`);
-
-    newPropKey = '';
-    newPropValue = '';
-    newPropType = 'string';
-    showAddCustomPropModal = false;
-  }
-
-  function handleRemoveCustomProperty(key: string) {
-    delete properties[key];
-    jsonEditorContent = JSON.stringify(properties, null, 2);
-    toast.info('Property Removed', `Custom property "${key}" deleted.`);
   }
 
   function handleSaveEntity() {
@@ -1568,86 +1510,6 @@
         </Card>
       {/if}
 
-      <!-- Custom / Extended Properties Section -->
-      {#if customPropertyKeys.length > 0 || !blueprint}
-        <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <h3
-                class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
-              >
-                <Sliders class="w-4 h-4 text-primary shrink-0" />
-                <span>Custom & Extended Object Properties</span>
-              </h3>
-              <p class="text-xs text-muted-foreground mt-0.5">
-                Instance-specific properties and data keys attached to this entity.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={() => (showAddCustomPropModal = true)}
-              class="h-7 text-xs flex items-center gap-1 shrink-0"
-            >
-              <Plus class="w-3 h-3" />
-              <span>Add Property</span>
-            </Button>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {#each customPropertyKeys as propKey}
-              {@const propVal = properties[propKey]}
-              <div
-                class="p-3.5 rounded-lg bg-muted/40 border border-border space-y-2 relative group min-w-0 overflow-hidden"
-              >
-                <div class="flex items-center justify-between gap-2 min-w-0">
-                  <span class="text-xs font-mono font-bold text-foreground truncate" title={propKey}
-                    >{propKey}</span
-                  >
-                  <button
-                    type="button"
-                    onclick={() => handleRemoveCustomProperty(propKey)}
-                    class="text-muted-foreground hover:text-destructive transition p-1 cursor-pointer shrink-0"
-                    title="Delete Property"
-                  >
-                    <Trash2 class="w-3 h-3" />
-                  </button>
-                </div>
-
-                {#if typeof propVal === 'number'}
-                  <Input
-                    type="number"
-                    bind:value={properties[propKey]}
-                    class="text-xs font-mono"
-                  />
-                {:else if typeof propVal === 'boolean'}
-                  <Select
-                    bind:value={properties[propKey]}
-                    options={[
-                      { value: 'true', label: 'True / Enabled' },
-                      { value: 'false', label: 'False / Disabled' },
-                    ]}
-                  />
-                {:else if typeof propVal === 'object' && propVal !== null}
-                  <Textarea
-                    rows={3}
-                    value={JSON.stringify(properties[propKey], null, 2)}
-                    class="text-xs font-mono leading-tight"
-                    oninput={(e) => {
-                      try {
-                        properties[propKey] = JSON.parse(e.currentTarget.value);
-                      } catch {}
-                    }}
-                  />
-                {:else}
-                  <Input bind:value={properties[propKey]} class="text-xs" />
-                {/if}
-              </div>
-            {/each}
-          </div>
-        </Card>
-      {/if}
-
       <!-- Live Evaluated Mathematical Formulas Banner -->
       {#if Object.keys(liveComputedFormulas).length > 0}
         <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs min-w-0 overflow-hidden">
@@ -1722,102 +1584,6 @@
     onConfirm={confirmDeleteAction}
     onCancel={() => (deleteConfirmOpen = false)}
   />
-
-  <!-- Add Custom Property Modal -->
-  {#if showAddCustomPropModal}
-    <div
-      class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-    >
-      <Card class="border-border bg-card max-w-md w-full p-6 space-y-4 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-border pb-3">
-          <div class="flex items-center gap-2 text-primary font-bold">
-            <Plus class="w-4 h-4" />
-            <span>Add Custom Object Property</span>
-          </div>
-          <button
-            type="button"
-            onclick={() => (showAddCustomPropModal = false)}
-            class="text-muted-foreground hover:text-foreground"
-          >
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-
-        <div class="space-y-3">
-          <Field id="custom-prop-key" label="Property Key (Identifier)" required>
-            <Input
-              id="custom-prop-key"
-              bind:value={newPropKey}
-              oninput={(e) => (newPropKey = e.currentTarget.value.toLowerCase())}
-              placeholder="e.g. soul_mark, aura_level, elemental_mastery"
-              class="font-mono text-xs"
-            />
-          </Field>
-
-          <Field id="custom-prop-type" label="Value Type">
-            <Select
-              bind:value={newPropType}
-              options={[
-                { value: 'string', label: 'Text (String)' },
-                { value: 'number', label: 'Number' },
-                { value: 'boolean', label: 'Boolean (Toggle)' },
-                { value: 'json', label: 'JSON Object / Array' },
-              ]}
-            />
-          </Field>
-
-          <Field id="custom-prop-val" label="Initial Value">
-            {#if newPropType === 'number'}
-              <Input
-                id="custom-prop-val"
-                type="number"
-                bind:value={newPropValue}
-                placeholder="0"
-                class="font-mono text-xs"
-              />
-            {:else if newPropType === 'boolean'}
-              <Select
-                bind:value={newPropValue}
-                options={[
-                  { value: 'true', label: 'True' },
-                  { value: 'false', label: 'False' },
-                ]}
-              />
-            {:else if newPropType === 'json'}
-              <Textarea
-                id="custom-prop-val"
-                rows={3}
-                bind:value={newPropValue}
-                placeholder={'{"level": 1}'}
-                class="font-mono text-xs"
-              />
-            {:else}
-              <Input
-                id="custom-prop-val"
-                bind:value={newPropValue}
-                placeholder="Initial text value..."
-                class="text-xs"
-              />
-            {/if}
-          </Field>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            onclick={() => (showAddCustomPropModal = false)}
-          >
-            Cancel
-          </Button>
-          <Button size="sm" onclick={handleAddCustomProperty}>
-            <Check class="w-3.5 h-3.5" />
-            <span>Add Property</span>
-          </Button>
-        </div>
-      </Card>
-    </div>
-  {/if}
 
   <!-- Dual-Axis Feather & Web History Inspector Dialog -->
   <FeatherHistoryDialog
