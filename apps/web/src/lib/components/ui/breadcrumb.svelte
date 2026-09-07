@@ -15,19 +15,19 @@
 
 <nav
   aria-label="Breadcrumb"
-  class="flex items-center gap-1.5 text-xs text-muted-foreground font-medium"
+  class="flex items-center flex-wrap gap-1.5 text-xs text-muted-foreground font-medium min-w-0"
 >
-  <a href="/" class="hover:text-foreground transition-colors flex items-center">
+  <a href="/" class="hover:text-foreground transition-colors flex items-center shrink-0">
     <Home class="w-3.5 h-3.5" />
   </a>
   {#each items as item, idx}
-    <ChevronRight class="w-3 h-3 text-muted-foreground/60" />
+    <ChevronRight class="w-3 h-3 text-muted-foreground/60 shrink-0" />
     {#if item.href && idx < items.length - 1}
-      <a href={item.href} class="hover:text-foreground transition-colors">
+      <a href={item.href} class="hover:text-foreground transition-colors truncate max-w-[140px] sm:max-w-[220px] md:max-w-none">
         {item.label}
       </a>
     {:else}
-      <span class="text-foreground font-semibold">{item.label}</span>
+      <span class="text-foreground font-semibold truncate max-w-[160px] sm:max-w-[260px] md:max-w-none">{item.label}</span>
     {/if}
   {/each}
 </nav>

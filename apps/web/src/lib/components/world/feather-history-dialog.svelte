@@ -136,43 +136,43 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in-0 duration-150"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in-0 duration-150"
   >
     <div
-      class="w-full max-w-5xl h-[88vh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+      class="w-full max-w-5xl h-[min(90dvh,850px)] max-h-[95dvh] bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
     >
       <!-- Dialog Header -->
       <div
-        class="flex items-center justify-between px-6 py-4 border-b border-border bg-card/60"
+        class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card/60 gap-3"
       >
-        <div class="flex items-center gap-3">
-          <div class="p-2 rounded-lg bg-primary/10 text-primary">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
             <GitBranch class="w-5 h-5" />
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-lg font-bold tracking-tight">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base sm:text-lg font-bold tracking-tight truncate">
                 Dual-Axis Feather History
               </h2>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono font-medium">
+              <span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono font-medium truncate max-w-[160px]">
                 {entity?.name}
               </span>
             </div>
-            <p class="text-xs text-muted-foreground">
+            <p class="text-xs text-muted-foreground hidden sm:block truncate">
               Explore orthogonal Plot Evolution (X-Axis) and Authorial Revision Barbs (Y-Axis) with infinite reversibility.
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onclick={() => (open = false)}>
+        <Button variant="ghost" size="sm" onclick={() => (open = false)} class="shrink-0">
           Close
         </Button>
       </div>
 
       <!-- Main Dual-Axis Viewport -->
-      <div class="flex-1 grid grid-cols-12 overflow-hidden">
+      <div class="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
         <!-- Left Panel: Revision Barbs Stack (Y-Axis) -->
         <div
-          class="col-span-4 border-r border-border flex flex-col bg-muted/20 overflow-hidden"
+          class="col-span-1 md:col-span-5 lg:col-span-4 border-b md:border-b-0 md:border-r border-border flex flex-col bg-muted/20 max-h-[35dvh] md:max-h-none overflow-hidden"
         >
           <div
             class="p-3 border-b border-border flex items-center justify-between bg-card/40"
@@ -251,12 +251,12 @@
         </div>
 
         <!-- Right Panel: Dual-Axis Inspector & Coordinate State (X-Axis) -->
-        <div class="col-span-8 flex flex-col overflow-hidden bg-background">
+        <div class="col-span-1 md:col-span-7 lg:col-span-8 flex flex-col overflow-hidden bg-background">
           <!-- Top Bar: Narrative Plot Sequence Scrubber (X-Axis) -->
-          <div class="p-4 border-b border-border bg-card/30">
-            <div class="flex items-center justify-between mb-2">
+          <div class="p-3 sm:p-4 border-b border-border bg-card/30">
+            <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
               <div class="flex items-center gap-2">
-                <Sliders class="w-4 h-4 text-primary" />
+                <Sliders class="w-4 h-4 text-primary shrink-0" />
                 <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Narrative Plot Axis (X-Axis / T_story)
                 </span>
@@ -278,10 +278,10 @@
                 bind:value={targetSeqNumber}
                 class="w-full accent-primary h-2 bg-muted rounded-lg appearance-none cursor-pointer"
               />
-              <div class="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
+              <div class="flex items-center justify-between text-[10px] text-muted-foreground font-mono overflow-x-auto gap-2 py-0.5">
                 <button
                   type="button"
-                  class="hover:text-primary transition-colors cursor-pointer"
+                  class="hover:text-primary transition-colors cursor-pointer shrink-0"
                   onclick={() => (targetSeqNumber = 0)}
                 >
                   Seq 0 (Creation)
@@ -289,7 +289,7 @@
                 {#each timelineEvents as ev}
                   <button
                     type="button"
-                    class="hover:text-primary transition-colors cursor-pointer {targetSeqNumber === ev.narrativeSequenceNumber ? 'text-primary font-bold' : ''}"
+                    class="hover:text-primary transition-colors cursor-pointer shrink-0 {targetSeqNumber === ev.narrativeSequenceNumber ? 'text-primary font-bold' : ''}"
                     onclick={() => (targetSeqNumber = ev.narrativeSequenceNumber)}
                   >
                     Seq {ev.narrativeSequenceNumber} ({ev.title.slice(0, 12)}...)
@@ -297,7 +297,7 @@
                 {/each}
                 <button
                   type="button"
-                  class="hover:text-primary transition-colors cursor-pointer"
+                  class="hover:text-primary transition-colors cursor-pointer shrink-0"
                   onclick={() => (targetSeqNumber = maxSeq)}
                 >
                   Latest (Seq {maxSeq})
@@ -307,23 +307,23 @@
           </div>
 
           <!-- Coordinate State Inspection -->
-          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+          <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
             {#if bitemporalState && activeRevision}
               <!-- 2D Coordinate Badge -->
-              <div class="p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 flex items-center justify-between">
+              <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <span class="text-[10px] uppercase tracking-wider font-bold text-primary">
                     Active Coordinate Resolution
                   </span>
                   <div class="flex items-center gap-3 mt-1">
-                    <div class="text-sm font-bold text-foreground flex items-center gap-1.5 font-mono">
+                    <div class="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5 font-mono flex-wrap">
                       <span>(T_story: Seq #{bitemporalState.narrativeSequenceNumber})</span>
                       <span class="text-muted-foreground font-normal">×</span>
                       <span>(T_rev: Rev #{bitemporalState.revisionNumber})</span>
                     </div>
                   </div>
                 </div>
-                <div class="text-right">
+                <div class="sm:text-right">
                   <span class="text-xs text-muted-foreground block">
                     Applied Plot Mutations
                   </span>
@@ -342,21 +342,21 @@
                   </h4>
                   <div class="border border-border rounded-lg divide-y divide-border overflow-hidden bg-card/50">
                     {#each bitemporalState.activeMutations as mutation}
-                      <div class="p-2.5 flex items-center justify-between text-xs font-mono">
-                        <div class="flex items-center gap-2">
-                          <span class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-bold">
+                      <div class="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-xs font-mono">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <span class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-bold shrink-0">
                             Seq #{mutation.sequenceNumber}
                           </span>
-                          <span class="text-foreground font-sans font-medium">
+                          <span class="text-foreground font-sans font-medium truncate">
                             {mutation.eventTitle}
                           </span>
                         </div>
-                        <div class="flex items-center gap-2 text-primary font-semibold">
+                        <div class="flex items-center gap-2 text-primary font-semibold flex-wrap">
                           <span>{mutation.propertyKey}</span>
                           <span class="px-1.5 py-0.5 rounded bg-primary/10 text-[10px] uppercase">
                             {mutation.operation}
                           </span>
-                          <span>{JSON.stringify(mutation.value)}</span>
+                          <span class="break-all">{JSON.stringify(mutation.value)}</span>
                         </div>
                       </div>
                     {/each}
@@ -373,27 +373,27 @@
                   </h4>
                   <div class="p-3 rounded-lg border border-border bg-muted/10 space-y-2 text-xs font-mono">
                     {#if activeRevision.patch.name}
-                      <div class="flex items-center gap-2">
+                      <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-muted-foreground">name:</span>
                         <span class="line-through text-rose-500">{activeRevision.patch.name.before || '(empty)'}</span>
-                        <ArrowRight class="w-3 h-3 text-muted-foreground" />
+                        <ArrowRight class="w-3 h-3 text-muted-foreground shrink-0" />
                         <span class="text-emerald-500 font-bold">{activeRevision.patch.name.after}</span>
                       </div>
                     {/if}
                     {#if activeRevision.patch.description}
-                      <div class="flex items-center gap-2">
+                      <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-muted-foreground">description:</span>
                         <span class="line-through text-rose-500">{activeRevision.patch.description.before || '(empty)'}</span>
-                        <ArrowRight class="w-3 h-3 text-muted-foreground" />
+                        <ArrowRight class="w-3 h-3 text-muted-foreground shrink-0" />
                         <span class="text-emerald-500 font-bold">{activeRevision.patch.description.after}</span>
                       </div>
                     {/if}
                     {#if activeRevision.patch.propertiesChanged}
                       {#each Object.entries(activeRevision.patch.propertiesChanged) as [propKey, diff]}
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                           <span class="text-muted-foreground">{propKey}:</span>
                           <span class="line-through text-rose-500">{JSON.stringify(diff.before)}</span>
-                          <ArrowRight class="w-3 h-3 text-muted-foreground" />
+                          <ArrowRight class="w-3 h-3 text-muted-foreground shrink-0" />
                           <span class="text-emerald-500 font-bold">{JSON.stringify(diff.after)}</span>
                         </div>
                       {/each}
@@ -408,7 +408,7 @@
                   <Layers class="w-3.5 h-3.5 text-muted-foreground" />
                   Resolved State at Coordinate (Properties & Formulas)
                 </h4>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {#each Object.entries(bitemporalState.properties) as [key, val]}
                     <div class="p-3 rounded-lg border border-border bg-card flex flex-col justify-between">
                       <span class="text-[10px] uppercase font-bold text-muted-foreground font-mono">

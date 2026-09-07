@@ -486,7 +486,7 @@
   <!-- Create / Edit Invariant Rule Modal -->
   {#if isModalOpen}
     <div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <Card class="border-border bg-card max-w-xl w-full p-6 space-y-5 shadow-2xl my-8">
+      <Card class="border-border bg-card max-w-xl w-full p-4 sm:p-6 space-y-5 shadow-2xl my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-border pb-3">
           <div class="flex items-center gap-2 text-amber-500">
             <ShieldCheck class="w-5 h-5" />
@@ -607,7 +607,7 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-border">
+        <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
           <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>Cancel</Button>
           <Button size="sm" disabled={!formName.trim()} onclick={handleSaveRule}>
             {modalMode === "add" ? "Create Rule" : "Save Changes"}

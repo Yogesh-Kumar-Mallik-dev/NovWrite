@@ -17,7 +17,7 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-4">
     <!-- Universe Entities -->
     <a
       href="/world/entities"

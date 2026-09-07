@@ -13,27 +13,27 @@
   } from "$lib/components/ui/card";
 </script>
 
-<div class="flex-1 p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
-  <div class="mb-10 text-center space-y-4">
+<div class="flex-1 p-4 sm:p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
+  <div class="mb-6 sm:mb-10 text-center space-y-3 sm:space-y-4">
     <div class="inline-block relative">
       <div class="absolute -inset-1.5 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur-md opacity-30 animate-pulse"></div>
       <img
         src="/logo.png"
         alt="NovWrite Logo"
-        class="relative w-20 h-20 mx-auto rounded-2xl border border-border bg-card p-1.5 shadow-xl object-contain"
+        class="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl border border-border bg-card p-1.5 shadow-xl object-contain"
       />
     </div>
     <h1
-      class="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground"
+      class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-foreground"
     >
       NovWrite Authoring Workspace
     </h1>
-    <p class="text-muted-foreground text-base max-w-2xl mx-auto leading-relaxed">
+    <p class="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
       Professional fictional universe design studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing.
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
     <!-- Prose Studio Card -->
     <a
       href="/novel"

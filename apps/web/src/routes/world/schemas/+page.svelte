@@ -216,7 +216,7 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {#each paginatedBlueprints.data as bp (bp.id)}
-          <Card class="border-border bg-card p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between shadow-xs">
+          <Card class="border-border bg-card p-4 sm:p-5 space-y-4 hover:border-border/80 transition flex flex-col justify-between shadow-xs">
             <div class="space-y-3">
               <!-- Header with Class Indicator & Category -->
               <div class="flex items-start justify-between gap-2">

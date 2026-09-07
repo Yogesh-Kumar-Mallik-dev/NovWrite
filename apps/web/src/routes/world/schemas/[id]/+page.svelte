@@ -576,7 +576,7 @@
     {/if}
 
     <!-- Meta Details Card -->
-    <Card class="p-6 space-y-4 border-border bg-card">
+    <Card class="p-4 sm:p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
       <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
         <Boxes class="w-4 h-4 text-primary" />
         <span>Blueprint Identity & Metadata</span>
@@ -621,7 +621,7 @@
     </Card>
 
     <!-- Fields & Mathematical Formulas Workbench -->
-    <Card class="p-6 space-y-6 border-border bg-card">
+    <Card class="p-4 sm:p-6 space-y-6 border-border bg-card min-w-0 overflow-hidden">
       <div class="flex items-center justify-between border-b border-border pb-3">
         <div>
           <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
@@ -1179,7 +1179,7 @@
 <!-- Edit Dynamic Field Modal -->
 {#if editingField}
   <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-    <div class="w-full max-w-2xl bg-card border border-border rounded-xl shadow-2xl p-6 space-y-5 my-8">
+    <div class="w-full max-w-2xl bg-card border border-border rounded-xl shadow-2xl p-4 sm:p-6 space-y-5 my-4 sm:my-8 max-h-[min(90dvh,800px)] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-border pb-3">
         <div class="flex items-center gap-2">
           <Edit3 class="w-4 h-4 text-primary" />

@@ -743,7 +743,7 @@
 
     {#if editorMode === 'json'}
       <!-- MODE 1: RAW JSON OBJECT INSPECTOR & EDITOR -->
-      <Card class="p-6 space-y-4 border-primary/40 bg-card shadow-sm min-w-0 overflow-hidden">
+      <Card class="p-4 sm:p-6 space-y-4 border-primary/40 bg-card shadow-sm min-w-0 overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
           <div class="space-y-0.5 min-w-0">
             <div class="flex items-center gap-2">
@@ -824,13 +824,13 @@
         <JsonEditor
           bind:value={jsonEditorContent}
           onchange={handleJsonTextareaChange}
-          height="520px"
+          height="clamp(320px, 50dvh, 600px)"
         />
       </Card>
     {:else}
       <!-- MODE 2: VISUAL FORM OBJECT INSPECTOR -->
       <!-- PRIMARY IDENTITY CARD -->
-      <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
+      <Card class="p-4 sm:p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
           <h3
             class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2 min-w-0"
@@ -887,7 +887,7 @@
 
       <!-- Dynamic Template Attributes (Direct Fields from Blueprint) -->
       {#if blueprint && directFields.length > 0}
-        <Card class="p-6 space-y-5 border-border bg-card min-w-0 overflow-hidden">
+        <Card class="p-4 sm:p-6 space-y-5 border-border bg-card min-w-0 overflow-hidden">
           <div class="border-b border-border pb-3">
             <h3
               class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2"
@@ -1170,7 +1170,7 @@
                     properties[field.name]
                   )
                 : null}
-              <Card class="p-5 border-cyan-500/30 bg-card space-y-4 shadow-xs min-w-0 overflow-hidden">
+              <Card class="p-4 sm:p-5 border-cyan-500/30 bg-card space-y-4 shadow-xs min-w-0 overflow-hidden">
                 <div
                   class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3"
                 >
@@ -1340,7 +1340,7 @@
 
       <!-- SECTION 4: 1st-Class Relational Entity Links & Multi-References -->
       {#if relationalEntityRefFields.length > 0 || arrayRefFields.length > 0}
-        <Card class="p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
+        <Card class="p-4 sm:p-6 space-y-4 border-border bg-card min-w-0 overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <h3
@@ -1512,7 +1512,7 @@
 
       <!-- Live Evaluated Mathematical Formulas Banner -->
       {#if Object.keys(liveComputedFormulas).length > 0}
-        <Card class="p-6 space-y-4 border-amber-500/40 bg-card shadow-xs min-w-0 overflow-hidden">
+        <Card class="p-4 sm:p-6 space-y-4 border-amber-500/40 bg-card shadow-xs min-w-0 overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
             <h3
               class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-2"
@@ -1554,7 +1554,7 @@
     {/if}
 
     <!-- Bottom Save & Delete Actions -->
-    <div class="flex items-center justify-between pt-4 border-t border-border">
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
       <Button
         variant="outline"
         size="sm"

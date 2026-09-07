@@ -57,7 +57,7 @@
 </script>
 
 <div
-  class={`flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-2.5 bg-card/60 ${
+  class={`flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-card/60 ${
     borderPosition === 'bottom'
       ? 'border-b border-border'
       : borderPosition === 'top'
@@ -66,7 +66,7 @@
   } ${className}`}
 >
   <!-- Item Range Telemetry -->
-  <div class="text-xs text-muted-foreground font-mono">
+  <div class="text-xs text-muted-foreground font-mono text-center sm:text-left">
     {#if totalCount === 0}
       <span>0 {itemLabel}</span>
     {:else}
@@ -75,12 +75,12 @@
   </div>
 
   <!-- Pagination Buttons & Page Indicator -->
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center">
     <!-- Previous Page Button -->
     <Button
       variant="outline"
       size="sm"
-      class="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      class="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1 sm:gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
       disabled={!hasPreviousPage || page <= 1}
       onclick={handlePrevious}
       aria-label="Previous Page"
@@ -90,7 +90,7 @@
     </Button>
 
     <!-- Page Number Text -->
-    <div class="px-2.5 py-1 rounded bg-muted/60 border border-border/70 text-xs font-mono text-muted-foreground min-w-[75px] text-center">
+    <div class="px-2 sm:px-2.5 py-1 rounded bg-muted/60 border border-border/70 text-xs font-mono text-muted-foreground min-w-[70px] sm:min-w-[75px] text-center">
       Page <strong class="text-foreground">{page}</strong> / {totalPages}
     </div>
 
@@ -98,7 +98,7 @@
     <Button
       variant="outline"
       size="sm"
-      class="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      class="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1 sm:gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
       disabled={!hasNextPage || page >= totalPages}
       onclick={handleNext}
       aria-label="Next Page"

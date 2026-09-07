@@ -323,7 +323,7 @@
           </div>
 
           <!-- Grouped Columns Selection -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- 1. Core Columns -->
             <div class="space-y-2 p-3 rounded-lg bg-muted/40 border border-border">
               <span class="text-[11px] font-semibold text-foreground uppercase tracking-wider block">

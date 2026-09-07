@@ -69,10 +69,10 @@
   </Select.Trigger>
   <Select.Portal>
     <Select.Content
-      class="z-50 min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
+      class="z-50 min-w-[8rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-lg"
       sideOffset={4}
     >
-      <Select.Viewport class="p-1 max-h-60 overflow-y-auto">
+      <Select.Viewport class="p-1 max-h-[min(60dvh,280px)] overflow-y-auto">
         {#each options as opt (opt.value)}
           <Select.Item
             value={opt.value}

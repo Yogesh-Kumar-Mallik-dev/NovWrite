@@ -277,7 +277,7 @@
   </div>
 
   <!-- Blueprint Meta Config -->
-  <Card class="p-6 space-y-5 border-border bg-card">
+  <Card class="p-4 sm:p-6 space-y-5 border-border bg-card min-w-0 overflow-hidden">
     <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
       <Layers class="w-4 h-4 text-primary" />
       <span>Blueprint Classification & Category</span>
@@ -376,7 +376,7 @@
   </Card>
 
   <!-- Dynamic Field Builder -->
-  <Card class="p-6 space-y-6 border-border bg-card">
+  <Card class="p-4 sm:p-6 space-y-6 border-border bg-card min-w-0 overflow-hidden">
     <div class="flex items-center justify-between border-b border-border pb-3">
       <div>
         <h3 class="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
@@ -741,7 +741,7 @@
   </Card>
 
   <!-- Actions -->
-  <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+  <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border">
     <a href="/world/schemas">
       <Button variant="outline" size="sm">Cancel</Button>
     </a>

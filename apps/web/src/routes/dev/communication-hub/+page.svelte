@@ -130,24 +130,24 @@
   });
 </script>
 
-<div class="flex-1 flex flex-col p-6 max-w-7xl mx-auto w-full gap-6">
+<div class="flex-1 flex flex-col p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full gap-4 sm:gap-6 min-w-0">
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-    <div>
+    <div class="min-w-0">
       <div class="flex items-center gap-2">
-        <Activity class="w-5 h-5 text-emerald-500" />
-        <h1 class="text-2xl font-bold tracking-tight text-foreground">
+        <Activity class="w-5 h-5 text-emerald-500 shrink-0" />
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
           Communication Bridge Diagnostics Hub
         </h1>
       </div>
-      <p class="text-sm text-muted-foreground mt-1">
+      <p class="text-xs sm:text-sm text-muted-foreground mt-1">
         Centralized console to inspect cross-domain RPC contracts, simulate
         payloads, and diagnose continuity violations in one page.
       </p>
     </div>
 
     <!-- Quick Action Triggers -->
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
       <Button
         variant="destructive"
         size="sm"
@@ -179,9 +179,9 @@
   </div>
 
   <!-- Main Grid: Traffic Inspector & Detail Inspector -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 flex-1 min-w-0">
     <!-- Left: Traffic Table -->
-    <Card class="lg:col-span-5 flex flex-col overflow-hidden bg-card border-border shadow-xs">
+    <Card class="lg:col-span-5 flex flex-col overflow-hidden bg-card border-border shadow-xs max-h-[50dvh] lg:max-h-none">
       <div
         class="bg-muted/60 px-4 py-2.5 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground"
       >

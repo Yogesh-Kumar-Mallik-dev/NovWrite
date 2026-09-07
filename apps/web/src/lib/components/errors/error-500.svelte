@@ -102,7 +102,7 @@
   }
 </script>
 
-<div class="relative flex-1 flex flex-col items-center justify-center py-16 md:py-24 px-6 md:px-12 overflow-hidden min-h-[calc(100vh-8rem)]">
+<div class="relative flex-1 flex flex-col items-center justify-center py-8 sm:py-16 md:py-24 px-4 sm:px-6 md:px-12 overflow-hidden min-h-[calc(100dvh-8rem)]">
   <!-- Subtle Amber / Destructive Ambient Glow Orbs -->
   <div
     class="absolute -top-32 -left-32 w-96 h-96 bg-destructive/15 rounded-full blur-3xl pointer-events-none"
@@ -113,22 +113,22 @@
     aria-hidden="true"
   ></div>
 
-  <div class="relative max-w-2xl w-full flex flex-col items-center text-center space-y-10 md:space-y-12 z-10">
+  <div class="relative max-w-2xl w-full flex flex-col items-center text-center space-y-6 sm:space-y-10 md:space-y-12 z-10">
     <!-- Status Badge -->
-    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono font-medium shadow-xs animate-in fade-in slide-in-from-top-3 duration-500">
-      <AlertTriangle class="w-4 h-4" />
-      <span>INVARIANT FAILURE · ERROR {statusCode}</span>
+    <div class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive text-xs font-mono font-medium shadow-xs animate-in fade-in slide-in-from-top-3 duration-500">
+      <AlertTriangle class="w-4 h-4 shrink-0" />
+      <span class="truncate">INVARIANT FAILURE · ERROR {statusCode}</span>
     </div>
 
     <!-- Giant Hero Number with Generous Vertical Space -->
-    <div class="relative select-none my-2 md:my-4">
+    <div class="relative select-none my-1 sm:my-2 md:my-4">
       <span
-        class="text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tighter bg-gradient-to-b from-foreground via-foreground/75 to-destructive/40 bg-clip-text text-transparent opacity-90 font-mono leading-none"
+        class="text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black tracking-tighter bg-gradient-to-b from-foreground via-foreground/75 to-destructive/40 bg-clip-text text-transparent opacity-90 font-mono leading-none"
       >
         {statusCode}
       </span>
       <div
-        class="absolute inset-0 flex items-center justify-center text-destructive/20 blur-xl text-8xl sm:text-9xl md:text-[10rem] font-black font-mono select-none -z-10 leading-none"
+        class="absolute inset-0 flex items-center justify-center text-destructive/20 blur-xl text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black font-mono select-none -z-10 leading-none"
         aria-hidden="true"
       >
         {statusCode}
@@ -136,33 +136,33 @@
     </div>
 
     <!-- Headline and Description -->
-    <div class="space-y-4 max-w-lg mx-auto">
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+    <div class="space-y-3 sm:space-y-4 max-w-lg mx-auto px-2">
+      <h1 class="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
         Continuity Invariant Collapse
       </h1>
-      <p class="text-sm sm:text-base text-muted-foreground leading-relaxed">
+      <p class="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
         {errorMessage}
       </p>
     </div>
 
     <!-- Action Navigation Buttons with comfortable spacing -->
-    <div class="flex flex-wrap items-center justify-center gap-3.5 pt-2">
-      <Button onclick={handleReload} variant="default" size="lg" class="shadow-sm gap-2">
+    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3.5 pt-2">
+      <Button onclick={handleReload} variant="default" size="default" class="shadow-sm gap-2">
         <RefreshCw class="w-4 h-4" />
         Recalibrate Timeline
       </Button>
-      <Button href="/" variant="outline" size="lg" class="gap-2 hover:bg-muted">
+      <Button href="/" variant="outline" size="default" class="gap-2 hover:bg-muted">
         <Home class="w-4 h-4" />
         Return to Safety
       </Button>
-      <Button href="/world/audit" variant="secondary" size="lg" class="gap-2">
+      <Button href="/world/audit" variant="secondary" size="default" class="gap-2">
         <ShieldAlert class="w-4 h-4 text-destructive" />
         Continuity Audit
       </Button>
       <Button
         onclick={handleCopyDiagnostics}
         variant="ghost"
-        size="lg"
+        size="default"
         class="gap-2 text-muted-foreground hover:text-foreground"
       >
         {#if isCopied}

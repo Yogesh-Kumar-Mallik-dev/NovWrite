@@ -521,7 +521,7 @@
   </div>
 
   <!-- SECTION 1: Carousel of 1st-Class Blueprint Archetype Cards -->
-  <Card class="p-6 space-y-5 border-border bg-card">
+  <Card class="p-4 sm:p-6 space-y-5 border-border bg-card min-w-0 overflow-hidden">
     <!-- Carousel Header & Category Tabs -->
     <div class="space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -617,7 +617,7 @@
           <button
             type="button"
             onclick={() => handleSelectBlueprint(bp.id)}
-            class={`w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border text-left transition cursor-pointer relative flex flex-col justify-between ${
+            class={`w-full sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border text-left transition cursor-pointer relative flex flex-col justify-between ${
               isSelected
                 ? 'border-primary bg-secondary/80 ring-1 ring-ring shadow-md'
                 : 'border-border bg-card/60 hover:border-border/80 hover:bg-muted/50'
@@ -674,7 +674,7 @@
         <a
           href="/world/schemas/create?blueprintClass=FIRST_CLASS"
           target="_blank"
-          class="w-full sm:w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border border-dashed border-border bg-card/40 hover:border-primary hover:bg-muted/40 transition flex flex-col justify-center items-center text-center space-y-2 text-muted-foreground hover:text-foreground min-h-[160px]"
+          class="w-full sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] shrink-0 snap-start p-4 rounded-xl border border-dashed border-border bg-card/40 hover:border-primary hover:bg-muted/40 transition flex flex-col justify-center items-center text-center space-y-2 text-muted-foreground hover:text-foreground min-h-[160px]"
         >
           <div class="p-2 rounded-full bg-muted border border-border">
             <Plus class="w-4 h-4 text-primary" />
@@ -1288,7 +1288,7 @@
   {/if}
 
   <!-- SECTION 6: Actions -->
-  <div class="flex items-center justify-end gap-3 pt-4 border-t border-border">
+  <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-4 border-t border-border">
     <a href="/world/entities">
       <Button variant="outline" size="sm">Cancel</Button>
     </a>
