@@ -11,7 +11,6 @@
     Clock,
     ShieldCheck,
     AlertOctagon,
-    Activity,
     ChevronRight,
   } from "lucide-svelte";
   import { page } from "$app/state";
@@ -221,20 +220,6 @@
                 {/each}
               </div>
             {/if}
-
-            <!-- Developer Tools Group -->
-            <div class="space-y-1 pt-2 border-t border-border/60">
-              <span class="text-[10px] uppercase font-bold tracking-wider text-muted-foreground px-2 block">
-                Diagnostics
-              </span>
-              <a
-                href="/dev/communication-hub"
-                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Activity class="w-3.5 h-3.5 text-emerald-500" />
-                <span>Bridge Diagnostics Hub</span>
-              </a>
-            </div>
           </div>
 
           <!-- Drawer Footer -->
