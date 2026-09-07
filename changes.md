@@ -96,8 +96,8 @@ timeline
 
 ### [Version 2.8] — 2026-09-07
 
-**Scope:** Simplified Project Creation Flow, Freeform Genre Text Input & Pure Clean Slate World Architecture  
-**Target Documents:** [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+**Scope:** Simplified Project Creation Flow, Freeform Genre Text Input, Project Edit Settings, 3-Step Irreversible Project Deletion & Pure Clean Slate World Architecture  
+**Target Documents:** [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
 
 #### Added & Refactored
 
@@ -109,6 +109,17 @@ timeline
   - Removed "Initial Blueprint Architecture" selector and eliminated starter archetype seeding (`seedStarterArchetypes`).
   - Newly created projects initialize 100% clean with 0 blueprints, 0 entities, 0 timeline events, and 0 rules.
   - Authors define custom blueprints and schemas dynamically inside the workspace.
+- **Project Edit Settings Modal (`EditProjectDialog.svelte`):**
+  - Dedicated dialog for updating Project Title, Freeform Genre, and Universe Synopsis.
+  - Features an integrated **Danger Zone** trigger for project deletion.
+- **3-Step Irreversible Project Deletion Confirmation Sequence (`DeleteProjectDialog.svelte`):**
+  - Multi-stage modal workflow to prevent accidental universe loss:
+    - **Step 1:** Scope and impact assessment detailing exact count of Blueprints, Entities, Scenes, and Timeline Events to be deleted.
+    - **Step 2:** Explicit checkbox acknowledgment of permanent data loss.
+    - **Step 3:** Exact project title typing verification before activating the final destructive delete action.
+- **Global Zero Redundant Close Buttons Standard:**
+  - Removed redundant top-right cross `(X)` buttons across all modals, drawers, and toasts.
+  - Standardized dismissal via backdrop clicks, `Escape` keypress, and explicit bottom action buttons.
 - **Streamlined Modal Form Rhythm & Responsiveness:**
   - Compact, natural vertical form rhythm (Title -> Genre -> Synopsis -> Action Tray).
   - Eliminates visual gaps and maintains responsive mobile-first stacking.

@@ -45,9 +45,13 @@ NovWrite is designed as a **hybrid multi-service architecture** composed of:
 
 ## 2. Core Domain Subsystems
 
-### 2.1 Identity & Access Management (`identity`)
+### 2.1 Identity, Project Isolation & Creative Workspace Lifecycle (`identity`, `project`)
 
-- **Multi-Tenant / Project-Level Isolation:** Every novel and world element is scoped to a `ProjectID`.
+- **Multi-Tenant / Project-Level Isolation:** Every novel, blueprint, dynamic property, timeline event, and scene is strictly partitioned by `ProjectID`.
+- **Creative Novel Project Lifecycle:**
+  - **Clean Slate Creation:** Instantiates isolated fictional universes with custom title, freeform genre text input (e.g. `Xianxia / Cultivation`, `Dark Fantasy`), and synopsis. Zero predefined dummy blueprints or starter archetype bloat.
+  - **Project Settings & Edit:** Live modification of title, genre, and synopsis via `EditProjectDialog`.
+  - **3-Step Irreversible Deletion:** Guarded by `DeleteProjectDialog` requiring scope assessment, irreversibility checkbox confirmation, and exact project title verification before destroying all scoped data.
 - **RBAC Roles:** `LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`.
 - **Session Security:** Cryptographically signed JWTs or HTTP-only session cookies with Redis revocation store and Platform Admin MFA assistance.
 
@@ -159,7 +163,7 @@ Every major domain is partitioned into a dedicated 3-tier route structure:
 - **Zero-Badge Policy:** Strict prohibition of badges/pill tags across all views. Replaced with semantic status icons, action buttons, accessible breadcrumbs, and slide-over drawers.
 - **3-Tier Header Visual Hierarchy:** Entity Editor header is divided into Tier 1 (Navigation & Breadcrumbs), Tier 2 (Identity Banner & Archetype metadata), and Tier 3 (Utility Toolbar with Form/JSON switch, Feather History drawer trigger, and primary Save action).
 - **Archetype Carousel:** Horizontal scroll deck on `/world/entities/create` with always-visible side navigation buttons (disabled, hover, active states), single-card stepping, no cutoffs, and hidden scrollbars.
-- **Communication Bridge Separation:** `@novwrite/bridge` messaging diagnostics are restricted to `/dev/communication-hub`.
+- **Communication Bridge Separation:** `@novwrite/bridge` messaging diagnostics, contract tests, and mock adapters are strictly isolated in the `@novwrite/bridge` package and tested in Phase 1 of the test suite.
 
 ---
 

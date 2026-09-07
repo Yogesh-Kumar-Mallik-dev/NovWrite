@@ -61,7 +61,7 @@ This document records the core design principles, trade-offs, and technical deci
 ## Decision 7: Two-Front Git Branching & Dedicated Communication Gateway
 
 - **Context:** Coupling novel drafting logic directly to dynamic worldbuilding engines leads to architectural spaghetti, cross-domain test fragility, and merge conflicts between writers and lore engineers. Cross-domain communication errors are difficult to diagnose when distributed arbitrarily across endpoints.
-- **Decision:** Divide development into two strictly isolated fronts on dedicated git branches (`novel` and `world`). Prohibit direct cross-domain imports or raw database joins between prose and lore. Route all inter-space interactions through a dedicated, strictly typed Communication Layer (`@novwrite/bridge`), backed by a centralized Single-Page Diagnostic Console (`/dev/communication-hub`) to capture, debug, mock, and resolve all cross-domain communication errors in one place.
+- **Decision:** Divide development into two strictly isolated fronts on dedicated git branches (`novel` and `world`). Prohibit direct cross-domain imports or raw database joins between prose and lore. Route all inter-space interactions through a dedicated, strictly typed Communication Layer (`@novwrite/bridge`), backed by automated contract tests and mock adapters to isolate, test, and resolve all cross-domain communication in one package.
 - **Consequences:** Accelerates parallel engineering velocity, enforces complete boundary isolation, simplifies debugging of cross-space communication errors, and provides seamless mocking for frontend teams.
 
 ---
@@ -89,3 +89,29 @@ This document records the core design principles, trade-offs, and technical deci
   1. Structure the Entity Editor header into a 3-tier vertical hierarchy: Tier 1 (Breadcrumb Location), Tier 2 (Identity Banner & Archetype Metadata), and Tier 3 (Utility Toolbar with Form/JSON switch, Feather History drawer trigger, and Save call-to-action).
   2. Enforce strict Schema Invariance by completely eradicating arbitrary ad-hoc instance properties in favor of formal Blueprint schema fields.
 - **Consequences:** Delivers a clear, distraction-free workbench interface while preventing data corruption from unvalidated loose properties.
+
+---
+
+## Decision 11: Creative Novel Multi-Project Isolation & Architecture
+
+- **Context:** Authors write multiple novels spanning different universes, genres, and world rules. Allowing global cross-pollination or un-scoped entities corrupts canon and introduces cross-tenant query leaks.
+- **Decision:** Enforce project-level scoping across every entity, blueprint, timeline event, and scene query (`project_id`). Manage active project context reactively via `projectStore.svelte.ts` on the frontend, with a dynamic Project Switcher in top navigation, modal creation, and zero-state "No Active Project Selected" guidance cards.
+- **Consequences:** Guarantees absolute project isolation, seamless switching between author workspaces without full page reloads, and deterministic data boundaries.
+
+---
+
+## Decision 12: Simplified Freeform Genre & Clean Slate Universe Initialization
+
+- **Context:** Hardcoding predefined genre enums (e.g. `XIANXIA`, `FANTASY`, `SCIFI`) restricts authors writing hybrid or niche stories (e.g. "Steampunk Cultivation", "Cyberpunk Space Opera"). Forcing starter archetypes / dummy blueprints upon universe creation clutters newly created worlds with boilerplate fields that authors immediately have to delete.
+- **Decision:** Treat `genre` as a freeform string field across the entire stack (PostgreSQL `VARCHAR(100)`, Prisma schema, Go backend models, TypeScript types, and UI input). Initialize new universes on a pure **Clean Slate**—zero pre-seeded blueprints, formulas, or entities—giving authors complete creative freedom.
+- **Consequences:** Empowers authors with unrestricted genre expression, reduces onboarding friction, and guarantees clean, clutter-free universe workspaces.
+
+---
+
+## Decision 13: 3-Step Irreversible Project Deletion & Zero Redundant Close Buttons
+
+- **Context:** Project deletion is catastrophic and permanent, obliterating all novels, chapters, blueprints, and timeline events. Single-click or casual confirmations lead to accidental data loss. Furthermore, dialogs, drawers, and toasts cluttered with redundant `X` (cross) close buttons create visual noise when backdrop click, `Escape` key, and bottom action buttons already provide clear dismissal paths.
+- **Decision:**
+  1. **3-Step Deletion Flow (`DeleteProjectDialog.svelte`):** Require users to navigate three sequential steps before executing project deletion: Step 1 (Scope & impact assessment with exact entity/blueprint counts), Step 2 (Explicit acknowledgment checkbox of permanent irreversibility), and Step 3 (Exact project title verification typing).
+  2. **Zero Redundant Close Buttons Standard:** Eliminate redundant top-right cross `(X)` buttons across all modals, drawers, and toasts. Dismissal is handled uniformly via backdrop click, `Escape` key press, and explicit `[Cancel]` / `[Close]` bottom action buttons.
+- **Consequences:** Prevents catastrophic accidental universe deletion through intentional friction while delivering clean, distraction-free modal dialogs across the entire application.

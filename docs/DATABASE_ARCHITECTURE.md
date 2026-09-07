@@ -1,6 +1,6 @@
 # Database Architecture Specification
 
-**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, Entity Revisions, Bitemporal Coordinates & REST Envelopes)  
+**Status:** Locked Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, Entity Revisions, Bitemporal Coordinates & REST Envelopes)  
 **Engine:** PostgreSQL 18 with `pgvector` extension  
 **ORM / Data Access:** TypeScript Data Service (`apps/data-service/`) using Prisma ORM & Coarse-Grained gRPC
 
@@ -86,12 +86,10 @@ CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL,
     description TEXT,
-    settings JSONB NOT NULL DEFAULT '{}'::jsonb,
+    genre VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_project_owner_slug UNIQUE (owner_id, slug)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Multi-User Project Memberships & Author Roles

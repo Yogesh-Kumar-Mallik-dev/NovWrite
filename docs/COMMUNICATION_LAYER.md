@@ -18,7 +18,7 @@ flowchart TB
 
     subgraph CommLayer ["Dedicated Communication Layer (Bridge / Hub)"]
         ContractGateway["Strict Typed Contract Gateway (Protobuf / Zod)"]
-        DiagnosticsHub["Unified Diagnostic Console (/dev/communication-hub)"]
+        ContractTestSuite["Automated Contract & Mock Suite (@novwrite/bridge)"]
         ErrorPipeline["Single-Page Error Normalizer & RFC 7807 Formatter"]
         EventStreamRouter["Bidirectional SSE / WebSocket Stream Router"]
     end
@@ -35,7 +35,7 @@ flowchart TB
     WorldSpace -->|Canon State & Diagnostic Payloads| ContractGateway
     ContractGateway -->|Normalized Grounding & Violations| NovelSpace
 
-    ContractGateway -.->|Real-Time Telemetry & Error Traces| DiagnosticsHub
+    ContractGateway -.->|Contract Verification & Mocks| ContractTestSuite
     CommLayer -.->|Centralized Exception Handling| ErrorPipeline
 ```
 
@@ -165,30 +165,30 @@ export interface WorldToNovelBridge {
 
 ---
 
-## 4. Centralized Communication Diagnostics Console (`/dev/communication-hub`)
+## 4. Dedicated Communication Bridge Package & Mock Adapter (`@novwrite/bridge`)
 
-To guarantee that **all communication errors can be diagnosed, debugged, and resolved in one central place**, NovWrite incorporates a dedicated **Communication Hub**:
+To guarantee that **all cross-domain communication contracts are strictly enforced, tested, and mockable in one central package**, NovWrite incorporates `@novwrite/bridge`:
 
-### 4.1. Core Capabilities of the Communication Hub
+### 4.1. Core Capabilities of the Bridge Package
 
-1. **Live Cross-Space Traffic Inspector:** Real-time stream of all requests and responses flowing between Novel Studio and World Studio.
-2. **Schema & Contract Validator:** Instant visualization of payload mismatch errors, missing required fields, or version incompatibilities.
-3. **Mock Server & Payload Injector:** Allows Novel developers on the `novel` branch to simulate World Engine responses without running the full timeline fold engine, and vice-versa.
-4. **Payload Replay & Time-Travel Debugger:** Capture failing RPC messages, modify parameters in the UI, and replay them through the bridge.
-5. **Unified RFC 7807 Error Normalizer:** Every error (network timeout, invalid entity ID, invariant rule syntax error) is formatted identically with actionable remediation steps.
+1. **Strict Contract Interfaces:** Type-safe RPC contracts (`NovelToWorldBridge`, `WorldToNovelBridge`) defining scene grounding, continuity audit, and entity mention queries.
+2. **Schema & Contract Validation:** Zod runtime schemas validating all request and response payloads, rejecting malformed requests at runtime.
+3. **Mock Server & Payload Adapter (`MockBridgeClient`):** Allows Novel developers on the `novel` branch to simulate World Engine responses without running the full timeline fold engine, and vice-versa.
+4. **Deterministic Contract Test Suite:** Automated test suite verifying serialization, deserialization, and boundary error behaviors across domains (Phase 1 of `./test.sh`).
+5. **Unified RFC 7807 Error Normalizer:** Every error (network timeout, invalid entity ID, invariant rule violation) is formatted into structured `application/problem+json` envelopes with actionable remediation steps.
 
 ```mermaid
 flowchart LR
-    subgraph UI ["Unified Diagnostic Page (/dev/communication-hub)"]
-        TrafficTable["Live Event / RPC Stream"]
-        SchemaInspector["Zod / Proto Contract Inspector"]
-        ReplayEngine["Payload Replayer & Mock Generator"]
-        ErrorSummary["Centralized Error Log & RFC 7807 Detail"]
+    subgraph BridgePkg ["Typed Contract Package (@novwrite/bridge)"]
+        ContractSchemas["Zod & Protobuf Schemas"]
+        MockAdapter["Mock Bridge Adapter"]
+        ErrorPipeline["RFC 7807 Error Normalizer"]
+        ContractTests["Automated Contract Tests"]
     end
 
-    TrafficTable --> SchemaInspector
-    SchemaInspector --> ReplayEngine
-    ReplayEngine --> ErrorSummary
+    ContractSchemas --> MockAdapter
+    MockAdapter --> ErrorPipeline
+    ErrorPipeline --> ContractTests
 ```
 
 ---

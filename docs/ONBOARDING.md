@@ -351,9 +351,9 @@ pnpm --filter @novwrite/web dev
 ```
 
 Access the applications in your browser:
-- **Web Application Studio:** [http://localhost:5173](http://localhost:5173)
-- **Go API Backend Health:** [http://localhost:8080/healthz](http://localhost:8080/healthz)
-- **Communication Dev Hub:** [http://localhost:5173/dev/communication-hub](http://localhost:5173/dev/communication-hub)
+- **Web Application Workbench:** [http://localhost:5173](http://localhost:5173)
+- **Go API Backend Health Probe:** [http://localhost:8080/healthz](http://localhost:8080/healthz)
+- **Go API Server Projects Route:** [http://localhost:8080/api/v1/projects](http://localhost:8080/api/v1/projects)
 - **Prisma Studio Inspector:** `pnpm --filter @novwrite/data-service db:studio` $\to$ [http://localhost:5555](http://localhost:5555)
 
 ---
@@ -366,6 +366,8 @@ All contributors and AI agents must strictly follow the repository standards def
 2. **Commit Standard**: Follow `<type>(<domain>): <expression>` (e.g. `feat(universe): add formula parser for combat powers`).
 3. **Signed Commits**: Always sign commits using GPG: `git commit -S -m "..."`.
 4. **Zero-Badge UI Policy**: Badges, chips, and pill tags are prohibited. Use semantic icons, action buttons, accessible breadcrumbs, and slide-over drawers instead.
-5. **Mobile-First Responsive Layouts**: Fluid containers (`w-full`, auto-fit grids), isolated horizontal scrolling for DAGs/tables, top pagination bars to prevent layout jumps, and viewport-safe modals (`max-h-[min(90dvh,800px)]`).
-6. **Motion & Accessibility**: All transitions use Svelte 5 native bidirectional transitions (`transition:fade`, `transition:scale`, `transition:fly`, 150–220ms) and degrade gracefully with `@media (prefers-reduced-motion: reduce)`.
-7. **Single-Icon Purple Theme Toggle**: Only one theme icon visible at a time (Sun in dark, Moon in light) rendered with theme purple `#7c3aed`.
+5. **Zero Redundant Close Buttons**: Omit redundant `X` buttons on modals/drawers that provide explicit Cancel/Close buttons, Escape keydown dismissal, and backdrop click handlers.
+6. **Mobile-First Responsive Layouts**: Fluid containers (`w-full`, auto-fit grids), isolated horizontal scrolling for DAGs/tables, top pagination bars to prevent layout jumps, and viewport-safe modals (`max-h-[min(90dvh,800px)]`).
+7. **Motion & Accessibility**: All transitions use Svelte 5 native bidirectional transitions (`transition:fade`, `transition:scale`, `transition:fly`, 150–220ms) and degrade gracefully with `@media (prefers-reduced-motion: reduce)`.
+8. **Single-Icon Purple Theme Toggle**: Only one theme icon visible at a time (Sun in dark, Moon in light) rendered with theme purple `#7c3aed`.
+9. **Clean Slate Workspace Initialization**: Newly created novel projects always start with empty blueprints and entities. Deleting projects follows a strict 3-step confirmation sequence.

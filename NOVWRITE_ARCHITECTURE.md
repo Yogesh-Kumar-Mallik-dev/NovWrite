@@ -1,6 +1,6 @@
 # NovWrite Platform Architecture
 
-**Status:** Technical Specification Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, RESTful API Standards & 5-Phase Monorepo Test Suite)  
+**Status:** Technical Specification Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Irreversible Project Deletion, Zero Redundant Close Buttons, Svelte 5 Native Bidirectional Transitions & 5-Phase Monorepo Test Suite)  
 **Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, REST standards, and deployment.
 
 ---
@@ -26,6 +26,8 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 13. **Dedicated Page-Based Routing, 3-Tier Hierarchy & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`), clean slate dynamic field initialization, 100% Bits UI Select dropdown usage, 3-tier header visual hierarchy, and automatic post-save redirection.
 14. **RESTful API Standards & Telemetry:** Explicit `/api/v1/` routes, `API-Version`, `X-Request-ID`, `X-Response-Time`, standardized pagination envelopes, guaranteed non-null `[]` empty queries, and container probes (`/healthz`, `/livez`, `/readyz`).
 15. **5-Phase Monorepo Test Architecture:** Automated test and regression pipeline covering contracts, domain engines, Go backend, SvelteKit components/stores, and monorepo diagnostics ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)).
+16. **Creative Novel Multi-Project Scoping & Freeform Genre:** Full workspace tenancy isolated by `ProjectID`, dynamic project switching via `projectStore.svelte.ts`, freeform genre string input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), and 100% Clean Slate universe creation with zero dummy entity bloat.
+17. **3-Step Irreversible Project Deletion & Zero Redundant Close Buttons:** Guarded 3-step deletion sequence (`DeleteProjectDialog.svelte` assessing scope, requiring irreversibility checkbox, and exact title typing) alongside elimination of redundant `X` close buttons across all modals, drawers, and toasts.
 
 ---
 

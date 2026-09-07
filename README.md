@@ -56,8 +56,13 @@ cp .env.example .env
 
 - **Dynamic Project Isolation & Multi-Novel Scoping**:
   - Full project hierarchy: `Project` $\rightarrow$ `Novel` $\rightarrow$ `Volume` $\rightarrow$ `Chapter` $\rightarrow$ `Scene`.
-  - Dynamic Project Switcher with instant switching, modal project creation (`CreateProjectDialog`), and zero-state "No Active Project Selected" guidance cards.
+  - Dynamic Project Switcher with instant switching, freeform genre text input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), pure **Clean Slate** universe creation (zero starter archetypes or dummy entity bloat), and zero-state "No Active Project Selected" guidance cards.
+  - Project Settings & Edit modal (`EditProjectDialog`) with title, genre, and synopsis modification.
+  - **3-Step Irreversible Project Deletion** (`DeleteProjectDialog`): Sequential confirmation sequence assessing affected asset scope, requiring an irreversibility acknowledgment checkbox, and exact project title verification before deletion.
   - Complete database & Redis reset lifecycle (`./flush_db.sh`) for testing fresh user onboarding.
+- **Zero Redundant Close Buttons Standard**:
+  - Clean, distraction-free modal dialogs, drawers, and toasts with zero redundant top-right cross `(X)` buttons.
+  - Consistent dismissal across all viewports via backdrop click, keyboard `Escape`, and explicit bottom action buttons (`[Cancel]`, `[Close]`).
 - **The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Engine**:
   - **The UPDATE Pipe (Plot Axis / $T_{\text{story}}$)**: Sequential horizontal pipeline representing chronological narrative events (`event0 ---> event1 ---> event2 ---> event3 ---> event4`).
   - **Hanging EDIT Trees (Authorial Revision DAG)**: Every event and entity possesses a vertical tree of immutable revision nodes (`ED0 -> ED1 -> ED2 -> ED3 ...`) with non-destructive checkouts. Reverting to an earlier node does not erase newer drafts—they remain branches of the parent node with infinite branching support.

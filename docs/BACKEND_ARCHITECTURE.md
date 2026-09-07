@@ -1,6 +1,6 @@
 # Backend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 5-Phase Monorepo Test Runner)  
+**Status:** Locked Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 5-Phase Monorepo Test Runner)  
 **Primary Application Engine:** Go 1.23+ (`apps/api/`)  
 **Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`apps/data-service/`)  
 **Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`) & `@novwrite/bridge`  
@@ -91,8 +91,8 @@ flowchart TB
 
 ### 2.3. Shared Contract & Communication Bridge (`packages/bridge/`)
 
-- **Bridge Contract Layer (`@novwrite/bridge`):** Houses typed RPC contracts, Zod schemas, and client adapters for inter-service and dev diagnostics communication (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
-- **Isolated Dev Hub (`/dev/communication-hub`):** Developer-only single-page diagnostic dashboard to inspect real-time inter-space traffic, detect payload discrepancies, and simulate mock responses.
+- **Bridge Contract Layer (`@novwrite/bridge`):** Houses typed RPC contracts, Zod schemas, mock adapters, and automated test suites for cross-domain interactions (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
+- **Deterministic Contract Testing:** Automated contract and mock suites executed in Phase 1 of the monorepo test runner (`./test.sh`) ensuring seamless frontend-to-backend communication without cross-domain leakage.
 
 ---
 
@@ -464,10 +464,10 @@ NovWrite enforces a mandatory 5-phase test and verification pipeline ([`./test.s
 ### 12.1. REST Creative Novel Projects Endpoints (`apps/api`)
 
 - `GET /api/v1/projects` — Paginated list of creative novel projects (`pageSize = 10`) with full-text search.
-- `POST /api/v1/projects` — Instantiate a new isolated project universe with name, description, and genre tags.
+- `POST /api/v1/projects` — Instantiate a new isolated project universe on a pure **Clean Slate** with title, freeform genre text input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), and synopsis. Zero boilerplate/starter archetypes seeded. Returns `201 Created` with `Location` header.
 - `GET /api/v1/projects/{projectId}` — Retrieve project metadata and configuration.
-- `PUT /api/v1/projects/{projectId}` — Update project title, synopsis, and genre classification.
-- `DELETE /api/v1/projects/{projectId}` — Delete project and cascade deletion across scoped blueprints, entities, and timeline events.
+- `PUT /api/v1/projects/{projectId}` / `PATCH /api/v1/projects/{projectId}` — Update project title, synopsis, and freeform genre string.
+- `DELETE /api/v1/projects/{projectId}` — Irreversibly delete project and cascade deletion across scoped blueprints, entities, scenes, and timeline events (`204 No Content`). Guarded by frontend 3-step confirmation sequence (`DeleteProjectDialog.svelte`).
 
 ### 12.2. Clean-Slate Database & Redis Flush Utility (`./flush_db.sh`)
 

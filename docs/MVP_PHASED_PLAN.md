@@ -11,7 +11,7 @@ flowchart TB
         F2["Phase 0.2: DB Schema Migrations & Prisma"]
         F3["Phase 0.3: @novwrite/bridge Contract Package"]
         F4["Phase 0.4: Development One-Click Data Filler Engine"]
-        F5["Phase 0.5: Communication Diagnostics Console (/dev/communication-hub)"]
+        F5["Phase 0.5: Bridge Contract & Mock Suite (@novwrite/bridge)"]
     end
 
     subgraph WorldBranch ["World Branch (Universe Engine & World Studio)"]
@@ -60,7 +60,7 @@ To ensure velocity, code quality, and maintainability, strict boundaries are enf
 | **Novel Engine**    | Projects, Volumes, Chapters, Scenes, TipTap/Lexical markdown canvas, `@entity` mention extraction                                                                                                                     | CRDT collaborative simultaneous character-by-character typing (OT/Yjs)                      |
 | **Collaboration**   | Role hierarchy (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, etc.), Redis 60s scene lease locks, lock break override                                                                                                         | Live audio chat, peer-to-peer WebRTC video rooms, fine-grained paragraph-level locking      |
 | **Platform Admin**  | User MFA reset endpoint, account unlock, simulated Stripe refund action, audit log table                                                                                                                              | Automated fraud detection ML pipelines, multi-currency conversion engines                   |
-| **Cross-Domain**    | `@novwrite/bridge` typed RPC/SSE contracts, `/dev/communication-hub` diagnostic inspector                                                                                                                             | GraphQL federation gateways, distributed mesh proxies                                       |
+| **Cross-Domain**    | `@novwrite/bridge` typed RPC/SSE contracts & mock test suite                                                                                                                                                          | GraphQL federation gateways, distributed mesh proxies                                       |
 | **Developer DX**    | **One-Click Dev Test Data Seeder (`POST /api/v1/dev/seed` + UI button)**                                                                                                                                              | Complex third-party mocking SaaS platforms                                                  |
 
 ---

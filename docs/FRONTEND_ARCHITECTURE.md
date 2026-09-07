@@ -1,6 +1,6 @@
 # Frontend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.4 - UPDATE Pipe & Hanging EDIT Trees DAG, 3-Tier Visual Hierarchy, Strict Schema Invariance, REST Standards & 5-Phase Test Suite)  
+**Status:** Locked Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, Zero Redundant Close Buttons, Svelte 5 Native Bidirectional Transitions & 5-Phase Monorepo Test Suite)  
 **Web & Desktop Framework:** SvelteKit 2 with Svelte 5 (Runes Mode) & Tauri 2  
 **Mobile Framework:** React Native with Expo (SDK 52+, Expo Router)  
 **Component Libraries (`shadcn` ecosystem):** `shadcn-svelte` (`bits-ui` in `zinc` on Web/Desktop) & `React Native Reusables` (`@rn-primitives` on Mobile)  
@@ -56,7 +56,7 @@ To ensure maximum focus, deep linking, and zero modal crowding, all primary doma
 1. **Zero-Badge UI Policy:** Badges, chips, and pill tags are **strictly prohibited** across the UI (except for raw data tables when explicitly necessary). Semantic status indicators, action buttons, accessible breadcrumbs, and slide-over drawers must be used instead.
 2. **No Forced In-Page Tabs for Core Domains:** The application does **NOT** force users to toggle between Prose Writing and World Building via small tabs inside a single screen.
 3. **No Jamming Complex Domains into Modals:** Blueprint creation, mathematical formula editing, entity state modification, and rule assertions receive their own dedicated standalone pages.
-4. **Communication Bridge Isolation:** Internal messaging and bridge diagnostic layers (`@novwrite/bridge`) are strictly isolated to developer tooling (`/dev/communication-hub`) and never exposed in authoring navigation.
+4. **Communication Bridge Isolation:** Internal messaging and bridge diagnostic layers (`@novwrite/bridge`) are strictly tested through contract suites and mock adapters and never exposed in authoring navigation.
 
 ---
 
@@ -560,13 +560,13 @@ To guarantee predictable memory consumption, instantaneous query response times,
 
 ### 18.1. Reactive Multi-Project State Store (`projectStore.svelte.ts`)
 
-- Manages user novel projects (`ProjectItem[]`), active project selection (`activeProjectId`), and persistent storage (`novwrite_projects_v1`).
+- Manages user novel projects (`ProjectItem[]`), active project selection (`activeProjectId`), project edit/delete modal states (`isEditDialogOpen`, `isDeleteDialogOpen`, `projectToEdit`, `projectToDelete`), and persistent storage (`novwrite_projects_v1`).
 - Provides clean isolation across different fictional universes, ensuring authors can write multiple distinct novels and world canons without data cross-contamination.
 
 ### 18.2. Interactive Project Switcher (`ProjectSwitcher.svelte`)
 
 - Embedded in both top desktop navigation and the mobile slide-over drawer.
-- Shows active novel title with folder icon and interactive dropdown selector with active checkmarks.
+- Shows active novel title with folder icon, interactive dropdown selector with active checkmarks, and fast-action edit/delete triggers.
 - Includes `+ New Novel Project...` action triggering the creation workflow.
 - Renders an immediate `[+ Create Project]` CTA when zero projects exist.
 
@@ -574,4 +574,29 @@ To guarantee predictable memory consumption, instantaneous query response times,
 
 - Supports custom Novel Title, arbitrary freeform Genre & Universe Setting text input (e.g. Xianxia / Cultivation, Dark Fantasy, Sci-Fi, Custom hybrids), and Universe Synopsis.
 - **Pure Clean Slate Guarantee:** Every newly created project starts 100% clean with zero predefined blueprints, schemas, or default entity bloat. Authorial universe architecture is designed directly within the workspace.
+
+### 18.4. Project Edit Settings (`EditProjectDialog.svelte`)
+
+- Allows authors to modify Project Title, Freeform Genre & Universe Setting, and Synopsis.
+- Features a dedicated **Danger Zone** section at the bottom allowing lead authors to initiate project deletion.
+
+### 18.5. 3-Step Irreversible Deletion Sequence (`DeleteProjectDialog.svelte`)
+
+- Guards against accidental deletion with a sequential 3-step confirmation workflow:
+  1. **Step 1 (Scope & Impact Assessment):** Displays exact counts of affected Blueprints, Entities, Scenes, and Timeline Events that will be permanently destroyed.
+  2. **Step 2 (Irreversibility Acknowledgment):** Requires explicit checkbox confirmation acknowledging that data cannot be restored.
+  3. **Step 3 (Exact Title Verification):** Requires the author to type the exact project title before enabling the final red `[Delete Project Forever]` button.
+
+---
+
+## 19. Zero Redundant Close Buttons Standard
+
+To minimize visual noise and enhance UI cleanliness across desktop and mobile screens:
+
+1. **Elimination of Cross (`X`) Buttons:** Top-right cross `(X)` close buttons are systematically eliminated from modals, dialogs, slide drawers, popovers, and toast notifications.
+2. **Unified Dismissal Vectors:** Every modal or drawer supports:
+   - Clicking outside the content box (backdrop dismiss).
+   - Pressing the keyboard `Escape` key.
+   - Explicit bottom action buttons (`[Cancel]`, `[Close]`, `[Done]`).
+3. **Touch-Friendly Navigation:** On mobile screens, full-width bottom buttons provide comfortable 44px+ touch targets superior to tiny top-corner cross icons.
 

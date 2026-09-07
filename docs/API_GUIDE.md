@@ -125,10 +125,10 @@ Errors return machine-readable problem details. Example validation error (`422 U
 ### 3.2 Projects & Workspace Scoping
 
 - `GET /api/v1/projects` — List user's active projects with pagination, sorting, and search.
-- `POST /api/v1/projects` — Create a new project workspace. Automatically scaffolds initial universe context and default schemas. Returns `201 Created` with `Location` header.
+- `POST /api/v1/projects` — Create a new project workspace on a pure **Clean Slate** with title, freeform genre text input (e.g. `Xianxia / Cultivation`, `Dark Fantasy`), and synopsis. Zero boilerplate/starter archetypes seeded. Returns `201 Created` with `Location` header.
 - `GET /api/v1/projects/{projectId}` — Retrieve project metadata, novel count, word count velocity, and author roles.
-- `PUT /api/v1/projects/{projectId}` — Update project name, description, genre, or settings.
-- `DELETE /api/v1/projects/{projectId}` — Soft-delete / remove project workspace and cascade-archive entities (`204 No Content`).
+- `PUT /api/v1/projects/{projectId}` / `PATCH /api/v1/projects/{projectId}` — Update project title, synopsis, and freeform genre string.
+- `DELETE /api/v1/projects/{projectId}` — Irreversibly delete project workspace and cascade-remove scoped blueprints, entities, scenes, and timeline events (`204 No Content`). Guarded by frontend 3-step confirmation sequence (`DeleteProjectDialog.svelte`).
 
 ### 3.3 Blueprints (Schemas)
 
