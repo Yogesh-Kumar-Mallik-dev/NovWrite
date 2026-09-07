@@ -114,4 +114,4 @@ When contributing code or building features:
    - Use early returns to keep logic flat and maintainable.
    - Attach unique block IDs (`BLOCK_<DOMAIN>_<ACTION>_<ID>`) to all error logs and return messages.
 5. **Zero-Badge UI Policy**: Badges and pill tags are prohibited on the frontend. Use semantic icons, action buttons, accessible breadcrumbs, and slide drawers.
-6. **Context Tracking**: Maintain active state in [`current_context.md`](file:///home/yogesh/Projects/NovWrite/current_context.md).
+6. **Context Tracking**: Maintain active state in [`current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md).

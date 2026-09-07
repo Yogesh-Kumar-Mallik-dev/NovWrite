@@ -92,9 +92,9 @@ The central design principle: **The author's world state—not an AI model's mem
   - [Backend Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md)
   - [Cache Architecture Specification](file:///home/yogesh/Projects/NovWrite/docs/CACHE_ARCHITECTURE.md)
 - **Guides & Context:**
-  - [Agent Instructions & Rules](file:///home/yogesh/Projects/NovWrite/agents.md)
+  - [Agent Instructions & Rules](file:///home/yogesh/Projects/NovWrite/.agent/agents.md)
   - [Frontend Design Decisions](file:///home/yogesh/Projects/NovWrite/frontend_design_descisions.md)
-  - [Current Context & Progress](file:///home/yogesh/Projects/NovWrite/current_context.md)
+  - [Current Context & Progress](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
   - [Monorepo Architecture Specification](file:///home/yogesh/Projects/NovWrite/NOVWRITE_ARCHITECTURE.md)
   - [API & gRPC Guide](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md)
   - [Developer Onboarding Guide](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md)
@@ -104,7 +104,7 @@ The central design principle: **The author's world state—not an AI model's mem
 
 ## 5. Development Workflow & Rules
 
-All contributors and AI agents must strictly adhere to the repository rules defined in [agents.md](file:///home/yogesh/Projects/NovWrite/agents.md):
+All contributors and AI agents must strictly adhere to the repository rules defined in [.agent/agents.md](file:///home/yogesh/Projects/NovWrite/.agent/agents.md):
 
 1. **Single-Change Policy**: Execute strictly one change at a time (one feature, one refactor, or one fix). Reject multi-change requests.
 2. **Commit Format**: All commit messages must follow `<type>(<domain>): <expression>` (e.g. `feat(world): add formula parser for combat powers`).

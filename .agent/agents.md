@@ -3,9 +3,9 @@
 Welcome, Agents! When working in this repository, you must adhere to the following rules:
 
 1. **Context Tracking**:
-   Before ending your task, you must always record your current context, the last step you completed, and any ongoing plans or immediate next steps into `current_context.md`.
+   Before ending your task, you must always record your current context, the last step you completed, and any ongoing plans or immediate next steps into `.agent/current_context.md`.
 2. **Reviewing Context**:
-   At the start of your task, always review `current_context.md` to understand where the previous agent left off.
+   At the start of your task, always review `.agent/current_context.md` to understand where the previous agent left off.
 3. **Architecture Adherence**:
    Respect the repository's architectural boundaries (e.g., separate domain logic, UI, and transport layers without circular or unauthorized imports).
 4. **Mandatory Hand-in-Hand Testing & 100% Coverage Target**:
@@ -28,7 +28,7 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
    - Always use **pnpm** exclusively across the monorepo for workspace orchestration, dependency management, script execution, and tool execution (e.g. `pnpm install`, `pnpm --filter <pkg> <cmd>`, `pnpm dlx <tool>`).
    - Never use `npm`, `npx`, or `yarn`.
 7. **Code Formatting**:
-   Always run prettier (`pnpm dlx prettier --write .` or `pnpm prettier --write .`) before updating `current_context.md` or committing changes to ensure consistent repository code style.
+   Always run prettier (`pnpm dlx prettier --write .` or `pnpm prettier --write .`) before updating `.agent/current_context.md` or committing changes to ensure consistent repository code style.
 8. **Block-Based Code Construction & Error Standards**:
    - **Block Structure & Comment Headers**: Write code in modular, logical blocks. Every block must start with a descriptive comment header explaining:
      - What the block is supposed to do
