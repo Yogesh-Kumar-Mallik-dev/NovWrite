@@ -12,6 +12,7 @@ import {
   evaluateFormula,
   validateFormulaSyntax,
   extractFormulaVariables,
+  detectFormulaCycles,
   BlueprintDef,
   EntityItem,
 } from "../index.js";
@@ -218,4 +219,35 @@ describe("Backend Validation Parity & Zero-Trust Schema/Entity Sanitization", ()
     );
     assert.deepStrictEqual(extracted.sort(), ["a", "b", "c.val", "d"].sort());
   });
+
+  it("BLOCK_TEST_VALIDATION_PARITY_001: should detect circular formula dependency loops in Blueprint", () => {
+    // 1. Direct self-reference
+    const selfRef = {
+      attack_power: "attack_power * 2",
+    };
+    const res1 = detectFormulaCycles(selfRef);
+    assert.strictEqual(res1.hasCycle, true);
+    assert.deepStrictEqual(res1.cyclePath, ["attack_power", "attack_power"]);
+
+    // 2. Transitive cycle: power -> modifier -> technique -> power
+    const transitive = {
+      power: "modifier * 1.5",
+      modifier: "technique + 50",
+      technique: "power - 10",
+    };
+    const res2 = detectFormulaCycles(transitive);
+    assert.strictEqual(res2.hasCycle, true);
+    assert.strictEqual(res2.cyclePath?.length, 4);
+
+    // 3. Acyclic DAG
+    const acyclic = {
+      total: "attack + defense",
+      attack: "base_stat * 2",
+      defense: "armor + 10",
+    };
+    const res3 = detectFormulaCycles(acyclic);
+    assert.strictEqual(res3.hasCycle, false);
+    assert.strictEqual(res3.cyclePath, undefined);
+  });
 });
+

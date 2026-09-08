@@ -408,6 +408,10 @@ export function validateEntityProperties(
   // Check for unregistered keys
   for (const rawKey of Object.keys(normalizedProps)) {
     if (!definedKeys.has(rawKey)) {
+      if (rawKey.startsWith("_")) {
+        coerced[rawKey] = normalizedProps[rawKey];
+        continue;
+      }
       errors.push({
         propertyKey: rawKey,
         code: "UNDEFINED_PROPERTY_KEY",
@@ -435,6 +439,43 @@ export function validateEntityProperties(
     errors,
   };
 }
+
+/**
+ * Non-destructively preserves obsolete entity properties under _legacy_properties when schemas evolve.
+ * Block Standard: BLOCK_WORLD_UPCAST_SCHEMA_001
+ */
+export function upcastLegacyProperties(
+  properties: Record<string, unknown>,
+  currentFields: DynamicFieldDef[],
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...properties };
+  const defined = new Set(currentFields.map((f) => f.name.toLowerCase()));
+  const legacy: Record<string, unknown> = {};
+
+  if (
+    properties["_legacy_properties"] &&
+    typeof properties["_legacy_properties"] === "object"
+  ) {
+    Object.assign(
+      legacy,
+      properties["_legacy_properties"] as Record<string, unknown>,
+    );
+  }
+
+  for (const [k, v] of Object.entries(properties)) {
+    if (k.startsWith("_")) continue;
+    if (!defined.has(k.toLowerCase())) {
+      legacy[k] = v;
+      delete result[k];
+    }
+  }
+
+  if (Object.keys(legacy).length > 0) {
+    result["_legacy_properties"] = legacy;
+  }
+  return result;
+}
+
 
 /**
  * Validates and sanitizes a Blueprint definition on the backend.

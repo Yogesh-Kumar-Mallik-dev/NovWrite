@@ -338,3 +338,68 @@ export const EditTreeSchema = z.object({
   activeEditId: z.string(),
   nodes: z.record(EditNodeSchema),
 });
+
+// =====================================
+// Differential State Patching Helpers
+// =====================================
+
+export const JSONPatchOpSchema = z.object({
+  op: z.enum(["add", "remove", "replace"]),
+  path: z.string(),
+  value: z.unknown().optional(),
+  from: z.string().optional(),
+});
+
+export const JSONPatchSchema = z.array(JSONPatchOpSchema);
+
+/**
+ * Compute differential state patches between two property maps (RFC 6902-style).
+ */
+export function diffEntityProperties(
+  before: Record<string, unknown> | null | undefined,
+  after: Record<string, unknown> | null | undefined,
+): Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }> {
+  const patches: Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }> = [];
+  const b = before || {};
+  const a = after || {};
+  const allKeys = new Set([...Object.keys(b), ...Object.keys(a)]);
+
+  for (const key of allKeys) {
+    const hasBefore = Object.prototype.hasOwnProperty.call(b, key);
+    const hasAfter = Object.prototype.hasOwnProperty.call(a, key);
+
+    if (!hasBefore && hasAfter) {
+      patches.push({ op: "add", path: `/${key}`, value: a[key] });
+    } else if (hasBefore && !hasAfter) {
+      patches.push({ op: "remove", path: `/${key}` });
+    } else if (hasBefore && hasAfter) {
+      if (JSON.stringify(b[key]) !== JSON.stringify(a[key])) {
+        patches.push({ op: "replace", path: `/${key}`, value: a[key] });
+      }
+    }
+  }
+
+  return patches;
+}
+
+/**
+ * Apply differential state patches to a property map.
+ */
+export function applyEntityPatch(
+  target: Record<string, unknown> | null | undefined,
+  patches: Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...(target || {}) };
+
+  for (const patch of patches) {
+    const key = patch.path.replace(/^\//, "");
+    if (patch.op === "remove") {
+      delete result[key];
+    } else if (patch.op === "add" || patch.op === "replace") {
+      result[key] = patch.value;
+    }
+  }
+
+  return result;
+}
+

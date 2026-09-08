@@ -141,10 +141,10 @@
       class="relative z-10 w-full max-w-lg"
     >
       <Card
-        class="border-destructive/40 bg-card p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,750px)] overflow-y-auto"
+        class="border-destructive/40 bg-card p-4 sm:p-6 shadow-2xl max-h-[min(90dvh,750px)] flex flex-col overflow-hidden"
       >
         <!-- Step Indicator Header -->
-        <div class="flex items-center justify-between border-b border-border/80 pb-3">
+        <div class="flex items-center justify-between border-b border-border/80 pb-3 shrink-0">
           <div class="flex items-center gap-2">
             {#if step === 1}
               <div class="p-2 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
@@ -184,104 +184,40 @@
         </div>
 
         {#if errorMsg}
-          <div class="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+          <div class="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs mt-3 shrink-0">
             {errorMsg}
           </div>
         {/if}
 
         <!-- STEP 1: IMPACT ASSESSMENT -->
         {#if step === 1}
-          <div class="space-y-4 text-xs text-muted-foreground leading-relaxed">
-            <p id="delete-dialog-description">
-              You are preparing to delete the novel universe project
-              <strong class="text-foreground font-semibold">"{targetProject?.name || 'Untitled Project'}"</strong>.
-            </p>
+          <div class="flex flex-col flex-1 min-h-0 overflow-hidden mt-4">
+            <div class="space-y-4 text-xs text-muted-foreground leading-relaxed overflow-y-auto flex-1 pr-1 pb-2">
+              <p id="delete-dialog-description">
+                You are preparing to delete the novel universe project
+                <strong class="text-foreground font-semibold">"{targetProject?.name || 'Untitled Project'}"</strong>.
+              </p>
 
-            <div class="p-3 rounded-lg bg-muted/40 border border-border/80 space-y-2">
-              <div class="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <ShieldAlert class="w-4 h-4 text-amber-500 shrink-0" />
-                <span>The following assets will be permanently deleted:</span>
+              <div class="p-3 rounded-lg bg-muted/40 border border-border/80 space-y-2">
+                <div class="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <ShieldAlert class="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>The following assets will be permanently deleted:</span>
+                </div>
+                <ul class="space-y-1.5 pl-5 list-disc text-muted-foreground">
+                  <li><strong class="text-foreground">Blueprints & Archetypes:</strong> All dynamic entity classes and second-class value types.</li>
+                  <li><strong class="text-foreground">Universe Entities:</strong> All characters, relics, factions, and relationship graphs.</li>
+                  <li><strong class="text-foreground">Causal Timeline & Events:</strong> All recorded narrative events, bitemporal branches, and AST formulas.</li>
+                  <li><strong class="text-foreground">Invariant Rules & Audits:</strong> All continuity rules, active constraints, and scene audit logs.</li>
+                </ul>
               </div>
-              <ul class="space-y-1.5 pl-5 list-disc text-muted-foreground">
-                <li><strong class="text-foreground">Blueprints & Archetypes:</strong> All dynamic entity classes and second-class value types.</li>
-                <li><strong class="text-foreground">Universe Entities:</strong> All characters, relics, factions, and relationship graphs.</li>
-                <li><strong class="text-foreground">Causal Timeline & Events:</strong> All recorded narrative events, bitemporal branches, and AST formulas.</li>
-                <li><strong class="text-foreground">Invariant Rules & Audits:</strong> All continuity rules, active constraints, and scene audit logs.</li>
-              </ul>
-            </div>
 
-            <p class="text-[11px] text-muted-foreground/80">
-              Please review your decision carefully before proceeding to the irreversibility acknowledgment.
-            </p>
-          </div>
-
-          <!-- Step 1 Footer -->
-          <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border/80">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onclick={handleClose}
-              class="h-9 px-4 text-xs w-full sm:w-auto"
-            >
-              Cancel / Keep Project
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onclick={handleNextStep}
-              class="h-9 px-4 text-xs font-semibold gap-1.5 w-full sm:w-auto"
-            >
-              <span>I Understand the Scope</span>
-              <ArrowRight class="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-        <!-- STEP 2: IRREVERSIBILITY ACKNOWLEDGMENT -->
-        {:else if step === 2}
-          <div class="space-y-4 text-xs text-muted-foreground leading-relaxed">
-            <div class="p-3.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive space-y-1.5">
-              <div class="font-bold text-sm flex items-center gap-1.5">
-                <AlertOctagon class="w-4 h-4 shrink-0" />
-                <span>Zero Recovery Guarantee</span>
-              </div>
-              <p class="text-xs text-destructive/90 leading-relaxed">
-                This deletion is <strong>permanent and immediate</strong>. NovWrite does not maintain a trash bin or backup archives for deleted projects. Once confirmed, all data will be purged.
+              <p class="text-[11px] text-muted-foreground/80">
+                Please review your decision carefully before proceeding to the irreversibility acknowledgment.
               </p>
             </div>
 
-            <!-- Explicit Checkbox Acknowledgment -->
-            <label class="flex items-start gap-3 p-3.5 rounded-lg border border-border bg-card hover:bg-muted/40 cursor-pointer transition-colors select-none">
-              <input
-                type="checkbox"
-                bind:checked={acknowledged}
-                class="mt-0.5 h-4 w-4 rounded border-border text-destructive focus:ring-destructive cursor-pointer shrink-0"
-              />
-              <div class="space-y-0.5">
-                <span class="font-semibold text-foreground text-xs block">
-                  I explicitly acknowledge permanent, unrecoverable data loss
-                </span>
-                <span class="text-[11px] text-muted-foreground block leading-relaxed">
-                  I understand that all universe lore, entity state trees, formulas, and manuscript records for "{targetProject?.name}" will be completely destroyed.
-                </span>
-              </div>
-            </label>
-          </div>
-
-          <!-- Step 2 Footer -->
-          <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-2.5 pt-4 border-t border-border/80">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onclick={handlePrevStep}
-              class="h-9 px-4 text-xs gap-1 w-full sm:w-auto"
-            >
-              <ArrowLeft class="w-3.5 h-3.5" />
-              <span>Back</span>
-            </Button>
-            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+            <!-- Step 1 Footer -->
+            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -289,87 +225,157 @@
                 onclick={handleClose}
                 class="h-9 px-4 text-xs w-full sm:w-auto"
               >
-                Cancel / Abort
+                Cancel / Keep Project
               </Button>
               <Button
                 type="button"
                 variant="destructive"
                 size="sm"
-                disabled={!acknowledged}
                 onclick={handleNextStep}
                 class="h-9 px-4 text-xs font-semibold gap-1.5 w-full sm:w-auto"
               >
-                <span>Proceed to Final Verification</span>
+                <span>I Understand the Scope</span>
                 <ArrowRight class="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
 
-        <!-- STEP 3: FINAL NAME VERIFICATION -->
-        {:else if step === 3}
-          <div class="space-y-4 text-xs text-muted-foreground leading-relaxed">
-            <p>
-              To execute the permanent deletion of this novel universe, please type the exact project title below:
-            </p>
+        <!-- STEP 2: IRREVERSIBILITY ACKNOWLEDGMENT -->
+        {:else if step === 2}
+          <div class="flex flex-col flex-1 min-h-0 overflow-hidden mt-4">
+            <div class="space-y-4 text-xs text-muted-foreground leading-relaxed overflow-y-auto flex-1 pr-1 pb-2">
+              <div class="p-3.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive space-y-1.5">
+                <div class="font-bold text-sm flex items-center gap-1.5">
+                  <AlertOctagon class="w-4 h-4 shrink-0" />
+                  <span>Zero Recovery Guarantee</span>
+                </div>
+                <p class="text-xs text-destructive/90 leading-relaxed">
+                  This deletion is <strong>permanent and immediate</strong>. NovWrite does not maintain a trash bin or backup archives for deleted projects. Once confirmed, all data will be purged.
+                </p>
+              </div>
 
-            <div class="p-2.5 bg-muted/60 border border-border rounded-md text-center">
-              <span class="select-all font-mono font-bold text-sm text-foreground">
-                {targetProject?.name || ""}
-              </span>
-            </div>
-
-            <div class="space-y-1.5">
-              <label for="confirm-project-name" class="text-xs font-semibold text-foreground block">
-                Type Project Title to Confirm:
+              <!-- Explicit Checkbox Acknowledgment -->
+              <label class="flex items-start gap-3 p-3.5 rounded-lg border border-border bg-card hover:bg-muted/40 cursor-pointer transition-colors select-none">
+                <input
+                  type="checkbox"
+                  bind:checked={acknowledged}
+                  class="mt-0.5 h-4 w-4 rounded border-border text-destructive focus:ring-destructive cursor-pointer shrink-0"
+                />
+                <div class="space-y-0.5">
+                  <span class="font-semibold text-foreground text-xs block">
+                    I explicitly acknowledge permanent, unrecoverable data loss
+                  </span>
+                  <span class="text-[11px] text-muted-foreground block leading-relaxed">
+                    I understand that all universe lore, entity state trees, formulas, and manuscript records for "{targetProject?.name}" will be completely destroyed.
+                  </span>
+                </div>
               </label>
-              <input
-                id="confirm-project-name"
-                type="text"
-                bind:value={confirmationInput}
-                placeholder="Enter exact project title..."
-                class="w-full px-3 py-2 text-sm bg-background border border-destructive/50 rounded-md focus:outline-hidden focus:ring-2 focus:ring-destructive focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
-                autocomplete="off"
-              />
             </div>
 
-            <p class="text-[11px] text-muted-foreground">
-              The delete button will unlock only after the typed title matches identically.
-            </p>
-          </div>
-
-          <!-- Step 3 Footer -->
-          <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-2.5 pt-4 border-t border-border/80">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onclick={handlePrevStep}
-              class="h-9 px-4 text-xs gap-1 w-full sm:w-auto"
-            >
-              <ArrowLeft class="w-3.5 h-3.5" />
-              <span>Back</span>
-            </Button>
-            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+            <!-- Step 2 Footer -->
+            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onclick={handleClose}
-                class="h-9 px-4 text-xs w-full sm:w-auto"
+                onclick={handlePrevStep}
+                class="h-9 px-4 text-xs gap-1 w-full sm:w-auto"
               >
-                Cancel / Abort
+                <ArrowLeft class="w-3.5 h-3.5" />
+                <span>Back</span>
               </Button>
+              <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onclick={handleClose}
+                  class="h-9 px-4 text-xs w-full sm:w-auto"
+                >
+                  Cancel / Abort
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={!acknowledged}
+                  onclick={handleNextStep}
+                  class="h-9 px-4 text-xs font-semibold gap-1.5 w-full sm:w-auto"
+                >
+                  <span>Proceed to Final Verification</span>
+                  <ArrowRight class="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+        <!-- STEP 3: FINAL NAME VERIFICATION -->
+        {:else if step === 3}
+          <div class="flex flex-col flex-1 min-h-0 overflow-hidden mt-4">
+            <div class="space-y-4 text-xs text-muted-foreground leading-relaxed overflow-y-auto flex-1 pr-1 pb-2">
+              <p>
+                To execute the permanent deletion of this novel universe, please type the exact project title below:
+              </p>
+
+              <div class="p-2.5 bg-muted/60 border border-border rounded-md text-center">
+                <span class="select-all font-mono font-bold text-sm text-foreground">
+                  {targetProject?.name || ""}
+                </span>
+              </div>
+
+              <div class="space-y-1.5">
+                <label for="confirm-project-name" class="text-xs font-semibold text-foreground block">
+                  Type Project Title to Confirm:
+                </label>
+                <input
+                  id="confirm-project-name"
+                  type="text"
+                  bind:value={confirmationInput}
+                  placeholder="Enter exact project title..."
+                  class="w-full px-3 py-2 text-sm bg-background border border-destructive/50 rounded-md focus:outline-hidden focus:ring-2 focus:ring-destructive focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
+                  autocomplete="off"
+                />
+              </div>
+
+              <p class="text-[11px] text-muted-foreground">
+                The delete button will unlock only after the typed title matches identically.
+              </p>
+            </div>
+
+            <!-- Step 3 Footer -->
+            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
               <Button
                 type="button"
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                disabled={isDeleting || confirmationInput.trim() !== (targetProject?.name || '').trim()}
-                onclick={handleFinalDelete}
-                class="h-9 px-4 text-xs font-semibold gap-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
+                onclick={handlePrevStep}
+                class="h-9 px-4 text-xs gap-1 w-full sm:w-auto"
               >
-                <Trash2 class="w-3.5 h-3.5" />
-                <span>Permanently Delete Universe</span>
+                <ArrowLeft class="w-3.5 h-3.5" />
+                <span>Back</span>
               </Button>
+              <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onclick={handleClose}
+                  class="h-9 px-4 text-xs w-full sm:w-auto"
+                >
+                  Cancel / Abort
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={isDeleting || confirmationInput.trim() !== (targetProject?.name || '').trim()}
+                  onclick={handleFinalDelete}
+                  class="h-9 px-4 text-xs font-semibold gap-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                  <span>Permanently Delete Universe</span>
+                </Button>
+              </div>
             </div>
           </div>
         {/if}

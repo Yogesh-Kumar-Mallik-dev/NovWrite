@@ -668,3 +668,90 @@ func executeBuiltinFunction(funcName string, args []float64) (float64, error) {
 		return 0, fmt.Errorf("unknown formula function '%s'", funcName)
 	}
 }
+
+// DetectFormulaCycles analyzes a set of interdependent formula expressions and detects circular dependency loops.
+// Block Standard: BLOCK_WORLD_FORMULA_DAG_001
+func DetectFormulaCycles(formulas map[string]string) ([]string, error) {
+	if len(formulas) == 0 {
+		return nil, nil
+	}
+
+	// Normalize formula keys and build dependency adjacency list
+	normalizedFormulas := make(map[string]string)
+	for k, v := range formulas {
+		normalizedFormulas[strings.ToLower(strings.TrimSpace(k))] = v
+	}
+
+	adj := make(map[string][]string)
+	for name, expr := range normalizedFormulas {
+		vars := ExtractFormulaVariables(expr)
+		var deps []string
+		for _, v := range vars {
+			vLower := strings.ToLower(v)
+			if _, exists := normalizedFormulas[vLower]; exists {
+				if vLower == name {
+					cycle := []string{name, name}
+					return cycle, fmt.Errorf("BLOCK_WORLD_FORMULA_DAG_001: circular dependency: formula '%s' directly references itself", name)
+				}
+				deps = append(deps, vLower)
+			}
+		}
+		adj[name] = deps
+	}
+
+	// State: 0 = unvisited, 1 = visiting (in stack), 2 = visited
+	state := make(map[string]int)
+	var currentPath []string
+
+	var dfs func(node string) ([]string, error)
+	dfs = func(node string) ([]string, error) {
+		state[node] = 1 // visiting
+		currentPath = append(currentPath, node)
+
+		for _, neighbor := range adj[node] {
+			if state[neighbor] == 1 {
+				// Found cycle! Reconstruct cycle path
+				cycleStartIdx := 0
+				for i, p := range currentPath {
+					if p == neighbor {
+						cycleStartIdx = i
+						break
+					}
+				}
+				cycle := append([]string{}, currentPath[cycleStartIdx:]...)
+				cycle = append(cycle, neighbor)
+				return cycle, fmt.Errorf("BLOCK_WORLD_FORMULA_DAG_001: circular formula dependency detected: %s", strings.Join(cycle, " -> "))
+			}
+			if state[neighbor] == 0 {
+				if cycle, err := dfs(neighbor); err != nil {
+					return cycle, err
+				}
+			}
+		}
+
+		state[node] = 2 // visited
+		currentPath = currentPath[:len(currentPath)-1]
+		return nil, nil
+	}
+
+	for node := range normalizedFormulas {
+		if state[node] == 0 {
+			if cycle, err := dfs(node); err != nil {
+				return cycle, err
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// DetectFormulaDependencyCycle checks if adding or updating a formula introduces a circular dependency with existing formulas.
+func DetectFormulaDependencyCycle(targetKey string, expression string, existingFormulas map[string]string) ([]string, error) {
+	all := make(map[string]string)
+	for k, v := range existingFormulas {
+		all[k] = v
+	}
+	all[targetKey] = expression
+	return DetectFormulaCycles(all)
+}
+

@@ -216,6 +216,13 @@ export interface DevSeedResponse {
 export type RevisionType =
   "TYPO_FIX" | "BASELINE_EDIT" | "RETROACTIVE_PLOT_FIX" | "REVERT";
 
+export interface JSONPatchOp {
+  op: "add" | "remove" | "replace";
+  path: string;
+  value?: unknown;
+  from?: string;
+}
+
 export interface EntityRevisionPatch {
   name?: { before: string; after: string };
   description?: { before: string; after: string };

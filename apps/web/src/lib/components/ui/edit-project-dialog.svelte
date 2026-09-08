@@ -117,10 +117,10 @@
       class="relative z-10 w-full max-w-lg"
     >
       <Card
-        class="border-border bg-card p-4 sm:p-6 space-y-5 shadow-2xl max-h-[min(90dvh,750px)] overflow-y-auto"
+        class="border-border bg-card p-4 sm:p-6 shadow-2xl max-h-[min(90dvh,750px)] flex flex-col overflow-hidden"
       >
         <!-- Dialog Header -->
-        <div class="flex items-start gap-3 border-b border-border/80 pb-3.5">
+        <div class="flex items-start gap-3 border-b border-border/80 pb-3.5 shrink-0">
           <div class="p-2.5 rounded-lg bg-primary/10 text-primary mt-0.5 shrink-0 border border-primary/20">
             <Pencil class="w-5 h-5" />
           </div>
@@ -134,65 +134,67 @@
           </div>
         </div>
 
-        <!-- Form Content -->
-        <form onsubmit={handleSubmit} class="space-y-4">
-          {#if errorMsg}
-            <div class="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
-              {errorMsg}
+        <!-- Form Content (Scrollable) -->
+        <form onsubmit={handleSubmit} class="flex flex-col flex-1 min-h-0 overflow-hidden mt-4">
+          <div class="space-y-4 overflow-y-auto flex-1 pr-1 pb-2">
+            {#if errorMsg}
+              <div class="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-xs">
+                {errorMsg}
+              </div>
+            {/if}
+
+            <!-- Project Title -->
+            <Field label="Novel / Project Title" description="The official title or working codename for your novel universe.">
+              <input
+                type="text"
+                bind:value={name}
+                placeholder="e.g. The Celestial Ascension or Tales of Eldoria"
+                class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
+                required
+              />
+            </Field>
+
+            <!-- Genre & Universe Setting Input -->
+            <Field label="Genre & Universe Setting" description="Defines the thematic tone and default progression context.">
+              <input
+                type="text"
+                bind:value={genre}
+                placeholder="e.g. Xianxia / Cultivation, Dark Fantasy, Sci-Fi..."
+                class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
+              />
+            </Field>
+
+            <!-- Universe Synopsis / Description -->
+            <Field label="Universe Synopsis & Description" description="Optional summary of premise, cosmology, and key themes.">
+              <textarea
+                bind:value={description}
+                rows="3"
+                placeholder="A brief overview of the world setting, major conflicts, and foundational lore..."
+                class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60 resize-y"
+              ></textarea>
+            </Field>
+
+            <!-- Danger Zone: Project Deletion -->
+            <div class="p-3 rounded-lg bg-destructive/5 border border-destructive/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+              <div class="space-y-0.5">
+                <span class="text-xs font-bold text-destructive block">Danger Zone</span>
+                <span class="text-[11px] text-muted-foreground block">Permanently erase this novel universe, entities, and timeline.</span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onclick={handleDeleteClick}
+                class="h-8 px-3 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5 shrink-0 w-full sm:w-auto"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+                <span>Delete Project...</span>
+              </Button>
             </div>
-          {/if}
-
-          <!-- Project Title -->
-          <Field label="Novel / Project Title" description="The official title or working codename for your novel universe.">
-            <input
-              type="text"
-              bind:value={name}
-              placeholder="e.g. The Celestial Ascension or Tales of Eldoria"
-              class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
-              required
-            />
-          </Field>
-
-          <!-- Genre & Universe Setting Input -->
-          <Field label="Genre & Universe Setting" description="Defines the thematic tone and default progression context.">
-            <input
-              type="text"
-              bind:value={genre}
-              placeholder="e.g. Xianxia / Cultivation, Dark Fantasy, Sci-Fi..."
-              class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60"
-            />
-          </Field>
-
-          <!-- Universe Synopsis / Description -->
-          <Field label="Universe Synopsis & Description" description="Optional summary of premise, cosmology, and key themes.">
-            <textarea
-              bind:value={description}
-              rows="3"
-              placeholder="A brief overview of the world setting, major conflicts, and foundational lore..."
-              class="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent text-foreground placeholder:text-muted-foreground/60 resize-y"
-            ></textarea>
-          </Field>
-
-          <!-- Danger Zone: Project Deletion -->
-          <div class="p-3 rounded-lg bg-destructive/5 border border-destructive/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-            <div class="space-y-0.5">
-              <span class="text-xs font-bold text-destructive block">Danger Zone</span>
-              <span class="text-[11px] text-muted-foreground block">Permanently erase this novel universe, entities, and timeline.</span>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onclick={handleDeleteClick}
-              class="h-8 px-3 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5 shrink-0 w-full sm:w-auto"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-              <span>Delete Project...</span>
-            </Button>
           </div>
 
-          <!-- Dialog Footer Actions -->
-          <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5 pt-4 border-t border-border/80">
+          <!-- Dialog Sticky Footer Actions -->
+          <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
             <Button
               type="button"
               variant="outline"

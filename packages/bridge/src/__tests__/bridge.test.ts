@@ -23,6 +23,9 @@ import {
   EditTreeSchema,
   EditNodeSchema,
   BitemporalEntityStateSchema,
+  JSONPatchSchema,
+  diffEntityProperties,
+  applyEntityPatch,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -254,5 +257,32 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     const parsedTree = EditTreeSchema.parse(validTree);
     assert.strictEqual(parsedTree.activeEditId, "node-1");
     assert.strictEqual(Object.keys(parsedTree.nodes).length, 2);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should compute and apply differential state patches (RFC 6902)", () => {
+    const beforeState = {
+      realm: "Foundation Establishment",
+      spiritual_energy: 1000,
+      status: "MEDITATING",
+      obsolete_field: "remove_me",
+    };
+
+    const afterState = {
+      realm: "Core Formation",
+      spiritual_energy: 3500,
+      status: "MEDITATING",
+      new_core_grade: "Golden Core",
+    };
+
+    const patches = diffEntityProperties(beforeState, afterState);
+    const parsedPatches = JSONPatchSchema.parse(patches);
+    assert.strictEqual(parsedPatches.length, 4);
+
+    const applied = applyEntityPatch(beforeState, patches);
+    assert.deepStrictEqual(applied, afterState);
+    assert.strictEqual(applied.realm, "Core Formation");
+    assert.strictEqual(applied.spiritual_energy, 3500);
+    assert.strictEqual(applied.new_core_grade, "Golden Core");
+    assert.strictEqual((applied as Record<string, unknown>).obsolete_field, undefined);
   });
 });

@@ -10,6 +10,7 @@ import {
   evaluateFormula,
   extractFormulaVariables,
   validateFormulaSyntax,
+  detectFormulaCycles,
 } from "../formulaEngine.ts";
 
 describe("BLOCK_WORLD_FORMULA_ENGINE_001: Formula Parsing & Math Evaluator", () => {
@@ -166,4 +167,44 @@ describe("BLOCK_WORLD_FORMULA_ENGINE_001: Formula Parsing & Math Evaluator", () 
     };
     assert.strictEqual(evaluateFormula(deepDot, deepContext).value, 80);
   });
+
+  it("should detect circular formula dependencies and loops using DAG topological traversal", () => {
+    // 1. Direct self-reference
+    const selfRef = {
+      attack_power: "attack_power * 2",
+    };
+    const res1 = detectFormulaCycles(selfRef);
+    assert.strictEqual(res1.hasCycle, true);
+    assert.deepStrictEqual(res1.cyclePath, ["attack_power", "attack_power"]);
+
+    // 2. Mutual loop: a -> b -> a
+    const mutual = {
+      a: "b + 10",
+      b: "a * 2",
+    };
+    const res2 = detectFormulaCycles(mutual);
+    assert.strictEqual(res2.hasCycle, true);
+    assert.ok((res2.cyclePath?.length || 0) >= 3);
+
+    // 3. 3-node transitive loop: power -> modifier -> technique -> power
+    const transitive = {
+      power: "modifier * 1.5",
+      modifier: "technique + 50",
+      technique: "power - 10",
+    };
+    const res3 = detectFormulaCycles(transitive);
+    assert.strictEqual(res3.hasCycle, true);
+    assert.strictEqual(res3.cyclePath?.length, 4);
+
+    // 4. Acyclic DAG
+    const acyclic = {
+      total: "attack + defense",
+      attack: "base_stat * 2",
+      defense: "armor + 10",
+    };
+    const res4 = detectFormulaCycles(acyclic);
+    assert.strictEqual(res4.hasCycle, false);
+    assert.strictEqual(res4.cyclePath, undefined);
+  });
 });
+

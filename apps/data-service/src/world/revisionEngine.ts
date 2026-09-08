@@ -141,6 +141,44 @@ export class EditTreeEngine<T = unknown> {
     const activeNode = tree.nodes[tree.activeEditId];
     return activeNode ? activeNode.snapshot : undefined;
   }
+
+  /**
+   * Compacts linear chains of consecutive TYPO_FIX edits on the tree to prevent state explosion.
+   * Block Standard: BLOCK_WORLD_REVISION_COMPACT_001
+   */
+  public compactMicroRevisions(key: string): number {
+    const tree = this.trees.get(key);
+    if (!tree || Object.keys(tree.nodes).length <= 2) {
+      return 0;
+    }
+
+    let compactedCount = 0;
+    for (const [id, node] of Object.entries(tree.nodes)) {
+      if (
+        node.childrenIds.length === 1 &&
+        node.parentId &&
+        node.type === "TYPO_FIX" &&
+        id !== tree.activeEditId &&
+        id !== tree.rootId
+      ) {
+        const parentId = node.parentId;
+        const childId = node.childrenIds[0];
+        const parentNode = tree.nodes[parentId];
+        const childNode = tree.nodes[childId];
+
+        if (parentNode && childNode) {
+          parentNode.childrenIds = parentNode.childrenIds.map((cid) =>
+            cid === id ? childId : cid,
+          );
+          childNode.parentId = parentId;
+          delete tree.nodes[id];
+          compactedCount++;
+        }
+      }
+    }
+
+    return compactedCount;
+  }
 }
 
 export class RevisionEngine {

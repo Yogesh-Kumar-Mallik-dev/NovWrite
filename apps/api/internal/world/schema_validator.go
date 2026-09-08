@@ -391,6 +391,13 @@ func ValidateEntityAttributes(bp BlueprintDef, properties map[string]interface{}
 		normalizedProps[strings.ToLower(k)] = v
 	}
 
+	// Preserve underscore-prefixed legacy metadata non-destructively
+	for k, v := range normalizedProps {
+		if strings.HasPrefix(k, "_") {
+			coerced[k] = v
+		}
+	}
+
 	for _, f := range bp.Fields {
 		fieldNameLower := strings.ToLower(f.Name)
 		rawVal := normalizedProps[fieldNameLower]
@@ -420,6 +427,39 @@ func ValidateEntityAttributes(bp BlueprintDef, properties map[string]interface{}
 
 	return coerced, errs
 }
+
+// UpcastLegacyProperties non-destructively preserves obsolete entity properties under _legacy_properties when schemas evolve.
+// Block Standard: BLOCK_WORLD_UPCAST_SCHEMA_001
+func UpcastLegacyProperties(properties map[string]interface{}, currentFields []DynamicFieldDef) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range properties {
+		result[k] = v
+	}
+	defined := make(map[string]bool)
+	for _, f := range currentFields {
+		defined[strings.ToLower(f.Name)] = true
+	}
+	legacy := make(map[string]interface{})
+	if rawLegacy, ok := properties["_legacy_properties"].(map[string]interface{}); ok {
+		for k, v := range rawLegacy {
+			legacy[k] = v
+		}
+	}
+	for k, v := range properties {
+		if strings.HasPrefix(k, "_") {
+			continue
+		}
+		if !defined[strings.ToLower(k)] {
+			legacy[k] = v
+			delete(result, k)
+		}
+	}
+	if len(legacy) > 0 {
+		result["_legacy_properties"] = legacy
+	}
+	return result
+}
+
 
 var sanitizeKeyRegex = regexp.MustCompile(`[^a-z0-9_\.]`)
 

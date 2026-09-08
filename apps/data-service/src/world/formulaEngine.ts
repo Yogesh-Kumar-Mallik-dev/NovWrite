@@ -599,3 +599,99 @@ export function evaluateFormula(
     };
   }
 }
+
+export interface FormulaCycleResult {
+  hasCycle: boolean;
+  cyclePath?: string[];
+  error?: string;
+}
+
+/**
+ * Detects circular dependency loops in a set of interdependent formula expressions using DAG topological traversal.
+ * Block Standard: BLOCK_WORLD_FORMULA_DAG_001
+ */
+export function detectFormulaCycles(
+  formulas: Record<string, string>,
+): FormulaCycleResult {
+  const keys = Object.keys(formulas);
+  if (keys.length === 0) {
+    return { hasCycle: false };
+  }
+
+  const normalizedFormulas: Record<string, string> = {};
+  for (const [k, v] of Object.entries(formulas)) {
+    normalizedFormulas[k.trim().toLowerCase()] = v;
+  }
+
+  const adj: Record<string, string[]> = {};
+  for (const [name, expr] of Object.entries(normalizedFormulas)) {
+    const valRes = validateFormulaSyntax(expr);
+    const deps: string[] = [];
+    for (const v of valRes.extractedVariables) {
+      const vLower = v.toLowerCase();
+      if (normalizedFormulas[vLower] !== undefined) {
+        if (vLower === name) {
+          const cycle = [name, name];
+          return {
+            hasCycle: true,
+            cyclePath: cycle,
+            error: `BLOCK_WORLD_FORMULA_DAG_001: circular dependency: formula '${name}' directly references itself`,
+          };
+        }
+        deps.push(vLower);
+      }
+    }
+    adj[name] = deps;
+  }
+
+  // 0 = unvisited, 1 = visiting (recursion stack), 2 = visited
+  const state: Record<string, number> = {};
+  let currentPath: string[] = [];
+
+  function dfs(node: string): FormulaCycleResult | null {
+    state[node] = 1;
+    currentPath.push(node);
+
+    for (const neighbor of adj[node] || []) {
+      if (state[neighbor] === 1) {
+        const startIdx = currentPath.indexOf(neighbor);
+        const cycle = currentPath.slice(startIdx).concat(neighbor);
+        return {
+          hasCycle: true,
+          cyclePath: cycle,
+          error: `BLOCK_WORLD_FORMULA_DAG_001: circular formula dependency detected: ${cycle.join(" -> ")}`,
+        };
+      }
+      if (!state[neighbor]) {
+        const res = dfs(neighbor);
+        if (res) return res;
+      }
+    }
+
+    state[node] = 2;
+    currentPath.pop();
+    return null;
+  }
+
+  for (const node of Object.keys(normalizedFormulas)) {
+    if (!state[node]) {
+      const res = dfs(node);
+      if (res) return res;
+    }
+  }
+
+  return { hasCycle: false };
+}
+
+/**
+ * Checks if adding or modifying a formula introduces a circular dependency loop.
+ */
+export function detectFormulaDependencyCycle(
+  targetKey: string,
+  expression: string,
+  existingFormulas: Record<string, string>,
+): FormulaCycleResult {
+  const combined = { ...existingFormulas, [targetKey]: expression };
+  return detectFormulaCycles(combined);
+}
+

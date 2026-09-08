@@ -120,3 +120,56 @@ func TestFormulaEngine_MathFunctions_And_NestedLogic_Regressions(t *testing.T) {
 		t.Errorf("BLOCK_TEST_FORMULA_ENGINE_REGRESSION_001: expected -90 for negative math, got %v (err: %v)", valNeg, err)
 	}
 }
+
+func TestFormulaEngine_DAGCycleDetection(t *testing.T) {
+	// 1. Direct self-reference
+	selfRefFormulas := map[string]string{
+		"attack_power": "attack_power * 2",
+	}
+	cycle, err := DetectFormulaCycles(selfRefFormulas)
+	if err == nil {
+		t.Errorf("expected circular dependency error for self-reference, got nil")
+	}
+	if len(cycle) != 2 || cycle[0] != "attack_power" {
+		t.Errorf("expected cycle path [attack_power, attack_power], got %v", cycle)
+	}
+
+	// 2. 2-node mutual loop: A -> B -> A
+	mutualFormulas := map[string]string{
+		"a": "b + 10",
+		"b": "a * 2",
+	}
+	cycle2, err2 := DetectFormulaCycles(mutualFormulas)
+	if err2 == nil {
+		t.Errorf("expected circular dependency error for mutual loop, got nil")
+	}
+	if len(cycle2) < 3 {
+		t.Errorf("expected cycle path length >= 3, got %v", cycle2)
+	}
+
+	// 3. 3-node transitive cycle: power -> modifier -> technique -> power
+	transitiveFormulas := map[string]string{
+		"power":     "modifier * 1.5",
+		"modifier":  "technique + 50",
+		"technique": "power - 10",
+	}
+	cycle3, err3 := DetectFormulaCycles(transitiveFormulas)
+	if err3 == nil {
+		t.Errorf("expected circular dependency error for transitive loop, got nil")
+	}
+	if len(cycle3) != 4 {
+		t.Errorf("expected 4-node cycle path, got %v", cycle3)
+	}
+
+	// 4. Valid acyclic DAG: total -> attack, defense; attack -> base; defense -> armor
+	validFormulas := map[string]string{
+		"total":   "attack + defense",
+		"attack":  "base_stat * 2",
+		"defense": "armor + 10",
+	}
+	cycle4, err4 := DetectFormulaCycles(validFormulas)
+	if err4 != nil || cycle4 != nil {
+		t.Errorf("expected no cycle for valid acyclic DAG, got err=%v cycle=%v", err4, cycle4)
+	}
+}
+

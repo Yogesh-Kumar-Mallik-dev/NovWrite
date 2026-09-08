@@ -382,3 +382,44 @@ func GetActiveEditNode(tree *EditTree) (*EditNode, bool) {
 	}
 	return &node, true
 }
+
+// CompactMicroRevisions compacts linear chains of consecutive TYPO_FIX edits to avoid tree state explosion.
+// Block Standard: BLOCK_WORLD_REVISION_COMPACT_001
+func CompactMicroRevisions(tree *EditTree) int {
+	if tree == nil || len(tree.Nodes) <= 2 {
+		return 0
+	}
+
+	compactedCount := 0
+	// Find linear paths where parent has exactly 1 child, child is TYPO_FIX, and child is not the active head
+	for id, node := range tree.Nodes {
+		if len(node.ChildrenIDs) == 1 && node.ParentID != nil && node.Type == RevTypeTypoFix && id != tree.ActiveEditID && id != tree.RootID {
+			parentID := *node.ParentID
+			childID := node.ChildrenIDs[0]
+			parentNode, pExists := tree.Nodes[parentID]
+			childNode, cExists := tree.Nodes[childID]
+
+			if pExists && cExists {
+				// Re-link parent to child directly
+				var newParentChildren []string
+				for _, cid := range parentNode.ChildrenIDs {
+					if cid == id {
+						newParentChildren = append(newParentChildren, childID)
+					} else {
+						newParentChildren = append(newParentChildren, cid)
+					}
+				}
+				parentNode.ChildrenIDs = newParentChildren
+				childNode.ParentID = &parentID
+
+				tree.Nodes[parentID] = parentNode
+				tree.Nodes[childID] = childNode
+				delete(tree.Nodes, id)
+				compactedCount++
+			}
+		}
+	}
+
+	return compactedCount
+}
+
