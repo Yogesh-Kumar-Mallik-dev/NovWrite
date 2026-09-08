@@ -87,6 +87,7 @@ Copy-Item .env.example .env
   - **Versioning & Telemetry**: Explicit `/api/v1/` routes with `API-Version`, `X-Request-ID`, and `X-Response-Time` tracing headers.
   - **Standardized Pagination & Empty Query Guarantees**: Predictable pagination metadata envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`). Empty queries are guaranteed to return HTTP 200 OK with `"data": []` (never `null`).
   - **RFC 7807 Problem Details**: All errors return structured `application/problem+json` envelopes with field-level validation breakdowns.
+  - **Defensive API Security & Rate Limiting**: Per-IP token-bucket rate limiter (`RateLimiterMiddleware`), 10MB payload size limiter (`MaxBytesMiddleware`), dynamic environment CORS (`CORS_ALLOWED_ORIGINS`), Content Security Policy & privacy headers, and JWT auth context (`JWTAuthMiddleware`).
   - **Container & Orchestration Probes**: Built-in `/healthz`, `/livez`, and `/readyz` endpoints.
 - **First-Class & Second-Class Blueprint System**: Complete freedom to create universes from scratch.
   - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible universe actors in the timeline (Characters, Sacred Relics, Realms, Factions, Sects) with full causal mutation history.

@@ -166,3 +166,17 @@ This document records the core design principles, trade-offs, and technical deci
   2. Provide native companion PowerShell scripts (`dev.ps1`, `build.ps1`, `check.ps1`, `test.ps1`, `flush_db.ps1`) providing 1-click parity for Windows developers executing directly in PowerShell / Windows Terminal.
 - **Consequences:** Delivers seamless, zero-friction developer onboarding and flawless script execution on every major operating system.
 
+---
+
+## Decision 20: Defensive API Security, Dynamic CORS, In-Memory Token Bucket Rate Limiting, and JWT Auth Context
+
+- **Context:** Public or multi-tenant API surfaces without payload bounding or rate limits are vulnerable to payload memory exhaustion DoS, brute-force attacks, unauthorized resource mutation, and cross-origin hijacking. Hardcoded CORS policies prevent flexible local desktop (Tauri) and staging deployments.
+- **Decision:**
+  1. **Request Body Size Limiter (`MaxBytesMiddleware`):** Enforce a strict 10MB payload limit (`http.MaxBytesReader`) on all inbound requests.
+  2. **In-Memory Token Bucket Rate Limiting (`RateLimiterMiddleware`):** Protect endpoints with thread-safe client IP rate limiting (300 requests/min default), client IP extraction (`X-Forwarded-For`, `X-Real-IP`, `RemoteAddr`), dynamic `X-RateLimit-*` headers, and RFC 7807 429 Too Many Requests responses.
+  3. **Content Security Policy & Defensive Headers:** Inject `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, and strict Content Security Policy.
+  4. **Dynamic Environment-Configured CORS:** Allow comma-separated origins configured via `CORS_ALLOWED_ORIGINS` with safe localhost and `tauri://localhost` defaults.
+  5. **JWT Authentication & User Context (`JWTAuthMiddleware`):** Implement standard HMAC-SHA256 JWT parsing, verification, and context population (`GetUserFromContext`), with support for both strict token-gated routes and non-blocking user identity extraction.
+- **Consequences:** Hardens the API against payload DoS, prevents resource abuse, protects author privacy, and delivers secure multi-platform desktop/web connectivity.
+
+

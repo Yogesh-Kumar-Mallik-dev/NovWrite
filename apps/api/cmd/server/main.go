@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,24 +21,50 @@ import (
 
 // Block Standard: BLOCK_API_SERVER_MAIN_001
 
+func getAllowedOrigins() []string {
+	originsEnv := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if originsEnv == "" {
+		return []string{
+			"http://localhost:5173",
+			"http://127.0.0.1:5173",
+			"http://localhost:3000",
+			"tauri://localhost",
+		}
+	}
+	var origins []string
+	for _, o := range strings.Split(originsEnv, ",") {
+		o = strings.TrimSpace(o)
+		if o != "" {
+			origins = append(origins, o)
+		}
+	}
+	if len(origins) == 0 {
+		return []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "tauri://localhost"}
+	}
+	return origins
+}
+
 func BuildRouter() *chi.Mux {
 	r := chi.NewRouter()
 
-	// Global Middlewares (Observability, Security, Tracing, Recovery)
+	// Global Middlewares (Observability, Security, Tracing, Recovery, Rate Limiting, Auth Context)
 	r.Use(httputil.RequestIDMiddleware)
 	r.Use(httputil.ResponseTimeMiddleware)
+	r.Use(httputil.MaxBytesMiddleware(10 << 20)) // 10MB request body limit
+	r.Use(httputil.RateLimiterMiddleware(300))  // 300 req/min token bucket rate limiter
 	r.Use(httputil.SecurityHeadersMiddleware)
 	r.Use(httputil.APIVersionMiddleware("1.0"))
+	r.Use(httputil.JWTAuthMiddleware(os.Getenv("JWT_SECRET"), false))
 	r.Use(httputil.PanicRecoveryMiddleware)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 
 	// CORS configuration for web, desktop, and mobile
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "tauri://localhost"},
+		AllowedOrigins:   getAllowedOrigins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID", "Idempotency-Key", "X-User-ID"},
-		ExposedHeaders:   []string{"Link", "Location", "X-Request-ID", "X-Response-Time", "API-Version", "X-API-Version"},
+		ExposedHeaders:   []string{"Link", "Location", "X-Request-ID", "X-Response-Time", "API-Version", "X-API-Version", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))

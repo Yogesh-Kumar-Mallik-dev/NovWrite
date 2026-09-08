@@ -19,9 +19,11 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
    - **Strict Single-Change Policy**: Only perform **one change at a time**—one feature, one refactor, or one fix per task/commit.
    - **Reject Multi-Change Requests**: If a user request contains multiple changes (e.g. multiple features, combinations of fixes + refactors, or multiple distinct tasks), you **MUST reject the request for multiple changes**, explain the single-change policy, and ask the user to split or pick one change to execute first.
    - **Commit Message Format**: Always format git commit messages strictly as:
+
      ```text
      <type>(<domain>): <expression>
      ```
+
      Examples: `feat(editor): implement markdown syntax parser`, `fix(auth): handle token expiration grace period`, `refactor(storage): streamline cache invalidation`.
    - **Signed Commits**: Always perform a `git commit -S -m "..."` immediately after completing any functional change, documentation update, or bug fix before passing control back to the user.
 6. **Package Manager Standard (pnpm Only)**:

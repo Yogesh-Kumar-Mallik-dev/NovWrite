@@ -373,6 +373,31 @@ All HTTP error responses adhere to `application/problem+json`:
 }
 ```
 
+### 7.3. Defensive API Security & Payload Bounding
+
+- **Request Body Size Limiting (`MaxBytesMiddleware`):** Protects the API server from memory exhaustion DoS attacks by capping request payloads at 10MB (`10 << 20` bytes) via Go's standard `http.MaxBytesReader`.
+- **Content Security Policy & Hardened Security Headers (`SecurityHeadersMiddleware`):**
+  - `Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; frame-ancestors 'none';`
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- **Dynamic CORS Policy (`cors.Handler`):** Reads allowed origins from the `CORS_ALLOWED_ORIGINS` environment variable (comma-separated), falling back to local web (`localhost:5173`, `localhost:3000`) and desktop Tauri (`tauri://localhost`).
+
+### 7.4. Token Bucket Rate Limiting & User Claims Context
+
+- **Thread-Safe Token Bucket Rate Limiting (`RateLimiterMiddleware`):**
+  - Per-client IP bucket holding up to $N$ tokens (default: 300 requests per minute) refilling smoothly over time.
+  - Automatically extracts client IP from `X-Forwarded-For`, `X-Real-IP`, or `RemoteAddr`.
+  - Injects `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset: 60` headers on all responses.
+  - Returns RFC 7807 `429 Too Many Requests` (`https://novwrite.com/errors/rate-limit-exceeded`, `RATE_LIMIT_EXCEEDED`) when capacity is exhausted.
+  - Automatically cleans up stale client records after 10 minutes of inactivity.
+- **JWT Authentication & Context (`JWTAuthMiddleware`):**
+  - Parses and verifies standard HMAC-SHA256 bearer tokens.
+  - Injects `UserClaims` (`UserID`, `Email`, `Role`, `ProjectIDs`) into the Go request context via `httputil.GetUserFromContext`.
+  - Supports local development fallback using the `X-User-ID` header when no bearer token is present.
+
 ---
 
 ## 8. Multi-User Collaboration & Concurrency Engine
