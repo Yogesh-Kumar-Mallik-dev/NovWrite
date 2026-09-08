@@ -179,4 +179,17 @@ This document records the core design principles, trade-offs, and technical deci
   5. **JWT Authentication & User Context (`JWTAuthMiddleware`):** Implement standard HMAC-SHA256 JWT parsing, verification, and context population (`GetUserFromContext`), with support for both strict token-gated routes and non-blocking user identity extraction.
 - **Consequences:** Hardens the API against payload DoS, prevents resource abuse, protects author privacy, and delivers secure multi-platform desktop/web connectivity.
 
+---
+
+## Decision 21: Three-Tier Multi-User Hierarchy (USER, ADMIN, SUPER_ADMIN)
+
+- **Context:** Fictional worldbuilding and prose drafting require multi-user collaboration across standard authors, platform support engineers, and system operators. Conflating workspace project roles (`LEAD_AUTHOR`, `CO_AUTHOR`) with system-level platform administration leads to privilege escalation, unverified tenant access, and administrative ambiguity.
+- **Decision:** Establish an explicit 3-tier system role model:
+  1. **`USER` (Standard Author / Storyteller):** Can create novel projects, author lore blueprints and entities, write prose, and invite collaborators to projects with granular workspace roles (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`).
+  2. **`ADMIN` (Platform Administrator):** Empowered to perform verified support operations, view user accounts, assist with MFA resets, unlock accounts, and initiate snapshot repairs without browsing private manuscripts.
+  3. **`SUPER_ADMIN` (Root / Super Administrator):** Unrestricted system authority; manages user role promotions/demotions, platform configuration, and administrative audits.
+  - Implement native database enum support (`UserRole`), typed RPC contracts in `@novwrite/bridge`, JWT role claims context (`UserClaims`), and Go HTTP middlewares (`RequireAdmin`, `RequireSuperAdmin`, `RequireRole`).
+- **Consequences:** Enforces strict role isolation, eliminates unauthorized privilege escalation, and provides full auditability across creative and operational boundaries.
+
+
 

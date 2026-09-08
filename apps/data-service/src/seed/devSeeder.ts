@@ -36,6 +36,7 @@ export const SEED_DATASET = {
       username: "eldrin_creator",
       passwordHash:
         "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyUIXe/qlWwR9aL4jG6I7XFom67sV4O2", // Argon2/bcrypt hash
+      role: "USER" as const,
       isPlatformAdmin: false,
       accountStatus: "ACTIVE",
     },
@@ -45,15 +46,27 @@ export const SEED_DATASET = {
       username: "lyra_scribe",
       passwordHash:
         "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyUIXe/qlWwR9aL4jG6I7XFom67sV4O2",
+      role: "USER" as const,
       isPlatformAdmin: false,
       accountStatus: "ACTIVE",
     },
     platformAdmin: {
+      id: "a8888888-8888-8888-8888-888888888888",
+      email: "admin@novwrite.dev",
+      username: "novwrite_admin",
+      passwordHash:
+        "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyUIXe/qlWwR9aL4jG6I7XFom67sV4O2",
+      role: "ADMIN" as const,
+      isPlatformAdmin: true,
+      accountStatus: "ACTIVE",
+    },
+    superAdmin: {
       id: "a9999999-9999-9999-9999-999999999999",
       email: "sysadmin@novwrite.dev",
       username: "novwrite_ops",
       passwordHash:
         "$2b$10$EpRnTzVlqHNP0.fUbXUwSOyUIXe/qlWwR9aL4jG6I7XFom67sV4O2",
+      role: "SUPER_ADMIN" as const,
       isPlatformAdmin: true,
       accountStatus: "ACTIVE",
     },
@@ -135,6 +148,7 @@ export async function seedDevelopmentUniverse(
       update: {
         email: user.email,
         username: user.username,
+        role: user.role,
         isPlatformAdmin: user.isPlatformAdmin,
         accountStatus: user.accountStatus,
       },

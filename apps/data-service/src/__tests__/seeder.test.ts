@@ -81,7 +81,7 @@ describe("NovWrite Development Test Seeder Engine", () => {
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.projectId, SEED_DATASET.project.id);
     assert.strictEqual(result.seededScenesCount, 3);
-    assert.strictEqual(upsertCalls["user"], 3);
+    assert.strictEqual(upsertCalls["user"], 4);
     assert.strictEqual(upsertCalls["project"], 1);
     assert.strictEqual(upsertCalls["projectMember"], 2);
     assert.strictEqual(upsertCalls["chapter"], 2);

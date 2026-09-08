@@ -17,6 +17,10 @@ import (
 
 const (
 	UserContextKey contextKey = "user_claims"
+
+	RoleUser       = "USER"
+	RoleAdmin      = "ADMIN"
+	RoleSuperAdmin = "SUPER_ADMIN"
 )
 
 // UserClaims captures the authenticated user's identity and permissions.
@@ -27,6 +31,33 @@ type UserClaims struct {
 	ProjectIDs []string `json:"projectIds,omitempty"`
 	ExpiresAt  int64    `json:"exp,omitempty"`
 	IssuedAt   int64    `json:"iat,omitempty"`
+}
+
+// IsSuperAdmin returns true if the user has the SUPER_ADMIN system role.
+func (c *UserClaims) IsSuperAdmin() bool {
+	if c == nil {
+		return false
+	}
+	return strings.EqualFold(c.Role, RoleSuperAdmin)
+}
+
+// IsAdmin returns true if the user has ADMIN or SUPER_ADMIN privileges.
+func (c *UserClaims) IsAdmin() bool {
+	if c == nil {
+		return false
+	}
+	return strings.EqualFold(c.Role, RoleAdmin) || strings.EqualFold(c.Role, RoleSuperAdmin)
+}
+
+// HasRole returns true if the user has the specified role, or is a SUPER_ADMIN.
+func (c *UserClaims) HasRole(role string) bool {
+	if c == nil {
+		return false
+	}
+	if strings.EqualFold(c.Role, RoleSuperAdmin) {
+		return true
+	}
+	return strings.EqualFold(c.Role, role)
 }
 
 // GetUserFromContext retrieves UserClaims from the request context if present.
@@ -175,3 +206,54 @@ func JWTAuthMiddleware(jwtSecret string, requireAuth bool) func(http.Handler) ht
 		})
 	}
 }
+
+// RequireRole returns an HTTP middleware enforcing that the authenticated user has at least one of the specified roles.
+func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := GetUserFromContext(r.Context())
+			if !ok || claims == nil {
+				RespondProblem(w, r, ProblemDetail{
+					Type:   "https://novwrite.com/errors/unauthorized",
+					Title:  "Authentication Required",
+					Status: http.StatusUnauthorized,
+					Detail: "Valid authentication credentials are required to perform this action.",
+					Code:   "UNAUTHORIZED",
+				})
+				return
+			}
+
+			// Super Admin automatically passes all role checks
+			if claims.IsSuperAdmin() {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			for _, allowed := range allowedRoles {
+				if strings.EqualFold(claims.Role, allowed) {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			RespondProblem(w, r, ProblemDetail{
+				Type:   "https://novwrite.com/errors/forbidden",
+				Title:  "Forbidden",
+				Status: http.StatusForbidden,
+				Detail: fmt.Sprintf("Access denied: role '%s' is not authorized to access this resource.", claims.Role),
+				Code:   "FORBIDDEN_ROLE_INSUFFICIENT",
+			})
+		})
+	}
+}
+
+// RequireAdmin verifies that the caller has ADMIN or SUPER_ADMIN privileges.
+func RequireAdmin() func(http.Handler) http.Handler {
+	return RequireRole(RoleAdmin, RoleSuperAdmin)
+}
+
+// RequireSuperAdmin verifies that the caller has SUPER_ADMIN privileges.
+func RequireSuperAdmin() func(http.Handler) http.Handler {
+	return RequireRole(RoleSuperAdmin)
+}
+

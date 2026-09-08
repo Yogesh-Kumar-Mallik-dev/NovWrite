@@ -453,15 +453,25 @@ func (s *AuthorOverrideService) ForceApproveViolation(ctx context.Context, proje
 
 ---
 
-## 10. Platform Administration API & Support Operations
+## 10. Multi-User Identity, Authentication & Platform Administration
 
-Platform Administrators (`is_platform_admin = true`) access a dedicated operational subsystem:
+NovWrite implements an explicit 3-tier system identity hierarchy:
 
-- `GET /api/v1/platform/users` — Search and view user account metadata, subscription status, and auth history.
-- `POST /api/v1/platform/users/{userId}/mfa/reset` — Reset user 2FA after verified identity check (logs support ticket ID).
-- `POST /api/v1/platform/users/{userId}/unlock` — Clear brute-force account lockout.
-- `POST /api/v1/platform/billing/refunds` — Issue partial/full Stripe refunds and adjust customer subscription tiers.
-- `POST /api/v1/platform/support/repair-project-snapshots` — Trigger deterministic snapshot rebuild for corrupted universes upon user support request.
+1. **`USER` (Standard Author):** Standard user tier for authors, worldbuilders, and collaborators. Authors manage their own novel projects and invite collaborators with granular project roles (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`).
+2. **`ADMIN` (Platform Administrator):** Operational tier for community managers and support engineers. Can view user accounts, filter by role, unlock accounts, and perform verified support actions.
+3. **`SUPER_ADMIN` (Super Administrator):** System root authority with unrestricted management privileges: promoting/demoting user roles, deleting accounts, configuring platform rules, and auditing system events.
+
+### 10.1. Authentication & Identity Endpoints (`/api/v1/auth`)
+
+- `POST /api/v1/auth/register` — Register a new author account (`USER`). Elevated role assignment (`ADMIN`, `SUPER_ADMIN`) during registration is strictly restricted to `SUPER_ADMIN`.
+- `POST /api/v1/auth/login` — Authenticate via email or username and password, returning an HMAC-SHA256 signed JWT token (`LoginResponse`) containing user claims.
+- `GET /api/v1/auth/me` — Retrieve the profile and active role of the authenticated caller.
+
+### 10.2. Administration & Role Management Endpoints (`/api/v1/admin`)
+
+- `GET /api/v1/admin/users` — Paginated user directory with search and role filtering (Guarded by `RequireAdmin`).
+- `PUT /api/v1/admin/users/{userId}/role` — Promote or demote a user's system role (Guarded by `RequireAdmin`; promoting to `ADMIN` or `SUPER_ADMIN` requires `RequireSuperAdmin`).
+- `DELETE /api/v1/admin/users/{userId}` — Irreversibly delete/deactivate a user account (Guarded by `RequireSuperAdmin`).
 
 ---
 

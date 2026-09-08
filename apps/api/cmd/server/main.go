@@ -74,8 +74,10 @@ func BuildRouter() *chi.Mux {
 	blueprintStore := handlers.NewInMemoryBlueprintStore()
 	entityStore := handlers.NewInMemoryEntityStore()
 	timelineStore := handlers.NewInMemoryTimelineStore()
+	userStore := handlers.NewInMemoryUserStore()
 
 	healthHandler := handlers.NewHealthHandler()
+	userHandler := handlers.NewUserHandler(userStore, os.Getenv("JWT_SECRET"))
 	projectHandler := handlers.NewProjectHandler(projectStore)
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore, projectStore)
 	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, projectStore, timelineStore)
@@ -94,6 +96,23 @@ func BuildRouter() *chi.Mux {
 		r.Get("/healthz", healthHandler.Healthz)
 		r.Get("/livez", healthHandler.Livez)
 		r.Get("/readyz", healthHandler.Readyz)
+
+		// Authentication & Identity
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", userHandler.Register)
+			r.Post("/login", userHandler.Login)
+			r.Get("/me", userHandler.Me)
+		})
+
+		// Platform Administration (Admin / Super Admin)
+		r.Route("/admin", func(r chi.Router) {
+			r.Use(httputil.RequireAdmin())
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/", userHandler.ListUsers)
+				r.Put("/{userId}/role", userHandler.UpdateUserRole)
+				r.With(httputil.RequireSuperAdmin()).Delete("/{userId}", userHandler.DeleteUser)
+			})
+		})
 
 		// Mathematical & Logical Formula Engine
 		r.Route("/formulas", func(r chi.Router) {

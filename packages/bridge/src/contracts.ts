@@ -403,3 +403,65 @@ export function applyEntityPatch(
   return result;
 }
 
+// =====================================
+// Multi-User Hierarchy & Auth Zod Schemas
+// =====================================
+
+export const UserRoleSchema = z.enum(["USER", "ADMIN", "SUPER_ADMIN"]);
+
+export const UserAccountSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  username: z.string().min(2),
+  role: UserRoleSchema,
+  isPlatformAdmin: z.boolean(),
+  mfaEnabled: z.boolean(),
+  accountStatus: z.enum(["ACTIVE", "SUSPENDED", "LOCKED"]),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+
+export const CreateUserRequestSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(2),
+  password: z.string().min(6).optional(),
+  role: UserRoleSchema.optional(),
+});
+
+export const UpdateUserRoleRequestSchema = z.object({
+  role: UserRoleSchema,
+  reason: z.string().optional(),
+});
+
+export const AuthLoginRequestSchema = z.object({
+  emailOrUsername: z.string().min(1),
+  password: z.string().optional(),
+});
+
+export const AuthLoginResponseSchema = z.object({
+  token: z.string().min(1),
+  user: UserAccountSchema,
+  expiresIn: z.number().int().positive(),
+});
+
+export function validateUserAccount(payload: unknown) {
+  const result = UserAccountSchema.safeParse(payload);
+  if (!result.success) {
+    throw new Error(
+      `BLOCK_COMM_BRIDGE_CONTRACT_001: Invalid UserAccount: ${result.error.message}`,
+    );
+  }
+  return result.data;
+}
+
+export function validateCreateUserRequest(payload: unknown) {
+  const result = CreateUserRequestSchema.safeParse(payload);
+  if (!result.success) {
+    throw new Error(
+      `BLOCK_COMM_BRIDGE_CONTRACT_001: Invalid CreateUserRequest: ${result.error.message}`,
+    );
+  }
+  return result.data;
+}
+
+

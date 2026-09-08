@@ -26,6 +26,7 @@ import {
   JSONPatchSchema,
   diffEntityProperties,
   applyEntityPatch,
+  validateUserAccount,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -285,4 +286,51 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     assert.strictEqual(applied.new_core_grade, "Golden Core");
     assert.strictEqual((applied as Record<string, unknown>).obsolete_field, undefined);
   });
+
+  it("BLOCK_TEST_BRIDGE_001: should validate User, Admin, and Super Admin accounts and roles", () => {
+    // 1. Standard User
+    const standardUser = {
+      id: "a1111111-1111-1111-1111-111111111111",
+      email: "author@novwrite.dev",
+      username: "creative_author",
+      role: "USER" as const,
+      isPlatformAdmin: false,
+      mfaEnabled: false,
+      accountStatus: "ACTIVE" as const,
+      createdAt: new Date().toISOString(),
+    };
+    const parsedUser = validateUserAccount(standardUser);
+    assert.strictEqual(parsedUser.role, "USER");
+    assert.strictEqual(parsedUser.isPlatformAdmin, false);
+
+    // 2. Platform Admin
+    const adminUser = {
+      id: "a2222222-2222-2222-2222-222222222222",
+      email: "admin@novwrite.dev",
+      username: "novwrite_admin",
+      role: "ADMIN" as const,
+      isPlatformAdmin: true,
+      mfaEnabled: true,
+      accountStatus: "ACTIVE" as const,
+      createdAt: new Date().toISOString(),
+    };
+    const parsedAdmin = validateUserAccount(adminUser);
+    assert.strictEqual(parsedAdmin.role, "ADMIN");
+    assert.strictEqual(parsedAdmin.isPlatformAdmin, true);
+
+    // 3. Super Admin
+    const superAdmin = {
+      id: "a3333333-3333-3333-3333-333333333333",
+      email: "root@novwrite.dev",
+      username: "super_admin",
+      role: "SUPER_ADMIN" as const,
+      isPlatformAdmin: true,
+      mfaEnabled: true,
+      accountStatus: "ACTIVE" as const,
+      createdAt: new Date().toISOString(),
+    };
+    const parsedSuperAdmin = validateUserAccount(superAdmin);
+    assert.strictEqual(parsedSuperAdmin.role, "SUPER_ADMIN");
+  });
 });
+

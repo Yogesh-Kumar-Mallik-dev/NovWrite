@@ -336,3 +336,45 @@ export interface TimelineEventWithTree {
     effects: unknown[];
   }>;
 }
+
+// =====================================
+// Multi-User Hierarchy & Identity Types
+// =====================================
+
+export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
+
+export interface UserAccount {
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
+  isPlatformAdmin: boolean;
+  mfaEnabled: boolean;
+  accountStatus: "ACTIVE" | "SUSPENDED" | "LOCKED";
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  username: string;
+  password?: string;
+  role?: UserRole;
+}
+
+export interface UpdateUserRoleRequest {
+  role: UserRole;
+  reason?: string;
+}
+
+export interface AuthLoginRequest {
+  emailOrUsername: string;
+  password?: string;
+}
+
+export interface AuthLoginResponse {
+  token: string;
+  user: UserAccount;
+  expiresIn: number;
+}
+
