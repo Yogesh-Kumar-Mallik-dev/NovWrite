@@ -600,3 +600,22 @@ To minimize visual noise and enhance UI cleanliness across desktop and mobile sc
    - Explicit bottom action buttons (`[Cancel]`, `[Close]`, `[Done]`).
 3. **Touch-Friendly Navigation:** On mobile screens, full-width bottom buttons provide comfortable 44px+ touch targets superior to tiny top-corner cross icons.
 
+---
+
+## 20. Viewport-Safe Modal Architecture & Sticky Action Trays
+
+To ensure total usability on short viewports, laptops (e.g. 1280x600), and mobile devices with virtual on-screen keyboards:
+
+1. **Strict Viewport Containment (`max-h-[min(90dvh,750px)]`):** Dialog cards use `flex flex-col max-h-[min(90dvh,750px)] overflow-hidden` to guarantee modals never exceed available screen height.
+2. **Dedicated Internal Scrollable Body (`overflow-y-auto flex-1`):** Form inputs, explanations, and dynamic lists scroll strictly within the modal body, preventing root window scrollbars or layout clipping.
+3. **Sticky Bottom Action Trays (`sticky bottom-0 bg-card/95 backdrop-blur-md`):** Action buttons (`[Save Changes]`, `[Create Project]`, `[Cancel]`, `[Delete]`) remain anchored to the bottom of the dialog container, floating cleanly above mobile soft keyboards.
+
+---
+
+## 21. Client-Side AST Formula Engine & $O(V+E)$ DAG Cycle Detection
+
+- **Real-Time Live Calculation (`apps/web/src/lib/engine/formulaEngine.ts`):** Evaluates mathematical expressions in real-time as users adjust property sliders or input values on the Entity Editor.
+- **Topological Cycle Traversal (`detectFormulaCycles`, `detectFormulaDependencyCycle`):** Detects circular dependencies (e.g. `technique_power -> attack_power -> technique_power`) synchronously before form submission, returning human-readable cycle path chains.
+- **Zero-Latency Mathematical Functions:** Full support for `CLAMP(val, min, max)`, `MIN(...)`, `MAX(...)`, `SQRT(...)`, `POW(...)`, and ternary `IF(cond, then, else)` expressions with mathjs integration.
+
+

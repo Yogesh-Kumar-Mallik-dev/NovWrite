@@ -115,3 +115,54 @@ This document records the core design principles, trade-offs, and technical deci
   1. **3-Step Deletion Flow (`DeleteProjectDialog.svelte`):** Require users to navigate three sequential steps before executing project deletion: Step 1 (Scope & impact assessment with exact entity/blueprint counts), Step 2 (Explicit acknowledgment checkbox of permanent irreversibility), and Step 3 (Exact project title verification typing).
   2. **Zero Redundant Close Buttons Standard:** Eliminate redundant top-right cross `(X)` buttons across all modals, drawers, and toasts. Dismissal is handled uniformly via backdrop click, `Escape` key press, and explicit `[Cancel]` / `[Close]` bottom action buttons.
 - **Consequences:** Prevents catastrophic accidental universe deletion through intentional friction while delivering clean, distraction-free modal dialogs across the entire application.
+
+---
+
+## Decision 14: Formula Engine Cycle Detection via $O(V+E)$ DAG Topological Traversal
+
+- **Context:** Dynamic formula fields allowing cross-property references can contain circular dependencies (e.g. `power = modifier * 2` and `modifier = power / 3`). Without cycle detection, formula evaluation enters infinite recursion, causing stack overflows or CPU thread starvation across Go and TypeScript runtimes.
+- **Decision:** Implement synchronous $O(V+E)$ depth-first search (DFS) topological cycle detection with 3-state coloring (`0 = unvisited`, `1 = visiting`, `2 = visited`) in Go (`apps/api`), TypeScript Data Service (`apps/data-service`), and Web Frontend (`apps/web`). Reject circular blueprints with explicit cycle chain paths (e.g. `power -> modifier -> power`) before saving.
+- **Consequences:** Completely eliminates infinite recursion risks and ensures deterministic formula evaluation order across all tiers.
+
+---
+
+## Decision 15: Non-Destructive Schema Evolution & Legacy Property Upcasting
+
+- **Context:** When blueprints evolve (e.g. renaming or removing fields), existing entities contain historical attributes. Deleting unknown properties immediately causes unrecoverable data loss in historical timeline branches.
+- **Decision:** Implement non-destructive schema evolution. Deprecated or removed properties are preserved under underscore prefixes (`_legacy_property` or `_key`) and dynamically upcasted via runtime helpers (`UpcastLegacyProperties` / `upcastLegacyProperties`) rather than stripped.
+- **Consequences:** Preserves historical fidelity across bitemporal branches without failing strict zero-trust schema validation.
+
+---
+
+## Decision 16: Bitemporal Micro-Revision Compaction for Authorial Draft Trees
+
+- **Context:** Frequent micro-edits (such as consecutive `TYPO_FIX` operations) cause vertical revision trees to bloat with dozens of near-identical nodes, increasing storage overhead and slowing traversal.
+- **Decision:** Implement deterministic micro-revision compaction (`CompactMicroRevisions` in Go, `compactMicroRevisions` in TypeScript `EditTreeEngine`). Collapse contiguous linear chains of `TYPO_FIX` revisions into atomic baseline edit nodes while preserving non-linear authorial branches.
+- **Consequences:** Prevents state explosion and keeps bitemporal revision trees lightweight and fast to resolve.
+
+---
+
+## Decision 17: RFC 6902-Style Differential State Patching Across IPC Boundaries
+
+- **Context:** Transmitting complete snapshot payloads across the Communication Bridge (`@novwrite/bridge`) and WebSocket streams for minor property updates wastes bandwidth and introduces JSON parsing bottlenecks.
+- **Decision:** Introduce RFC 6902-compliant differential state patching (`diffEntityProperties`, `applyEntityPatch`, `JSONPatchOpSchema`). Transmit lightweight delta arrays (`[{ op: "replace", path: "/mana", value: 450 }]`) across domain boundaries.
+- **Consequences:** Reduces IPC and network payload size by up to 90% while maintaining deterministic state synchronization.
+
+---
+
+## Decision 18: Viewport-Safe Mobile Dialogs with Sticky Bottom Action Trays
+
+- **Context:** Mobile keyboards and small screens (e.g. 1280x600 laptop screens or mobile devices in landscape) cut off modal action buttons and cause root page-level scrollbars when dialogs exceed viewport bounds.
+- **Decision:** Enforce `flex flex-col max-h-[min(90dvh,750px)] overflow-hidden` modal containers across all dialogs (`CreateProjectDialog`, `EditProjectDialog`, `DeleteProjectDialog`). Isolate form fields within an internal scrollable body (`overflow-y-auto flex-1`), and dock action buttons in a sticky footer tray (`sticky bottom-0 bg-card/95 backdrop-blur-md shrink-0`) safely above virtual keyboards.
+- **Consequences:** Guarantees primary actions (`Save`, `Cancel`, `Create`, `Delete`) remain perpetually visible and accessible regardless of screen dimensions or keyboard presence.
+
+---
+
+## Decision 19: Universal Cross-Platform Scripting Architecture (POSIX Bash + PowerShell)
+
+- **Context:** Developers and CI environments work across heterogeneous operating systems: Linux distributions, macOS (Darwin), and Windows (PowerShell, Command Prompt, Git Bash, MSYS2, WSL). Hardcoded GNU utilities (such as `xargs -r`), Linux-specific port killers, or un-extended binary paths (`bin/api-server` vs `bin/api-server.exe`) fail on macOS and Windows.
+- **Decision:**
+  1. Make all 5 top-level `.sh` scripts (`dev.sh`, `build.sh`, `check.sh`, `test.sh`, `flush_db.sh`) universally portable by adding runtime OS detection, `.exe` extension awareness, BSD-safe port freeing without `xargs -r`, Docker Compose v1/v2 compatibility, and portable signal trapping.
+  2. Provide native companion PowerShell scripts (`dev.ps1`, `build.ps1`, `check.ps1`, `test.ps1`, `flush_db.ps1`) providing 1-click parity for Windows developers executing directly in PowerShell / Windows Terminal.
+- **Consequences:** Delivers seamless, zero-friction developer onboarding and flawless script execution on every major operating system.
+

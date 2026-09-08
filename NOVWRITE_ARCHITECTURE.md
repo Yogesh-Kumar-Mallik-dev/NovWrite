@@ -25,9 +25,15 @@ NovWrite is a continuity-first novel creation platform designed to track the sta
 12. **Multi-User Collaboration & Audited Governance:** Multi-tenant RBAC (`LEAD_AUTHOR`, `CO_AUTHOR`, `EDITOR`, `CONTRIBUTOR`, `VIEWER`), 60-second collaborative scene leases, and immutable Admin Override logs.
 13. **Dedicated Page-Based Routing, 3-Tier Hierarchy & Zero-Badge Policy:** Every domain features dedicated 3-tier routing (`/`, `/create`, `/[id]`), clean slate dynamic field initialization, 100% Bits UI Select dropdown usage, 3-tier header visual hierarchy, and automatic post-save redirection.
 14. **RESTful API Standards & Telemetry:** Explicit `/api/v1/` routes, `API-Version`, `X-Request-ID`, `X-Response-Time`, standardized pagination envelopes, guaranteed non-null `[]` empty queries, and container probes (`/healthz`, `/livez`, `/readyz`).
-15. **5-Phase Monorepo Test Architecture:** Automated test and regression pipeline covering contracts, domain engines, Go backend, SvelteKit components/stores, and monorepo diagnostics ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)).
+15. **5-Phase Monorepo Test Architecture:** Automated test and regression pipeline covering contracts, domain engines, Go backend, SvelteKit components/stores, and monorepo diagnostics ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) / [`.\test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1)).
 16. **Creative Novel Multi-Project Scoping & Freeform Genre:** Full workspace tenancy isolated by `ProjectID`, dynamic project switching via `projectStore.svelte.ts`, freeform genre string input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), and 100% Clean Slate universe creation with zero dummy entity bloat.
 17. **3-Step Irreversible Project Deletion & Zero Redundant Close Buttons:** Guarded 3-step deletion sequence (`DeleteProjectDialog.svelte` assessing scope, requiring irreversibility checkbox, and exact title typing) alongside elimination of redundant `X` close buttons across all modals, drawers, and toasts.
+18. **Formula Engine Cycle Detection ($O(V+E)$ DAG Topological Traversal):** Synchronous 3-state DFS cycle detection catches circular formula dependencies before persistence with formatted cycle chain error paths.
+19. **Non-Destructive Schema Evolution & Legacy Upcasting:** Preserves deprecated properties (`_legacy_properties`) across historical timeline revisions and upcasts them dynamically during blueprint updates.
+20. **Bitemporal Micro-Revision Compaction:** Collapses contiguous linear chains of `TYPO_FIX` edits into atomic baseline revisions (`CompactMicroRevisions`), preventing tree bloat.
+21. **RFC 6902 Differential State Patching:** Lightweight delta operations (`diffEntityProperties`, `applyEntityPatch`) across `@novwrite/bridge` IPC boundaries.
+22. **Viewport-Safe Mobile Dialogs & Sticky Action Trays:** Enforces `max-h-[min(90dvh,750px)]` modal containment, internal scrollable body, and sticky bottom footer trays docked safely above virtual keyboards.
+23. **Universal Cross-Platform Tooling:** Universal portability across Linux, macOS, and Windows with matching POSIX Bash (`.sh`) and PowerShell (`.ps1`) scripts.
 
 ---
 
@@ -172,10 +178,10 @@ NovWrite introduces an orthogonal dual-axis revision paradigm:
 
 ## 7. 5-Phase Monorepo Test Architecture
 
-NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)):
+NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) / [`.\test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1)):
 
-1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, and error normalizers (12 unit tests).
-2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, AST formula engine, and state fold engine (40 unit tests).
-3. **Phase 3 (`apps/api`):** Go backend unit and integration test suite.
-4. **Phase 4 (`@novwrite/web`):** Vitest frontend component and store tests (`PipeTreeVisualizer`, `worldStore`, `formulaEngine`).
-5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, differential state patchers, and error normalizers (13 unit tests).
+2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, micro-revision compaction, and AST formula engine with cycle detection (41 unit tests).
+3. **Phase 3 (`apps/api`):** Go backend unit, formula engine cycle detection, and HTTP integration test suite.
+4. **Phase 4 (`@novwrite/web`):** Frontend component, store, table configuration, and mathjs AST formula evaluation tests (25 unit tests).
+5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh) / [`.\check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1) with 0 errors and 0 warnings tolerance.

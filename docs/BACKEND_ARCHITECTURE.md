@@ -68,12 +68,17 @@ flowchart TB
   - **Narrative Timeline Conduit ($T_{\text{story}}$)**: Sequential plot axis carrying narrative sequence numbers and chronological timestamps (`event0 ---> event1 ---> event2 ...`).
   - **Authorial Revision DAG ($T_{\text{revision}}$)**: Vertical hanging tree (`EditTree<T>`) for every event and entity containing immutable revision nodes (`ED0 -> ED1 -> ED2 ...`).
   - **Non-Destructive Checkout**: Checking out an earlier revision does not erase later drafts—they remain valid branches of the parent node with infinite branching support.
+  - **Bitemporal Micro-Revision Compaction (`CompactMicroRevisions`)**: Collapses contiguous linear chains of minor `TYPO_FIX` edits into unified baseline nodes to prevent vertical tree explosion while preserving non-linear authorial branches.
   - **Bitemporal Coordinate Resolution**: Deterministically resolves exact world state at any dual-axis coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
 - **Universe & Blueprint Engine (`universe`):**
   - Manages **1st-Class Blueprints** (Entity Archetypes: Characters, Weapons, Sanctuaries, Factions) and **2nd-Class Blueprints** (Sub-Schemas & Gauges: Cultivation Ranks, Affection Scales, Power Matrices).
   - Validates dynamic entity attributes against `BlueprintDef` and `DynamicFieldDef` schemas, including pure categorical enums (`ENUM`), weighted value types (`VALUE_TYPE`: `{ label, value, power }`), freeform arrays (`ARRAY`), blueprint references (`BLUEPRINT_REF`), and blueprint array references (`ARRAY_REF`).
-  - **Zero-Trust Validation & Sanitization:** Automatically forces lowercase machine keys (`strings.ToLower`), rejects duplicate field keys (`DUPLICATE_FIELD_KEY`), executes field type slate wipe (strips stale bounds/options/formulas), and normalizes entity property keys.
-  - **Server-Side AST Formula Engine (`formula_engine.go`):** Executes full recursive descent AST formula parsing and deterministic calculation server-side during entity persistence and event mutation. Never trusts client-sent formula values.
+  - **Zero-Trust Validation & Non-Destructive Schema Evolution:**
+    - Automatically forces lowercase machine keys (`strings.ToLower`), rejects duplicate field keys (`DUPLICATE_FIELD_KEY`), executes field type slate wipe, and normalizes entity property keys.
+    - Preserves historical attributes under underscore-prefixed legacy property maps (`_legacy_properties`) and runs non-destructive upcasters (`UpcastLegacyProperties`), guaranteeing backward compatibility when schemas evolve.
+  - **Server-Side AST Formula Engine with DAG Cycle Detection (`formula_engine.go`):**
+    - Executes recursive descent AST formula parsing and deterministic calculation server-side during entity persistence and event mutation.
+    - Synchronous 3-state DAG topological traversal (`DetectFormulaCycles`, `DetectFormulaDependencyCycle`) detects circular dependencies before saving and returns formatted cycle paths (e.g. `power -> modifier -> power`).
 - **Prose & Novel Engine (`novel`):** Managing scene markdown, word count telemetry, chapter hierarchies, entity mentions, and collaborative 60-second heartbeat scene locks (`scene_leases`).
 - **Continuity & Rules Engine (`continuity`):** Invariant rule execution, predicate evaluation against folded state, relational link validation, and explainable violation traceback generation.
 - **AI Context Gateway (`ai`):** Assembling grounded prompts from canonical state and `pgvector` similarity, streaming model completions via SSE.
@@ -81,7 +86,7 @@ flowchart TB
 ### 2.2. TypeScript Data Service (`apps/data-service/`)
 
 - **Isolation Scope:** Encapsulates direct database queries, migrations, and Prisma ORM client operations.
-- **Domain Engine Parity:** Houses dual-engine TypeScript implementations of Schema Engine (`schemaEngine.ts`), Property Validator (`propertyValidator.ts`), State Fold Engine (`stateFoldEngine.ts`), Timeline Engine (`timelineEngine.ts`), and AST Formula Engine (`formulaEngine.ts`) maintaining 100% parity with the Go backend.
+- **Domain Engine Parity:** Houses dual-engine TypeScript implementations of Schema Engine (`schemaEngine.ts`), Property Validator (`propertyValidator.ts`), State Fold Engine (`stateFoldEngine.ts`), Timeline Engine (`timelineEngine.ts`), Revision Engine (`revisionEngine.ts` with `compactMicroRevisions`), and AST Formula Engine (`formulaEngine.ts` with `detectFormulaCycles`) maintaining 100% parity with the Go backend.
 - **Coarse-Grained Domain gRPC API:**
   - `GetProjectState(projectId, sequenceNumber)`
   - `CreateEventWithEffects(projectId, eventData, effects)`
@@ -91,8 +96,8 @@ flowchart TB
 
 ### 2.3. Shared Contract & Communication Bridge (`packages/bridge/`)
 
-- **Bridge Contract Layer (`@novwrite/bridge`):** Houses typed RPC contracts, Zod schemas, mock adapters, and automated test suites for cross-domain interactions (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
-- **Deterministic Contract Testing:** Automated contract and mock suites executed in Phase 1 of the monorepo test runner (`./test.sh`) ensuring seamless frontend-to-backend communication without cross-domain leakage.
+- **Bridge Contract Layer (`@novwrite/bridge`):** Houses typed RPC contracts, Zod schemas, mock adapters, differential patching utilities (`diffEntityProperties`, `applyEntityPatch`, `JSONPatchSchema`), and automated test suites for cross-domain interactions (`SceneGroundingRequest`, `ValidateContinuityRequest`, `EntityMentionQuery`).
+- **Deterministic Contract Testing:** Automated contract and mock suites executed in Phase 1 of the monorepo test runner (`./test.sh` / `.\test.ps1`) ensuring seamless frontend-to-backend communication without cross-domain leakage.
 
 ---
 

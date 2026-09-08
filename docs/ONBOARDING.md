@@ -299,12 +299,12 @@ pnpm --filter @novwrite/bridge build
 
 ## 6. Monorepo 1-Click Orchestration Scripts
 
-NovWrite provides dedicated top-level lifecycle scripts:
+NovWrite provides dedicated top-level lifecycle scripts with universal cross-platform support across Linux, macOS, and Windows:
 
+### 6.1. Linux, macOS, and Windows (Git Bash / WSL)
 ```bash
 # 🚀 1-Click Development Environment
-# (Starts Postgres & Redis containers, verifies health, runs DB migrations, 
-#  and boots Go API Backend, TypeScript Data Service, and SvelteKit Web simultaneously)
+# (Starts Postgres & Redis containers, verifies health, boots Go API Backend & SvelteKit Web simultaneously)
 ./dev.sh
 
 # 🏗️ 1-Click Monorepo Production Build
@@ -319,9 +319,27 @@ NovWrite provides dedicated top-level lifecycle scripts:
 # (Executes bridge tests -> data-service tests -> Go backend tests -> web tests -> typecheck)
 ./test.sh
 
-# 🧹 Complete Database & Cache Reset
-# (Flushes all PostgreSQL tables & Redis keys to start fresh for new user testing)
+# 🧹 Clean Slate Database & Redis Reset Utility
+# (Flushes Redis 7.2 keys via FLUSHALL and resets PostgreSQL tables to 0 records)
 ./flush_db.sh
+```
+
+### 6.2. Windows (PowerShell / Windows Terminal / pwsh)
+```powershell
+# 🚀 1-Click Development Environment
+.\dev.ps1
+
+# 🏗️ 1-Click Monorepo Production Build
+.\build.ps1
+
+# 🔍 1-Click Monorepo Typecheck & Diagnostics
+.\check.ps1
+
+# 🧪 1-Click 5-Phase Monorepo Test Runner
+.\test.ps1
+
+# 🧹 Clean Slate Database & Redis Reset Utility
+.\flush_db.ps1
 ```
 
 ---

@@ -35,19 +35,32 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 
 ### 1.2. 1-Click Monorepo Launch
 
+#### Linux / macOS / Windows (Git Bash / WSL)
 ```bash
 # 1. Clone repository
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# 2. Install workspace dependencies
+# 2. Install workspace dependencies & setup environment
 pnpm install
-
-# 3. Setup environment configuration
 cp .env.example .env
 
-# 4. Launch 1-Click Full Dev Environment (Postgres, Redis, API, Data Service, Web)
+# 3. Launch 1-Click Full Dev Environment (Postgres, Redis, API, Data Service, Web)
 ./dev.sh
+```
+
+#### Windows (PowerShell / Windows Terminal)
+```powershell
+# 1. Clone repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. Install workspace dependencies & setup environment
+pnpm install
+Copy-Item .env.example .env
+
+# 3. Launch 1-Click Full Dev Environment
+.\dev.ps1
 ```
 
 ---
@@ -59,15 +72,17 @@ cp .env.example .env
   - Dynamic Project Switcher with instant switching, freeform genre text input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), pure **Clean Slate** universe creation (zero starter archetypes or dummy entity bloat), and zero-state "No Active Project Selected" guidance cards.
   - Project Settings & Edit modal (`EditProjectDialog`) with title, genre, and synopsis modification.
   - **3-Step Irreversible Project Deletion** (`DeleteProjectDialog`): Sequential confirmation sequence assessing affected asset scope, requiring an irreversibility acknowledgment checkbox, and exact project title verification before deletion.
-  - Complete database & Redis reset lifecycle (`./flush_db.sh`) for testing fresh user onboarding.
+  - Complete database & Redis reset lifecycle (`./flush_db.sh` / `.\flush_db.ps1`) for testing fresh user onboarding.
 - **Zero Redundant Close Buttons Standard**:
   - Clean, distraction-free modal dialogs, drawers, and toasts with zero redundant top-right cross `(X)` buttons.
   - Consistent dismissal across all viewports via backdrop click, keyboard `Escape`, and explicit bottom action buttons (`[Cancel]`, `[Close]`).
 - **The UPDATE Pipe & Hanging EDIT Trees Dual-Axis Reversible DAG Engine**:
   - **The UPDATE Pipe (Plot Axis / $T_{\text{story}}$)**: Sequential horizontal pipeline representing chronological narrative events (`event0 ---> event1 ---> event2 ---> event3 ---> event4`).
   - **Hanging EDIT Trees (Authorial Revision DAG)**: Every event and entity possesses a vertical tree of immutable revision nodes (`ED0 -> ED1 -> ED2 -> ED3 ...`) with non-destructive checkouts. Reverting to an earlier node does not erase newer drafts—they remain branches of the parent node with infinite branching support.
+  - **Bitemporal Micro-Revision Compaction**: Deterministically collapses contiguous linear chains of `TYPO_FIX` edits into atomic baseline revisions (`CompactMicroRevisions`), preventing tree bloat while preserving all non-linear draft branches.
   - **Bitemporal Coordinate Resolution**: Deterministically resolves exact world state at any dual-axis coordinate $(T_{\text{narrative}}, T_{\text{revision}})$.
   - **Interactive PipeTree Visualizer**: Dedicated UI component (`PipeTreeVisualizer`) rendering the glowing horizontal timeline conduit alongside vertical hanging branch graphs with live EDIT head pointers (`[⚡ ACTIVE EDIT HEAD]`).
+- **RFC 6902-Style Differential State Patching**: Lightweight delta operations (`diffEntityProperties`, `applyEntityPatch`) across Communication Bridge (`@novwrite/bridge`) IPC boundaries, cutting network payloads by up to 90%.
 - **RESTful API Standardization & Best Practices**:
   - **Versioning & Telemetry**: Explicit `/api/v1/` routes with `API-Version`, `X-Request-ID`, and `X-Response-Time` tracing headers.
   - **Standardized Pagination & Empty Query Guarantees**: Predictable pagination metadata envelopes (`page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`). Empty queries are guaranteed to return HTTP 200 OK with `"data": []` (never `null`).
@@ -77,15 +92,20 @@ cp .env.example .env
   - **1st-Class Blueprints (Entity Archetypes)**: Instantiate tangible universe actors in the timeline (Characters, Sacred Relics, Realms, Factions, Sects) with full causal mutation history.
   - **2nd-Class Blueprints (Sub-Blueprints & Value Objects)**: Reusable embedded data structures and scale gauges (e.g. `Romantic Affection Scale`, `Cultivation Rank & Mastery`, `Power Matrices`) referenced across entities.
 - **Dynamic Enums, Value Types, Arrays & Blueprint References**: Define options for enum fields, power-weighted value types, freeform item arrays (`ARRAY`), and entity reference arrays (`ARRAY_REF`).
-- **Zero-Trust Backend Validation Parity**: Strict lowercase machine key coercion (`.toLowerCase()`, `strings.ToLower`), duplicate key rejection, field type slate wipe, and normalized property lookup across both Go and TypeScript backends.
-- **Deterministic Server-Side AST Formula Engine**: Write complex mathematical formulas for computed properties (e.g. `Total Combat Power = (cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`) that recalculate in real-time on frontend and are validated and computed deterministically on the backend.
-- **Mobile-First Responsive Architecture & Motion System**:
+- **Zero-Trust Backend Validation Parity & Non-Destructive Schema Evolution**:
+  - Strict lowercase machine key coercion (`.toLowerCase()`, `strings.ToLower`), duplicate key rejection, field type slate wipe, and normalized property lookup across both Go and TypeScript backends.
+  - Non-destructive schema evolution preserves legacy attributes (`_legacy_properties`) and runtime upcasters (`UpcastLegacyProperties`), preventing data corruption when blueprints evolve.
+- **Deterministic Server-Side AST Formula Engine with $O(V+E)$ Cycle Detection**:
+  - Write complex mathematical formulas for computed properties (e.g. `Total Combat Power = (cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery`) that recalculate in real-time on frontend and are validated and computed deterministically on the backend.
+  - Synchronous 3-state DAG topological traversal catches circular dependencies before persistence and displays exact cycle chains (e.g. `power -> modifier -> power`).
+- **Mobile-First Responsive Architecture & Viewport Resilience**:
   - 2-tier sub-header control strip, auto-fit container-safe cards, top pagination bar to eliminate layout jumps, and isolated table/DAG scrolling.
+  - Viewport-safe dialogs (`max-h-[min(90dvh,750px)]`) with internal scrollable bodies and sticky bottom action trays docked safely above mobile soft keyboards.
   - Svelte 5 native bidirectional transitions (`transition:fade`, `transition:scale`, `transition:fly`, 150–220ms) with physics-based cubic easing and full `@media (prefers-reduced-motion: reduce)` accessibility.
   - Single-icon purple theme toggle (`#7c3aed`) rendering exactly one icon at a time matching both light and dark themes.
 - **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking & Evidence-Based Continuity Warnings**: At any scene, reconstructs exact world state and flags prose contradictions citing historical causal events.
-- **Graceful Lifecycle Orchestration & 5-Phase Test Runner**: 1-click dev server (`./dev.sh`), build (`./build.sh`), typecheck (`./check.sh`), unified 5-phase test runner (`./test.sh`), and database flusher (`./flush_db.sh`).
+- **Universal Cross-Platform Tooling & 5-Phase Test Runner**: 1-click dev server (`./dev.sh` / `.\dev.ps1`), build (`./build.sh` / `.\build.ps1`), typecheck (`./check.sh` / `.\check.ps1`), unified 5-phase test runner (`./test.sh` / `.\test.ps1`), and database flusher (`./flush_db.sh` / `.\flush_db.ps1`) supporting Linux, macOS, and Windows.
 
 ---
 

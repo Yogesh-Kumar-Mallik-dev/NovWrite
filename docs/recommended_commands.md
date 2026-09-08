@@ -40,6 +40,9 @@ go version && node -v && pnpm -v && docker --version && protoc --version && buf 
 
 ## 2. Top-Level Monorepo Orchestration Scripts
 
+All scripts are universally portable across **Linux**, **macOS (Darwin)**, and **Windows** (Git Bash / MSYS2 / WSL / native PowerShell).
+
+### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
 ```bash
 # 🚀 1-Click Development Server (Postgres, Redis, API, Data Service, Web with health checks & graceful shutdown)
 ./dev.sh
@@ -55,6 +58,24 @@ go version && node -v && pnpm -v && docker --version && protoc --version && buf 
 
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
 ./flush_db.sh
+```
+
+### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
+```powershell
+# 🚀 1-Click Development Server
+.\dev.ps1
+
+# 🏗️ 1-Click Monorepo Build
+.\build.ps1
+
+# 🔍 1-Click Monorepo Diagnostics & Typecheck
+.\check.ps1
+
+# 🧪 1-Click 5-Phase Test Runner
+.\test.ps1
+
+# 🧹 Complete Database & Cache Reset
+.\flush_db.ps1
 ```
 
 ---
