@@ -2,16 +2,28 @@
 set -e
 
 # ==============================================================================
-# NovWrite Test Suite Runner
+# NovWrite Test Suite Runner (Universal Cross-Platform)
+# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL / Cygwin)
 # Runs Bridge contracts, Data Service tests, Go API unit tests, Web engine tests, and Typechecks
 # ==============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
+OS_TYPE="$(uname -s 2>/dev/null || echo "Unknown")"
+
 echo "========================================================"
 echo "  🧪 Running All NovWrite Test Suites"
+echo "  🖥️  Platform: $OS_TYPE"
 echo "========================================================"
+
+# Pre-flight check for test toolchain
+for tool in go pnpm node; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "❌ Error: Required tool '$tool' is not installed or not in PATH."
+    exit 1
+  fi
+done
 
 # 1. Test Bridge Contracts
 echo ""

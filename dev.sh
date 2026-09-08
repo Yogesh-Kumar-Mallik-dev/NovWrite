@@ -2,9 +2,10 @@
 set -e
 
 # ==============================================================================
-# NovWrite Local Development Launcher
+# NovWrite Local Development Launcher (Universal Cross-Platform)
+# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL / Cygwin)
 # Starts Go API server (port 8080) and SvelteKit Web Client (port 5173)
-# with graceful startup probing and signal-trapped graceful shutdown.
+# with graceful startup probing, cross-platform port freeing, and signal trapping.
 # ==============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,8 +16,18 @@ WEB_PORT="5173"
 API_HOST="127.0.0.1"
 WEB_HOST="127.0.0.1"
 
+# Detect Operating System & Executable Extension
+OS_TYPE="$(uname -s 2>/dev/null || echo "Unknown")"
+EXE_EXT=""
+case "$OS_TYPE" in
+  CYGWIN*|MINGW*|MSYS*|Windows_NT)
+    EXE_EXT=".exe"
+    ;;
+esac
+
 echo "========================================================"
 echo "  🚀 Starting NovWrite Development Environment"
+echo "  🖥️  Platform: $OS_TYPE"
 echo "========================================================"
 
 # Pre-flight check for required tools
@@ -27,20 +38,42 @@ for tool in go pnpm node curl; do
   fi
 done
 
-# Function to release a port if held by a stale process
+# Cross-platform port clearing function (Linux / macOS / Windows Git Bash)
 free_port() {
   local port="$1"
   local name="$2"
-  local pids
-  pids=$(lsof -ti:"$port" 2>/dev/null || true)
+  local pids=""
+
+  if command -v lsof >/dev/null 2>&1; then
+    pids=$(lsof -ti:"$port" 2>/dev/null || true)
+  elif command -v netstat >/dev/null 2>&1; then
+    # Fallback for Windows / MSYS environments without lsof
+    pids=$(netstat -ano 2>/dev/null | awk -v p=":$port" '$2 ~ p && $4 == "LISTENING" {print $5}' | sort -u | tr -d '\r' || true)
+  fi
+
   if [ -n "$pids" ]; then
     echo "⚠️  Port $port is currently in use (PID: $pids). Terminating stale $name process..."
-    kill -15 $pids 2>/dev/null || true
+    for pid in $pids; do
+      if [ "$pid" != "0" ] && [ -n "$pid" ]; then
+        kill -15 "$pid" 2>/dev/null || true
+      fi
+    done
     sleep 1
-    # Force kill if still holding port
-    pids_remaining=$(lsof -ti:"$port" 2>/dev/null || true)
-    if [ -n "$pids_remaining" ]; then
-      kill -9 $pids_remaining 2>/dev/null || true
+
+    # Force kill if still lingering
+    local remaining=""
+    if command -v lsof >/dev/null 2>&1; then
+      remaining=$(lsof -ti:"$port" 2>/dev/null || true)
+    elif command -v netstat >/dev/null 2>&1; then
+      remaining=$(netstat -ano 2>/dev/null | awk -v p=":$port" '$2 ~ p && $4 == "LISTENING" {print $5}' | sort -u | tr -d '\r' || true)
+    fi
+
+    if [ -n "$remaining" ]; then
+      for pid in $remaining; do
+        if [ "$pid" != "0" ] && [ -n "$pid" ]; then
+          kill -9 "$pid" 2>/dev/null || true
+        fi
+      done
     fi
   fi
 }
@@ -103,9 +136,19 @@ cleanup() {
     kill -9 "$WEB_PID" 2>/dev/null || true
   fi
 
-  # Clean any residual processes on ports
-  lsof -ti:"$API_PORT" 2>/dev/null | xargs -r kill -9 2>/dev/null || true
-  lsof -ti:"$WEB_PORT" 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+  # Clean any residual processes on ports portably (no xargs -r for BSD/macOS compatibility)
+  if command -v lsof >/dev/null 2>&1; then
+    local pids_api
+    pids_api=$(lsof -ti:"$API_PORT" 2>/dev/null || true)
+    if [ -n "$pids_api" ]; then
+      for pid in $pids_api; do kill -9 "$pid" 2>/dev/null || true; done
+    fi
+    local pids_web
+    pids_web=$(lsof -ti:"$WEB_PORT" 2>/dev/null || true)
+    if [ -n "$pids_web" ]; then
+      for pid in $pids_web; do kill -9 "$pid" 2>/dev/null || true; done
+    fi
+  fi
 
   echo "✨ All NovWrite development servers stopped cleanly."
   echo "========================================================"
@@ -117,18 +160,18 @@ trap cleanup SIGINT SIGTERM SIGHUP EXIT
 # 1. Build & Start Go API Server in background
 echo "📦 [1/2] Preparing Go API Server on http://${API_HOST}:${API_PORT}..."
 mkdir -p "$ROOT_DIR/bin"
-(cd "$ROOT_DIR/apps/api" && go build -o "$ROOT_DIR/bin/api-server" ./cmd/server/main.go)
+(cd "$ROOT_DIR/apps/api" && go build -o "$ROOT_DIR/bin/api-server$EXE_EXT" ./cmd/server/main.go)
 
 (
   cd "$ROOT_DIR/apps/api"
-  PORT="$API_PORT" ENVIRONMENT=development exec "$ROOT_DIR/bin/api-server"
+  PORT="$API_PORT" ENVIRONMENT=development exec "$ROOT_DIR/bin/api-server$EXE_EXT"
 ) &
 API_PID=$!
 
 # Probe Go API health endpoint until ready
 echo "⏳ Waiting for Go API server to become ready..."
 api_ready=0
-for i in {1..30}; do
+for i in $(seq 1 30 2>/dev/null || echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30); do
   if curl -s -f "http://${API_HOST}:${API_PORT}/healthz" >/dev/null 2>&1; then
     api_ready=1
     break
@@ -157,7 +200,7 @@ WEB_PID=$!
 # Probe Web Server until accepting connections
 echo "⏳ Waiting for SvelteKit Web Workbench to initialize..."
 web_ready=0
-for i in {1..30}; do
+for i in $(seq 1 30 2>/dev/null || echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30); do
   if curl -s -I "http://${WEB_HOST}:${WEB_PORT}" >/dev/null 2>&1; then
     web_ready=1
     break
