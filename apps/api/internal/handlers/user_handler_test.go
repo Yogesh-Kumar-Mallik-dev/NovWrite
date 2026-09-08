@@ -248,3 +248,57 @@ func TestUserHandler_RequireRoleMiddlewares(t *testing.T) {
 		t.Errorf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for super admin, got %d", recSuper.Code)
 	}
 }
+
+func TestUserHandler_SuperAdminLogin(t *testing.T) {
+	store := NewInMemoryUserStore()
+	handler := NewUserHandler(store, "test-secret-key-32b")
+
+	// 1. Valid Super Admin username login
+	loginSuperPayload := `{"emailOrUsername":"novwrite_ops","password":"any_password"}`
+	reqValid := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginSuperPayload))
+	recValid := httptest.NewRecorder()
+
+	handler.SuperAdminLogin(recValid, reqValid)
+	if recValid.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for valid super admin login, got %d: %s", recValid.Code, recValid.Body.String())
+	}
+
+	var loginResp httputil.SingleResponse
+	if err := json.Unmarshal(recValid.Body.Bytes(), &loginResp); err != nil {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: failed to parse response: %v", err)
+	}
+	respMap := loginResp.Data.(map[string]interface{})
+	if respMap["token"] == "" {
+		t.Errorf("BLOCK_TEST_USER_HANDLER_001: expected non-empty token")
+	}
+
+	// 2. Valid Super Admin email login
+	loginEmailPayload := `{"emailOrUsername":"sysadmin@novwrite.dev","password":"any_password"}`
+	reqEmail := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginEmailPayload))
+	recEmail := httptest.NewRecorder()
+
+	handler.SuperAdminLogin(recEmail, reqEmail)
+	if recEmail.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for email login, got %d: %s", recEmail.Code, recEmail.Body.String())
+	}
+
+	// 3. Standard USER attempting Super Admin login -> 403 Forbidden
+	loginUserPayload := `{"emailOrUsername":"lead_author@novwrite.dev","password":"any_password"}`
+	reqUser := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginUserPayload))
+	recUser := httptest.NewRecorder()
+
+	handler.SuperAdminLogin(recUser, reqUser)
+	if recUser.Code != http.StatusForbidden {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 403 Forbidden for standard user on superadmin login, got %d", recUser.Code)
+	}
+
+	// 4. Non-existent user -> 401 Unauthorized
+	loginNonExistent := `{"emailOrUsername":"ghost_user@novwrite.dev","password":"any_password"}`
+	reqNonExistent := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginNonExistent))
+	recNonExistent := httptest.NewRecorder()
+
+	handler.SuperAdminLogin(recNonExistent, reqNonExistent)
+	if recNonExistent.Code != http.StatusUnauthorized {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 401 Unauthorized for non-existent user, got %d", recNonExistent.Code)
+	}
+}

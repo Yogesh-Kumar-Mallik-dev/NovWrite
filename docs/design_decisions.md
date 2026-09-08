@@ -191,5 +191,16 @@ This document records the core design principles, trade-offs, and technical deci
   - Implement native database enum support (`UserRole`), typed RPC contracts in `@novwrite/bridge`, JWT role claims context (`UserClaims`), and Go HTTP middlewares (`RequireAdmin`, `RequireSuperAdmin`, `RequireRole`).
 - **Consequences:** Enforces strict role isolation, eliminates unauthorized privilege escalation, and provides full auditability across creative and operational boundaries.
 
+---
+
+## Decision 22: Singleton Super Admin Constraint, Username & Password Protected Dashboard, and Server CLI
+
+- **Context:** Unconstrained proliferation of root administrative accounts poses severe platform security risks. Exposing a root dashboard without strong authentication barriers or restricting root operations to web-only interfaces leaves the platform vulnerable to session hijacking and credential stuffing.
+- **Decision:**
+  1. **Singleton Super Admin Constraint:** Enforce that exactly one `SUPER_ADMIN` account exists in the platform at all times (`novwrite_ops` / `sysadmin@novwrite.dev`). Reject API requests attempting to register or promote secondary `SUPER_ADMIN` accounts, and protect the singleton from deletion.
+  2. **Username & Password Protected Dashboard Gate (`/superadmin` & `POST /api/v1/superadmin/login`):** Guard the `/superadmin` web route behind a mandatory credentials screen. The server verifies identity against the singleton record and asserts that the caller holds `RoleSuperAdmin` before minting 24-hour HMAC-SHA256 JWT tokens. Unauthorized role logins are denied with `403 Forbidden`.
+  3. **Backend Host Server CLI (`apps/api/cmd/admin-cli`):** Provide an out-of-band administrative interface on the backend server shell supporting direct telemetry inspection (`status`), root JWT token generation (`token`), user listings (`list-users`), and role promotions/demotions (`promote`, `demote`).
+- **Consequences:** Guarantees absolute single-root accountability, provides dual-layer dashboard security (credentials + JWT guard), and enables secure terminal-based operations directly on the server host.
+
 
 

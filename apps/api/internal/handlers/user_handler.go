@@ -550,6 +550,77 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// SuperAdminLogin authenticates the Singleton Super Admin via username/email and password.
+func (h *UserHandler) SuperAdminLogin(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.RespondBadRequest(w, r, "Invalid JSON payload: "+err.Error(), "INVALID_JSON")
+		return
+	}
+
+	identifier := strings.TrimSpace(req.EmailOrUsername)
+	if identifier == "" {
+		httputil.RespondBadRequest(w, r, "Super admin email or username is required.", "MISSING_IDENTIFIER")
+		return
+	}
+
+	user, err := h.store.GetByEmailOrUsername(identifier)
+	if err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/unauthorized",
+			Title:  "Invalid Super Admin Credentials",
+			Status: http.StatusUnauthorized,
+			Detail: "Invalid super admin credentials.",
+			Code:   "INVALID_CREDENTIALS",
+		})
+		return
+	}
+
+	// Strict check: Caller MUST have the SUPER_ADMIN role
+	if user.Role != httputil.RoleSuperAdmin {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/forbidden",
+			Title:  "Forbidden",
+			Status: http.StatusForbidden,
+			Detail: "Access denied. The Super Admin control plane requires singleton Super Admin credentials.",
+			Code:   "SUPER_ADMIN_CREDENTIALS_REQUIRED",
+		})
+		return
+	}
+
+	if user.AccountStatus != "ACTIVE" {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/account-suspended",
+			Title:  "Account Inactive",
+			Status: http.StatusForbidden,
+			Detail: fmt.Sprintf("Account status is '%s'.", user.AccountStatus),
+			Code:   "ACCOUNT_INACTIVE",
+		})
+		return
+	}
+
+	expiresIn := int64(24 * 3600)
+	claims := httputil.UserClaims{
+		UserID:    user.ID,
+		Email:     user.Email,
+		Role:      httputil.RoleSuperAdmin,
+		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		IssuedAt:  time.Now().Unix(),
+	}
+
+	token, err := httputil.SignJWT(claims, h.jwtSecret)
+	if err != nil {
+		httputil.RespondInternalError(w, r, "Failed to issue super admin authentication token.")
+		return
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, LoginResponse{
+		Token:     token,
+		User:      user,
+		ExpiresIn: expiresIn,
+	})
+}
+
 // Me returns the authenticated user's profile.
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
 	claims, ok := httputil.GetUserFromContext(r.Context())

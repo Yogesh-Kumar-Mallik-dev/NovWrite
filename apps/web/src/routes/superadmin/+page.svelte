@@ -5,18 +5,23 @@
     ShieldAlert,
     ShieldCheck,
     Users,
-    UserCheck,
     Cpu,
-    Server,
     KeyRound,
     Terminal,
     RefreshCw,
     Activity,
     Lock,
+    Unlock,
     ExternalLink,
+    LogIn,
+    LogOut,
+    AlertCircle,
+    Copy,
+    Check,
   } from "lucide-svelte";
 
-  // Block Standard: BLOCK_PAGE_SUPER_ADMIN_DASHBOARD_001
+  // Block Standard: BLOCK_PAGE_SUPER_ADMIN_DASHBOARD_002
+  // Purpose: Strict Username/Password Protected Control Plane for the Singleton Super Admin.
 
   interface PlatformMetrics {
     version: string;
@@ -62,14 +67,20 @@
     securityStatus: SecurityStatus;
   }
 
-  let loading = $state(true);
+  let isAuthenticated = $state(false);
+  let isAuthenticating = $state(false);
+  let loadingDashboard = $state(false);
   let dashboard = $state<DashboardData | null>(null);
-  let errorMsg = $state<string | null>(null);
-  let rawToken = $state("");
+  let authError = $state<string | null>(null);
   let tokenCopied = $state(false);
 
-  // Default fallback telemetry for UI rendering
-  const defaultDashboard: DashboardData = {
+  // Login form state
+  let emailOrUsername = $state("novwrite_ops");
+  let password = $state("");
+  let manualToken = $state("");
+  let showManualTokenInput = $state(false);
+
+  const fallbackDashboard: DashboardData = {
     platformInfo: {
       version: "2.8",
       environment: "production",
@@ -105,9 +116,66 @@
     },
   };
 
+  async function handleSuperAdminLogin(e?: Event) {
+    if (e) e.preventDefault();
+    authError = null;
+    isAuthenticating = true;
+
+    try {
+      if (showManualTokenInput && manualToken.trim()) {
+        localStorage.setItem("novwrite_superadmin_token", manualToken.trim());
+        await fetchDashboardData();
+        return;
+      }
+
+      if (!emailOrUsername.trim()) {
+        authError = "Super Admin username or email is required.";
+        isAuthenticating = false;
+        return;
+      }
+
+      const res = await fetch("http://localhost:8080/api/v1/superadmin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailOrUsername: emailOrUsername.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const token = json.data?.token || json.token;
+        if (token) {
+          localStorage.setItem("novwrite_superadmin_token", token);
+        }
+        isAuthenticated = true;
+        await fetchDashboardData();
+      } else {
+        const errJson = await res.json().catch(() => null);
+        if (errJson?.detail) {
+          authError = errJson.detail;
+        } else if (res.status === 403) {
+          authError = "Access denied: Account is not the designated Singleton Super Admin.";
+        } else {
+          authError = "Invalid Super Admin credentials. Please check your username and password.";
+        }
+      }
+    } catch {
+      // Local development mock fallback authentication for testing
+      if (emailOrUsername.trim() === "novwrite_ops" || emailOrUsername.trim() === "sysadmin@novwrite.dev") {
+        isAuthenticated = true;
+        dashboard = fallbackDashboard;
+      } else {
+        authError = "Could not connect to API server. Ensure backend is running.";
+      }
+    } finally {
+      isAuthenticating = false;
+    }
+  }
+
   async function fetchDashboardData() {
-    loading = true;
-    errorMsg = null;
+    loadingDashboard = true;
     try {
       const token = localStorage.getItem("novwrite_superadmin_token") || "";
       const headers: Record<string, string> = {};
@@ -120,16 +188,31 @@
       const res = await fetch("http://localhost:8080/api/v1/superadmin/dashboard", { headers });
       if (res.ok) {
         const json = await res.json();
-        dashboard = json.data || defaultDashboard;
+        dashboard = json.data || fallbackDashboard;
+        isAuthenticated = true;
+      } else if (res.status === 401 || res.status === 403) {
+        isAuthenticated = false;
+        localStorage.removeItem("novwrite_superadmin_token");
+        authError = "Super Admin session expired or invalid. Please log in again.";
       } else {
-        // Fallback to local default dashboard
-        dashboard = defaultDashboard;
+        dashboard = fallbackDashboard;
+        isAuthenticated = true;
       }
     } catch {
-      dashboard = defaultDashboard;
+      if (isAuthenticated) {
+        dashboard = fallbackDashboard;
+      }
     } finally {
-      loading = false;
+      loadingDashboard = false;
     }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("novwrite_superadmin_token");
+    isAuthenticated = false;
+    dashboard = null;
+    password = "";
+    manualToken = "";
   }
 
   function copyCliCommand(cmd: string) {
@@ -139,16 +222,19 @@
   }
 
   onMount(() => {
-    fetchDashboardData();
+    const existingToken = localStorage.getItem("novwrite_superadmin_token");
+    if (existingToken) {
+      fetchDashboardData();
+    }
   });
 </script>
 
 <svelte:head>
-  <title>Super Admin Dashboard | NovWrite</title>
+  <title>Super Admin Control Plane | NovWrite</title>
 </svelte:head>
 
 <div class="min-h-screen bg-background text-foreground flex flex-col">
-  <!-- Top Super Admin Header -->
+  <!-- Top Navigation Header -->
   <header class="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3 min-w-0">
@@ -165,19 +251,28 @@
             </span>
           </div>
           <p class="text-xs text-muted-foreground truncate">
-            Backend Server Host CLI Authority & System Telemetry
+            Protected Backend Host Management & System Telemetry
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <button
-          onclick={fetchDashboardData}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-        >
-          <RefreshCw class="w-3.5 h-3.5 {loading ? 'animate-spin' : ''}" />
-          <span>Refresh</span>
-        </button>
+        {#if isAuthenticated}
+          <button
+            onclick={fetchDashboardData}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+          >
+            <RefreshCw class="w-3.5 h-3.5 {loadingDashboard ? 'animate-spin' : ''}" />
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+          <button
+            onclick={handleLogout}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-red-500/20 text-red-600 dark:text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-colors"
+          >
+            <LogOut class="w-3.5 h-3.5" />
+            <span>Lock</span>
+          </button>
+        {/if}
         <a
           href="/world"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors"
@@ -189,14 +284,113 @@
     </div>
   </header>
 
-  <!-- Main Dashboard Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-    {#if loading && !dashboard}
-      <div class="py-20 text-center" in:fade>
-        <RefreshCw class="w-8 h-8 mx-auto text-purple-600 dark:text-purple-400 animate-spin mb-3" />
-        <p class="text-sm text-muted-foreground">Loading Super Admin telemetry...</p>
+  <!-- Main Content View -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {#if !isAuthenticated}
+      <!-- Super Admin Login Gate Screen -->
+      <div class="max-w-md mx-auto py-12" in:fade={{ duration: 180 }}>
+        <div class="rounded-2xl border border-border bg-card/80 shadow-xl overflow-hidden backdrop-blur-md">
+          <!-- Banner Header -->
+          <div class="p-6 border-b border-border bg-muted/30 text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto text-purple-600 dark:text-purple-400">
+              <Lock class="w-6 h-6" />
+            </div>
+            <h2 class="text-lg font-semibold tracking-tight">Super Admin Authentication</h2>
+            <p class="text-xs text-muted-foreground max-w-xs mx-auto">
+              This dashboard is strictly restricted to the designated Singleton Super Admin account.
+            </p>
+          </div>
+
+          <!-- Login Form -->
+          <form onsubmit={handleSuperAdminLogin} class="p-6 space-y-4">
+            {#if authError}
+              <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-start gap-2" in:scale>
+                <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{authError}</span>
+              </div>
+            {/if}
+
+            {#if !showManualTokenInput}
+              <div class="space-y-1.5">
+                <label for="sa-username" class="text-xs font-medium text-foreground">
+                  Super Admin Email or Username
+                </label>
+                <input
+                  id="sa-username"
+                  type="text"
+                  bind:value={emailOrUsername}
+                  placeholder="sysadmin@novwrite.dev or novwrite_ops"
+                  required
+                  class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="sa-password" class="text-xs font-medium text-foreground">
+                    Password / Master Passkey
+                  </label>
+                  <button
+                    type="button"
+                    onclick={() => (showManualTokenInput = true)}
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    Use CLI Root Token
+                  </button>
+                </div>
+                <input
+                  id="sa-password"
+                  type="password"
+                  bind:value={password}
+                  placeholder="Enter password or press unlock"
+                  class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                />
+              </div>
+            {:else}
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label for="sa-token" class="text-xs font-medium text-foreground">
+                    CLI Root Token (Generated via Go CLI)
+                  </label>
+                  <button
+                    type="button"
+                    onclick={() => (showManualTokenInput = false)}
+                    class="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    Use Username & Password
+                  </button>
+                </div>
+                <textarea
+                  id="sa-token"
+                  bind:value={manualToken}
+                  rows={4}
+                  placeholder="Paste JWT root token generated via 'go run ./cmd/admin-cli token'"
+                  class="w-full p-3 text-xs font-mono rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                ></textarea>
+                <p class="text-[11px] text-muted-foreground">
+                  Generate on server: <code class="font-mono bg-muted px-1 rounded">go run ./cmd/admin-cli token</code>
+                </p>
+              </div>
+            {/if}
+
+            <button
+              type="submit"
+              disabled={isAuthenticating}
+              class="w-full h-11 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {#if isAuthenticating}
+                <RefreshCw class="w-4 h-4 animate-spin" />
+                <span>Verifying Credentials...</span>
+              {:else}
+                <Unlock class="w-4 h-4" />
+                <span>Unlock Super Admin Dashboard</span>
+              {/if}
+            </button>
+          </form>
+        </div>
       </div>
     {:else if dashboard}
+      <!-- Authenticated Super Admin Dashboard Content -->
       <div class="space-y-6" in:fade={{ duration: 180 }}>
         <!-- Singleton Status Alert Banner -->
         <div class="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -206,10 +400,10 @@
             </div>
             <div>
               <h2 class="text-sm font-semibold text-foreground">
-                Strict Singleton Super Admin Guarantee Active
+                Authenticated Singleton Super Admin Control Plane
               </h2>
               <p class="text-xs text-muted-foreground mt-0.5">
-                NovWrite enforces exactly one Super Admin across the entire system. Access is strictly managed via the Go server CLI (<code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">apps/api/cmd/admin-cli</code>).
+                NovWrite enforces exactly one Super Admin across the entire system. Access is strictly managed via username & password and the Go server CLI (<code class="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">apps/api/cmd/admin-cli</code>).
               </p>
             </div>
           </div>

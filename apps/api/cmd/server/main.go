@@ -114,10 +114,13 @@ func BuildRouter() *chi.Mux {
 			})
 		})
 
-		// Dedicated Singleton Super Admin Dashboard (Backend Host & Root CLI accessible)
+		// Dedicated Singleton Super Admin Dashboard (Username/Password Protected & Root CLI accessible)
 		r.Route("/superadmin", func(r chi.Router) {
-			r.Use(httputil.RequireSuperAdmin())
-			r.Get("/dashboard", userHandler.SuperAdminDashboard)
+			r.Post("/login", userHandler.SuperAdminLogin)
+			r.Group(func(r chi.Router) {
+				r.Use(httputil.RequireSuperAdmin())
+				r.Get("/dashboard", userHandler.SuperAdminDashboard)
+			})
 		})
 
 		// Mathematical & Logical Formula Engine

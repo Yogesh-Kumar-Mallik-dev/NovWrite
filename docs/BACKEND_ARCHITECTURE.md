@@ -473,6 +473,42 @@ NovWrite implements an explicit 3-tier system identity hierarchy:
 - `PUT /api/v1/admin/users/{userId}/role` — Promote or demote a user's system role (Guarded by `RequireAdmin`; promoting to `ADMIN` or `SUPER_ADMIN` requires `RequireSuperAdmin`).
 - `DELETE /api/v1/admin/users/{userId}` — Irreversibly delete/deactivate a user account (Guarded by `RequireSuperAdmin`).
 
+### 10.3. Dedicated Singleton Super Admin Dashboard & Authentication (`/superadmin`)
+
+NovWrite enforces a strict **Singleton Super Admin Constraint** across the entire platform. Exactly one root Super Admin account exists (`novwrite_ops` / `sysadmin@novwrite.dev`). Access to the dedicated Super Admin control plane is guarded by dual-layer protection:
+
+1. **Username & Password Authentication Gate (`POST /api/v1/superadmin/login`):**
+   - The `/superadmin` web route is locked by default behind a credential gate.
+   - Requires valid Super Admin credentials (`emailOrUsername` and password).
+   - Validates that the authenticated identity strictly holds the `SUPER_ADMIN` system role. Requests from standard `USER` or `ADMIN` roles are denied with `403 Forbidden` (`SUPER_ADMIN_CREDENTIALS_REQUIRED`).
+   - Issues 24-hour HMAC-SHA256 signed JWT tokens containing `RoleSuperAdmin` claims.
+2. **Protected Telemetry & Operations Endpoint (`GET /api/v1/superadmin/dashboard`):**
+   - Guarded by `httputil.RequireSuperAdmin()` middleware.
+   - Returns real-time system metrics: active goroutines, Go runtime version, host platform, user tier distributions, rate limiter status, payload size caps, and security telemetry.
+3. **Session Lock & Voluntary Revocation:**
+   - Dedicated `[Lock]` action on the Super Admin control plane allows the administrator to securely purge stored tokens and lock the interface immediately.
+
+### 10.4. Backend Server CLI Management (`apps/api/cmd/admin-cli`)
+
+For high-security host operations, the Super Admin singleton is directly administrable via the Go server CLI located on the backend host:
+
+```bash
+# 👑 Inspect Singleton Super Admin status, user distribution, and platform telemetry
+cd apps/api && go run ./cmd/admin-cli status
+
+# 🔑 Generate root JWT dashboard access token directly on server host
+cd apps/api && go run ./cmd/admin-cli token
+
+# 👥 List all registered users and their platform roles
+cd apps/api && go run ./cmd/admin-cli list-users
+
+# ⬆️ Promote a standard USER to ADMIN
+cd apps/api && go run ./cmd/admin-cli promote <email_or_username>
+
+# ⬇️ Demote an ADMIN back to standard USER
+cd apps/api && go run ./cmd/admin-cli demote <email_or_username>
+```
+
 ---
 
 ## 11. 5-Phase Monorepo Test Architecture & Regression Pipeline

@@ -88,11 +88,40 @@ timeline
                : Freeform String Genre Input across DB, Go Backend, TypeScript Types & UI
                : Complete Removal of Starter Archetype Seeding & Scaffolding Selection
                : Responsive Single-Column Modal Layout with Zero-Cross Action Trays
+    2026-09-08 : Version 2.9 (Three-Tier Multi-User Hierarchy, Singleton Super Admin & Server CLI)
+               : 3-Tier Multi-User RBAC (USER, ADMIN, SUPER_ADMIN)
+               : Singleton Super Admin Constraint (novwrite_ops / sysadmin@novwrite.dev)
+               : Dedicated Username & Password Protected Super Admin Dashboard (/superadmin)
+               : Backend Host Server Go CLI (apps/api/cmd/admin-cli)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.9] — 2026-09-08
+
+**Scope:** Three-Tier Multi-User Identity Hierarchy, Enforced Singleton Super Admin Constraint, Username & Password Protected Super Admin Dashboard Gate, and Backend Host Server CLI  
+**Target Documents:** [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added & Refactored
+
+- **Three-Tier System Identity Hierarchy (`USER`, `ADMIN`, `SUPER_ADMIN`):**
+  - Added native multi-tenant role model separating standard authors (`USER`), platform operators (`ADMIN`), and root administrators (`SUPER_ADMIN`).
+  - Added typed RPC contracts in `@novwrite/bridge`, JWT role claims context (`UserClaims`), and Go HTTP middlewares (`RequireAdmin`, `RequireSuperAdmin`, `RequireRole`).
+- **Enforced Singleton Super Admin Constraint:**
+  - Guaranteed that exactly one root Super Admin account exists in the platform at all times (`novwrite_ops` / `sysadmin@novwrite.dev`).
+  - Strict store-level and handler-level rejection for any attempts to register or promote a second Super Admin account, and complete protection against Super Admin deletion.
+- **Username & Password Protected Super Admin Dashboard (`/superadmin` & `POST /api/v1/superadmin/login`):**
+  - Created a responsive, accessible credentials gate screen requiring valid Super Admin identifier (`sysadmin@novwrite.dev` or `novwrite_ops`) and password.
+  - Returns `403 Forbidden` (`SUPER_ADMIN_CREDENTIALS_REQUIRED`) if standard `USER` or `ADMIN` accounts attempt to authenticate on the Super Admin control plane.
+  - Implemented session lock/logout mechanism allowing root administrators to immediately revoke local session state.
+- **Backend Host Server CLI (`apps/api/cmd/admin-cli`):**
+  - Standalone Go CLI tool on the backend server host providing commands for status inspection (`status`), root JWT token generation (`token`), user directory listings (`list-users`), and role promotions/demotions (`promote`, `demote`).
+- **Full 5-Phase Test Coverage & Diagnostics Verification:**
+  - Added unit test suite `TestUserHandler_SuperAdminLogin` verifying credentials and role gating with 100% test pass rate across all 5 monorepo phases.
+
+---
 
 ### [Version 2.8] — 2026-09-07
 
