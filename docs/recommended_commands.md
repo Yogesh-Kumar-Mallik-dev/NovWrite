@@ -98,7 +98,30 @@ pnpm --filter @novwrite/web dev
 
 ---
 
-## 4. Database & Prisma Operations
+## 4. Backend Super Admin Server CLI (Exclusive Root Control Plane)
+
+The Singleton Super Admin is managed exclusively on the backend server host via the `admin-cli` tool:
+
+```bash
+# 👑 Inspect Singleton Super Admin status, user counts, and platform telemetry
+cd apps/api && go run ./cmd/admin-cli status
+
+# 🔑 Generate root authentication token for the Super Admin Dashboard (/superadmin)
+cd apps/api && go run ./cmd/admin-cli token
+
+# 👥 List all registered users, platform admins, and roles
+cd apps/api && go run ./cmd/admin-cli list-users
+
+# ⬆️ Promote a standard USER to ADMIN
+cd apps/api && go run ./cmd/admin-cli promote author@novwrite.dev
+
+# ⬇️ Demote an ADMIN back to standard USER
+cd apps/api && go run ./cmd/admin-cli demote admin@novwrite.dev
+```
+
+---
+
+## 5. Database & Prisma Operations
 
 ```bash
 # Push Prisma schema directly to PostgreSQL (development)

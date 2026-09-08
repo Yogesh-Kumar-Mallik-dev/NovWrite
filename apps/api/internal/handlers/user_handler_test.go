@@ -92,7 +92,6 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 	promotePayload := `{"role":"ADMIN","reason":"Promoted to community manager"}`
 	reqPromote := httptest.NewRequest(http.MethodPut, "/api/v1/admin/users/a1111111-1111-1111-1111-111111111111/role", bytes.NewBufferString(promotePayload))
 
-	// Attach chi URLParam
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("userId", "a1111111-1111-1111-1111-111111111111")
 	ctx := context.WithValue(reqPromote.Context(), chi.RouteCtxKey, rctx)
@@ -112,6 +111,94 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 	updatedUser, err := store.GetByID("a1111111-1111-1111-1111-111111111111")
 	if err != nil || updatedUser.Role != httputil.RoleAdmin {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected user role ADMIN, got %s", updatedUser.Role)
+	}
+}
+
+func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
+	store := NewInMemoryUserStore()
+	handler := NewUserHandler(store, "test-secret-key-32b")
+
+	// 1. Prohibit registering SUPER_ADMIN via HTTP API
+	regSuperPayload := `{"email":"imposter_super@novwrite.dev","username":"imposter","role":"SUPER_ADMIN"}`
+	reqRegSuper := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString(regSuperPayload))
+	recRegSuper := httptest.NewRecorder()
+
+	handler.Register(recRegSuper, reqRegSuper)
+	if recRegSuper.Code != http.StatusForbidden {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 403 Forbidden when registering SUPER_ADMIN via HTTP, got %d", recRegSuper.Code)
+	}
+
+	// 2. Direct store reject creating a second SUPER_ADMIN
+	errCreate := store.Create(&User{
+		ID:       "imposter-super-id",
+		Email:    "imposter2@novwrite.dev",
+		Username: "imposter2",
+		Role:     httputil.RoleSuperAdmin,
+	})
+	if errCreate == nil {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected error creating second SUPER_ADMIN, got nil")
+	}
+
+	// 3. Reject promoting another user to SUPER_ADMIN
+	errPromote := store.UpdateRole("a1111111-1111-1111-1111-111111111111", httputil.RoleSuperAdmin)
+	if errPromote == nil {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected error promoting second user to SUPER_ADMIN, got nil")
+	}
+
+	// 4. Reject deleting the designated Singleton Super Admin
+	errDelete := store.Delete("a9999999-9999-9999-9999-999999999999")
+	if errDelete == nil {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected error deleting singleton Super Admin, got nil")
+	}
+}
+
+func TestUserHandler_SuperAdminDashboard(t *testing.T) {
+	store := NewInMemoryUserStore()
+	handler := NewUserHandler(store, "test-secret-key-32b")
+
+	// 1. Super Admin access to dashboard -> 200 OK
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/superadmin/dashboard", nil)
+	ctx := httputil.SetUserInContext(req.Context(), &httputil.UserClaims{
+		UserID: "a9999999-9999-9999-9999-999999999999",
+		Role:   httputil.RoleSuperAdmin,
+	})
+	rec := httptest.NewRecorder()
+
+	handler.SuperAdminDashboard(rec, req.WithContext(ctx))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for SuperAdminDashboard, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp httputil.SingleResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: failed to unmarshal dashboard response: %v", err)
+	}
+
+	dataMap, ok := resp.Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected valid map data")
+	}
+
+	userMetrics := dataMap["userMetrics"].(map[string]interface{})
+	if int(userMetrics["superAdminUsers"].(float64)) != 1 {
+		t.Errorf("BLOCK_TEST_USER_HANDLER_001: expected exactly 1 super admin user, got %v", userMetrics["superAdminUsers"])
+	}
+
+	// 2. Guard RequireSuperAdmin blocks ADMIN and USER
+	superMiddleware := httputil.RequireSuperAdmin()
+	protectedDashboard := superMiddleware(http.HandlerFunc(handler.SuperAdminDashboard))
+
+	// ADMIN -> 403
+	reqAdmin := httptest.NewRequest(http.MethodGet, "/superadmin", nil)
+	ctxAdmin := httputil.SetUserInContext(reqAdmin.Context(), &httputil.UserClaims{
+		UserID: "admin_1",
+		Role:   httputil.RoleAdmin,
+	})
+	recAdmin := httptest.NewRecorder()
+	protectedDashboard.ServeHTTP(recAdmin, reqAdmin.WithContext(ctxAdmin))
+
+	if recAdmin.Code != http.StatusForbidden {
+		t.Errorf("BLOCK_TEST_USER_HANDLER_001: expected 403 Forbidden for ADMIN attempting to access SuperAdminDashboard, got %d", recAdmin.Code)
 	}
 }
 
