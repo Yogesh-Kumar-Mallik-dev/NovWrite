@@ -8,6 +8,8 @@
 
 param(
     [switch]$All,
+    [switch]$Tunnel,
+    [switch]$Clear,
     [switch]$WebOnly,
     [switch]$MobileOnly,
     [switch]$DesktopOnly
@@ -111,8 +113,12 @@ if ($startMobile) {
         CI = "1"
         EXPO_PORT = "$mobilePort"
     }
+    $expoArgs = @("exec", "expo", "start", "--port", "$mobilePort")
+    if ($Tunnel) { $expoArgs += "--tunnel" } else { $expoArgs += @("--host", "lan") }
+    if ($Clear) { $expoArgs += "--clear" }
+
     $expoLog = Join-Path $logsDir "expo.log"
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort", "--host", "lan" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
     
     # Probe Metro until accepting Expo Go connections
     Write-Host "⏳ Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray

@@ -22,6 +22,8 @@ START_MOBILE=1
 START_DESKTOP=1
 START_WEB=1
 START_API=1
+EXPO_HOST_FLAG="--host lan"
+EXPO_CLEAR_FLAG=""
 
 for arg in "$@"; do
   case "$arg" in
@@ -29,6 +31,12 @@ for arg in "$@"; do
       START_MOBILE=1
       START_DESKTOP=1
       START_WEB=1
+      ;;
+    --tunnel|-t)
+      EXPO_HOST_FLAG="--tunnel"
+      ;;
+    --clear|-c)
+      EXPO_CLEAR_FLAG="--clear"
       ;;
     --mobile-only|-m)
       START_MOBILE=1
@@ -53,6 +61,8 @@ for arg in "$@"; do
       echo ""
       echo "Options:"
       echo "  --all, -a           Launch all 3 clients + API (default)"
+      echo "  --tunnel, -t        Use Expo Tunnel mode (fixes Ethernet-to-Wi-Fi router isolation)"
+      echo "  --clear, -c         Clear Metro and bundler cache"
       echo "  --web-only, -w      Launch Go API and SvelteKit Web only"
       echo "  --desktop-only, -d  Launch Go API, SvelteKit Web, and Tauri Desktop"
       echo "  --mobile-only, -m   Launch Go API and Mobile Expo only"
@@ -223,7 +233,7 @@ if [ "$START_MOBILE" -eq 1 ]; then
   echo "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..."
   (
     cd "$ROOT_DIR/apps/mobile"
-    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" --host lan > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
+    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" $EXPO_HOST_FLAG $EXPO_CLEAR_FLAG > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
   ) &
   MOBILE_PID=$!
 
