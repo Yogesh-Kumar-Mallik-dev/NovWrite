@@ -17,9 +17,9 @@ MOBILE_PORT="${EXPO_PORT:-8081}"
 API_HOST="127.0.0.1"
 WEB_HOST="127.0.0.1"
 
-# Flag parsing
-START_MOBILE=0
-START_DESKTOP=0
+# Flag parsing (Defaults to launching all 3 frontends + API)
+START_MOBILE=1
+START_DESKTOP=1
 START_WEB=1
 START_API=1
 
@@ -28,27 +28,35 @@ for arg in "$@"; do
     --all|-a)
       START_MOBILE=1
       START_DESKTOP=1
+      START_WEB=1
       ;;
-    --mobile|-m)
+    --mobile-only|-m)
       START_MOBILE=1
+      START_DESKTOP=0
+      START_WEB=0
       ;;
-    --desktop|-d)
+    --desktop-only|-d)
+      START_MOBILE=0
       START_DESKTOP=1
+      START_WEB=1
       ;;
-    --web|-w)
+    --web-only|-w)
       START_MOBILE=0
       START_DESKTOP=0
+      START_WEB=1
       ;;
     --help|-h)
-      echo "NovWrite Development Server Launcher"
+      echo "NovWrite Universal Development Server Launcher"
       echo "Usage: ./dev.sh [OPTIONS]"
       echo ""
+      echo "Default: Launches Go API Backend, Mobile Expo Studio (with upfront QR), Tauri Desktop, and Vite Web."
+      echo ""
       echo "Options:"
-      echo "  --all, -a      Launch all clients (Go API, Web, Mobile Expo, and Desktop Tauri)"
-      echo "  --mobile, -m   Launch Go API, SvelteKit Web, and Mobile Expo"
-      echo "  --desktop, -d  Launch Go API, SvelteKit Web, and Desktop Tauri"
-      echo "  --web, -w      Launch Go API and SvelteKit Web only (default)"
-      echo "  --help, -h     Display this help menu"
+      echo "  --all, -a           Launch all 3 clients + API (default)"
+      echo "  --web-only, -w      Launch Go API and SvelteKit Web only"
+      echo "  --desktop-only, -d  Launch Go API, SvelteKit Web, and Tauri Desktop"
+      echo "  --mobile-only, -m   Launch Go API and Mobile Expo only"
+      echo "  --help, -h          Display this help menu"
       exit 0
       ;;
   esac
@@ -205,23 +213,24 @@ cleanup() {
 trap cleanup SIGINT SIGTERM SIGHUP EXIT
 
 # ------------------------------------------------------------------------------
-# STEP 1: If Mobile is enabled, display Expo QR Code upfront & launch non-hijacking Metro
+# STEP 1: Mobile (Expo SDK 52) - Render QR Upfront & Run Metro Bundler in Background
 # ------------------------------------------------------------------------------
 if [ "$START_MOBILE" -eq 1 ]; then
+  mkdir -p "$ROOT_DIR/logs"
   echo "📱 Displaying Expo QR Code upfront before starting service logs..."
   node "$ROOT_DIR/scripts/show-mobile-qr.mjs"
 
-  echo "🚀 Launching Expo Mobile Metro Bundler in non-interactive background mode..."
+  echo "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..."
   (
     cd "$ROOT_DIR/apps/mobile"
-    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" </dev/null
+    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
   ) &
   MOBILE_PID=$!
   sleep 1
 fi
 
 # ------------------------------------------------------------------------------
-# STEP 2: Build & Start Go API Server in background
+# STEP 2: Go API Backend Server
 # ------------------------------------------------------------------------------
 echo "📦 Preparing Go API Server on http://${API_HOST}:${API_PORT}..."
 mkdir -p "$ROOT_DIR/bin"
@@ -255,9 +264,9 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# STEP 3: Start SvelteKit Web Workbench in background
+# STEP 3: Vite Web Workbench (SvelteKit 2 + Vite)
 # ------------------------------------------------------------------------------
-echo "🌐 Starting SvelteKit Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
+echo "🌐 Starting SvelteKit Vite Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
 (
   cd "$ROOT_DIR/apps/web"
   exec pnpm exec vite dev --host "$WEB_HOST" --port "$WEB_PORT"
@@ -284,13 +293,14 @@ if [ "$web_ready" -eq 1 ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# STEP 4: If Desktop is enabled, start Tauri 2 Native Client
+# STEP 4: Tauri 2 Native Desktop Client (attaching to Vite server)
 # ------------------------------------------------------------------------------
 if [ "$START_DESKTOP" -eq 1 ]; then
-  echo "🖥️  Starting Tauri 2 Native Desktop Client..."
+  echo "🖥️  Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..."
+  mkdir -p "$ROOT_DIR/logs"
   (
     cd "$ROOT_DIR/apps/desktop"
-    exec pnpm exec tauri dev --no-dev-server </dev/null
+    exec pnpm exec tauri dev --no-dev-server > "$ROOT_DIR/logs/desktop.log" 2>&1 </dev/null
   ) &
   DESKTOP_PID=$!
 fi

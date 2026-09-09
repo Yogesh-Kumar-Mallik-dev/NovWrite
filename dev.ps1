@@ -8,17 +8,33 @@
 
 param(
     [switch]$All,
-    [switch]$Mobile,
-    [switch]$Desktop,
-    [switch]$Web
+    [switch]$WebOnly,
+    [switch]$MobileOnly,
+    [switch]$DesktopOnly
 )
 
 $ErrorActionPreference = "Stop"
 $rootDir = $PSScriptRoot
 Set-Location $rootDir
 
-$startMobile = $All -or $Mobile
-$startDesktop = $All -or $Desktop
+# By default, launch all 3 frontends + API unless restricted by flags
+$startMobile = $true
+$startDesktop = $true
+$startWeb = $true
+
+if ($WebOnly) {
+    $startMobile = $false
+    $startDesktop = $false
+    $startWeb = $true
+} elseif ($MobileOnly) {
+    $startMobile = $true
+    $startDesktop = $false
+    $startWeb = $false
+} elseif ($DesktopOnly) {
+    $startMobile = $false
+    $startDesktop = $true
+    $startWeb = $true
+}
 
 $apiPort = if ($env:PORT) { $env:PORT } else { "8080" }
 $webPort = "5173"
@@ -29,7 +45,7 @@ $webHost = "127.0.0.1"
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  🚀 Starting NovWrite Development Environment" -ForegroundColor Cyan
 Write-Host "  🖥️  Platform: PowerShell / Cross-Platform" -ForegroundColor Cyan
-Write-Host "  📦 Targets: API=on Web=on Mobile=$(if ($startMobile) {'on'} else {'off'}) Desktop=$(if ($startDesktop) {'on'} else {'off'})" -ForegroundColor Cyan
+Write-Host "  📦 Targets: API=on Web=$(if ($startWeb) {'on'} else {'off'}) Mobile=$(if ($startMobile) {'on'} else {'off'}) Desktop=$(if ($startDesktop) {'on'} else {'off'})" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
 # Pre-flight check for required tools
@@ -78,6 +94,11 @@ if ($startMobile) {
 $mobileProcess = $null
 $desktopProcess = $null
 
+$logsDir = Join-Path $rootDir "logs"
+if (-not (Test-Path $logsDir)) {
+    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+}
+
 # ------------------------------------------------------------------------------
 # STEP 1: If Mobile is enabled, display Expo QR Code upfront & launch non-hijacking Metro
 # ------------------------------------------------------------------------------
@@ -85,12 +106,13 @@ if ($startMobile) {
     Write-Host "📱 Displaying Expo QR Code upfront before starting service logs..." -ForegroundColor Magenta
     node (Join-Path $rootDir "scripts/show-mobile-qr.mjs")
 
-    Write-Host "🚀 Launching Expo Mobile Metro Bundler in non-interactive background mode..." -ForegroundColor Blue
+    Write-Host "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..." -ForegroundColor Blue
     $mobileEnv = @{
         CI = "1"
         EXPO_PORT = "$mobilePort"
     }
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -PassThru
+    $expoLog = Join-Path $logsDir "expo.log"
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
     Start-Sleep -Seconds 1
 }
 
@@ -144,34 +166,37 @@ if ($apiReady) {
 # ------------------------------------------------------------------------------
 # STEP 3: Start SvelteKit Web Workbench in background
 # ------------------------------------------------------------------------------
-Write-Host "🌐 Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
-$webProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "vite", "dev", "--host", $webHost, "--port", $webPort -WorkingDirectory (Join-Path $rootDir "apps/web") -PassThru
+if ($startWeb) {
+    Write-Host "🌐 Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
+    $webProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "vite", "dev", "--host", $webHost, "--port", $webPort -WorkingDirectory (Join-Path $rootDir "apps/web") -PassThru
 
-# Probe Web Server until accepting connections
-Write-Host "⏳ Waiting for SvelteKit Web Workbench to initialize..." -ForegroundColor DarkGray
-$webReady = $false
-for ($i = 0; $i -lt 30; $i++) {
-    try {
-        $response = Invoke-WebRequest -Uri "http://${webHost}:${webPort}" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
-        if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
-            $webReady = $true
-            break
+    # Probe Web Server until accepting connections
+    Write-Host "⏳ Waiting for SvelteKit Web Workbench to initialize..." -ForegroundColor DarkGray
+    $webReady = $false
+    for ($i = 0; $i -lt 30; $i++) {
+        try {
+            $response = Invoke-WebRequest -Uri "http://${webHost}:${webPort}" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
+                $webReady = $true
+                break
+            }
+        } catch {
+            Start-Sleep -Milliseconds 300
         }
-    } catch {
-        Start-Sleep -Milliseconds 300
     }
-}
 
-if ($webReady) {
-    Write-Host "✅ SvelteKit Web Workbench is live! (PID: $($webProcess.Id))" -ForegroundColor Green
+    if ($webReady) {
+        Write-Host "✅ SvelteKit Web Workbench is live! (PID: $($webProcess.Id))" -ForegroundColor Green
+    }
 }
 
 # ------------------------------------------------------------------------------
 # STEP 4: If Desktop is enabled, start Tauri 2 Native Client
 # ------------------------------------------------------------------------------
 if ($startDesktop) {
-    Write-Host "🖥️  Starting Tauri 2 Native Desktop Client..." -ForegroundColor Blue
-    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -PassThru
+    Write-Host "🖥️  Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
+    $desktopLog = Join-Path $logsDir "desktop.log"
+    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -RedirectStandardOutput $desktopLog -RedirectStandardError $desktopLog -PassThru
 }
 
 Write-Host ""
