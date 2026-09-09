@@ -112,8 +112,29 @@ if ($startMobile) {
         EXPO_PORT = "$mobilePort"
     }
     $expoLog = Join-Path $logsDir "expo.log"
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
-    Start-Sleep -Seconds 1
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort", "--host", "lan" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
+    
+    # Probe Metro until accepting Expo Go connections
+    Write-Host "⏳ Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
+    $metroReady = $false
+    for ($i = 0; $i -lt 30; $i++) {
+        try {
+            $headers = @{ "expo-platform" = "android" }
+            $response = Invoke-WebRequest -Uri "http://${apiHost}:${mobilePort}" -Headers $headers -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
+                $metroReady = $true
+                break
+            }
+        } catch {
+            Start-Sleep -Milliseconds 300
+        }
+    }
+
+    if ($metroReady) {
+        Write-Host "✅ Expo Mobile Metro Bundler is live and ready for Expo Go! (PID: $($mobileProcess.Id))" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  Expo Metro Bundler took longer than expected to initialize, proceeding..." -ForegroundColor Yellow
+    }
 }
 
 # ------------------------------------------------------------------------------

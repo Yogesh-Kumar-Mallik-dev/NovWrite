@@ -223,10 +223,23 @@ if [ "$START_MOBILE" -eq 1 ]; then
   echo "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..."
   (
     cd "$ROOT_DIR/apps/mobile"
-    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
+    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" --host lan > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
   ) &
   MOBILE_PID=$!
-  sleep 1
+
+  # Probe Metro until accepting Expo Go connections
+  echo "⏳ Waiting for Expo Mobile Metro Bundler to become ready..."
+  for i in $(seq 1 30 2>/dev/null || echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30); do
+    if curl -s -o /dev/null -H "expo-platform: android" "http://127.0.0.1:${MOBILE_PORT}" >/dev/null 2>&1; then
+      echo "✅ Expo Mobile Metro Bundler is live and ready for Expo Go! (PID: $MOBILE_PID)"
+      break
+    fi
+    if ! kill -0 "$MOBILE_PID" 2>/dev/null; then
+      echo "⚠️  Expo Metro Bundler exited unexpectedly. Check logs/expo.log for details."
+      break
+    fi
+    sleep 0.3
+  done
 fi
 
 # ------------------------------------------------------------------------------
