@@ -1,31 +1,38 @@
 /**
  * @file mobileStore.ts
- * @description Mobile client reactive state engine with project switching, prose drafting, world building, timeline, rules, and continuity audit.
- * Block Standard: BLOCK_MOBILE_STORE_001
+ * @description Mobile client reactive state engine matching web stores (projectStore, proseStore, worldStore) with real application state and formula evaluation.
+ * Block Standard: BLOCK_MOBILE_STORE_002
  */
 
+import { evaluateFormula } from "./formulaEngine.ts";
 import type {
+  ProjectItem,
+  ChapterItem,
+  SceneItem,
+  SceneStatus,
   BlueprintDef,
+  DynamicFieldDef,
   EntityItem,
-  MobileProjectItem,
-  MobileChapterItem,
-  MobileSceneItem,
-  MobileTimelineEvent,
-  MobileInvariantRule,
-  MobileContinuityIssue,
+  TimelineEventItem,
+  TimelineEffectItem,
+  InvariantRuleItem,
+  ContinuityViolationItem,
+  RuleSeverity,
+  RuleType,
 } from "./types.ts";
 
 export interface MobileAppState {
-  projects: MobileProjectItem[];
+  projects: ProjectItem[];
   activeProjectId: string | null;
-  chapters: MobileChapterItem[];
-  scenes: MobileSceneItem[];
+  chapters: ChapterItem[];
+  scenes: SceneItem[];
   activeSceneId: string | null;
+  activeChapterId: string | null;
   blueprints: BlueprintDef[];
   entities: EntityItem[];
-  timelineEvents: MobileTimelineEvent[];
-  invariantRules: MobileInvariantRule[];
-  continuityIssues: MobileContinuityIssue[];
+  timelineEvents: TimelineEventItem[];
+  rules: InvariantRuleItem[];
+  violations: ContinuityViolationItem[];
   dailyWordGoal: number;
   todayWordsWritten: number;
 }
@@ -41,267 +48,26 @@ function countWords(text: string): number {
 
 export class MobileStore {
   private state: MobileAppState = {
-    projects: [
-      {
-        id: "proj-celestial",
-        name: "Chronicles of the Celestial Dao",
-        genre: "Xianxia / Cultivation",
-        description: "An ancient realm where cultivators ascend mortal planes through spiritual breakthroughs, dao comprehension, and artifact refinement.",
-        createdAt: "2026-09-01T10:00:00.000Z",
-        updatedAt: "2026-09-09T18:30:00.000Z",
-      },
-      {
-        id: "proj-starfall",
-        name: "Starfall Vanguard",
-        genre: "Sci-Fi / Space Opera",
-        description: "A dying stellar imperium wages war against rogue artificial intelligences on the galactic rim.",
-        createdAt: "2026-09-05T14:20:00.000Z",
-        updatedAt: "2026-09-09T12:00:00.000Z",
-      },
-    ],
-    activeProjectId: "proj-celestial",
-    chapters: [
-      {
-        id: "chap-1",
-        projectId: "proj-celestial",
-        title: "Chapter 1: The Mountain Gate",
-        orderIndex: 0,
-        synopsis: "Eldrin arrives at the Azure Cloud Sect gates seeking apprenticeship amidst the mist.",
-      },
-      {
-        id: "chap-2",
-        projectId: "proj-celestial",
-        title: "Chapter 2: The Spirit Gathering Trial",
-        orderIndex: 1,
-        synopsis: "A crucible test where aspiring disciples channel spiritual qi into ancestral resonance stones.",
-      },
-    ],
-    scenes: [
-      {
-        id: "scene-1",
-        chapterId: "chap-1",
-        projectId: "proj-celestial",
-        title: "Scene 1: Dawn at the Sect Steps",
-        orderIndex: 0,
-        proseContent: "The morning mist clung to the thousand jade steps ascending into the heavens. Eldrin tightened his grip on the rusted ancestral blade, feeling the faint hum of lightning slumbering within the metal.",
-        wordCount: 31,
-        status: "IN_PROGRESS",
-        targetWordCount: 1500,
-        synopsis: "Eldrin encounters the outer sect gatekeeper and displays his unyielding determination.",
-      },
-      {
-        id: "scene-2",
-        chapterId: "chap-1",
-        projectId: "proj-celestial",
-        title: "Scene 2: The Elder's Decree",
-        orderIndex: 1,
-        proseContent: "Elder Shen lowered his gaze, his silver robes billowing in the mountain gale. 'A dual root of wind and thunder is rare, boy. But talent without temperance is mere kindling for disaster.'",
-        wordCount: 31,
-        status: "DRAFT",
-        targetWordCount: 1800,
-        synopsis: "Elder Shen tests Eldrin's meridians and grants him probation into the outer courtyard.",
-      },
-      {
-        id: "scene-3",
-        chapterId: "chap-2",
-        projectId: "proj-celestial",
-        title: "Scene 1: Resonating Pillars",
-        orderIndex: 0,
-        proseContent: "Nine obsidian monoliths rose around the courtyard. As Eldrin stepped forward, the azure runes ignited in a cascading shockwave.",
-        wordCount: 20,
-        status: "DRAFT",
-        targetWordCount: 2000,
-        synopsis: "The spirit trial begins.",
-      },
-    ],
-    activeSceneId: "scene-1",
-    blueprints: [
-      {
-        id: "bp-cultivator",
-        name: "Cultivator Archetype",
-        blueprintClass: "FIRST_CLASS",
-        category: "Characters",
-        description: "Primary martial artist or spiritual cultivator with cultivation realm and combat rating.",
-        fields: [
-          { id: "f1", name: "realm", label: "Cultivation Realm", fieldType: "STRING", isRequired: true },
-          { id: "f2", name: "qi_power", label: "Qi Power Level", fieldType: "NUMBER", min: 1, max: 10000 },
-          { id: "f3", name: "faction", label: "Sect / Allegiance", fieldType: "STRING" },
-          { id: "f4", name: "status", label: "Life Status", fieldType: "ENUM", options: ["ALIVE", "INJURED", "DEAD", "TRANSCENDED"] },
-        ],
-      },
-      {
-        id: "bp-artifact",
-        name: "Sacred Relic",
-        blueprintClass: "FIRST_CLASS",
-        category: "Relics & Armaments",
-        description: "Ancient weapons, divine talismans, and spiritual treasures.",
-        fields: [
-          { id: "f5", name: "grade", label: "Treasure Grade", fieldType: "STRING", isRequired: true },
-          { id: "f6", name: "attack_power", label: "Base Attack Power", fieldType: "NUMBER", min: 10, max: 5000 },
-          { id: "f7", name: "element", label: "Elemental Affinity", fieldType: "STRING" },
-        ],
-      },
-      {
-        id: "bp-location",
-        name: "Cosmic Realm / Sect",
-        blueprintClass: "FIRST_CLASS",
-        category: "Cosmology & Geography",
-        description: "Sacred mountain domains, ancestral grounds, and mystic territories.",
-        fields: [
-          { id: "f8", name: "qi_density", label: "Qi Density (1-10)", fieldType: "NUMBER", min: 1, max: 10 },
-          { id: "f9", name: "ruling_sect", label: "Ruling Sect", fieldType: "STRING" },
-        ],
-      },
-    ],
-    entities: [
-      {
-        id: "ent-eldrin",
-        projectId: "proj-celestial",
-        blueprintId: "bp-cultivator",
-        name: "Eldrin Stormweaver",
-        category: "Characters",
-        description: "Protagonist with dual wind and lightning spiritual roots striving for ascension.",
-        properties: {
-          realm: "Foundation Establishment",
-          qi_power: 450,
-          faction: "Azure Cloud Sect",
-          status: "ALIVE",
-        },
-        computedFormulas: { combat_score: 950 },
-        lastMutatedSeqNumber: 12,
-      },
-      {
-        id: "ent-malakor",
-        projectId: "proj-celestial",
-        blueprintId: "bp-cultivator",
-        name: "Lord Malakor",
-        category: "Characters",
-        description: "Former grand patriarch slain in the Great Cataclysm.",
-        properties: {
-          realm: "Core Formation",
-          qi_power: 0,
-          faction: "Void Harbingers",
-          status: "DEAD",
-        },
-        computedFormulas: { combat_score: 0 },
-        lastMutatedSeqNumber: 150,
-      },
-      {
-        id: "ent-blade",
-        projectId: "proj-celestial",
-        blueprintId: "bp-artifact",
-        name: "Thunderfang Longsword",
-        category: "Relics & Armaments",
-        description: "A grade-3 spiritual blade forged from celestial lightning ore.",
-        properties: {
-          grade: "Grade 3 Earth Rank",
-          attack_power: 620,
-          element: "Lightning",
-        },
-        lastMutatedSeqNumber: 8,
-      },
-      {
-        id: "ent-mountain",
-        projectId: "proj-celestial",
-        blueprintId: "bp-location",
-        name: "Azure Cloud Peak",
-        category: "Cosmology & Geography",
-        description: "Sacred peak soaring ten thousand feet into the heavens.",
-        properties: {
-          qi_density: 9,
-          ruling_sect: "Azure Cloud Sect",
-        },
-        lastMutatedSeqNumber: 2,
-      },
-    ],
-    timelineEvents: [
-      {
-        id: "evt-1",
-        projectId: "proj-celestial",
-        sequenceNumber: 1,
-        title: "The Fall of the Void Citadel",
-        timestamp: "Year of the Dragon 1024",
-        eventType: "CANON_MUTATION",
-        entityName: "Lord Malakor",
-        entityId: "ent-malakor",
-        description: "Patriarch Malakor falls in battle; status set to DEAD at Seq #150.",
-        delta: { status: "DEAD", qi_power: 0 },
-        isKeyMilestone: true,
-      },
-      {
-        id: "evt-2",
-        projectId: "proj-celestial",
-        sequenceNumber: 2,
-        title: "Forging of Thunderfang",
-        timestamp: "Year of the Dragon 1030",
-        eventType: "STATE_INITIALIZATION",
-        entityName: "Thunderfang Longsword",
-        entityId: "ent-blade",
-        description: "Divine blade awakened with lightning ore.",
-        delta: { grade: "Grade 3 Earth Rank", attack_power: 620 },
-      },
-      {
-        id: "evt-3",
-        projectId: "proj-celestial",
-        sequenceNumber: 3,
-        title: "Eldrin Foundation Breakthrough",
-        timestamp: "Year of the Dragon 1042",
-        eventType: "AFFINITY_SHIFT",
-        entityName: "Eldrin Stormweaver",
-        entityId: "ent-eldrin",
-        description: "Eldrin ascends to Foundation Establishment stage.",
-        delta: { realm: "Foundation Establishment", qi_power: 450 },
-        isKeyMilestone: true,
-      },
-    ],
-    invariantRules: [
-      {
-        id: "r-mana-bounds",
-        projectId: "proj-celestial",
-        name: "Qi / Mana Non-Negativity Invariant",
-        description: "Spiritual energy and stamina can never drop below zero in any scene event.",
-        severity: "BLOCKING_ERROR",
-        scope: "GLOBAL",
-        ruleExpression: "entity.qi_power >= 0",
-        isActive: true,
-      },
-      {
-        id: "r-deceased-actions",
-        projectId: "proj-celestial",
-        name: "Deceased Entity Inaction Rule",
-        description: "Entities marked as DEAD cannot cast spells, move, or speak without necromancy authorization.",
-        severity: "BLOCKING_ERROR",
-        scope: "CHARACTERS",
-        ruleExpression: "entity.status != 'DEAD' || action == 'NECROMANCY'",
-        isActive: true,
-      },
-      {
-        id: "r-realm-cap",
-        projectId: "proj-celestial",
-        name: "Mortal Realm Boundary Cap",
-        description: "Foundation Establishment disciples cannot surpass 1,000 base Qi power.",
-        severity: "WARNING",
-        scope: "CHARACTERS",
-        ruleExpression: "realm != 'Foundation' || qi_power <= 1000",
-        isActive: true,
-      },
-    ],
-    continuityIssues: [
-      {
-        id: "iss-1",
-        code: "INVARIANT_STATE_ILLEGAL_ACTION",
-        ruleName: "Deceased Entity Inaction Rule",
-        entityName: "Lord Malakor",
-        sceneTitle: "Scene 1: Dawn at the Sect Steps",
-        message: "Lord Malakor is marked DEAD at Seq #150 and cannot execute combat moves in active scene.",
-        severity: "ERROR",
-      },
-    ],
+    projects: [],
+    activeProjectId: null,
+    chapters: [],
+    scenes: [],
+    activeSceneId: null,
+    activeChapterId: null,
+    blueprints: [],
+    entities: [],
+    timelineEvents: [],
+    rules: [],
+    violations: [],
     dailyWordGoal: 1000,
-    todayWordsWritten: 82,
+    todayWordsWritten: 0,
   };
 
   private listeners: Set<Listener> = new Set();
+
+  constructor() {
+    this.loadFromStorage();
+  }
 
   getState(): MobileAppState {
     return this.state;
@@ -313,51 +79,175 @@ export class MobileStore {
   }
 
   private notify() {
+    this.saveToStorage();
     this.listeners.forEach((l) => l());
   }
 
+  private loadFromStorage() {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") {
+      return;
+    }
+    try {
+      const rawProjects = localStorage.getItem("novwrite_projects_v1");
+      if (rawProjects) {
+        const parsed = JSON.parse(rawProjects);
+        if (Array.isArray(parsed)) {
+          this.state.projects = parsed;
+        }
+      }
+
+      const activeId = localStorage.getItem("novwrite_active_project_id_v1");
+      if (activeId && this.state.projects.some((p) => p.id === activeId)) {
+        this.state.activeProjectId = activeId;
+      } else if (this.state.projects.length > 0) {
+        this.state.activeProjectId = this.state.projects[0].id;
+      } else {
+        this.state.activeProjectId = null;
+      }
+
+      if (this.state.activeProjectId) {
+        this.loadProjectScopedData(this.state.activeProjectId);
+      }
+    } catch (e) {
+      console.warn("[MobileStore] Failed to load from storage:", e);
+    }
+  }
+
+  private loadProjectScopedData(projectId: string) {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") {
+      return;
+    }
+    try {
+      // Prose data
+      const rawProse = localStorage.getItem(`novwrite_prose_v1_${projectId}`);
+      if (rawProse) {
+        const parsed = JSON.parse(rawProse);
+        this.state.chapters = Array.isArray(parsed.chapters) ? parsed.chapters : [];
+        this.state.scenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
+        this.state.dailyWordGoal = typeof parsed.dailyWordGoal === "number" ? parsed.dailyWordGoal : 1000;
+        this.state.todayWordsWritten = typeof parsed.todayWordsWritten === "number" ? parsed.todayWordsWritten : 0;
+        this.state.activeSceneId = parsed.activeSceneId || (this.state.scenes[0]?.id ?? null);
+      } else {
+        this.state.chapters = [];
+        this.state.scenes = [];
+        this.state.activeSceneId = null;
+        this.state.activeChapterId = null;
+      }
+
+      // World data
+      const rawWorld = localStorage.getItem(`novwrite_world_state_${projectId}`);
+      if (rawWorld) {
+        const parsed = JSON.parse(rawWorld);
+        this.state.blueprints = Array.isArray(parsed.blueprints) ? parsed.blueprints : [];
+        this.state.entities = Array.isArray(parsed.entities) ? parsed.entities : [];
+        this.state.timelineEvents = Array.isArray(parsed.timelineEvents) ? parsed.timelineEvents : [];
+        this.state.rules = Array.isArray(parsed.rules) ? parsed.rules : [];
+        this.state.violations = Array.isArray(parsed.violations) ? parsed.violations : [];
+      } else {
+        this.state.blueprints = [];
+        this.state.entities = [];
+        this.state.timelineEvents = [];
+        this.state.rules = [];
+        this.state.violations = [];
+      }
+
+      this.recomputeAllEntityFormulas();
+    } catch (e) {
+      console.warn("[MobileStore] Failed to load project scoped data:", e);
+    }
+  }
+
+  private saveToStorage() {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") {
+      return;
+    }
+    try {
+      localStorage.setItem("novwrite_projects_v1", JSON.stringify(this.state.projects));
+      if (this.state.activeProjectId) {
+        localStorage.setItem("novwrite_active_project_id_v1", this.state.activeProjectId);
+
+        const prosePayload = {
+          chapters: this.state.chapters,
+          scenes: this.state.scenes,
+          activeSceneId: this.state.activeSceneId,
+          dailyWordGoal: this.state.dailyWordGoal,
+          todayWordsWritten: this.state.todayWordsWritten,
+        };
+        localStorage.setItem(`novwrite_prose_v1_${this.state.activeProjectId}`, JSON.stringify(prosePayload));
+
+        const worldPayload = {
+          blueprints: this.state.blueprints,
+          entities: this.state.entities,
+          timelineEvents: this.state.timelineEvents,
+          rules: this.state.rules,
+          violations: this.state.violations,
+        };
+        localStorage.setItem(`novwrite_world_state_${this.state.activeProjectId}`, JSON.stringify(worldPayload));
+      } else {
+        localStorage.removeItem("novwrite_active_project_id_v1");
+      }
+    } catch (e) {
+      console.warn("[MobileStore] Failed to save state to localStorage:", e);
+    }
+  }
+
   // ==========================================
-  // Project Management
+  // Project Management Operations
   // ==========================================
-  getActiveProject(): MobileProjectItem | null {
+  getActiveProject(): ProjectItem | null {
+    if (!this.state.activeProjectId) return null;
     return this.state.projects.find((p) => p.id === this.state.activeProjectId) || null;
+  }
+
+  getProjects(): ProjectItem[] {
+    return this.state.projects;
+  }
+
+  createProject(params: { name: string; description?: string; genre?: string }): ProjectItem {
+    const name = params.name.trim();
+    if (!name) {
+      throw new Error("Project name is required.");
+    }
+
+    const newProj: ProjectItem = {
+      id: `proj-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
+      name,
+      description: params.description?.trim() || "",
+      genre: params.genre?.trim() || "General Fiction",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.state.projects = [newProj, ...this.state.projects];
+    this.setActiveProject(newProj.id);
+    return newProj;
   }
 
   setActiveProject(id: string | null) {
     this.state.activeProjectId = id;
-    const firstChap = this.getChaptersForActiveProject()[0];
-    if (firstChap) {
-      const firstScene = this.getScenesForChapter(firstChap.id)[0];
-      this.state.activeSceneId = firstScene ? firstScene.id : null;
+    if (id) {
+      this.loadProjectScopedData(id);
     } else {
+      this.state.chapters = [];
+      this.state.scenes = [];
       this.state.activeSceneId = null;
+      this.state.blueprints = [];
+      this.state.entities = [];
+      this.state.timelineEvents = [];
+      this.state.rules = [];
+      this.state.violations = [];
     }
     this.notify();
   }
 
-  createProject(params: { name: string; genre?: string; description?: string }): MobileProjectItem {
-    const newProj: MobileProjectItem = {
-      id: `proj-${Date.now()}`,
-      name: params.name.trim(),
-      genre: params.genre?.trim() || "Creative Fiction",
-      description: params.description?.trim(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    this.state.projects = [newProj, ...this.state.projects];
-    this.state.activeProjectId = newProj.id;
-    this.notify();
-    return newProj;
-  }
-
-  updateProject(id: string, params: { name: string; genre?: string; description?: string }) {
+  updateProject(id: string, updates: Partial<Pick<ProjectItem, "name" | "description" | "genre">>) {
     this.state.projects = this.state.projects.map((p) => {
       if (p.id === id) {
         return {
           ...p,
-          name: params.name.trim(),
-          genre: params.genre?.trim() || p.genre,
-          description: params.description?.trim(),
+          ...(updates.name !== undefined ? { name: updates.name.trim() } : {}),
+          ...(updates.description !== undefined ? { description: updates.description.trim() } : {}),
+          ...(updates.genre !== undefined ? { genre: updates.genre.trim() } : {}),
           updatedAt: new Date().toISOString(),
         };
       }
@@ -369,77 +259,89 @@ export class MobileStore {
   deleteProject(id: string) {
     this.state.projects = this.state.projects.filter((p) => p.id !== id);
     if (this.state.activeProjectId === id) {
-      this.state.activeProjectId = this.state.projects[0]?.id || null;
+      this.setActiveProject(this.state.projects[0]?.id || null);
+    } else {
+      this.notify();
     }
-    this.notify();
   }
 
   // ==========================================
   // Prose Studio Operations
   // ==========================================
-  getActiveScene(): MobileSceneItem | null {
-    return this.state.scenes.find((s) => s.id === this.state.activeSceneId) || null;
+  getChapters(): ChapterItem[] {
+    return [...this.state.chapters].sort((a, b) => a.orderIndex - b.orderIndex);
   }
 
-  getChaptersForActiveProject(): MobileChapterItem[] {
-    return this.state.chapters
-      .filter((c) => c.projectId === this.state.activeProjectId)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
-  }
-
-  getScenesForChapter(chapterId: string): MobileSceneItem[] {
+  getScenesForChapter(chapterId: string): SceneItem[] {
     return this.state.scenes
       .filter((s) => s.chapterId === chapterId)
       .sort((a, b) => a.orderIndex - b.orderIndex);
   }
 
-  selectScene(sceneId: string | null) {
-    this.state.activeSceneId = sceneId;
-    this.notify();
+  getActiveScene(): SceneItem | null {
+    if (!this.state.activeSceneId) return null;
+    return this.state.scenes.find((s) => s.id === this.state.activeSceneId) || null;
   }
 
-  updateSceneContent(sceneId: string, content: string) {
-    const words = countWords(content);
-    this.state.scenes = this.state.scenes.map((s) => {
-      if (s.id === sceneId) {
-        const diff = Math.max(0, words - s.wordCount);
-        this.state.todayWordsWritten += diff;
-        return {
-          ...s,
-          proseContent: content,
-          wordCount: words,
-        };
+  getActiveChapter(): ChapterItem | null {
+    if (!this.state.activeChapterId) {
+      if (this.state.activeSceneId) {
+        const sc = this.getActiveScene();
+        return this.state.chapters.find((c) => c.id === sc?.chapterId) || null;
       }
-      return s;
-    });
-    this.notify();
+      return null;
+    }
+    return this.state.chapters.find((c) => c.id === this.state.activeChapterId) || null;
   }
 
-  setSceneStatus(sceneId: string, status: "DRAFT" | "IN_PROGRESS" | "REVISED" | "COMPLETED") {
-    this.state.scenes = this.state.scenes.map((s) => (s.id === sceneId ? { ...s, status } : s));
-    this.notify();
-  }
-
-  createChapter(title: string, synopsis?: string): MobileChapterItem {
-    const projectId = this.state.activeProjectId || "proj-default";
-    const existing = this.getChaptersForActiveProject();
-    const newChap: MobileChapterItem = {
-      id: `chap-${Date.now()}`,
+  createChapter(title: string, synopsis?: string): ChapterItem {
+    const projectId = this.state.activeProjectId || "default";
+    const newChap: ChapterItem = {
+      id: `chap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       projectId,
-      title: title.trim() || `Chapter ${existing.length + 1}`,
-      orderIndex: existing.length,
-      synopsis: synopsis?.trim(),
+      title: title.trim() || `Chapter ${this.state.chapters.length + 1}`,
+      orderIndex: this.state.chapters.length,
+      synopsis: synopsis?.trim() || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     this.state.chapters = [...this.state.chapters, newChap];
+    this.state.activeChapterId = newChap.id;
     this.notify();
     return newChap;
   }
 
-  createScene(chapterId: string, title: string, targetWords = 1500): MobileSceneItem {
-    const projectId = this.state.activeProjectId || "proj-default";
+  updateChapter(id: string, updates: Partial<ChapterItem>) {
+    this.state.chapters = this.state.chapters.map((c) => {
+      if (c.id === id) {
+        return {
+          ...c,
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return c;
+    });
+    this.notify();
+  }
+
+  deleteChapter(id: string) {
+    this.state.chapters = this.state.chapters.filter((c) => c.id !== id);
+    this.state.scenes = this.state.scenes.filter((s) => s.chapterId !== id);
+    if (this.state.activeChapterId === id) {
+      this.state.activeChapterId = this.state.chapters[0]?.id || null;
+    }
+    if (this.getActiveScene()?.chapterId === id) {
+      this.state.activeSceneId = this.state.scenes[0]?.id || null;
+    }
+    this.notify();
+  }
+
+  createScene(chapterId: string, title: string, targetWordCount?: number, synopsis?: string): SceneItem {
+    const projectId = this.state.activeProjectId || "default";
     const existing = this.getScenesForChapter(chapterId);
-    const newScene: MobileSceneItem = {
-      id: `scene-${Date.now()}`,
+    const newScene: SceneItem = {
+      id: `scene-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       chapterId,
       projectId,
       title: title.trim() || `Scene ${existing.length + 1}`,
@@ -447,7 +349,10 @@ export class MobileStore {
       proseContent: "",
       wordCount: 0,
       status: "DRAFT",
-      targetWordCount: targetWords,
+      targetWordCount: targetWordCount || 1500,
+      synopsis: synopsis?.trim() || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     this.state.scenes = [...this.state.scenes, newScene];
     this.state.activeSceneId = newScene.id;
@@ -455,65 +360,108 @@ export class MobileStore {
     return newScene;
   }
 
-  // ==========================================
-  // World Studio Operations: Entities
-  // ==========================================
-  getEntities(): EntityItem[] {
-    return this.state.entities.filter(
-      (e) => !e.projectId || e.projectId === this.state.activeProjectId
-    );
-  }
-
-  createEntity(params: {
-    name: string;
-    blueprintId: string;
-    category?: string;
-    description?: string;
-    properties?: Record<string, unknown>;
-  }): EntityItem {
-    const blueprint = this.state.blueprints.find((b) => b.id === params.blueprintId);
-    const newEntity: EntityItem = {
-      id: `ent-${Date.now()}`,
-      projectId: this.state.activeProjectId || undefined,
-      blueprintId: params.blueprintId,
-      name: params.name.trim(),
-      category: params.category || blueprint?.category || "General",
-      description: params.description?.trim(),
-      properties: params.properties || {},
-      lastMutatedSeqNumber: 1,
-    };
-    this.state.entities = [newEntity, ...this.state.entities];
-    this.notify();
-    return newEntity;
-  }
-
-  deleteEntity(id: string) {
-    this.state.entities = this.state.entities.filter((e) => e.id !== id);
+  updateScene(id: string, updates: Partial<SceneItem>) {
+    this.state.scenes = this.state.scenes.map((s) => {
+      if (s.id === id) {
+        const nextContent = updates.proseContent !== undefined ? updates.proseContent : s.proseContent;
+        const nextWordCount = updates.proseContent !== undefined ? countWords(nextContent) : s.wordCount;
+        return {
+          ...s,
+          ...updates,
+          wordCount: nextWordCount,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return s;
+    });
     this.notify();
   }
 
+  updateSceneContent(id: string, content: string) {
+    const words = countWords(content);
+    this.state.scenes = this.state.scenes.map((s) => {
+      if (s.id === id) {
+        const diff = Math.max(0, words - s.wordCount);
+        this.state.todayWordsWritten += diff;
+        return {
+          ...s,
+          proseContent: content,
+          wordCount: words,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return s;
+    });
+    this.notify();
+  }
+
+  deleteScene(id: string) {
+    this.state.scenes = this.state.scenes.filter((s) => s.id !== id);
+    if (this.state.activeSceneId === id) {
+      this.state.activeSceneId = this.state.scenes[0]?.id || null;
+    }
+    this.notify();
+  }
+
+  selectScene(sceneId: string | null) {
+    this.state.activeSceneId = sceneId;
+    if (sceneId) {
+      const sc = this.state.scenes.find((s) => s.id === sceneId);
+      if (sc) {
+        this.state.activeChapterId = sc.chapterId;
+      }
+    }
+    this.notify();
+  }
+
+  selectChapter(chapterId: string | null) {
+    this.state.activeChapterId = chapterId;
+    const chapterScenes = chapterId ? this.getScenesForChapter(chapterId) : [];
+    if (chapterScenes.length > 0 && (!this.state.activeSceneId || !chapterScenes.some((s) => s.id === this.state.activeSceneId))) {
+      this.state.activeSceneId = chapterScenes[0].id;
+    }
+    this.notify();
+  }
+
+  setDailyGoal(goal: number) {
+    this.state.dailyWordGoal = Math.max(100, goal);
+    this.notify();
+  }
+
   // ==========================================
-  // World Studio Operations: Blueprints
+  // World Studio: Blueprints
   // ==========================================
   getBlueprints(): BlueprintDef[] {
     return this.state.blueprints;
   }
 
+  getFirstClassBlueprints(): BlueprintDef[] {
+    return this.state.blueprints.filter((b) => b.blueprintClass === "FIRST_CLASS");
+  }
+
+  getSecondClassBlueprints(): BlueprintDef[] {
+    return this.state.blueprints.filter((b) => b.blueprintClass === "SECOND_CLASS");
+  }
+
+  getBlueprint(id: string): BlueprintDef | undefined {
+    return this.state.blueprints.find((b) => b.id === id);
+  }
+
   createBlueprint(params: {
     name: string;
+    blueprintClass: "FIRST_CLASS" | "SECOND_CLASS";
     category: string;
     description?: string;
-    blueprintClass: "FIRST_CLASS" | "SECOND_CLASS";
+    fields?: DynamicFieldDef[];
   }): BlueprintDef {
     const newBp: BlueprintDef = {
-      id: `bp-${Date.now()}`,
-      projectId: this.state.activeProjectId || undefined,
+      id: `bp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       name: params.name.trim(),
-      category: params.category.trim(),
-      description: params.description?.trim(),
       blueprintClass: params.blueprintClass,
-      fields: [
-        { id: `f-${Date.now()}`, name: "name", label: "Entity Name", fieldType: "STRING", isRequired: true },
+      category: params.category.trim() || "Characters",
+      description: params.description?.trim() || "",
+      fields: params.fields || [
+        { id: `f-${Date.now()}`, name: "name", label: "Entity Name", fieldType: "STRING", required: true },
       ],
     };
     this.state.blueprints = [...this.state.blueprints, newBp];
@@ -521,67 +469,341 @@ export class MobileStore {
     return newBp;
   }
 
+  updateBlueprint(id: string, updates: Partial<BlueprintDef>) {
+    this.state.blueprints = this.state.blueprints.map((b) => (b.id === id ? { ...b, ...updates } : b));
+    this.recomputeAllEntityFormulas();
+    this.notify();
+  }
+
+  deleteBlueprint(id: string) {
+    this.state.blueprints = this.state.blueprints.filter((b) => b.id !== id);
+    this.state.entities = this.state.entities.filter((e) => e.blueprintId !== id);
+    this.notify();
+  }
+
   // ==========================================
-  // World Studio Operations: Timeline & Audit
+  // World Studio: Entities
   // ==========================================
-  getTimelineEvents(): MobileTimelineEvent[] {
-    return this.state.timelineEvents
-      .filter((e) => !e.projectId || e.projectId === this.state.activeProjectId)
-      .sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  getEntities(): EntityItem[] {
+    return this.state.entities;
+  }
+
+  getEntity(id: string): EntityItem | undefined {
+    return this.state.entities.find((e) => e.id === id);
+  }
+
+  createEntity(params: {
+    name: string;
+    blueprintId: string;
+    category?: string;
+    description?: string;
+    properties?: Record<string, any>;
+  }): EntityItem {
+    const bp = this.getBlueprint(params.blueprintId);
+    const newEnt: EntityItem = {
+      id: `ent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: params.name.trim(),
+      blueprintId: params.blueprintId,
+      blueprintName: bp?.name || "Archetype",
+      category: params.category?.trim() || bp?.category || "General",
+      description: params.description?.trim() || "",
+      properties: params.properties || {},
+      lastMutatedSeqNumber: 1,
+    };
+
+    const computed = this.computeEntityFormulas(newEnt);
+    newEnt.computedFormulas = computed;
+
+    this.state.entities = [newEnt, ...this.state.entities];
+    this.notify();
+    return newEnt;
+  }
+
+  updateEntity(id: string, updates: Partial<EntityItem>) {
+    this.state.entities = this.state.entities.map((e) => {
+      if (e.id === id) {
+        const updated = { ...e, ...updates };
+        updated.computedFormulas = this.computeEntityFormulas(updated);
+        return updated;
+      }
+      return e;
+    });
+    this.notify();
+  }
+
+  deleteEntity(id: string) {
+    this.state.entities = this.state.entities.filter((e) => e.id !== id);
+    this.notify();
+  }
+
+  private computeEntityFormulas(entity: EntityItem): Record<string, number> {
+    const bp = this.getBlueprint(entity.blueprintId);
+    if (!bp) return {};
+
+    const formulaFields = bp.fields.filter((f) => f.fieldType === "FORMULA" && f.formulaExpression);
+    const results: Record<string, number> = {};
+
+    for (const f of formulaFields) {
+      if (!f.formulaExpression) continue;
+      const res = evaluateFormula(f.formulaExpression, entity.properties);
+      if (res.success && typeof res.value === "number") {
+        results[f.name] = res.value;
+        if (f.key) {
+          results[f.key] = res.value;
+        }
+      }
+    }
+    return results;
+  }
+
+  evaluateEntityFormulas(entityId: string): Record<string, number> {
+    const ent = this.getEntity(entityId);
+    if (!ent) return {};
+    return this.computeEntityFormulas(ent);
+  }
+
+  recomputeAllEntityFormulas() {
+    this.state.entities = this.state.entities.map((e) => ({
+      ...e,
+      computedFormulas: this.computeEntityFormulas(e),
+    }));
+  }
+
+  // ==========================================
+  // World Studio: Timeline Events
+  // ==========================================
+  getTimelineEvents(): TimelineEventItem[] {
+    return [...this.state.timelineEvents].sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
+  }
+
+  addTimelineEvent(params: {
+    title: string;
+    description: string;
+    narrativeSequenceNumber: number;
+    chronologicalOrder: number;
+    anchorChapterTitle?: string;
+    anchorSceneTitle?: string;
+    effects?: TimelineEffectItem[];
+  }): TimelineEventItem {
+    const newEv: TimelineEventItem = {
+      id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: params.title.trim(),
+      description: params.description.trim(),
+      narrativeSequenceNumber: params.narrativeSequenceNumber,
+      chronologicalOrder: params.chronologicalOrder,
+      anchorChapterTitle: params.anchorChapterTitle?.trim(),
+      anchorSceneTitle: params.anchorSceneTitle?.trim(),
+      effects: params.effects || [],
+      createdAt: new Date().toISOString(),
+    };
+    this.state.timelineEvents = [...this.state.timelineEvents, newEv];
+    this.notify();
+    return newEv;
+  }
+
+  updateTimelineEvent(id: string, updates: Partial<TimelineEventItem>) {
+    this.state.timelineEvents = this.state.timelineEvents.map((ev) => (ev.id === id ? { ...ev, ...updates } : ev));
+    this.notify();
+  }
+
+  deleteTimelineEvent(id: string) {
+    this.state.timelineEvents = this.state.timelineEvents.filter((ev) => ev.id !== id);
+    this.notify();
+  }
+
+  getFoldedEntitiesAtSequence(targetSeq: number, mode: "narrative" | "chronological" = "narrative"): EntityItem[] {
+    return this.foldStateAtSequence(targetSeq, mode);
+  }
+
+  foldStateAtSequence(targetSeq: number, mode: "narrative" | "chronological" = "narrative"): EntityItem[] {
+    const eventsToApply = [...this.state.timelineEvents]
+      .filter((ev) => (mode === "narrative" ? ev.narrativeSequenceNumber <= targetSeq : ev.chronologicalOrder <= targetSeq))
+      .sort((a, b) => (mode === "narrative" ? a.narrativeSequenceNumber - b.narrativeSequenceNumber : a.chronologicalOrder - b.chronologicalOrder));
+
+    const clonedEntities: Record<string, EntityItem> = {};
+    for (const ent of this.state.entities) {
+      clonedEntities[ent.id] = JSON.parse(JSON.stringify(ent));
+    }
+
+    for (const ev of eventsToApply) {
+      for (const eff of ev.effects) {
+        const ent = clonedEntities[eff.targetEntityId];
+        if (!ent) continue;
+        ent.lastMutatedSeqNumber = mode === "narrative" ? ev.narrativeSequenceNumber : ev.chronologicalOrder;
+
+        const keys = eff.propertyKey.split(".");
+        if (keys.length === 1) {
+          const k = keys[0];
+          if (eff.operation === "SET") ent.properties[k] = eff.value;
+          else if (eff.operation === "INCREMENT" && typeof ent.properties[k] === "number") ent.properties[k] += Number(eff.value);
+          else if (eff.operation === "DECREMENT" && typeof ent.properties[k] === "number") ent.properties[k] -= Number(eff.value);
+          else if (eff.operation === "APPEND" && Array.isArray(ent.properties[k])) ent.properties[k].push(eff.value);
+          else if (eff.operation === "REMOVE" && Array.isArray(ent.properties[k])) ent.properties[k] = ent.properties[k].filter((x: any) => x !== eff.value);
+        } else if (keys.length === 2) {
+          const [p1, p2] = keys;
+          if (!ent.properties[p1] || typeof ent.properties[p1] !== "object") ent.properties[p1] = {};
+          if (eff.operation === "SET") ent.properties[p1][p2] = eff.value;
+          else if (eff.operation === "INCREMENT" && typeof ent.properties[p1][p2] === "number") ent.properties[p1][p2] += Number(eff.value);
+          else if (eff.operation === "DECREMENT" && typeof ent.properties[p1][p2] === "number") ent.properties[p1][p2] -= Number(eff.value);
+        }
+      }
+    }
+
+    return Object.values(clonedEntities);
+  }
+
+  // ==========================================
+  // World Studio: Invariant Rules
+  // ==========================================
+  getRules(): InvariantRuleItem[] {
+    return this.state.rules;
+  }
+
+  getRule(id: string): InvariantRuleItem | undefined {
+    return this.state.rules.find((r) => r.id === id);
+  }
+
+  addRule(params: {
+    name: string;
+    severity: RuleSeverity;
+    type: RuleType;
+    targetBlueprintId?: string;
+    targetBlueprintName?: string;
+    targetCategory?: string;
+    predicateExpression: string;
+    predicateSummary?: string;
+    description: string;
+    enabled?: boolean;
+    suggestedResolution?: string;
+  }): InvariantRuleItem {
+    const newRule: InvariantRuleItem = {
+      id: `r-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: params.name.trim(),
+      severity: params.severity,
+      type: params.type,
+      targetBlueprintId: params.targetBlueprintId,
+      targetBlueprintName: params.targetBlueprintName,
+      targetCategory: params.targetCategory,
+      predicateExpression: params.predicateExpression.trim(),
+      predicateSummary: (params.predicateSummary || params.predicateExpression).trim(),
+      description: params.description.trim(),
+      enabled: params.enabled !== undefined ? params.enabled : true,
+      suggestedResolution: params.suggestedResolution?.trim(),
+    };
+    this.state.rules = [...this.state.rules, newRule];
+    this.notify();
+    return newRule;
+  }
+
+  updateRule(id: string, updates: Partial<InvariantRuleItem>) {
+    this.state.rules = this.state.rules.map((r) => (r.id === id ? { ...r, ...updates } : r));
+    this.notify();
+  }
+
+  deleteRule(id: string) {
+    this.state.rules = this.state.rules.filter((r) => r.id !== id);
+    this.notify();
+  }
+
+  toggleRule(id: string) {
+    this.state.rules = this.state.rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r));
+    this.notify();
+  }
+
+  // ==========================================
+  // World Studio: Continuity Audit & RFC 7807
+  // ==========================================
+  getViolations(): ContinuityViolationItem[] {
+    return this.state.violations;
+  }
+
+  runContinuityAudit() {
+    this.notify();
+  }
+
+  overrideViolation(id: string, justification: string, authorName = "Lead Author") {
+    this.state.violations = this.state.violations.map((v) => {
+      if (v.id === id) {
+        return {
+          ...v,
+          overridden: true,
+          overrideJustification: justification.trim(),
+          overriddenBy: authorName.trim(),
+          overriddenAt: new Date().toISOString(),
+        };
+      }
+      return v;
+    });
+    this.notify();
+  }
+
+  reconcileViolation(id: string, actionType: string): boolean {
+    this.dismissViolation(id);
+    return true;
+  }
+
+  dismissViolation(id: string) {
+    this.state.violations = this.state.violations.filter((v) => v.id !== id);
+    this.notify();
+  }
+
+  // ==========================================
+  // Telemetry Calculations & Compatibility Aliases
+  // ==========================================
+  getChaptersForActiveProject(): ChapterItem[] {
+    return this.getChapters();
+  }
+
+  getSortedChapters(): ChapterItem[] {
+    return this.getChapters();
+  }
+
+  getTotalChaptersCount(): number {
+    return this.state.chapters.length;
+  }
+
+  getTotalScenesCount(): number {
+    return this.state.scenes.length;
+  }
+
+  getInvariantRules(): InvariantRuleItem[] {
+    return this.getRules();
+  }
+
+  getContinuityIssues(): ContinuityViolationItem[] {
+    return this.getViolations();
   }
 
   createTimelineEvent(params: {
     title: string;
-    entityName: string;
-    entityId: string;
     description: string;
-    eventType: "CANON_MUTATION" | "RELATION_TRANSFER" | "AFFINITY_SHIFT" | "STATE_INITIALIZATION";
-    timestamp: string;
-  }): MobileTimelineEvent {
-    const existing = this.getTimelineEvents();
-    const newEvt: MobileTimelineEvent = {
-      id: `evt-${Date.now()}`,
-      projectId: this.state.activeProjectId || "proj-default",
-      sequenceNumber: existing.length + 1,
-      title: params.title.trim(),
-      timestamp: params.timestamp.trim() || new Date().toLocaleDateString(),
-      eventType: params.eventType,
-      entityName: params.entityName.trim(),
-      entityId: params.entityId,
-      description: params.description.trim(),
-      delta: {},
-    };
-    this.state.timelineEvents = [...this.state.timelineEvents, newEvt];
-    this.notify();
-    return newEvt;
+    narrativeSequenceNumber?: number;
+    chronologicalOrder?: number;
+    entityName?: string;
+    entityId?: string;
+    eventType?: string;
+    timestamp?: string;
+    anchorChapterTitle?: string;
+    anchorSceneTitle?: string;
+    effects?: TimelineEffectItem[];
+  }): TimelineEventItem {
+    return this.addTimelineEvent({
+      title: params.title,
+      description: params.description,
+      narrativeSequenceNumber: params.narrativeSequenceNumber ?? (this.state.timelineEvents.length + 1) * 10,
+      chronologicalOrder: params.chronologicalOrder ?? (this.state.timelineEvents.length + 1) * 10,
+      anchorChapterTitle: params.anchorChapterTitle,
+      anchorSceneTitle: params.anchorSceneTitle,
+      effects: params.effects ?? [],
+    });
   }
 
-  getInvariantRules(): MobileInvariantRule[] {
-    return this.state.invariantRules;
-  }
-
-  toggleRule(id: string) {
-    this.state.invariantRules = this.state.invariantRules.map((r) =>
-      r.id === id ? { ...r, isActive: !r.isActive } : r
-    );
-    this.notify();
-  }
-
-  getContinuityIssues(): MobileContinuityIssue[] {
-    return this.state.continuityIssues;
-  }
-
-  // ==========================================
-  // Telemetry Calculations
-  // ==========================================
   getTotalWordCount(): number {
-    return this.state.scenes
-      .filter((s) => s.projectId === this.state.activeProjectId)
-      .reduce((acc, s) => acc + (s.wordCount || 0), 0);
+    return this.state.scenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
   }
 
   getReadingTimeMin(): number {
-    return Math.ceil(this.getTotalWordCount() / 200);
+    return Math.max(1, Math.ceil(this.getTotalWordCount() / 200));
   }
 
   getDailyGoalProgress(): number {
@@ -591,4 +813,3 @@ export class MobileStore {
 }
 
 export const mobileStore = new MobileStore();
-

@@ -1,130 +1,200 @@
 import { Tabs } from "expo-router";
 import React, { useSyncExternalStore, useState } from "react";
-import { View, Text, TouchableOpacity, Modal, TextInput, useWindowDimensions, ScrollView } from "react-native";
-import { BookOpen, Globe2, FolderGit2, Sparkles, ChevronDown, Plus, CheckCircle2, Trash2, Pencil } from "lucide-react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Image,
+  ScrollView,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  BookOpen,
+  Globe2,
+  Folder,
+  FolderPlus,
+  ChevronDown,
+  Plus,
+  CheckCircle2,
+  Trash2,
+  Pencil,
+} from "lucide-react-native";
 import { mobileStore } from "../../src/lib/mobileStore.ts";
 
 export default function TabLayout() {
-  const { width } = useWindowDimensions();
-  const isTabletOrWide = width >= 768;
-
+  const insets = useSafeAreaInsets();
   const state = useSyncExternalStore(
     (cb) => mobileStore.subscribe(cb),
     () => mobileStore.getState()
   );
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectGenre, setNewProjectGenre] = useState("");
-  const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const [nameInput, setNameInput] = useState("");
+  const [genreInput, setGenreInput] = useState("");
+  const [descInput, setDescInput] = useState("");
 
   const activeProject = mobileStore.getActiveProject();
 
-  function handleCreateProject() {
-    if (!newProjectName.trim()) return;
+  function openCreate() {
+    setNameInput("");
+    setGenreInput("");
+    setDescInput("");
+    setIsCreateModalOpen(true);
+  }
+
+  function openEdit() {
+    if (!activeProject) return;
+    setNameInput(activeProject.name);
+    setGenreInput(activeProject.genre || "");
+    setDescInput(activeProject.description || "");
+    setIsEditModalOpen(true);
+  }
+
+  function handleCreate() {
+    if (!nameInput.trim()) return;
     mobileStore.createProject({
-      name: newProjectName.trim(),
-      genre: newProjectGenre.trim() || undefined,
-      description: newProjectDesc.trim() || undefined,
+      name: nameInput.trim(),
+      genre: genreInput.trim() || undefined,
+      description: descInput.trim() || undefined,
     });
-    setNewProjectName("");
-    setNewProjectGenre("");
-    setNewProjectDesc("");
-    setIsNewProjectModalOpen(false);
+    setIsCreateModalOpen(false);
+    setIsSwitcherOpen(false);
+  }
+
+  function handleEdit() {
+    if (!activeProject || !nameInput.trim()) return;
+    mobileStore.updateProject(activeProject.id, {
+      name: nameInput.trim(),
+      genre: genreInput.trim() || undefined,
+      description: descInput.trim() || undefined,
+    });
+    setIsEditModalOpen(false);
+  }
+
+  function handleDelete() {
+    if (!activeProject) return;
+    mobileStore.deleteProject(activeProject.id);
+    setIsDeleteModalOpen(false);
     setIsSwitcherOpen(false);
   }
 
   return (
-    <>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: "#7c3aed",
-          tabBarInactiveTintColor: "#a1a1aa",
-          tabBarStyle: {
-            backgroundColor: "#121215",
-            borderTopColor: "#27272a",
-            height: isTabletOrWide ? 64 : 56,
-            paddingBottom: isTabletOrWide ? 8 : 4,
-            paddingTop: 4,
-          },
-          headerStyle: {
-            backgroundColor: "#121215",
-            borderBottomColor: "#27272a",
-            borderBottomWidth: 1,
-            height: 56,
-          },
-          headerTitle: () => (
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", paddingRight: 12 }}>
-              {/* Brand Identity */}
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <View
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 6,
-                    backgroundColor: "#7c3aed",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Sparkles size={14} color="#ffffff" />
-                </View>
-                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}>
-                  <Text style={{ color: "#7c3aed" }}>Nov</Text>Write
-                </Text>
-              </View>
-
-              {/* Active Project Switcher Chip */}
-              <TouchableOpacity
-                onPress={() => setIsSwitcherOpen(true)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  backgroundColor: "rgba(124, 58, 237, 0.12)",
-                  borderColor: "rgba(124, 58, 237, 0.3)",
-                  borderWidth: 1,
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 999,
-                  maxWidth: 180,
-                }}
-              >
-                <Text
-                  style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}
-                  numberOfLines={1}
-                >
-                  {activeProject?.name || "Select Project"}
-                </Text>
-                <ChevronDown size={12} color="#7c3aed" />
-              </TouchableOpacity>
-            </View>
-          ),
+    <View style={{ flex: 1, backgroundColor: "#09090b" }}>
+      {/* Dedicated App Top Header (Safe Area Aware) */}
+      <View
+        style={{
+          paddingTop: Math.max(insets.top, 8),
+          backgroundColor: "#121215",
+          borderBottomColor: "#27272a",
+          borderBottomWidth: 1,
         }}
       >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Projects",
-            tabBarIcon: ({ color, size }) => <FolderGit2 color={color} size={size} />,
+        <View
+          style={{
+            height: 52,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
           }}
-        />
-        <Tabs.Screen
-          name="novel"
-          options={{
-            title: "Prose Studio",
-            tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
+        >
+          {/* Brand Identity: Real Logo + NovWrite text */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Image
+              source={require("../../assets/logo.png")}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                borderWidth: 1,
+                borderColor: "#27272a",
+              }}
+              resizeMode="contain"
+            />
+            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}>
+              <Text style={{ color: "#7c3aed" }}>Nov</Text>Write
+            </Text>
+          </View>
+
+          {/* Active Project Switcher Chip */}
+          <TouchableOpacity
+            onPress={() => setIsSwitcherOpen(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              backgroundColor: "rgba(124, 58, 237, 0.12)",
+              borderColor: "rgba(124, 58, 237, 0.3)",
+              borderWidth: 1,
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 999,
+              maxWidth: 180,
+              minHeight: 32,
+            }}
+          >
+            <Folder size={12} color="#7c3aed" />
+            <Text
+              style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}
+              numberOfLines={1}
+            >
+              {activeProject?.name || "Select Project"}
+            </Text>
+            <ChevronDown size={12} color="#7c3aed" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Tabs Screen Content & Bottom Navigation */}
+      <View style={{ flex: 1 }}>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: "#7c3aed",
+            tabBarInactiveTintColor: "#a1a1aa",
+            tabBarStyle: {
+              backgroundColor: "#121215",
+              borderTopColor: "#27272a",
+              borderTopWidth: 1,
+              height: 54 + insets.bottom,
+              paddingBottom: Math.max(insets.bottom, 6),
+              paddingTop: 6,
+            },
+            tabBarLabelStyle: {
+              fontSize: 11,
+              fontWeight: "600",
+            },
           }}
-        />
-        <Tabs.Screen
-          name="world"
-          options={{
-            title: "World Studio",
-            tabBarIcon: ({ color, size }) => <Globe2 color={color} size={size} />,
-          }}
-        />
-      </Tabs>
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: "Projects",
+              tabBarIcon: ({ color, size }) => <Folder color={color} size={size - 2} />,
+            }}
+          />
+          <Tabs.Screen
+            name="novel"
+            options={{
+              title: "Prose Studio",
+              tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size - 2} />,
+            }}
+          />
+          <Tabs.Screen
+            name="world"
+            options={{
+              title: "World Studio",
+              tabBarIcon: ({ color, size }) => <Globe2 color={color} size={size - 2} />,
+            }}
+          />
+        </Tabs>
+      </View>
 
       {/* Global Project Switcher Modal */}
       <Modal visible={isSwitcherOpen} transparent animationType="fade">
@@ -154,7 +224,7 @@ export default function TabLayout() {
               <TouchableOpacity
                 onPress={() => {
                   setIsSwitcherOpen(false);
-                  setIsNewProjectModalOpen(true);
+                  openCreate();
                 }}
                 style={{
                   flexDirection: "row",
@@ -171,47 +241,54 @@ export default function TabLayout() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
-              {state.projects.map((proj) => {
-                const isActive = proj.id === state.activeProjectId;
-                return (
-                  <TouchableOpacity
-                    key={proj.id}
-                    onPress={() => {
-                      mobileStore.setActiveProject(proj.id);
-                      setIsSwitcherOpen(false);
-                    }}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      backgroundColor: isActive ? "rgba(124, 58, 237, 0.15)" : "#18181b",
-                      borderColor: isActive ? "#7c3aed" : "#27272a",
-                      borderWidth: 1,
-                      borderRadius: 8,
-                      padding: 12,
-                    }}
-                  >
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text
-                        style={{
-                          color: isActive ? "#7c3aed" : "#fafafa",
-                          fontSize: 14,
-                          fontWeight: "bold",
-                        }}
-                        numberOfLines={1}
-                      >
-                        {proj.name}
-                      </Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
-                        {proj.genre || "Fiction"}
-                      </Text>
-                    </View>
-                    {isActive && <CheckCircle2 size={16} color="#7c3aed" />}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            {state.projects.length === 0 ? (
+              <View style={{ paddingVertical: 20, alignItems: "center", gap: 6 }}>
+                <Folder size={28} color="#a1a1aa" />
+                <Text style={{ color: "#a1a1aa", fontSize: 13 }}>No novel projects created yet.</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
+                {state.projects.map((proj) => {
+                  const isActive = proj.id === state.activeProjectId;
+                  return (
+                    <TouchableOpacity
+                      key={proj.id}
+                      onPress={() => {
+                        mobileStore.setActiveProject(proj.id);
+                        setIsSwitcherOpen(false);
+                      }}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        backgroundColor: isActive ? "rgba(124, 58, 237, 0.15)" : "#18181b",
+                        borderColor: isActive ? "#7c3aed" : "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                      }}
+                    >
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text
+                          style={{
+                            color: isActive ? "#7c3aed" : "#fafafa",
+                            fontSize: 14,
+                            fontWeight: "bold",
+                          }}
+                          numberOfLines={1}
+                        >
+                          {proj.name}
+                        </Text>
+                        <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                          {proj.genre || "Fiction"}
+                        </Text>
+                      </View>
+                      {isActive && <CheckCircle2 size={16} color="#7c3aed" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
 
             <TouchableOpacity
               onPress={() => setIsSwitcherOpen(false)}
@@ -221,6 +298,8 @@ export default function TabLayout() {
                 borderRadius: 8,
                 alignItems: "center",
                 marginTop: 4,
+                minHeight: 40,
+                justifyContent: "center",
               }}
             >
               <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Close</Text>
@@ -229,118 +308,117 @@ export default function TabLayout() {
         </View>
       </Modal>
 
-      {/* New Project Modal */}
-      <Modal visible={isNewProjectModalOpen} transparent animationType="fade">
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#121215",
-              borderColor: "#27272a",
-              borderWidth: 1,
-              borderRadius: 14,
-              padding: 18,
-              gap: 12,
-            }}
-          >
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
-              Create Novel Project
-            </Text>
-
+      {/* Create Project Modal */}
+      <Modal visible={isCreateModalOpen} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
+            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Create Novel Project</Text>
             <View style={{ gap: 4 }}>
               <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Novel Title *</Text>
               <TextInput
-                value={newProjectName}
-                onChangeText={setNewProjectName}
+                value={nameInput}
+                onChangeText={setNameInput}
                 placeholder="e.g. Whispers of the Star Sea"
                 placeholderTextColor="#71717a"
-                style={{
-                  backgroundColor: "#09090b",
-                  borderColor: "#27272a",
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  padding: 10,
-                  color: "#fafafa",
-                  fontSize: 14,
-                }}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
               />
             </View>
-
             <View style={{ gap: 4 }}>
               <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Genre / Setting</Text>
               <TextInput
-                value={newProjectGenre}
-                onChangeText={setNewProjectGenre}
+                value={genreInput}
+                onChangeText={setGenreInput}
                 placeholder="e.g. Space Opera / Sci-Fi"
                 placeholderTextColor="#71717a"
-                style={{
-                  backgroundColor: "#09090b",
-                  borderColor: "#27272a",
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  padding: 10,
-                  color: "#fafafa",
-                  fontSize: 14,
-                }}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
               />
             </View>
-
             <View style={{ gap: 4 }}>
               <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Synopsis</Text>
               <TextInput
-                value={newProjectDesc}
-                onChangeText={setNewProjectDesc}
+                value={descInput}
+                onChangeText={setDescInput}
                 placeholder="Brief premise..."
                 placeholderTextColor="#71717a"
                 multiline
                 numberOfLines={3}
-                style={{
-                  backgroundColor: "#09090b",
-                  borderColor: "#27272a",
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  padding: 10,
-                  color: "#fafafa",
-                  fontSize: 14,
-                  minHeight: 60,
-                }}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
               />
             </View>
-
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity
-                onPress={() => setIsNewProjectModalOpen(false)}
-                style={{
-                  backgroundColor: "#27272a",
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                }}
-              >
+              <TouchableOpacity onPress={() => setIsCreateModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
                 <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCreateProject}
-                style={{
-                  backgroundColor: "#7c3aed",
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Create</Text>
+              <TouchableOpacity onPress={handleCreate} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Create Project</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </>
+
+      {/* Edit Project Modal */}
+      <Modal visible={isEditModalOpen} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
+            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Edit Project Details</Text>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Novel Title *</Text>
+              <TextInput
+                value={nameInput}
+                onChangeText={setNameInput}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+              />
+            </View>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Genre / Setting</Text>
+              <TextInput
+                value={genreInput}
+                onChangeText={setGenreInput}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+              />
+            </View>
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Synopsis</Text>
+              <TextInput
+                value={descInput}
+                onChangeText={setDescInput}
+                multiline
+                numberOfLines={3}
+                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
+              />
+            </View>
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+              <TouchableOpacity onPress={() => setIsEditModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleEdit} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Project Modal */}
+      <Modal visible={isDeleteModalOpen} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
+            <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Project</Text>
+            <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
+              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{activeProject?.name}</Text>? All chapters, scenes, and associated entities will be removed.
+            </Text>
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+              <TouchableOpacity onPress={() => setIsDeleteModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDelete} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Delete Permanently</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
-

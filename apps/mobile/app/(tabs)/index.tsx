@@ -6,16 +6,19 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
+  Image,
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { mobileStore } from "../../src/lib/mobileStore.ts";
+import { EmptyState } from "../../src/components/EmptyState.tsx";
 import {
   Sparkles,
   Plus,
   BookOpen,
   Globe2,
   Folder,
+  FolderPlus,
   Pencil,
   Trash2,
   CheckCircle2,
@@ -112,7 +115,11 @@ export default function ProjectsScreen() {
             elevation: 4,
           }}
         >
-          <Sparkles size={28} color="#7c3aed" />
+          <Image
+            source={require("../../assets/logo.png")}
+            style={{ width: 42, height: 42, borderRadius: 10 }}
+            resizeMode="contain"
+          />
         </View>
 
         <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 26 : 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.5 }}>
@@ -398,46 +405,56 @@ export default function ProjectsScreen() {
       </View>
 
       {/* Projects Grid List */}
-      <View style={{ gap: 10, flexDirection: isTabletOrWide ? "row" : "column", flexWrap: "wrap" }}>
-        {state.projects.map((proj) => {
-          const isActive = proj.id === state.activeProjectId;
-          return (
-            <TouchableOpacity
-              key={proj.id}
-              onPress={() => mobileStore.setActiveProject(proj.id)}
-              style={{
-                width: isTabletOrWide ? "48%" : "100%",
-                backgroundColor: isActive ? "rgba(124, 58, 237, 0.12)" : "#121215",
-                borderColor: isActive ? "#7c3aed" : "#27272a",
-                borderWidth: 1,
-                borderRadius: 10,
-                padding: 14,
-                gap: 8,
-                minHeight: 44,
-              }}
-            >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text
-                  style={{
-                    color: isActive ? "#7c3aed" : "#fafafa",
-                    fontSize: 15,
-                    fontWeight: "bold",
-                    flex: 1,
-                  }}
-                  numberOfLines={1}
-                >
-                  {proj.name}
-                </Text>
-                {isActive && <CheckCircle2 size={16} color="#7c3aed" />}
-              </View>
+      {state.projects.length === 0 ? (
+        <EmptyState
+          icon={FolderPlus}
+          title="No Novel Projects Found"
+          description="Create your first novel project workspace to begin drafting prose, designing blueprints, and maintaining causal lore."
+          actionText="Create Your First Novel Project"
+          onAction={openCreate}
+        />
+      ) : (
+        <View style={{ gap: 10, flexDirection: isTabletOrWide ? "row" : "column", flexWrap: "wrap" }}>
+          {state.projects.map((proj) => {
+            const isActive = proj.id === state.activeProjectId;
+            return (
+              <TouchableOpacity
+                key={proj.id}
+                onPress={() => mobileStore.setActiveProject(proj.id)}
+                style={{
+                  width: isTabletOrWide ? "48%" : "100%",
+                  backgroundColor: isActive ? "rgba(124, 58, 237, 0.12)" : "#121215",
+                  borderColor: isActive ? "#7c3aed" : "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  padding: 14,
+                  gap: 8,
+                  minHeight: 44,
+                }}
+              >
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text
+                    style={{
+                      color: isActive ? "#7c3aed" : "#fafafa",
+                      fontSize: 15,
+                      fontWeight: "bold",
+                      flex: 1,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {proj.name}
+                  </Text>
+                  {isActive && <CheckCircle2 size={16} color="#7c3aed" />}
+                </View>
 
-              <Text style={{ color: "#a1a1aa", fontSize: 12 }} numberOfLines={2}>
-                {proj.description || proj.genre || "Creative Fiction"}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+                <Text style={{ color: "#a1a1aa", fontSize: 12 }} numberOfLines={2}>
+                  {proj.description || proj.genre || "Creative Fiction"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
 
       {/* Create Project Modal */}
       <Modal visible={isCreateModalOpen} transparent animationType="fade">
