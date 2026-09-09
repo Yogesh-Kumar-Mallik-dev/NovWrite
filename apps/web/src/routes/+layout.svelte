@@ -61,7 +61,7 @@
 
 <svelte:window onkeydown={(e) => { if (e.key === 'Escape' && mobileDrawerOpen) mobileDrawerOpen = false; }} />
 
-<div class="min-h-screen flex flex-col bg-background text-foreground font-sans relative">
+<div class="min-h-screen w-full max-w-full flex flex-col bg-background text-foreground font-sans relative overflow-x-clip">
   {#if !isErrorPage}
     <!-- Main Navigation Bar -->
     <nav
