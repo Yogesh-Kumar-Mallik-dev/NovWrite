@@ -160,6 +160,10 @@ Copy-Item .env.example .env
   - [Cache Architecture Specification](docs/CACHE_ARCHITECTURE.md)
   - [Communication Layer Specification](docs/COMMUNICATION_LAYER.md)
   - [MVP Phased Implementation Plan](docs/MVP_PHASED_PLAN.md)
+- **Governance, Quality Standards & Contribution:**
+  - [Repository Documentation Standards & AI Anti-Pattern Prevention](docs/DOCUMENTATION_STANDARDS.md)
+  - [Contributor Guidelines (CONTRIBUTING.md)](CONTRIBUTING.md)
+  - [Security Policy & Vulnerability Disclosure (SECURITY.md)](SECURITY.md)
 - **Guides & Quick References:**
   - [Developer Onboarding & Multi-OS Setup Guide](docs/ONBOARDING.md)
   - [Recommended Development Commands Cheat Sheet](docs/recommended_commands.md)

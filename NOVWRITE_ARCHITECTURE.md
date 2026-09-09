@@ -185,3 +185,13 @@ NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yoges
 3. **Phase 3 (`apps/api`):** Go backend unit, formula engine cycle detection, and HTTP integration test suite.
 4. **Phase 4 (`@novwrite/web`):** Frontend component, store, table configuration, and mathjs AST formula evaluation tests (25 unit tests).
 5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh) / [`.\check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1) with 0 errors and 0 warnings tolerance.
+
+---
+
+## 8. Governance, Quality Standards & Anti-Pattern Prevention
+
+NovWrite establishes an authoritative engineering documentation governance standard modeled after leading open-source repositories:
+
+- **Authoritative Standard:** [`docs/DOCUMENTATION_STANDARDS.md`](docs/DOCUMENTATION_STANDARDS.md) establishes strict rules against AI documentation anti-patterns (hallucinated flags, lazy TODO placeholders, robotic buzzword fluff, code-doc drift, broken links, happy-path exclusivity).
+- **Contributor Guidelines:** [`CONTRIBUTING.md`](CONTRIBUTING.md) defines conventional commits, mandatory GPG signing (`git commit -S`), single-change isolation, and PR checklists.
+- **Security Policy:** [`SECURITY.md`](SECURITY.md) outlines vulnerability reporting, SLAs, per-IP rate limiting, 10MB payload size limits, and the Singleton Super Admin security model.

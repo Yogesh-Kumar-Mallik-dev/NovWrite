@@ -1,6 +1,6 @@
 # Database Architecture Specification
 
-**Status:** Locked Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, Entity Revisions, Bitemporal Coordinates & REST Envelopes)  
+**Status:** Locked Baseline (Version 2.9 - Three-Tier Multi-User RBAC, Singleton Super Admin Constraint, Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, Entity Revisions, Bitemporal Coordinates & REST Envelopes)  
 **Engine:** PostgreSQL 18 with `pgvector` extension  
 **ORM / Data Access:** TypeScript Data Service (`apps/data-service/`) using Prisma ORM & Coarse-Grained gRPC
 
@@ -66,17 +66,18 @@ erDiagram
 ### 3.1. Identity, Tenancy & Prose Hierarchy
 
 ```sql
--- Users and authentication (with Platform Admin & MFA support)
+-- Users and authentication (with 3-Tier Multi-User RBAC & MFA support)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    display_name VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'USER', -- USER, ADMIN, SUPER_ADMIN
     is_platform_admin BOOLEAN NOT NULL DEFAULT FALSE,
     mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     mfa_secret VARCHAR(255),
     stripe_customer_id VARCHAR(100),
-    account_status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, suspended, pending_mfa_reset
+    account_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, SUSPENDED, LOCKED
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

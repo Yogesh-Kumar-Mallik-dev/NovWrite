@@ -202,5 +202,16 @@ This document records the core design principles, trade-offs, and technical deci
   3. **Backend Host Server CLI (`apps/api/cmd/admin-cli`):** Provide an out-of-band administrative interface on the backend server shell supporting direct telemetry inspection (`status`), root JWT token generation (`token`), user listings (`list-users`), and role promotions/demotions (`promote`, `demote`).
 - **Consequences:** Guarantees absolute single-root accountability, provides dual-layer dashboard security (credentials + JWT guard), and enables secure terminal-based operations directly on the server host.
 
+---
+
+## Decision 23: Authoritative Repository Documentation Standards, Open-Source Hygiene & AI Anti-Pattern Prevention
+
+- **Context:** High-velocity AI-assisted software development often leads to documentation degradation: hallucinated CLI flags, lazy `// TODO` stubs, hyperbolic marketing fluff, desynchronized API paths, and inverted technical depth. Without strict documentation governance, developer onboarding and architectural trust decay rapidly.
+- **Decision:**
+  1. **Gold-Standard Documentation Framework:** Mandate an authoritative documentation hierarchy modeled after premier open-source repositories (Kubernetes, Vite, Next.js, FastAPI, Rust, Svelte): `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/DOCUMENTATION_STANDARDS.md`, `docs/ONBOARDING.md`, `docs/API_GUIDE.md`, and domain architecture specs.
+  2. **Strict Prohibition of 10 AI Documentation Anti-Patterns:** Enforce zero tolerance for hallucinated commands, placeholder stubs, robotic buzzwords, code-doc drift, broken paths, happy-path exclusivity, and unpinned dependencies.
+  3. **Atomic Code-Doc Synchronization:** Mandate that all route, schema, or command changes be updated in the documentation within the exact same atomic commit, validated by `./check.sh` and `./test.sh` before GPG signing.
+- **Consequences:** Establishes permanent architectural fidelity, eliminates cognitive friction for new engineers, and ensures the codebase serves as an authoritative open-source reference.
+
 
 

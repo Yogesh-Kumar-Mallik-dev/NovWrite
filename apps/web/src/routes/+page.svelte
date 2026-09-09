@@ -22,7 +22,7 @@
 <div class="flex-1 p-4 sm:p-6 md:p-12 max-w-5xl mx-auto w-full flex flex-col justify-center transition-colors">
   <div class="mb-6 sm:mb-10 text-center space-y-3 sm:space-y-4">
     <div class="inline-block relative">
-      <div class="absolute -inset-1.5 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur-md opacity-30 animate-pulse"></div>
+      <div class="absolute -inset-1.5 bg-linear-to-r from-primary to-purple-600 rounded-2xl blur-md opacity-30 animate-pulse"></div>
       <img
         src="/logo.png"
         alt="NovWrite Logo"
@@ -89,7 +89,6 @@
           </CardDescription>
         </CardHeader>
         <CardFooter class="pt-4 border-t border-border/80 flex items-center justify-between text-xs font-mono text-muted-foreground">
-          <span>Branch: novel</span>
           <span
             class="text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
           >
@@ -119,7 +118,6 @@
           </CardDescription>
         </CardHeader>
         <CardFooter class="pt-4 border-t border-border/80 flex items-center justify-between text-xs font-mono text-muted-foreground">
-          <span>Branch: world</span>
           <span
             class="text-destructive flex items-center gap-1 group-hover:translate-x-1 transition-transform font-medium"
           >

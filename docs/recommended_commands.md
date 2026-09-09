@@ -84,7 +84,7 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 
 ```bash
 # Start backend infrastructure (PostgreSQL & Redis)
-docker compose -f deploy/compose.yaml up -d postgres redis
+docker compose up -d postgres redis
 
 # Launch TypeScript Data Service
 pnpm --filter @novwrite/data-service dev

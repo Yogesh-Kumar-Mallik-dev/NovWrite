@@ -1,19 +1,22 @@
 # Current Context
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
-- **Execution Constraints:** Local signed commits (`git commit -S`) are standard.
-- **Architectural Baseline:** Version 2.7 (Project-as-Root Hierarchy, Single-Icon Theme Toggle, Security & Isolation Validation, and .agent/ Directory Reorganization).
+- **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 5-phase test verification (`./test.sh`), strict single-change isolation.
+- **Architectural Baseline:** Version 2.10 (Authoritative Repository Documentation Standards, Open-Source Hygiene & AI Anti-Pattern Prevention).
 - **Recent Accomplishments:**
-  - **Git Commit Structure & Agent Directory Reorganization**:
-    - Reorganized all agent-related files (`agents.md`, `current_context.md`, rules) into `.agent/`.
-    - Enforced `<type>(<domain>): <expression>` git commit format across all commits.
-  - **Project-as-Root Hierarchy & Invariants Enforcement**:
-    - Added `ValidateProjectAccess` across all Blueprint, Entity, and Timeline REST endpoints, eliminating `"default"` project fallbacks.
-    - Added project data isolation and user authorization validation (`X-User-ID`).
-    - Added zero-project blocker empty state in World Studio workbench with direct creation CTA.
-  - **Theme Toggle Single-Icon Redesign**:
-    - Replaced dual-icon toggle with a single-icon button displaying strictly `Moon` (light mode) or `Sun` (dark mode) in application purple (`text-primary`).
-  - **UI/UX Cleanup**:
-    - Purged leftover `/dev/communication-hub` and removed the Diagnostics link from the mobile slide-over navigation drawer.
+  - **Authoritative Repository Documentation Standards (`docs/DOCUMENTATION_STANDARDS.md` & `.agent/rules/documentation_standards.md`)**:
+    - Synthesized gold-standard documentation practices from world-class open source projects (Kubernetes, Vite, Next.js, FastAPI, Rust, Svelte, Supabase).
+    - Formulated the **10 AI Documentation Anti-Patterns Catalog** and strict prevention rules.
+  - **Open-Source Repository Hygiene (`CONTRIBUTING.md` & `SECURITY.md`)**:
+    - Created developer contribution guidelines and vulnerability disclosure SLA policies.
+  - **Comprehensive Code-Doc Parity Across Architecture Specs**:
+    - Updated `docs/API_GUIDE.md` (added auth, admin, superadmin, rate limit headers).
+    - Updated `docs/ONBOARDING.md` and `docs/recommended_commands.md` (verified container commands).
+    - Updated `docs/DATABASE_ARCHITECTURE.md` (Version 2.9 baseline with 3-tier multi-user RBAC).
+    - Added Decision 23 to `docs/design_decisions.md`.
+    - Updated `README.md`, `NOVWRITE_ARCHITECTURE.md`, `changes.md`, and regenerated `Novwrite.docx`.
+- **Verification:**
+  - `./check.sh`: Passed with 0 errors and 0 warnings.
+  - `./test.sh`: Passed all 5 test phases.
 - **Next Steps:**
-  - Proceed with novel manuscript and prose studio development while maintaining strict project isolation and 100% test coverage.
+  - Maintain 100% code-doc synchronization and anti-pattern prevention across all future functional changes.

@@ -112,6 +112,28 @@ Errors return machine-readable problem details. Example validation error (`422 U
 }
 ```
 
+### 2.4 Defensive Security & Rate Limit Telemetry (`429 Too Many Requests`)
+
+All API endpoints are protected by an in-memory token bucket rate limiter (300 req/min default per client IP) and return dynamic rate limit telemetry headers:
+
+- `X-RateLimit-Limit`: Maximum requests permitted per rate window (e.g. `300`).
+- `X-RateLimit-Remaining`: Remaining request quota for the current window.
+- `X-RateLimit-Reset-Seconds`: Seconds until the quota replenishment window resets.
+
+When rate limits are exceeded, the API returns HTTP 429:
+
+```json
+{
+  "type": "https://novwrite.io/errors/rate-limit-exceeded",
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "Rate limit exceeded. Please retry in 12 seconds.",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "retryAfterSeconds": 12,
+  "timestamp": "2026-09-09T05:00:00.000000Z"
+}
+```
+
 ---
 
 ## 3. Endpoints Reference (`/api/v1/...`)
@@ -179,6 +201,27 @@ Errors return machine-readable problem details. Example validation error (`422 U
 - `POST /api/v1/bridge/ground` — Ground a scene with folded canonical state for referenced entities.
 - `POST /api/v1/bridge/audit` — Audit draft prose actions against invariant rules (e.g. deceased entity taking actions, numeric bounds underflow).
 - `POST /api/v1/bridge/mentions` — Fast autocomplete query for universe entities with category filtering.
+
+### 3.8 Authentication & User Identity (`/api/v1/auth`)
+
+- `POST /api/v1/auth/register` — Register a new author account (`USER`). Elevated role self-assignment (`ADMIN`, `SUPER_ADMIN`) is strictly prohibited and returns `403 Forbidden`.
+  - Body: `{ "email": "author@novwrite.dev", "username": "author_pen", "password": "SecurePassword123" }`
+  - Returns: `201 Created` with User object envelope.
+- `POST /api/v1/auth/login` — Authenticate via email or username and password.
+  - Body: `{ "emailOrUsername": "author@novwrite.dev", "password": "SecurePassword123" }`
+  - Returns: `200 OK` with JWT bearer token and user profile.
+- `GET /api/v1/auth/me` — Retrieve active profile and system role of authenticated caller. Guarded by `JWTAuthMiddleware`.
+
+### 3.9 Platform Administration (`/api/v1/admin`)
+
+- `GET /api/v1/admin/users` — Paginated user directory with search and role filters (`page`, `pageSize`, `search`, `role`). Guarded by `RequireAdmin()`.
+- `PUT /api/v1/admin/users/{userId}/role` — Promote or demote user system roles. Guarded by `RequireAdmin()` (promoting to `ADMIN` or `SUPER_ADMIN` requires `RequireSuperAdmin()`).
+- `DELETE /api/v1/admin/users/{userId}` — Irreversibly delete a user account. Guarded by `RequireSuperAdmin()`.
+
+### 3.10 Singleton Super Admin Control Plane (`/api/v1/superadmin`)
+
+- `POST /api/v1/superadmin/login` — Authenticate the designated Singleton Super Admin (`novwrite_ops` / `sysadmin@novwrite.dev`). Requests by non-superadmin users are rejected with `403 Forbidden` (`SUPER_ADMIN_CREDENTIALS_REQUIRED`). Returns 24-hour signed JWT token.
+- `GET /api/v1/superadmin/dashboard` — High-security system telemetry: active goroutines, Go runtime version, host platform, user tier distributions, and rate limiter status. Guarded by `RequireSuperAdmin()`.
 
 ---
 

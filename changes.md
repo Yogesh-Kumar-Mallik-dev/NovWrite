@@ -93,11 +93,39 @@ timeline
                : Singleton Super Admin Constraint (novwrite_ops / sysadmin@novwrite.dev)
                : Dedicated Username & Password Protected Super Admin Dashboard (/superadmin)
                : Backend Host Server Go CLI (apps/api/cmd/admin-cli)
+    2026-09-09 : Version 2.10 (Authoritative Repository Documentation Standards & AI Anti-Pattern Prevention)
+               : Gold-Standard Documentation Architecture (docs/DOCUMENTATION_STANDARDS.md)
+               : Strict 10 AI Documentation Anti-Patterns Catalog & Prevention Rules
+               : Open Source Repository Hygiene (CONTRIBUTING.md & SECURITY.md)
+               : Full Code-Doc Parity Across Monorepo Architecture Specs
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10] — 2026-09-09
+
+**Scope:** Authoritative Repository Documentation Standards, Open-Source Repository Hygiene & Strict AI Documentation Anti-Pattern Prevention  
+**Target Documents:** [`docs/DOCUMENTATION_STANDARDS.md`](file:///home/yogesh/Projects/NovWrite/docs/DOCUMENTATION_STANDARDS.md), [`CONTRIBUTING.md`](file:///home/yogesh/Projects/NovWrite/CONTRIBUTING.md), [`SECURITY.md`](file:///home/yogesh/Projects/NovWrite/SECURITY.md), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`.agent/agents.md`](file:///home/yogesh/Projects/NovWrite/.agent/agents.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added & Refactored
+
+- **Authoritative Repository Documentation Standards (`docs/DOCUMENTATION_STANDARDS.md` & `.agent/rules/documentation_standards.md`):**
+  - Synthesized best-in-class documentation principles from world-class open-source projects (Kubernetes, Vite, Next.js, FastAPI, Rust, Svelte, Supabase).
+  - Cataloged the **10 AI Documentation Anti-Patterns**: Hallucinated Commands & Ghost Flags, Lazy Placeholder Stubs, Robotic Buzzwords & Fluff, Code-Doc Discrepancy Drift, Inverted Technical Depth, Broken/Hypothetical Paths, Happy-Path Exclusivity, Unstructured Monolithic Walls, Unpinned Dependency Hand-Waving, and Invariant Contradictions.
+  - Formulated strict prevention rules, comparison tables ("Bad AI Example" vs. "Good Engineering Standard"), and pre-commit audit checklists.
+- **Open-Source Repository Hygiene Documents (`CONTRIBUTING.md` & `SECURITY.md`):**
+  - Created standardized `CONTRIBUTING.md` defining branching models, conventional commit conventions, mandatory GPG signing (`git commit -S`), single-change isolation policy, 5-phase test verification, and PR checklists.
+  - Created `SECURITY.md` outlining vulnerability disclosure SLAs, contact channels (`security@novwrite.dev`), token-bucket rate limiting (300 req/min), 10MB payload size limits, and defense-in-depth architecture.
+- **Full Code-Doc Parity Across Architecture Specifications:**
+  - Updated [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md) with complete reference for Authentication (`/api/v1/auth`), Platform Administration (`/api/v1/admin`), Singleton Super Admin (`/api/v1/superadmin`), and Rate Limiting telemetry headers (`X-RateLimit-*`, RFC 7807 429 responses).
+  - Updated [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md) and [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md) ensuring verified container invocations against `docker-compose.yml`.
+  - Updated [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md) to Version 2.9 baseline with 3-Tier Multi-User RBAC models.
+  - Added Decision 23 to [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md).
+  - Updated [`.agent/agents.md`](file:///home/yogesh/Projects/NovWrite/.agent/agents.md) with Rule 16 enforcing documentation hygiene and zero AI anti-patterns.
+
+---
 
 ### [Version 2.9] — 2026-09-08
 

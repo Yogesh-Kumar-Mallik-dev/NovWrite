@@ -279,7 +279,7 @@ OPENAI_API_KEY=""
 ### 5.1. Start PostgreSQL & Redis Containers
 
 ```bash
-docker compose -f deploy/compose.yaml up -d postgres redis
+docker compose up -d postgres redis
 ```
 
 ### 5.2. Push Prisma Schema & Generate Client
@@ -350,7 +350,7 @@ If you prefer to run services in separate terminal windows:
 
 ### Terminal 1: Infrastructure
 ```bash
-docker compose -f deploy/compose.yaml up postgres redis
+docker compose up postgres redis
 ```
 
 ### Terminal 2: TypeScript Data Service

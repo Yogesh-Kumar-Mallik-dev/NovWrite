@@ -99,3 +99,7 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
 15. **Standardized 10-Item Pagination & Layout Jump Prevention**:
     - **Standard 10-Item Page Size**: All GET endpoints, list views, timeline feeds, and table datasets must be paginated in 10-item chunks with standardized metadata (`page`, `pageSize: 10`, `totalCount`, `totalPages`, `hasNextPage`, `hasPreviousPage`).
     - **Top Pagination Bar Location**: Pagination controls MUST be positioned **ABOVE** tables/lists rather than below, preventing cumulative layout shifts (CLS) and UI jumps when record heights vary across pages.
+16. **Authoritative Repository Documentation Standards & AI Anti-Pattern Prevention**:
+    - Strictly adhere to [`docs/DOCUMENTATION_STANDARDS.md`](docs/DOCUMENTATION_STANDARDS.md).
+    - **Zero AI Anti-Patterns**: Never generate hallucinated CLI flags, lazy `// TODO` stubs, robotic marketing buzzwords, desynchronized routes, broken file paths, or happy-path only documentation.
+    - **Atomic Documentation Synchronization**: Always update corresponding documentation in `docs/`, `README.md`, and `changes.md` in the exact same commit whenever functional routes, schemas, or commands are added or modified.
