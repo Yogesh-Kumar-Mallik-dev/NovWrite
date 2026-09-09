@@ -100,6 +100,12 @@ pnpm --filter @novwrite/desktop dev
 
 # Build Tauri 2 Native Desktop Application Bundle
 pnpm --filter @novwrite/desktop build
+
+# Launch React Native & Expo Mobile Client
+pnpm --filter @novwrite/mobile start
+
+# Launch Mobile Client on Android / iOS Simulator
+pnpm --filter @novwrite/mobile android   # or: pnpm --filter @novwrite/mobile ios
 ```
 
 ---

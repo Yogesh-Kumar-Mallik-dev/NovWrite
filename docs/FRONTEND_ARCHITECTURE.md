@@ -631,5 +631,23 @@ NovWrite enforces consistent responsive parity across all three frontend deploym
 | **Desktop (Tauri 2)** | Maximized window provides full desktop canvas and sidebars | Resizing / shrinking the window fluidly transitions into the mobile touch-safe layout |
 | **Mobile (React Native)** | Tablet / Foldable / Landscape / DeX expands into multi-column layout | Mobile phone portrait provides dedicated bottom tabs / slide drawer and stacked cards |
 
+---
+
+## 24. NovWrite Mobile Studio Client Architecture (`apps/mobile`)
+
+The dedicated Mobile Client is powered by **React Native 0.76+**, **Expo SDK 52+**, **Expo Router**, and **NativeWind v4**:
+
+- **Shared Domain Contracts (`@novwrite/bridge`):** Direct contract-first binding to the universe schema models, entity structures, and causal invariants without duplicate type definitions.
+- **Mobile Reactive Store (`src/lib/mobileStore.ts`):** Lightweight client state store providing active project context isolation, chapter/scene progression, distraction-free drafting, and telemetry synchronization.
+- **Tab Navigation & Responsive Tablet Expansion (`app/(tabs)/_layout.tsx`):**
+  - **Phone (< 768px):** Bottom tab navigation (`Projects`, `Prose Studio`, `Entities`, `Blueprints`) with $\ge 44\text{px}$ touch targets.
+  - **Tablet / Foldable (≥ 768px):** Expands into master-detail split views, multi-column card grids, and persistent sidebar drawers.
+- **Screens:**
+  - **Projects Dashboard (`app/(tabs)/index.tsx`):** Active project telemetry card, project list, and creation modal.
+  - **Prose Studio (`app/(tabs)/novel.tsx`):** Distraction-free canvas with horizontal/vertical scene selectors and live word counters.
+  - **Entities Registry (`app/(tabs)/world.tsx`):** Dedicated touch entity cards with archetype badges and property inspectors.
+  - **Blueprints & Schemas (`app/(tabs)/schemas.tsx`):** 1st & 2nd class archetype viewer with dynamic fields and validation lists.
+
+
 
 

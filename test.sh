@@ -47,12 +47,17 @@ echo "🔹 [3/5] Testing Go API Backend & HTTP Handlers..."
 
 # 4. Test Web Frontend Engines & Utilities
 echo ""
-echo "🔹 [4/5] Testing @novwrite/web Frontend Engines & Utilities..."
+echo "🔹 [4/6] Testing @novwrite/web Frontend Engines & Utilities..."
 pnpm --filter @novwrite/web test
 
-# 5. Typecheck Frontend
+# 5. Test Mobile Client Engines & Telemetry
 echo ""
-echo "🔹 [5/5] Typechecking Frontend Web Application..."
+echo "🔹 [5/6] Testing @novwrite/mobile Client Engines & Telemetry..."
+node --test apps/mobile/src/__tests__/mobileEngine.test.ts
+
+# 6. Typecheck Frontend
+echo ""
+echo "🔹 [6/6] Typechecking Frontend Web Application..."
 pnpm --filter @novwrite/web check
 
 echo ""

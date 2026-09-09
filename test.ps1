@@ -43,11 +43,15 @@ try {
 }
 
 # 4. Test Web Frontend Engines & Utilities
-Write-Host "`n🔹 [4/5] Testing @novwrite/web Frontend Engines & Utilities..." -ForegroundColor Blue
+Write-Host "`n🔹 [4/6] Testing @novwrite/web Frontend Engines & Utilities..." -ForegroundColor Blue
 pnpm --filter @novwrite/web test
 
-# 5. Typecheck Frontend
-Write-Host "`n🔹 [5/5] Typechecking Frontend Web Application..." -ForegroundColor Blue
+# 5. Test Mobile Client Engines & Telemetry
+Write-Host "`n🔹 [5/6] Testing @novwrite/mobile Client Engines & Telemetry..." -ForegroundColor Blue
+node --test apps/mobile/src/__tests__/mobileEngine.test.ts
+
+# 6. Typecheck Frontend
+Write-Host "`n🔹 [6/6] Typechecking Frontend Web Application..." -ForegroundColor Blue
 pnpm --filter @novwrite/web check
 
 Write-Host ""

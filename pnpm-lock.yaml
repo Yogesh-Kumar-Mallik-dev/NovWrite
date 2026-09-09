@@ -43,6 +43,12 @@ importers:
         specifier: workspace:*
         version: link:../web
 
+  apps/mobile:
+    dependencies:
+      '@novwrite/bridge':
+        specifier: workspace:*
+        version: link:../../packages/bridge
+
   apps/web:
     dependencies:
       '@codemirror/lang-json':

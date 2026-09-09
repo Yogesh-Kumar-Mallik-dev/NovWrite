@@ -77,6 +77,21 @@ out/
 # ------------------------------------------------------------------------------
 src-tauri/target/
 frontend/desktop/src-tauri/target/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+target/
+
+# ------------------------------------------------------------------------------
+# Expo & React Native Mobile Artifacts
+# ------------------------------------------------------------------------------
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
 
 # ------------------------------------------------------------------------------
 # Go Build & Test Artifacts

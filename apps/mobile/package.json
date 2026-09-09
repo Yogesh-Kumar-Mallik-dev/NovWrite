@@ -1,0 +1,17 @@
+{
+  "name": "@novwrite/mobile",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@novwrite/bridge": "workspace:*"
+  }
+}
