@@ -110,8 +110,10 @@ if ($startMobile) {
 
     Write-Host "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..." -ForegroundColor Blue
     $mobileEnv = @{
-        CI = "1"
         EXPO_PORT = "$mobilePort"
+    }
+    if ($Tunnel) {
+        $env:EXPO_TUNNEL = "1"
     }
     $expoArgs = @("exec", "expo", "start", "--port", "$mobilePort")
     if ($Tunnel) { $expoArgs += "--tunnel" } else { $expoArgs += @("--host", "lan") }

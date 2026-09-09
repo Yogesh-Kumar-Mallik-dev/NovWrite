@@ -34,6 +34,7 @@ for arg in "$@"; do
       ;;
     --tunnel|-t)
       EXPO_HOST_FLAG="--tunnel"
+      export EXPO_TUNNEL=1
       ;;
     --clear|-c)
       EXPO_CLEAR_FLAG="--clear"
@@ -233,7 +234,7 @@ if [ "$START_MOBILE" -eq 1 ]; then
   echo "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..."
   (
     cd "$ROOT_DIR/apps/mobile"
-    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" $EXPO_HOST_FLAG $EXPO_CLEAR_FLAG > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
+    exec pnpm exec expo start --port "$MOBILE_PORT" $EXPO_HOST_FLAG $EXPO_CLEAR_FLAG > "$ROOT_DIR/logs/expo.log" 2>&1 </dev/null
   ) &
   MOBILE_PID=$!
 
