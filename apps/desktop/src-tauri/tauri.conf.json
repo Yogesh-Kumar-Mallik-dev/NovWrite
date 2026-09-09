@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "NovWrite — Fictional Universe & Prose Authoring Studio",
+        "title": "NovWrite",
         "width": 1280,
         "height": 800,
         "minWidth": 400,
