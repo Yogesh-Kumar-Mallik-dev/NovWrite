@@ -23,14 +23,17 @@ foreach ($tool in $requiredTools) {
     }
 }
 
-Write-Host "🔹 [1/3] Typechecking @novwrite/bridge..." -ForegroundColor Blue
+Write-Host "🔹 [1/4] Typechecking @novwrite/bridge..." -ForegroundColor Blue
 pnpm --filter @novwrite/bridge build
 
-Write-Host "🔹 [2/3] Typechecking @novwrite/data-service..." -ForegroundColor Blue
+Write-Host "🔹 [2/4] Typechecking @novwrite/data-service..." -ForegroundColor Blue
 pnpm --filter @novwrite/data-service build
 
-Write-Host "🔹 [3/3] Typechecking @novwrite/web..." -ForegroundColor Blue
+Write-Host "🔹 [3/4] Typechecking @novwrite/web..." -ForegroundColor Blue
 pnpm --filter @novwrite/web check
+
+Write-Host "🔹 [4/4] Typechecking @novwrite/mobile..." -ForegroundColor Blue
+pnpm --filter @novwrite/mobile exec tsc --noEmit
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Green

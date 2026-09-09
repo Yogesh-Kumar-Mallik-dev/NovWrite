@@ -24,14 +24,17 @@ for tool in pnpm node; do
   fi
 done
 
-echo "🔹 [1/3] Typechecking @novwrite/bridge..."
+echo "🔹 [1/4] Typechecking @novwrite/bridge..."
 pnpm --filter @novwrite/bridge build
 
-echo "🔹 [2/3] Typechecking @novwrite/data-service..."
+echo "🔹 [2/4] Typechecking @novwrite/data-service..."
 pnpm --filter @novwrite/data-service build
 
-echo "🔹 [3/3] Typechecking @novwrite/web..."
+echo "🔹 [3/4] Typechecking @novwrite/web..."
 pnpm --filter @novwrite/web check
+
+echo "🔹 [4/4] Typechecking @novwrite/mobile..."
+pnpm --filter @novwrite/mobile exec tsc --noEmit
 
 echo ""
 echo "========================================================"
