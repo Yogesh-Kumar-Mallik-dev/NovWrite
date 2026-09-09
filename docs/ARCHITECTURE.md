@@ -13,32 +13,41 @@ NovWrite is designed as a **hybrid multi-service architecture** composed of:
 3. **TypeScript Data Service:** Prisma-backed domain data service communicating with the Go backend via high-performance internal gRPC.
 4. **Storage & Infrastructure:** PostgreSQL 18 with `pgvector`, Redis for queues/caching/leases, S3-compatible Object Storage, and Traefik reverse proxy.
 
-```text
-┌────────────────────────────────────────────────────────┐
-│                   FRONTEND LAYER                       │
-│    Web (SvelteKit SSR/SPA) · Desktop (Tauri 2)         │
-│    Mobile (React Native + Expo SDK 52)                 │
-└───────────────────────────┬────────────────────────────┘
-                            │ HTTP / JSON (OpenAPI 3.1) + SSE
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                   API BACKEND (Go)                     │
-│    Chi Router · Auth · Continuity Engine · AI Gateway  │
-│    Universe & Blueprint Engine · Timeline Fold Engine  │
-└───────────────────────────┬────────────────────────────┘
-                            │ Coarse-Grained gRPC (data/v1)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│             DATA SERVICE (TypeScript)                  │
-│    Prisma ORM · JSONB Operators · Vector Search        │
-│    AST Mathematical Formula Evaluator Engine           │
-└───────────────────────────┬────────────────────────────┘
-                            │ PostgreSQL wire protocol / SQL
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                  DATABASE LAYER                        │
-│   PostgreSQL 18 · pgvector · Redis · Object Storage    │
-└────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph FrontendClients ["FRONTEND CLIENTS"]
+        Web["Web: SvelteKit 2 + Svelte 5 Runes + Tailwind v4"]
+        Desktop["Desktop: Tauri 2"]
+        Mobile["Mobile: React Native + Expo (SDK 52)"]
+    end
+
+    subgraph GoBackend ["GO API BACKEND"]
+        Chi["Chi Router & REST API (/api/v1)"]
+        AuthModule["JWT Auth & 3-Tier RBAC (USER / ADMIN / SUPER_ADMIN)"]
+        ContinuityEng["Continuity Engine & Invariant Rule Auditor"]
+        AIGateway["AI Grounding Gateway"]
+        UniverseEng["Universe & Blueprint Engine"]
+        TimelineFold["Timeline Fold Engine"]
+    end
+
+    subgraph DataService ["TYPESCRIPT DATA SERVICE"]
+        Prisma["Prisma ORM & Domain Query Services"]
+        FormulaAST["Deterministic AST Formula Evaluator Engine"]
+        StateFold["State Fold Engine & Dynamic Schemas"]
+        VectorSearch["pgvector Query Compiler"]
+    end
+
+    subgraph StorageLayer ["DATABASE & STORAGE"]
+        Postgres[("PostgreSQL 18 (Canonical World State + pgvector)")]
+        Redis[("Redis 7.2 (Cache, Leases, Pub/Sub, Rate Limiting)")]
+        ObjectStore[("S3-Compatible Object Storage")]
+    end
+
+    FrontendClients -->|"REST / HTTP JSON (OpenAPI 3.1) & SSE"| GoBackend
+    GoBackend -->|"Coarse-Grained gRPC (data/v1)"| DataService
+    DataService -->|"SQL Queries / pgvector"| Postgres
+    GoBackend -->|"Cache / Leases / Rate Limit"| Redis
+    GoBackend -->|"Asset Storage"| ObjectStore
 ```
 
 ---
@@ -100,23 +109,39 @@ NovWrite cleanly separates world-building archetypes from concrete instantiated 
 
 NovWrite separates story progression from authorial drafting through an orthogonal dual-axis architecture:
 
-```text
-======================= THE UPDATE PIPE (Plot Axis / T_story) =======================
-  [ Event 0 ] ════════► [ Event 1 ] ════════► [ Event 2 ] ════════► [ Event 3 ]
-       │                     │                     │                     │
-       ▼                     ▼                     ▼                     ▼
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  Edit Tree 0 │      │  Edit Tree 1 │      │  Edit Tree 2 │      │  Edit Tree 3 │
-│  ED0 (Head)  │      │  ED0 -> ED1  │      │     ED0      │      │  ED0 -> ED1  │
-└──────────────┘      └──────────────┘      │      │       │      └──────────────┘
-                                            │     ED1      │
-                                            │      │       │
-                                            │     ED2      │
-                                            │      │       │
-                                            │     ED3 ◄───[ACTIVE EDIT HEAD]
-                                            │    /   \     │
-                                            │  ED4   ED5   │  (Infinite Branching DAG)
-                                            └──────────────┘
+```mermaid
+flowchart TB
+    subgraph UpdatePipe ["THE UPDATE PIPE (Chronological Plot Axis / T_story)"]
+        direction LR
+        Ev0["Event 0<br/>(Prologue Awakening)"] --> Ev1["Event 1<br/>(Ancient Ruin Breach)"]
+        Ev1 --> Ev2["Event 2<br/>(Duel at Moonlit Peak)"]
+        Ev2 --> Ev3["Event 3<br/>(Sacred Realm Ascension)"]
+    end
+
+    subgraph Tree0 ["Edit Tree 0"]
+        ED0_0["ED0 (Root Baseline)"]
+    end
+
+    subgraph Tree1 ["Edit Tree 1"]
+        ED1_0["ED0 (Initial Draft)"] --> ED1_1["ED1 (Dialogue Polish)"]
+    end
+
+    subgraph Tree2 ["Edit Tree 2 (DAG Revision Tree)"]
+        ED2_0["ED0 (Draft)"] --> ED2_1["ED1 (Spell Retune)"]
+        ED2_1 --> ED2_2["ED2 (Pacing Refactor)"]
+        ED2_2 --> ED2_3["ED3 ⚡ ACTIVE EDIT HEAD"]
+        ED2_3 --> ED2_4["ED4 (Branch A: Mercy)"]
+        ED2_3 --> ED2_5["ED5 (Branch B: Fatal Strike)"]
+    end
+
+    subgraph Tree3 ["Edit Tree 3"]
+        ED3_0["ED0 (Baseline)"] --> ED3_1["ED1 (Continuity Fix)"]
+    end
+
+    Ev0 --> Tree0
+    Ev1 --> Tree1
+    Ev2 --> Tree2
+    Ev3 --> Tree3
 ```
 
 1. **The UPDATE Pipe (Horizontal Plot Timeline):**

@@ -104,33 +104,30 @@ flowchart TB
 
 ## 4. First-Class & Second-Class Blueprint Architecture
 
-```text
-┌────────────────────────────────────────────────────────┐
-│               FIRST-CLASS BLUEPRINTS                   │
-│   Primary Entity Archetypes (Characters, Relics,       │
-│   Realms, Ancient Factions, Sects)                     │
-│   - Instantiates timeline EntityItem instances         │
-│   - Tracks causality, state snapshots & mutation logs   │
-│   - References other 1st-Class entities (entity graph) │
-└───────────────────────────┬────────────────────────────┘
-                            │ References / Embeds
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│              SECOND-CLASS BLUEPRINTS                   │
-│   Sub-Schemas & Continuous Gauges                      │
-│   - Romantic Affection Scale (-100 to +1000 pts)       │
-│   - Cultivation Rank & Mastery (Realms 1-9)            │
-│   - Power Matrices & Alignment Gauges                  │
-└───────────────────────────┬────────────────────────────┘
-                            │ Evaluates via
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│         MATHEMATICAL & LOGICAL FORMULA ENGINE          │
-│   Safe AST Expression Parser (formulaEngine.ts)        │
-│   - Live Combat Power = (cultivation.major_realm *     │
-│     cultivation.minor_realm) * special_Physique +      │
-│     attack * mastery - defence * def_mastery           │
-└────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph FirstClass ["1st-Class Blueprints (Entity Archetypes)"]
+        FC1["Primary Entity Archetypes<br/>(Characters, Relics, Realms, Factions, Sects)"]
+        FC2["Instantiates concrete timeline EntityItem records"]
+        FC3["Tracks causality, state snapshots & mutation logs"]
+        FC4["Relational Entity Graph (Character -> Faction, Weapon -> Realm)"]
+    end
+
+    subgraph SecondClass ["2nd-Class Blueprints (Sub-Schemas & Scales)"]
+        SC1["Reusable Sub-Schemas & Continuous Gauges"]
+        SC2["Romantic Affection Scale (-100 to +1000 pts)"]
+        SC3["Cultivation Rank & Mastery (Realms 1-9)"]
+        SC4["Power Matrices & Alignment Gauges"]
+    end
+
+    subgraph FormulaEngine ["Mathematical & Logical Formula Engine"]
+        FE1["Safe AST Expression Parser (formulaEngine.ts & formula_engine.go)"]
+        FE2["Evaluates nested properties & dynamic variables"]
+        FE3["Deterministic O(V+E) Cycle Detection in DAG"]
+    end
+
+    FirstClass -->|"Embeds & References"| SecondClass
+    SecondClass -->|"Evaluates via"| FormulaEngine
 ```
 
 ---
@@ -139,23 +136,39 @@ flowchart TB
 
 NovWrite introduces an orthogonal dual-axis revision paradigm:
 
-```text
-======================= THE UPDATE PIPE (Plot Axis / T_story) =======================
-  [ Event 0 ] ════════► [ Event 1 ] ════════► [ Event 2 ] ════════► [ Event 3 ]
-       │                     │                     │                     │
-       ▼                     ▼                     ▼                     ▼
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  Edit Tree 0 │      │  Edit Tree 1 │      │  Edit Tree 2 │      │  Edit Tree 3 │
-│  ED0 (Head)  │      │  ED0 -> ED1  │      │     ED0      │      │  ED0 -> ED1  │
-└──────────────┘      └──────────────┘      │      │       │      └──────────────┘
-                                            │     ED1      │
-                                            │      │       │
-                                            │     ED2      │
-                                            │      │       │
-                                            │     ED3 ◄───[ACTIVE EDIT HEAD]
-                                            │    /   \     │
-                                            │  ED4   ED5   │  (Infinite Branching DAG)
-                                            └──────────────┘
+```mermaid
+flowchart TB
+    subgraph UpdatePipe ["THE UPDATE PIPE (Chronological Plot Axis / T_story)"]
+        direction LR
+        Ev0["Event 0<br/>(Prologue Awakening)"] --> Ev1["Event 1<br/>(Ancient Ruin Breach)"]
+        Ev1 --> Ev2["Event 2<br/>(Duel at Moonlit Peak)"]
+        Ev2 --> Ev3["Event 3<br/>(Sacred Realm Ascension)"]
+    end
+
+    subgraph Tree0 ["Edit Tree 0"]
+        ED0_0["ED0 (Root Baseline)"]
+    end
+
+    subgraph Tree1 ["Edit Tree 1"]
+        ED1_0["ED0 (Initial Draft)"] --> ED1_1["ED1 (Dialogue Polish)"]
+    end
+
+    subgraph Tree2 ["Edit Tree 2 (DAG Revision Tree)"]
+        ED2_0["ED0 (Draft)"] --> ED2_1["ED1 (Spell Retune)"]
+        ED2_1 --> ED2_2["ED2 (Pacing Refactor)"]
+        ED2_2 --> ED2_3["ED3 ⚡ ACTIVE EDIT HEAD"]
+        ED2_3 --> ED2_4["ED4 (Branch A: Mercy)"]
+        ED2_3 --> ED2_5["ED5 (Branch B: Fatal Strike)"]
+    end
+
+    subgraph Tree3 ["Edit Tree 3"]
+        ED3_0["ED0 (Baseline)"] --> ED3_1["ED1 (Continuity Fix)"]
+    end
+
+    Ev0 --> Tree0
+    Ev1 --> Tree1
+    Ev2 --> Tree2
+    Ev3 --> Tree3
 ```
 
 - **The UPDATE Pipe ($T_{\text{story}}$):** The horizontal chronological story pipeline (`event0 ---> event1 ---> event2 ...`).

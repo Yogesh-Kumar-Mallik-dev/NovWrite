@@ -417,19 +417,11 @@ To eliminate flickering, empty input states, and race conditions during SSR and 
 
 The Entity Editor header layout ([`apps/web/src/routes/world/entities/[id]/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/world/entities/[id]/+page.svelte)) resolves toolbar crowding through a strictly tiered 3-level vertical hierarchy:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ TIER 1: LOCATION & CONTEXT (Breadcrumbs & Parent Hierarchy)                     │
-│ ‹ All Entities  /  World Studio  ›  Entities  ›  Eldrin the Spellblade          │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ TIER 2: IDENTITY BANNER (Entity Archetype & Metadata)                           │
-│ [ICON]  Eldrin the Spellblade                                                   │
-│         Cultivator · Template: Protagonist Archetype · Sequence #12             │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ TIER 3: UTILITIES & ACTIONS TOOLBAR (Modes & Operations)                        │
-│ [ Visual Form | Raw JSON ]  [ ⚡ Feather History (3) ]  [ ↗ Schema ]  [ Save ]    │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+| Tier Level | Component Purpose | Elements & Structure |
+| :--- | :--- | :--- |
+| **Tier 1: Location & Context** | Breadcrumb navigation | `‹ All Entities / World Studio › Entities › Eldrin the Spellblade` |
+| **Tier 2: Identity Banner** | Entity archetype & metadata | `[ICON] Eldrin the Spellblade` · `Cultivator · Template: Protagonist Archetype · Sequence #12` |
+| **Tier 3: Utilities & Actions** | Operating modes & primary CTAs | `[ Visual Form \| Raw JSON ]` · `[ ⚡ Feather History (3) ]` · `[ ↗ Schema ]` · `[ Save Changes ]` |
 
 1. **Tier 1 (Location & Navigation):** Clean breadcrumb path with back-link (`‹ All Entities`) establishing spatial context without competing with actions.
 2. **Tier 2 (Identity Banner):** Prominent entity name, archetype icon, category descriptor, template link, and causal mutation sequence number.
@@ -492,18 +484,14 @@ NovWrite avoids device-query fragmentation by anchoring layout styling in contai
 
 Responsive design in NovWrite is NOT about compressing desktop layouts into narrow mobile views. When desktop interaction patterns degrade on small viewports, components pivot to dedicated mobile interaction structures:
 
-```text
-┌──────────────────────────────────────┬──────────────────────────────────────┐
-│ DESKTOP PATTERN                      │ DEDICATED MOBILE PATTERN             │
-├──────────────────────────────────────┼──────────────────────────────────────┤
-│ Persistent Multi-level Sidebar       │ Hamburger [☰] + Slide-over Drawer    │
-│ Horizontal Subnav Tab Strip          │ Breadcrumb Header + Select Dropdown  │
-│ Multi-column Data Table              │ Mobile Entity Card List + Toggle     │
-│ Multi-column Side-by-Side Form       │ Single-column Vertical Stack         │
-│ Side-by-Side Entity Inspector Pane   │ Full-width Segmented Tabbed Sheet    │
-│ Horizontal Action Toolbar Tray       │ Full-width Primary CTA + Sub-actions │
-└──────────────────────────────────────┴──────────────────────────────────────┘
-```
+| Desktop UI Pattern | Dedicated Mobile UI Pattern (< 768px) |
+| :--- | :--- |
+| **Persistent Multi-level Sidebar** | Hamburger `[☰]` + Slide-over Drawer / Sheet |
+| **Horizontal Subnav Tab Strip** | Breadcrumb Header + Mobile Section Dropdown (`Select`) |
+| **Multi-column Data Table** | Dedicated Mobile Entity Card List + Table View Switcher |
+| **Multi-column Form Grid** | Single-column Vertical Stack with $\ge 44\text{px}$ touch targets |
+| **Side-by-Side Dual-Axis Inspector** | Full-width Segmented Tabbed Sheet (`[Revisions]` vs `[Coordinates]`) |
+| **Horizontal Action Toolbar Tray** | Stacked Full-width Primary CTA above Secondary Sub-actions |
 
 ### 16.1. Mobile Navigation & Breadcrumb Dropdown Pattern
 

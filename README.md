@@ -113,30 +113,38 @@ Copy-Item .env.example .env
 
 ## 3. Architecture & Tech Stack
 
-```text
-┌────────────────────────────────────────────────────────┐
-│                   FRONTEND CLIENTS                     │
-│    Web (SvelteKit 2 + Svelte 5 Runes + Tailwind v4)    │
-│    Desktop (Tauri 2) · Mobile (React Native + Expo)    │
-└───────────────────────────┬────────────────────────────┘
-                            │ REST / HTTP JSON (OpenAPI 3.1)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                   GO API BACKEND                       │
-│    Chi Router · Auth · Continuity Engine · AI Gateway  │
-└───────────────────────────┬────────────────────────────┘
-                            │ Internal gRPC
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│             TYPESCRIPT DATA SERVICE                    │
-│    Prisma ORM · Domain Query Services · Schemas        │
-└───────────────────────────┬────────────────────────────┘
-                            │ SQL Queries / pgvector
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                  DATABASE & STORAGE                    │
-│    PostgreSQL 18 (Canonical) · Redis · Object Storage  │
-└────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph FrontendClients ["FRONTEND CLIENTS"]
+        Web["Web: SvelteKit 2 + Svelte 5 Runes + Tailwind v4"]
+        Desktop["Desktop: Tauri 2"]
+        Mobile["Mobile: React Native + Expo (SDK 52)"]
+    end
+
+    subgraph GoBackend ["GO API BACKEND"]
+        Chi["Chi Router & REST API (/api/v1)"]
+        AuthModule["JWT Auth & 3-Tier RBAC (USER / ADMIN / SUPER_ADMIN)"]
+        ContinuityEng["Continuity Engine & Invariant Rule Auditor"]
+        AIGateway["AI Grounding Gateway"]
+    end
+
+    subgraph DataService ["TYPESCRIPT DATA SERVICE"]
+        Prisma["Prisma ORM & Domain Query Services"]
+        FormulaAST["Deterministic AST Formula Evaluator Engine"]
+        StateFold["State Fold Engine & Dynamic Schemas"]
+    end
+
+    subgraph StorageLayer ["DATABASE & STORAGE"]
+        Postgres[("PostgreSQL 18 (Canonical World State + pgvector)")]
+        Redis[("Redis 7.2 (Cache, Leases, Pub/Sub, Rate Limiting)")]
+        ObjectStore[("S3-Compatible Object Storage")]
+    end
+
+    FrontendClients -->|"REST / HTTP JSON (OpenAPI 3.1) & SSE"| GoBackend
+    GoBackend -->|"Internal Coarse-Grained gRPC"| DataService
+    DataService -->|"SQL Queries / pgvector"| Postgres
+    GoBackend -->|"Cache / Leases / Rate Limit"| Redis
+    GoBackend -->|"Asset Storage"| ObjectStore
 ```
 
 - **API Backend**: Go 1.23+ (Modular Monolith with `go-chi/chi`, Dependency Injection).

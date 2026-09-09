@@ -515,17 +515,13 @@ cd apps/api && go run ./cmd/admin-cli demote <email_or_username>
 
 NovWrite enforces a mandatory 5-phase test and verification pipeline ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)) executing across the entire monorepo:
 
-```text
-┌────────────────────────────────────────────────────────┐
-│             5-PHASE TEST RUNNER (./test.sh)            │
-├─────────┬──────────────────────────┬───────────────────┤
-│ Phase 1 │ @novwrite/bridge         │ 12 Unit Tests     │
-│ Phase 2 │ @novwrite/data-service   │ 40 Unit Tests     │
-│ Phase 3 │ apps/api (Go Backend)    │ Go Test Suite     │
-│ Phase 4 │ @novwrite/web (Frontend) │ 14 Vitest Tests   │
-│ Phase 5 │ SvelteKit & TS Types     │ Diagnostic Check  │
-└─────────┴──────────────────────────┴───────────────────┘
-```
+| Phase | Target Subsystem / Package | Test Type & Scope | Verification Command |
+| :--- | :--- | :--- | :--- |
+| **Phase 1** | `@novwrite/bridge` | 13 Unit Tests: RPC contracts, Zod schemas, error normalizers | `pnpm --filter @novwrite/bridge test` |
+| **Phase 2** | `@novwrite/data-service` | 41 Unit Tests: Schema validation, AST formulas, DAG cycle checks | `pnpm --filter @novwrite/data-service test` |
+| **Phase 3** | `apps/api` (Go Backend) | Go Handler Suite: chi routes, RBAC guards, rate limiter, auth | `go test ./...` |
+| **Phase 4** | `@novwrite/web` (Frontend) | 25 Unit Tests: mathjs formulas, project engine, table configs | `pnpm --filter @novwrite/web test` |
+| **Phase 5** | SvelteKit & TS Monorepo | Monorepo Diagnostics: `svelte-check` and `tsc --noEmit` | `./check.sh` |
 
 1. **Phase 1 (`@novwrite/bridge`):** Verifies typed RPC contracts, Zod schemas, error normalizers, and mock adapters.
 2. **Phase 2 (`@novwrite/data-service`):** Verifies schema validation, property normalization, AST formula engine, and timeline state fold engine.

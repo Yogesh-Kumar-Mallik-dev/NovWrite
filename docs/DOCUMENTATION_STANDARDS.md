@@ -178,13 +178,12 @@ mindmap
 
 ---
 
-### Anti-Pattern 8: Unstructured Monolithic Walls of Text
-- ❌ **The Anti-Pattern:** 500 lines of continuous prose without headings, tables, code blocks, or visual separation.
-- ✅ **The Rule:** Use structured markdown with:
-  - Clear hierarchical headings (`#`, `##`, `###`).
-  - Comparison and decision tables.
-  - Syntax-highlighted code blocks (`bash`, `typescript`, `go`, `sql`, `json`, `mermaid`).
-  - GitHub-style callouts (`> [!NOTE]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`).
+### Anti-Pattern 8: Unstructured Monolithic Walls & ASCII Art Box Diagrams
+- ❌ **The Anti-Pattern:** Drawing architecture diagrams or tables using ASCII box characters (`┌───┐`, `│   │`, `└───┘`, `+---+`) inside text code fences, or generating 500 lines of unbroken prose without visual hierarchy.
+- ✅ **The Rule:** Always use **proper documentation tools**:
+  - Use **Mermaid.js** (`flowchart TB`, `sequenceDiagram`, `erDiagram`, `mindmap`, `classDiagram`) for visual architecture diagrams, workflows, and DAG trees.
+  - Use **Standard Markdown Tables** (`| Col 1 | Col 2 |`) for tabular data, mappings, and matrices.
+  - Use **GitHub-Style Callouts** (`> [!NOTE]`, `> [!IMPORTANT]`, `> [!WARNING]`, `> [!CAUTION]`) for alerts.
 
 ---
 
