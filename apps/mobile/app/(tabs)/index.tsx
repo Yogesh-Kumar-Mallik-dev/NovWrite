@@ -94,166 +94,284 @@ export default function ProjectsScreen() {
       style={{ flex: 1, backgroundColor: "#09090b" }}
       contentContainerStyle={{ padding: isTabletOrWide ? 24 : 16, gap: 16 }}
     >
-      {/* Active Project Hero Card (Formula Matched to Web) */}
-      <View
-        style={{
-          backgroundColor: "#121215",
-          borderColor: "#27272a",
-          borderWidth: 1,
-          borderRadius: 12,
-          padding: isTabletOrWide ? 20 : 16,
-          gap: 12,
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      {/* Top Hero Section (Faithfully Recreated from web +page.svelte) */}
+      <View style={{ alignItems: "center", paddingVertical: 12, gap: 8 }}>
+        <View
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            backgroundColor: "#121215",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#7c3aed",
+            shadowOpacity: 0.3,
+            shadowRadius: 10,
+            elevation: 4,
+          }}
+        >
+          <Sparkles size={28} color="#7c3aed" />
+        </View>
+
+        <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 26 : 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.5 }}>
+          NovWrite Authoring Workspace
+        </Text>
+
+        <Text style={{ color: "#a1a1aa", fontSize: 13, textAlign: "center", lineHeight: 18, maxWidth: 500 }}>
+          Professional fictional universe design studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing.
+        </Text>
+
+        {/* Active Project Pill or Zero Project CTA */}
+        {activeProject ? (
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
               gap: 6,
-              backgroundColor: "rgba(124, 58, 237, 0.15)",
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: "rgba(124, 58, 237, 0.3)",
-            }}
-          >
-            <Sparkles size={12} color="#7c3aed" />
-            <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>
-              {activeProject?.genre || "Creative Fiction"}
-            </Text>
-          </View>
-
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <TouchableOpacity
-              onPress={openEdit}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                backgroundColor: "#1e1e24",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 6,
-              }}
-            >
-              <Pencil size={12} color="#a1a1aa" />
-              <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "600" }}>Edit</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setIsDeleteModalOpen(true)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                backgroundColor: "rgba(239, 68, 68, 0.15)",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 6,
-              }}
-            >
-              <Trash2 size={12} color="#ef4444" />
-              <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "600" }}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 22 : 18, fontWeight: "bold" }}>
-          {activeProject?.name || "Untitled Novel"}
-        </Text>
-
-        <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 18 }} numberOfLines={3}>
-          {activeProject?.description || "No universe synopsis provided yet. Define your world canon and write captivating prose."}
-        </Text>
-
-        {/* Quick Metric Cards Strip */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            borderTopWidth: 1,
-            borderTopColor: "#27272a",
-            paddingTop: 12,
-            marginTop: 4,
-          }}
-        >
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
-              Words
-            </Text>
-            <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
-              {totalWords.toLocaleString()}
-            </Text>
-          </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
-              Chapters
-            </Text>
-            <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
-              {chapters.length}
-            </Text>
-          </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
-              Entities
-            </Text>
-            <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
-              {entities.length}
-            </Text>
-          </View>
-          <View style={{ alignItems: "center", flex: 1 }}>
-            <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
-              Read Time
-            </Text>
-            <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
-              {readingTimeMin}m
-            </Text>
-          </View>
-        </View>
-
-        {/* Quick Launch Action Buttons */}
-        <View style={{ flexDirection: "row", gap: 10, paddingTop: 4 }}>
-          <TouchableOpacity
-            onPress={() => router.push("/novel")}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              backgroundColor: "#7c3aed",
-              paddingVertical: 10,
-              borderRadius: 8,
-              minHeight: 44,
-            }}
-          >
-            <BookOpen size={16} color="#ffffff" />
-            <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Prose Studio</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push("/world")}
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
               backgroundColor: "#1e1e24",
               borderColor: "#27272a",
               borderWidth: 1,
-              paddingVertical: 10,
-              borderRadius: 8,
-              minHeight: 44,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 999,
+              marginTop: 4,
             }}
           >
-            <Globe2 size={16} color="#7c3aed" />
-            <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "bold" }}>World Studio</Text>
+            <Folder size={14} color="#7c3aed" />
+            <Text style={{ color: "#fafafa", fontSize: 12 }}>
+              Active Novel: <Text style={{ fontWeight: "bold" }}>{activeProject.name}</Text>
+            </Text>
+            <Text style={{ color: "#a1a1aa", fontSize: 12 }}>({activeProject.genre || "Fiction"})</Text>
+            <TouchableOpacity onPress={openEdit} style={{ padding: 2 }}>
+              <Pencil size={12} color="#a1a1aa" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={openCreate}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              backgroundColor: "#7c3aed",
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 8,
+              marginTop: 4,
+            }}
+          >
+            <Plus size={14} color="#ffffff" />
+            <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}>Create Your First Novel Project</Text>
           </TouchableOpacity>
-        </View>
+        )}
       </View>
+
+      {/* 2 Core Studio Cards (Faithfully Recreated from web +page.svelte) */}
+      <View style={{ gap: 12, flexDirection: isTabletOrWide ? "row" : "column" }}>
+        {/* Prose Studio Card */}
+        <TouchableOpacity
+          onPress={() => router.push("/novel")}
+          style={{
+            flex: 1,
+            backgroundColor: "#121215",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 16,
+            gap: 10,
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ gap: 10 }}>
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                backgroundColor: "rgba(124, 58, 237, 0.12)",
+                borderColor: "rgba(124, 58, 237, 0.25)",
+                borderWidth: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <BookOpen size={20} color="#7c3aed" />
+            </View>
+            <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>Prose Studio</Text>
+            <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }}>
+              Dedicated novel writing canvas, rich text editor, manuscript hierarchy tree, lore lookup drawer, and collaborative scene leases.
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 10 }}>
+            <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "600" }}>Open Studio</Text>
+            <ArrowRight size={14} color="#7c3aed" />
+          </View>
+        </TouchableOpacity>
+
+        {/* World Studio Card */}
+        <TouchableOpacity
+          onPress={() => router.push("/world")}
+          style={{
+            flex: 1,
+            backgroundColor: "#121215",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 16,
+            gap: 10,
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ gap: 10 }}>
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                backgroundColor: "rgba(220, 38, 38, 0.12)",
+                borderColor: "rgba(220, 38, 38, 0.25)",
+                borderWidth: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Globe2 size={20} color="#dc2626" />
+            </View>
+            <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>World Studio</Text>
+            <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }}>
+              1st-Class Blueprint Archetypes, 2nd-Class Sub-Schemas, AST Math Formulas, Causal Timeline, Invariant Rules, and Continuity Violation Audit.
+            </Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 10 }}>
+            <Text style={{ color: "#dc2626", fontSize: 12, fontWeight: "600" }}>Open Studio</Text>
+            <ArrowRight size={14} color="#dc2626" />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Active Project Telemetry & Management Hero */}
+      {activeProject && (
+        <View
+          style={{
+            backgroundColor: "#121215",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: isTabletOrWide ? 20 : 16,
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                backgroundColor: "rgba(124, 58, 237, 0.15)",
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: "rgba(124, 58, 237, 0.3)",
+              }}
+            >
+              <Sparkles size={12} color="#7c3aed" />
+              <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>
+                {activeProject?.genre || "Creative Fiction"}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity
+                onPress={openEdit}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  backgroundColor: "#1e1e24",
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Pencil size={12} color="#a1a1aa" />
+                <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "600" }}>Edit</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setIsDeleteModalOpen(true)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Trash2 size={12} color="#ef4444" />
+                <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "600" }}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 20 : 16, fontWeight: "bold" }}>
+            {activeProject?.name || "Untitled Novel"}
+          </Text>
+
+          <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }} numberOfLines={3}>
+            {activeProject?.description || "No universe synopsis provided yet. Define your world canon and write captivating prose."}
+          </Text>
+
+          {/* Quick Metric Cards Strip */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              borderTopWidth: 1,
+              borderTopColor: "#27272a",
+              paddingTop: 12,
+              marginTop: 4,
+            }}
+          >
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+                Words
+              </Text>
+              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+                {totalWords.toLocaleString()}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+                Chapters
+              </Text>
+              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+                {chapters.length}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+                Entities
+              </Text>
+              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+                {entities.length}
+              </Text>
+            </View>
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+                Read Time
+              </Text>
+              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+                {readingTimeMin}m
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Projects List Header */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
