@@ -74,5 +74,6 @@ Write-Host "     - @novwrite/bridge:       packages/bridge/dist"
 Write-Host "     - @novwrite/data-service: apps/data-service/dist"
 Write-Host "     - apps/api:               apps/api/bin/server$exeExt"
 Write-Host "     - @novwrite/web:          apps/web/.svelte-kit/output"
+Write-Host "     - @novwrite/desktop:      apps/desktop/src-tauri"
 Write-Host "========================================================" -ForegroundColor Green
 Write-Host ""

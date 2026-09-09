@@ -94,6 +94,12 @@ cd apps/api && go run ./cmd/server
 
 # Launch SvelteKit Web Frontend
 pnpm --filter @novwrite/web dev
+
+# Launch Tauri 2 Native Desktop Client (Linux, macOS, Windows)
+pnpm --filter @novwrite/desktop dev
+
+# Build Tauri 2 Native Desktop Application Bundle
+pnpm --filter @novwrite/desktop build
 ```
 
 ---
