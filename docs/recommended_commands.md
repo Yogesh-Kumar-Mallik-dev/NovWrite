@@ -45,19 +45,19 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 ### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
 ```bash
 # 🚀 1-Click Development Server (Postgres, Redis, API, Data Service, Web with health checks & graceful shutdown)
-./dev.sh
+./dev.sh         # or: run repo dev (or simply: run repo / run depo)
 
 # 🏗️ 1-Click Monorepo Build (bridge contracts, data-service dist, Go api binary, web bundle)
-./build.sh
+./build.sh       # or: run repo build
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck (verifies all TS and Svelte diagnostics across packages)
-./check.sh
+./check.sh       # or: run repo check
 
 # 🧪 1-Click 5-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> typecheck)
-./test.sh
+./test.sh        # or: run repo test
 
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
-./flush_db.sh
+./flush_db.sh    # or: run repo flush
 ```
 
 ### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
