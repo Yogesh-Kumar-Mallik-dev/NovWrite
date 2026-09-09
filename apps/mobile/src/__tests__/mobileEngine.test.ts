@@ -58,4 +58,77 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
     assert.equal(updated?.proseContent, proseSample);
     assert.equal(updated?.wordCount, 12);
   });
+
+  it("should initialize default blueprints, entities, and support entity creation", () => {
+    const blueprints = store.getBlueprints();
+    assert.ok(blueprints.length >= 3);
+    const cultivatorBp = blueprints.find((b) => b.id === "bp-cultivator");
+    assert.ok(cultivatorBp);
+    assert.equal(cultivatorBp?.blueprintClass, "FIRST_CLASS");
+
+    const entities = store.getEntities();
+    assert.ok(entities.length >= 2);
+    const eldrin = entities.find((e) => e.id === "ent-eldrin");
+    assert.ok(eldrin);
+    assert.equal(eldrin?.name, "Eldrin Stormweaver");
+    assert.equal(eldrin?.properties.realm, "Foundation Establishment");
+
+    // Create a new entity with dynamic properties
+    const newEnt = store.createEntity({
+      name: "Grand Elder Zhang",
+      blueprintId: "bp-cultivator",
+      description: "Supreme elder of the Azure Cloud Sect",
+      properties: {
+        realm: "Nascent Soul",
+        qi_power: 9500,
+        faction: "Azure Cloud Sect",
+        status: "ALIVE",
+      },
+    });
+
+    assert.ok(newEnt.id);
+    assert.equal(newEnt.name, "Grand Elder Zhang");
+    assert.equal(newEnt.properties.realm, "Nascent Soul");
+    const updatedEntities = store.getEntities();
+    assert.equal(updatedEntities.some((e) => e.id === newEnt.id), true);
+  });
+
+  it("should manage causal timeline events and track sequence numbers", () => {
+    const initialEvents = store.getTimelineEvents();
+    assert.ok(initialEvents.length >= 3);
+
+    const newEvent = store.createTimelineEvent({
+      title: "Discovery of Ancient Lightning Scripture",
+      description: "Eldrin stumbles upon a forgotten cave during his sect trials.",
+      eventType: "CANON_MUTATION",
+      entityName: "Eldrin Stormweaver",
+      entityId: "ent-eldrin",
+      timestamp: "Year of the Dragon 1045",
+    });
+
+    assert.ok(newEvent.id);
+    assert.equal(newEvent.title, "Discovery of Ancient Lightning Scripture");
+    const allEvents = store.getTimelineEvents();
+    assert.equal(allEvents.some((e) => e.id === newEvent.id), true);
+  });
+
+  it("should toggle invariant rules and report continuity audit issues", () => {
+    const rules = store.getInvariantRules();
+    assert.ok(rules.length >= 2);
+    const firstRule = rules[0];
+    const initialActive = firstRule.isActive;
+
+    store.toggleRule(firstRule.id);
+    const updatedRule = store.getInvariantRules().find((r) => r.id === firstRule.id);
+    assert.equal(updatedRule?.isActive, !initialActive);
+
+    const issues = store.getContinuityIssues();
+    assert.ok(issues.length >= 1);
+    assert.equal(issues[0].severity, "ERROR");
+    assert.equal(issues[0].code, "INVARIANT_STATE_ILLEGAL_ACTION");
+  });
 });
+
+
+
+

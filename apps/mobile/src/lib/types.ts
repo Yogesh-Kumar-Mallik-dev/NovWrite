@@ -34,3 +34,39 @@ export interface MobileSceneItem {
   targetWordCount?: number;
   synopsis?: string;
 }
+
+export interface MobileTimelineEvent {
+  id: string;
+  projectId: string;
+  sequenceNumber: number;
+  title: string;
+  timestamp: string;
+  eventType: "CANON_MUTATION" | "RELATION_TRANSFER" | "AFFINITY_SHIFT" | "STATE_INITIALIZATION";
+  entityName: string;
+  entityId: string;
+  description: string;
+  delta: Record<string, unknown>;
+  isKeyMilestone?: boolean;
+}
+
+export interface MobileInvariantRule {
+  id: string;
+  projectId: string;
+  name: string;
+  description: string;
+  severity: "BLOCKING_ERROR" | "WARNING" | "ADVISORY_NOTE";
+  scope: string;
+  ruleExpression: string;
+  isActive: boolean;
+}
+
+export interface MobileContinuityIssue {
+  id: string;
+  code: string;
+  ruleName: string;
+  entityName: string;
+  sceneTitle: string;
+  message: string;
+  severity: "ERROR" | "WARNING";
+}
+
