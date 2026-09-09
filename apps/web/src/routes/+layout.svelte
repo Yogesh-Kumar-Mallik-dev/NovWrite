@@ -13,6 +13,9 @@
     ShieldCheck,
     AlertOctagon,
     ChevronRight,
+    Edit3,
+    ListTree,
+    BarChart3,
   } from "lucide-svelte";
   import { page } from "$app/state";
   import ThemeToggle from "$lib/components/ui/theme-toggle.svelte";
@@ -38,6 +41,13 @@
     page.url.pathname;
     mobileDrawerOpen = false;
   });
+
+  const novelNavItems = [
+    { href: "/novel", label: "Manuscript Overview", icon: BookOpen, exact: true },
+    { href: "/novel/editor", label: "Canvas Editor", icon: Edit3 },
+    { href: "/novel/outline", label: "Manuscript Outline", icon: ListTree },
+    { href: "/novel/stats", label: "Writing Telemetry", icon: BarChart3 },
+  ];
 
   const worldNavItems = [
     { href: "/world", label: "Overview / Dashboard", icon: Home, exact: true },
@@ -198,6 +208,34 @@
                 </a>
               </div>
             </div>
+
+            <!-- Prose Studio Sections Sub-List -->
+            {#if page.url.pathname.startsWith('/novel')}
+              <div class="space-y-1.5">
+                <span class="text-[10px] uppercase font-bold tracking-wider text-primary/90 px-1 block">
+                  Prose Workbench
+                </span>
+
+                <div class="space-y-1 border-l-2 border-primary/30 ml-2.5 pl-2.5">
+                  {#each novelNavItems as item}
+                    {@const Icon = item.icon}
+                    {@const isActive = item.exact
+                      ? page.url.pathname === item.href
+                      : page.url.pathname.startsWith(item.href)}
+                    <a
+                      href={item.href}
+                      onclick={() => (mobileDrawerOpen = false)}
+                      class="flex items-center gap-2.5 h-8 px-2 rounded-md text-xs font-medium transition-colors {isActive
+                        ? 'bg-secondary text-secondary-foreground font-bold border border-border shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'}"
+                    >
+                      <Icon class="w-3.5 h-3.5 shrink-0 {isActive ? 'text-primary' : 'text-muted-foreground'}" />
+                      <span class="truncate">{item.label}</span>
+                    </a>
+                  {/each}
+                </div>
+              </div>
+            {/if}
 
             <!-- World Studio Sections Sub-List -->
             {#if page.url.pathname.startsWith('/world')}
