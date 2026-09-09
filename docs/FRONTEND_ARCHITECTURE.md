@@ -25,9 +25,10 @@ flowchart TB
         AppNav["Unified App Switcher & Project Context"]
 
         subgraph ProseApp ["NovWrite Prose Studio (Writing Space)"]
-            P1["/projects/[id]/novel/editor<br/>Full-Height Prose Canvas"]
-            P2["/projects/[id]/novel/outline<br/>Manuscript Structure & Chapters"]
-            P3["/projects/[id]/novel/stats<br/>Word Count & Velocity Telemetry"]
+            P0["/novel<br/>Manuscript Overview & Chapters"]
+            P1["/novel/editor<br/>Full-Height Prose Canvas"]
+            P2["/novel/outline<br/>Manuscript Structure & Outline"]
+            P3["/novel/stats<br/>Word Count & Velocity Telemetry"]
         end
 
         subgraph WorldApp ["NovWrite World Studio (Creation / Canon Space)"]
@@ -39,7 +40,7 @@ flowchart TB
         end
     end
 
-    AppNav --> P1 & P2 & P3
+    AppNav --> P0 & P1 & P2 & P3
     AppNav --> W1 & W2 & W3 & W4 & W5
 ```
 
@@ -605,5 +606,30 @@ To ensure total usability on short viewports, laptops (e.g. 1280x600), and mobil
 - **Real-Time Live Calculation (`apps/web/src/lib/engine/formulaEngine.ts`):** Evaluates mathematical expressions in real-time as users adjust property sliders or input values on the Entity Editor.
 - **Topological Cycle Traversal (`detectFormulaCycles`, `detectFormulaDependencyCycle`):** Detects circular dependencies (e.g. `technique_power -> attack_power -> technique_power`) synchronously before form submission, returning human-readable cycle path chains.
 - **Zero-Latency Mathematical Functions:** Full support for `CLAMP(val, min, max)`, `MIN(...)`, `MAX(...)`, `SQRT(...)`, `POW(...)`, and ternary `IF(cond, then, else)` expressions with mathjs integration.
+
+---
+
+## 22. NovWrite Prose Studio Architecture (`/novel`)
+
+The Prose Studio provides the dedicated novel drafting and manuscript structuring workspace:
+
+- **Reactive State Store (`proseStore.svelte.ts`):** Manages chapters, scenes, draft prose text, word counts, daily targets, and localStorage persistence keyed to `projectStore.activeProjectId`.
+- **Manuscript Overview (`/novel`):** Novel hero header, word counts, chapter counts, reading times, and quick start cards.
+- **Canvas Prose Editor (`/novel/editor`):** Distraction-free writing canvas with fluid width clamp (`max-w-3xl`), focus mode toggle, live word/character counters, estimated reading time, and auto-save timers.
+- **Manuscript Outline (`/novel/outline`):** Hierarchical chapter/scene tree with collapsible accordions, scene status tracking (`DRAFT`, `IN_PROGRESS`, `REVISED`, `COMPLETED`), target word counts, and deletion confirmations.
+- **Writing Telemetry (`/novel/stats`):** Daily writing output metrics, target completion percentages, pacing velocity, and chapter-by-chapter word distribution breakdown.
+
+---
+
+## 23. Cross-Frontend Adaptive Viewport Invariant
+
+NovWrite enforces consistent responsive parity across all three frontend deployment targets:
+
+| Frontend Target | Wide Viewport (≥ 768px / Desktop / Maximized) | Narrow Viewport (< 768px / Mobile / Shrunk Window) |
+| :--- | :--- | :--- |
+| **Web (SvelteKit 2)** | Persistent sub-headers, multi-column master-detail grids, dense table views | Hamburger `[☰]` + slide-over drawer, mobile dropdown switcher, touch cards |
+| **Desktop (Tauri 2)** | Maximized window provides full desktop canvas and sidebars | Resizing / shrinking the window fluidly transitions into the mobile touch-safe layout |
+| **Mobile (React Native)** | Tablet / Foldable / Landscape / DeX expands into multi-column layout | Mobile phone portrait provides dedicated bottom tabs / slide drawer and stacked cards |
+
 
 
