@@ -2,6 +2,7 @@
   "name": "novwrite-monorepo",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "A Continuity-First Multi-User Novel Creation Platform with a User-Defined Story Universe Engine",
   "packageManager": "pnpm@11.22.0",
   "scripts": {
@@ -9,6 +10,9 @@
     "dev:all": "pnpm --parallel --filter \"@novwrite/*\" dev",
     "dev:web": "pnpm --filter @novwrite/web dev",
     "dev:api": "cd apps/api && go run ./cmd/server/main.go",
+    "dev:desktop": "pnpm --filter @novwrite/desktop dev",
+    "dev:mobile": "pnpm --filter @novwrite/mobile start",
+    "mobile:qr": "node scripts/show-mobile-qr.mjs",
     "build": "pnpm --recursive run build",
     "check": "pnpm --filter @novwrite/web check",
     "test": "pnpm --recursive run test && cd apps/api && go test ./...",
@@ -23,7 +27,9 @@
     "docker:down": "docker compose down"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "prettier": "^3.5.0",
+    "qrcode": "^1.5.4",
     "typescript": "^5.7.3"
   }
 }

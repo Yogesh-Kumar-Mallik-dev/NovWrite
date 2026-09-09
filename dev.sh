@@ -4,8 +4,8 @@ set -e
 # ==============================================================================
 # NovWrite Local Development Launcher (Universal Cross-Platform)
 # Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL / Cygwin)
-# Starts Go API server (port 8080) and SvelteKit Web Client (port 5173)
-# with graceful startup probing, cross-platform port freeing, and signal trapping.
+# Starts Go API server (8080), SvelteKit Web (5173), Expo Mobile (8081), and
+# Tauri Desktop with upfront Expo QR rendering, non-hijacking logging, and graceful exit.
 # ==============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,8 +13,46 @@ cd "$ROOT_DIR"
 
 API_PORT="${PORT:-8080}"
 WEB_PORT="5173"
+MOBILE_PORT="${EXPO_PORT:-8081}"
 API_HOST="127.0.0.1"
 WEB_HOST="127.0.0.1"
+
+# Flag parsing
+START_MOBILE=0
+START_DESKTOP=0
+START_WEB=1
+START_API=1
+
+for arg in "$@"; do
+  case "$arg" in
+    --all|-a)
+      START_MOBILE=1
+      START_DESKTOP=1
+      ;;
+    --mobile|-m)
+      START_MOBILE=1
+      ;;
+    --desktop|-d)
+      START_DESKTOP=1
+      ;;
+    --web|-w)
+      START_MOBILE=0
+      START_DESKTOP=0
+      ;;
+    --help|-h)
+      echo "NovWrite Development Server Launcher"
+      echo "Usage: ./dev.sh [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --all, -a      Launch all clients (Go API, Web, Mobile Expo, and Desktop Tauri)"
+      echo "  --mobile, -m   Launch Go API, SvelteKit Web, and Mobile Expo"
+      echo "  --desktop, -d  Launch Go API, SvelteKit Web, and Desktop Tauri"
+      echo "  --web, -w      Launch Go API and SvelteKit Web only (default)"
+      echo "  --help, -h     Display this help menu"
+      exit 0
+      ;;
+  esac
+done
 
 # Detect Operating System & Executable Extension
 OS_TYPE="$(uname -s 2>/dev/null || echo "Unknown")"
@@ -28,6 +66,7 @@ esac
 echo "========================================================"
 echo "  🚀 Starting NovWrite Development Environment"
 echo "  🖥️  Platform: $OS_TYPE"
+echo "  📦 Targets: API=on Web=on Mobile=$([ "$START_MOBILE" -eq 1 ] && echo "on" || echo "off") Desktop=$([ "$START_DESKTOP" -eq 1 ] && echo "on" || echo "off")"
 echo "========================================================"
 
 # Pre-flight check for required tools
@@ -47,7 +86,6 @@ free_port() {
   if command -v lsof >/dev/null 2>&1; then
     pids=$(lsof -ti:"$port" 2>/dev/null || true)
   elif command -v netstat >/dev/null 2>&1; then
-    # Fallback for Windows / MSYS environments without lsof
     pids=$(netstat -ano 2>/dev/null | awk -v p=":$port" '$2 ~ p && $4 == "LISTENING" {print $5}' | sort -u | tr -d '\r' || true)
   fi
 
@@ -60,7 +98,6 @@ free_port() {
     done
     sleep 1
 
-    # Force kill if still lingering
     local remaining=""
     if command -v lsof >/dev/null 2>&1; then
       remaining=$(lsof -ti:"$port" 2>/dev/null || true)
@@ -80,9 +117,14 @@ free_port() {
 
 free_port "$API_PORT" "Go API Server"
 free_port "$WEB_PORT" "SvelteKit Web Client"
+if [ "$START_MOBILE" -eq 1 ]; then
+  free_port "$MOBILE_PORT" "Expo Metro Bundler"
+fi
 
 API_PID=""
 WEB_PID=""
+MOBILE_PID=""
+DESKTOP_PID=""
 SHUTDOWN_IN_PROGRESS=0
 
 # Graceful Shutdown Handler
@@ -98,28 +140,38 @@ cleanup() {
   echo "🛑 Initiating graceful shutdown of all NovWrite services..."
   echo "========================================================"
 
-  # 1. Gracefully terminate SvelteKit Web server
+  # 1. Gracefully terminate Desktop client
+  if [ -n "$DESKTOP_PID" ] && kill -0 "$DESKTOP_PID" 2>/dev/null; then
+    echo "🔹 Stopping Tauri Desktop Client (PID: $DESKTOP_PID)..."
+    kill -15 "$DESKTOP_PID" 2>/dev/null || true
+  fi
+
+  # 2. Gracefully terminate Mobile Metro server
+  if [ -n "$MOBILE_PID" ] && kill -0 "$MOBILE_PID" 2>/dev/null; then
+    echo "🔹 Stopping Expo Mobile Metro Bundler (PID: $MOBILE_PID)..."
+    kill -15 "$MOBILE_PID" 2>/dev/null || true
+  fi
+
+  # 3. Gracefully terminate SvelteKit Web server
   if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then
     echo "🔹 Stopping SvelteKit Web Workbench (PID: $WEB_PID)..."
     kill -15 "$WEB_PID" 2>/dev/null || true
   fi
 
-  # 2. Gracefully terminate Go API server
+  # 4. Gracefully terminate Go API server
   if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
     echo "🔹 Stopping Go API Server (PID: $API_PID)..."
     kill -15 "$API_PID" 2>/dev/null || true
   fi
 
-  # 3. Wait up to 3 seconds for processes to cleanly exit
+  # Wait up to 3 seconds for processes to cleanly exit
   local wait_count=0
   while [ "$wait_count" -lt 6 ]; do
     local still_running=0
-    if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
-      still_running=1
-    fi
-    if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then
-      still_running=1
-    fi
+    if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then still_running=1; fi
+    if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then still_running=1; fi
+    if [ -n "$MOBILE_PID" ] && kill -0 "$MOBILE_PID" 2>/dev/null; then still_running=1; fi
+    if [ -n "$DESKTOP_PID" ] && kill -0 "$DESKTOP_PID" 2>/dev/null; then still_running=1; fi
 
     if [ "$still_running" -eq 0 ]; then
       break
@@ -128,26 +180,21 @@ cleanup() {
     wait_count=$((wait_count + 1))
   done
 
-  # 4. Force kill if anything is lingering
-  if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
-    kill -9 "$API_PID" 2>/dev/null || true
-  fi
-  if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then
-    kill -9 "$WEB_PID" 2>/dev/null || true
-  fi
+  # Force kill if anything is lingering
+  if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then kill -9 "$API_PID" 2>/dev/null || true; fi
+  if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then kill -9 "$WEB_PID" 2>/dev/null || true; fi
+  if [ -n "$MOBILE_PID" ] && kill -0 "$MOBILE_PID" 2>/dev/null; then kill -9 "$MOBILE_PID" 2>/dev/null || true; fi
+  if [ -n "$DESKTOP_PID" ] && kill -0 "$DESKTOP_PID" 2>/dev/null; then kill -9 "$DESKTOP_PID" 2>/dev/null || true; fi
 
-  # Clean any residual processes on ports portably (no xargs -r for BSD/macOS compatibility)
+  # Clean residual processes on ports portably
   if command -v lsof >/dev/null 2>&1; then
-    local pids_api
-    pids_api=$(lsof -ti:"$API_PORT" 2>/dev/null || true)
-    if [ -n "$pids_api" ]; then
-      for pid in $pids_api; do kill -9 "$pid" 2>/dev/null || true; done
-    fi
-    local pids_web
-    pids_web=$(lsof -ti:"$WEB_PORT" 2>/dev/null || true)
-    if [ -n "$pids_web" ]; then
-      for pid in $pids_web; do kill -9 "$pid" 2>/dev/null || true; done
-    fi
+    for p in "$API_PORT" "$WEB_PORT" "$MOBILE_PORT"; do
+      local pids_res
+      pids_res=$(lsof -ti:"$p" 2>/dev/null || true)
+      if [ -n "$pids_res" ]; then
+        for pid in $pids_res; do kill -9 "$pid" 2>/dev/null || true; done
+      fi
+    done
   fi
 
   echo "✨ All NovWrite development servers stopped cleanly."
@@ -157,8 +204,26 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM SIGHUP EXIT
 
-# 1. Build & Start Go API Server in background
-echo "📦 [1/2] Preparing Go API Server on http://${API_HOST}:${API_PORT}..."
+# ------------------------------------------------------------------------------
+# STEP 1: If Mobile is enabled, display Expo QR Code upfront & launch non-hijacking Metro
+# ------------------------------------------------------------------------------
+if [ "$START_MOBILE" -eq 1 ]; then
+  echo "📱 Displaying Expo QR Code upfront before starting service logs..."
+  node "$ROOT_DIR/scripts/show-mobile-qr.mjs"
+
+  echo "🚀 Launching Expo Mobile Metro Bundler in non-interactive background mode..."
+  (
+    cd "$ROOT_DIR/apps/mobile"
+    CI=1 exec pnpm exec expo start --port "$MOBILE_PORT" </dev/null
+  ) &
+  MOBILE_PID=$!
+  sleep 1
+fi
+
+# ------------------------------------------------------------------------------
+# STEP 2: Build & Start Go API Server in background
+# ------------------------------------------------------------------------------
+echo "📦 Preparing Go API Server on http://${API_HOST}:${API_PORT}..."
 mkdir -p "$ROOT_DIR/bin"
 (cd "$ROOT_DIR/apps/api" && go build -o "$ROOT_DIR/bin/api-server$EXE_EXT" ./cmd/server/main.go)
 
@@ -189,8 +254,10 @@ else
   echo "⚠️  Go API Server took longer than expected to report healthy, proceeding..."
 fi
 
-# 2. Start SvelteKit Web Workbench in background
-echo "🌐 [2/2] Starting SvelteKit Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
+# ------------------------------------------------------------------------------
+# STEP 3: Start SvelteKit Web Workbench in background
+# ------------------------------------------------------------------------------
+echo "🌐 Starting SvelteKit Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
 (
   cd "$ROOT_DIR/apps/web"
   exec pnpm exec vite dev --host "$WEB_HOST" --port "$WEB_PORT"
@@ -216,13 +283,31 @@ if [ "$web_ready" -eq 1 ]; then
   echo "✅ SvelteKit Web Workbench is live! (PID: $WEB_PID)"
 fi
 
+# ------------------------------------------------------------------------------
+# STEP 4: If Desktop is enabled, start Tauri 2 Native Client
+# ------------------------------------------------------------------------------
+if [ "$START_DESKTOP" -eq 1 ]; then
+  echo "🖥️  Starting Tauri 2 Native Desktop Client..."
+  (
+    cd "$ROOT_DIR/apps/desktop"
+    exec pnpm exec tauri dev --no-dev-server </dev/null
+  ) &
+  DESKTOP_PID=$!
+fi
+
 echo ""
 echo "========================================================"
 echo "  🌟 NovWrite Development Environment is LIVE"
 echo "========================================================"
-echo "  🔗 Web Workbench: http://${WEB_HOST}:${WEB_PORT}"
-echo "  🔗 API Backend:   http://${API_HOST}:${API_PORT}"
-echo "  🔗 Health Probe:  http://${API_HOST}:${API_PORT}/healthz"
+echo "  🔗 Web Workbench:   http://${WEB_HOST}:${WEB_PORT}"
+echo "  🔗 API Backend:     http://${API_HOST}:${API_PORT}"
+echo "  🔗 Health Probe:    http://${API_HOST}:${API_PORT}/healthz"
+if [ "$START_MOBILE" -eq 1 ]; then
+  echo "  📱 Mobile (Expo):   http://127.0.0.1:${MOBILE_PORT} (QR printed above)"
+fi
+if [ "$START_DESKTOP" -eq 1 ]; then
+  echo "  🖥️  Desktop (Tauri): Active (PID: $DESKTOP_PID)"
+fi
 echo "  🛑 Press Ctrl+C at any time for graceful shutdown"
 echo "========================================================"
 echo ""
@@ -239,6 +324,17 @@ while true; do
     cleanup
     break
   fi
+  if [ "$START_MOBILE" -eq 1 ] && [ -n "$MOBILE_PID" ] && ! kill -0 "$MOBILE_PID" 2>/dev/null; then
+    echo "⚠️  Expo Mobile Metro Bundler (PID: $MOBILE_PID) stopped unexpectedly."
+    cleanup
+    break
+  fi
+  if [ "$START_DESKTOP" -eq 1 ] && [ -n "$DESKTOP_PID" ] && ! kill -0 "$DESKTOP_PID" 2>/dev/null; then
+    echo "⚠️  Tauri Desktop Client (PID: $DESKTOP_PID) stopped unexpectedly."
+    cleanup
+    break
+  fi
   sleep 1 &
   wait $! 2>/dev/null || true
 done
+

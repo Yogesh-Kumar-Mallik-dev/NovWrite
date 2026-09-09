@@ -2,22 +2,34 @@
 .SYNOPSIS
     NovWrite Local Development Launcher (PowerShell / Windows / macOS / Linux)
 .DESCRIPTION
-    Starts Go API server (port 8080) and SvelteKit Web Client (port 5173)
-    with graceful startup probing, port clearing, and signal-trapped shutdown.
+    Starts Go API server (8080), SvelteKit Web (5173), Expo Mobile (8081), and
+    Tauri Desktop with upfront Expo QR rendering, non-hijacking logging, and graceful exit.
 #>
+
+param(
+    [switch]$All,
+    [switch]$Mobile,
+    [switch]$Desktop,
+    [switch]$Web
+)
 
 $ErrorActionPreference = "Stop"
 $rootDir = $PSScriptRoot
 Set-Location $rootDir
 
+$startMobile = $All -or $Mobile
+$startDesktop = $All -or $Desktop
+
 $apiPort = if ($env:PORT) { $env:PORT } else { "8080" }
 $webPort = "5173"
+$mobilePort = if ($env:EXPO_PORT) { $env:EXPO_PORT } else { "8081" }
 $apiHost = "127.0.0.1"
 $webHost = "127.0.0.1"
 
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  🚀 Starting NovWrite Development Environment" -ForegroundColor Cyan
 Write-Host "  🖥️  Platform: PowerShell / Cross-Platform" -ForegroundColor Cyan
+Write-Host "  📦 Targets: API=on Web=on Mobile=$(if ($startMobile) {'on'} else {'off'}) Desktop=$(if ($startDesktop) {'on'} else {'off'})" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
 # Pre-flight check for required tools
@@ -45,7 +57,6 @@ function Free-Port($port, $name) {
             }
         }
     } catch {
-        # Fallback to netstat if Get-NetTCPConnection fails
         $netstatOut = netstat -ano 2>$null | Select-String ":$port\s+.*LISTENING\s+(\d+)"
         foreach ($match in $netstatOut) {
             if ($match.Matches[0].Groups[1].Value) {
@@ -60,9 +71,33 @@ function Free-Port($port, $name) {
 
 Free-Port -port $apiPort -name "Go API Server"
 Free-Port -port $webPort -name "SvelteKit Web Client"
+if ($startMobile) {
+    Free-Port -port $mobilePort -name "Expo Metro Bundler"
+}
 
-# 1. Build & Start Go API Server in background
-Write-Host "📦 [1/2] Preparing Go API Server on http://${apiHost}:${apiPort}..." -ForegroundColor Blue
+$mobileProcess = $null
+$desktopProcess = $null
+
+# ------------------------------------------------------------------------------
+# STEP 1: If Mobile is enabled, display Expo QR Code upfront & launch non-hijacking Metro
+# ------------------------------------------------------------------------------
+if ($startMobile) {
+    Write-Host "📱 Displaying Expo QR Code upfront before starting service logs..." -ForegroundColor Magenta
+    node (Join-Path $rootDir "scripts/show-mobile-qr.mjs")
+
+    Write-Host "🚀 Launching Expo Mobile Metro Bundler in non-interactive background mode..." -ForegroundColor Blue
+    $mobileEnv = @{
+        CI = "1"
+        EXPO_PORT = "$mobilePort"
+    }
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "expo", "start", "--port", "$mobilePort" -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -PassThru
+    Start-Sleep -Seconds 1
+}
+
+# ------------------------------------------------------------------------------
+# STEP 2: Build & Start Go API Server in background
+# ------------------------------------------------------------------------------
+Write-Host "📦 Preparing Go API Server on http://${apiHost}:${apiPort}..." -ForegroundColor Blue
 $binDir = Join-Path $rootDir "bin"
 if (-not (Test-Path $binDir)) {
     New-Item -ItemType Directory -Path $binDir -Force | Out-Null
@@ -106,8 +141,10 @@ if ($apiReady) {
     Write-Host "⚠️  Go API Server took longer than expected to report healthy, proceeding..." -ForegroundColor Yellow
 }
 
-# 2. Start SvelteKit Web Workbench in background
-Write-Host "🌐 [2/2] Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
+# ------------------------------------------------------------------------------
+# STEP 3: Start SvelteKit Web Workbench in background
+# ------------------------------------------------------------------------------
+Write-Host "🌐 Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
 $webProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "vite", "dev", "--host", $webHost, "--port", $webPort -WorkingDirectory (Join-Path $rootDir "apps/web") -PassThru
 
 # Probe Web Server until accepting connections
@@ -129,13 +166,27 @@ if ($webReady) {
     Write-Host "✅ SvelteKit Web Workbench is live! (PID: $($webProcess.Id))" -ForegroundColor Green
 }
 
+# ------------------------------------------------------------------------------
+# STEP 4: If Desktop is enabled, start Tauri 2 Native Client
+# ------------------------------------------------------------------------------
+if ($startDesktop) {
+    Write-Host "🖥️  Starting Tauri 2 Native Desktop Client..." -ForegroundColor Blue
+    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -PassThru
+}
+
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  🌟 NovWrite Development Environment is LIVE" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  🔗 Web Workbench: http://${webHost}:${webPort}"
-Write-Host "  🔗 API Backend:   http://${apiHost}:${apiPort}"
-Write-Host "  🔗 Health Probe:  http://${apiHost}:${apiPort}/healthz"
+Write-Host "  🔗 Web Workbench:   http://${webHost}:${webPort}"
+Write-Host "  🔗 API Backend:     http://${apiHost}:${apiPort}"
+Write-Host "  🔗 Health Probe:    http://${apiHost}:${apiPort}/healthz"
+if ($startMobile) {
+    Write-Host "  📱 Mobile (Expo):   http://127.0.0.1:${mobilePort} (QR printed above)"
+}
+if ($startDesktop) {
+    Write-Host "  🖥️  Desktop (Tauri): Active (PID: $($desktopProcess.Id))"
+}
 Write-Host "  🛑 Press Ctrl+C at any time for graceful shutdown"
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
@@ -151,10 +202,24 @@ try {
             Write-Host "⚠️  SvelteKit Web server stopped unexpectedly." -ForegroundColor Yellow
             break
         }
+        if ($mobileProcess -and $mobileProcess.HasExited) {
+            Write-Host "⚠️  Expo Mobile Metro Bundler stopped unexpectedly." -ForegroundColor Yellow
+            break
+        }
+        if ($desktopProcess -and $desktopProcess.HasExited) {
+            Write-Host "⚠️  Tauri Desktop Client stopped unexpectedly." -ForegroundColor Yellow
+            break
+        }
         Start-Sleep -Seconds 1
     }
 } finally {
     Write-Host "`n🛑 Initiating graceful shutdown of NovWrite services..." -ForegroundColor Yellow
+    if ($desktopProcess -and -not $desktopProcess.HasExited) {
+        Stop-Process -Id $desktopProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+    if ($mobileProcess -and -not $mobileProcess.HasExited) {
+        Stop-Process -Id $mobileProcess.Id -Force -ErrorAction SilentlyContinue
+    }
     if ($webProcess -and -not $webProcess.HasExited) {
         Stop-Process -Id $webProcess.Id -Force -ErrorAction SilentlyContinue
     }
@@ -163,3 +228,4 @@ try {
     }
     Write-Host "✨ All NovWrite development servers stopped cleanly." -ForegroundColor Green
 }
+

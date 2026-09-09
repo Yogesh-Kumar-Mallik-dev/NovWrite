@@ -44,26 +44,45 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 
 ### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
 ```bash
-# 🚀 1-Click Development Server (Postgres, Redis, API, Data Service, Web with health checks & graceful shutdown)
-./dev.sh         # or: run repo dev (or simply: run repo / run depo)
+# 🚀 1-Click Development Server (API + Web)
+./dev.sh             # or: run repo dev (or simply: run repo / run depo)
+
+# 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
+# Renders Expo QR code upfront and streams Web/Tauri logs cleanly without terminal hijacking
+./dev.sh --all       # or: ./dev.sh -a
+
+# 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
+./dev.sh --mobile    # or: ./dev.sh -m
+
+# 🖥️ Launch API + Web + Tauri Desktop Client
+./dev.sh --desktop   # or: ./dev.sh -d
 
 # 🏗️ 1-Click Monorepo Build (bridge contracts, data-service dist, Go api binary, web bundle)
-./build.sh       # or: run repo build
+./build.sh           # or: run repo build
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck (verifies all TS and Svelte diagnostics across packages)
-./check.sh       # or: run repo check
+./check.sh           # or: run repo check
 
-# 🧪 1-Click 5-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> typecheck)
-./test.sh        # or: run repo test
+# 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
+./test.sh            # or: run repo test
 
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
-./flush_db.sh    # or: run repo flush
+./flush_db.sh        # or: run repo flush
 ```
 
 ### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
 ```powershell
-# 🚀 1-Click Development Server
+# 🚀 1-Click Development Server (API + Web)
 .\dev.ps1
+
+# 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
+.\dev.ps1 -All
+
+# 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
+.\dev.ps1 -Mobile
+
+# 🖥️ Launch API + Web + Tauri Desktop Client
+.\dev.ps1 -Desktop
 
 # 🏗️ 1-Click Monorepo Build
 .\build.ps1
@@ -71,7 +90,7 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 # 🔍 1-Click Monorepo Diagnostics & Typecheck
 .\check.ps1
 
-# 🧪 1-Click 5-Phase Test Runner
+# 🧪 1-Click 6-Phase Test Runner
 .\test.ps1
 
 # 🧹 Complete Database & Cache Reset

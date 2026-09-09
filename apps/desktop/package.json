@@ -11,5 +11,8 @@
   },
   "dependencies": {
     "@novwrite/web": "workspace:*"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4"
   }
 }
