@@ -75,6 +75,10 @@ func BuildRouter() *chi.Mux {
 	entityStore := handlers.NewInMemoryEntityStore()
 	timelineStore := handlers.NewInMemoryTimelineStore()
 	userStore := handlers.NewInMemoryUserStore()
+	chapterStore := handlers.NewInMemoryChapterStore()
+	sceneStore := handlers.NewInMemorySceneStore()
+	ruleStore := handlers.NewInMemoryRuleStore()
+	eventHub := handlers.NewEventHub()
 
 	healthHandler := handlers.NewHealthHandler()
 	userHandler := handlers.NewUserHandler(userStore, os.Getenv("JWT_SECRET"))
@@ -82,6 +86,9 @@ func BuildRouter() *chi.Mux {
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore, projectStore)
 	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, projectStore, timelineStore)
 	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore, projectStore)
+	novelHandler := handlers.NewNovelHandler(chapterStore, sceneStore, projectStore, eventHub)
+	ruleHandler := handlers.NewRuleHandler(ruleStore, projectStore, entityStore, timelineStore, eventHub)
+	sseHandler := handlers.NewSSEHandler(eventHub)
 	formulaHandler := handlers.NewFormulaHandler()
 	bridgeHandler := handlers.NewWorldBridgeHandler(nil, nil, nil)
 
@@ -96,6 +103,9 @@ func BuildRouter() *chi.Mux {
 		r.Get("/healthz", healthHandler.Healthz)
 		r.Get("/livez", healthHandler.Livez)
 		r.Get("/readyz", healthHandler.Readyz)
+
+		// Realtime Server-Sent Events (SSE) Global Stream
+		r.Get("/events/stream", sseHandler.StreamEvents)
 
 		// Authentication & Identity
 		r.Route("/auth", func(r chi.Router) {
@@ -145,9 +155,43 @@ func BuildRouter() *chi.Mux {
 			r.Delete("/{projectId}", projectHandler.Delete)
 		})
 
-		// Project-Scoped World Domain Resources
+		// Project-Scoped World Domain & Manuscript Resources
 		r.Route("/projects/{projectId}", func(r chi.Router) {
-			// Blueprints
+			// Realtime Project SSE Stream
+			r.Get("/events/stream", sseHandler.StreamEvents)
+
+			// Novel Manuscript (Chapters & Scenes)
+			r.Route("/chapters", func(r chi.Router) {
+				r.Get("/", novelHandler.ListChapters)
+				r.Post("/", novelHandler.CreateChapter)
+				r.Get("/{chapterId}", novelHandler.GetChapter)
+				r.Put("/{chapterId}", novelHandler.UpdateChapter)
+				r.Delete("/{chapterId}", novelHandler.DeleteChapter)
+			})
+
+			r.Route("/scenes", func(r chi.Router) {
+				r.Get("/", novelHandler.ListScenes)
+				r.Post("/", novelHandler.CreateScene)
+				r.Get("/{sceneId}", novelHandler.GetScene)
+				r.Put("/{sceneId}", novelHandler.UpdateScene)
+				r.Delete("/{sceneId}", novelHandler.DeleteScene)
+			})
+
+			// Invariant Rules & Continuity Audits
+			r.Route("/rules", func(r chi.Router) {
+				r.Get("/", ruleHandler.List)
+				r.Post("/", ruleHandler.Create)
+				r.Get("/{ruleId}", ruleHandler.Get)
+				r.Put("/{ruleId}", ruleHandler.Update)
+				r.Delete("/{ruleId}", ruleHandler.Delete)
+			})
+
+			r.Route("/audit", func(r chi.Router) {
+				r.Get("/", ruleHandler.Audit)
+				r.Post("/{violationId}/override", ruleHandler.OverrideViolation)
+			})
+
+			// Blueprints / Dynamic Schemas
 			r.Route("/blueprints", func(r chi.Router) {
 				r.Get("/", blueprintHandler.List)
 				r.Post("/", blueprintHandler.Create)
