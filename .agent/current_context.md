@@ -10,10 +10,13 @@
     - User override support via `NOVWRITE_DECORATIONS=1|0`.
   - **Tauri 2 Cross-Platform Window Standards (`apps/desktop/src-tauri/tauri.conf.json`)**:
     - Added explicit `"label": "main"` matching capability permissions in `capabilities/default.json`.
+    - Removed duplicate `beforeDevCommand` preventing port 5173 collisions and hanging on Windows.
     - Updated devUrl to `"http://127.0.0.1:5173"` to prevent IPv6 DNS delay issues.
-  - **Rust/Cargo Pre-Flight Detection (`dev.sh`, `dev.ps1`)**:
-    - Added automatic detection of Rust/Cargo toolchain; gracefully skips desktop launch with an informative notice if Rust is not installed.
-  - **Resilient Supervisor Lifecycle Management (`dev.sh`, `dev.ps1`)**:
+  - **Rust/Cargo Toolchain Detection & Path Injection (`dev.sh`, `dev.ps1`)**:
+    - Automatically detects and prepends `$USERPROFILE\.cargo\bin` / `$HOME/.cargo/bin` to active environment `$env:PATH`.
+    - Skips desktop launch gracefully with an informative notice if Rust is not installed.
+  - **Resilient Supervisor Lifecycle & Error Diagnosis (`dev.sh`, `dev.ps1`)**:
+    - Captured and surfaced desktop stderr snippet on premature exit so users on Windows immediately see linker or toolchain diagnostic errors.
     - Closing the Tauri desktop window during development no longer tears down active Go API or SvelteKit Web servers unless run with `--desktop-only` / `-DesktopOnly`.
     - Verified all PowerShell scripts remain 100% pure ASCII with 0 non-ASCII bytes.
   - **Codebase Health Verification & Formatting**:

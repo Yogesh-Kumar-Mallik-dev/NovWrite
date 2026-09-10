@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "identifier": "com.novwrite.studio",
   "build": {
-    "beforeDevCommand": "pnpm --filter @novwrite/web dev",
     "devUrl": "http://127.0.0.1:5173",
     "beforeBuildCommand": "pnpm --filter @novwrite/web build",
     "frontendDist": "../web/build"

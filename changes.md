@@ -148,11 +148,14 @@ timeline
   - **Custom User Override:** Respects `NOVWRITE_DECORATIONS=1` or `NOVWRITE_DECORATIONS=0` environment variables across all platforms.
 - **Tauri 2 Cross-Platform Window Configuration (`tauri.conf.json`):**
   - Added explicit `"label": "main"` mapping to align with default security capability configuration (`capabilities/default.json`).
+  - Removed duplicate `beforeDevCommand` from `tauri.conf.json` to prevent duplicate Vite spawns and port 5173 collisions when launched via `dev.sh` and `dev.ps1`.
   - Updated loopback devUrl to `"http://127.0.0.1:5173"` to avoid IPv6 `::1` DNS resolution delays.
-- **Rust/Cargo Pre-Flight Validation (`dev.sh` / `dev.ps1`):**
+- **Rust/Cargo Pre-Flight Validation & Path Resolution (`dev.sh` / `dev.ps1`):**
+  - Automatically detects and appends `$HOME/.cargo/bin` / `USERPROFILE\.cargo\bin` to `$env:PATH` if not already loaded in the active shell.
   - Added pre-flight check for `cargo` binary before attempting desktop compilation. If Rust is not installed, logs an informative notice and skips desktop launch without failing the Go API, SvelteKit Web, or Expo Mobile services.
-- **Resilient Supervisor Lifecycle Management (`dev.sh` / `dev.ps1`):**
+- **Resilient Supervisor Lifecycle & Desktop Error Diagnosis (`dev.sh` / `dev.ps1`):**
   - Hardened supervisor monitoring loop so that closing the native desktop window does not kill the active Go backend API or SvelteKit Web workbench unless explicitly run in `--desktop-only` / `-DesktopOnly` mode.
+  - Captured and displayed desktop stderr snippet on premature exit to surface missing MSVC C++ Build Tools or compilation issues immediately to the user.
   - Added `--api-only`, `--no-desktop`, and `--no-mobile` flags across both Unix Bash and PowerShell development launchers.
 
 ---

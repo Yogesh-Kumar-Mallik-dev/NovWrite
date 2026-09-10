@@ -63,6 +63,13 @@ $mobilePort = if ($env:EXPO_PORT) { $env:EXPO_PORT } else { "8081" }
 $apiHost = "127.0.0.1"
 $webHost = "127.0.0.1"
 
+# Automatically add standard Cargo bin directory to PATH if not already present
+$userProfileDir = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile)
+$cargoBin = Join-Path $userProfileDir ".cargo\bin"
+if ((Test-Path $cargoBin) -and ($env:PATH -notlike "*$cargoBin*")) {
+    $env:PATH = "$cargoBin;$env:PATH"
+}
+
 # Check Rust/Cargo toolchain for Desktop if requested
 if ($startDesktop) {
     if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
@@ -71,7 +78,7 @@ if ($startDesktop) {
             exit 1
         } else {
             Write-Host "[WARN] Rust/Cargo toolchain not detected in PATH. Tauri Desktop client will be skipped." -ForegroundColor Yellow
-            Write-Host "[INFO] Install Rust from https://rustup.rs to enable the native desktop client." -ForegroundColor DarkGray
+            Write-Host "[INFO] To enable the native Desktop window, install Rust from: https://rustup.rs" -ForegroundColor DarkGray
             $startDesktop = $false
         }
     }
@@ -288,10 +295,13 @@ if ($startWeb) {
 # STEP 4: If Desktop is enabled, start Tauri 2 Native Client
 # ------------------------------------------------------------------------------
 if ($startDesktop) {
-    Write-Host "[*] Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
+    Write-Host "[*] Starting Tauri 2 Native Desktop Client..." -ForegroundColor Blue
+    Write-Host "[*] Compiling & launching native binary (logs -> logs/desktop.log)..." -ForegroundColor DarkGray
     $desktopLog = Join-Path $logsDir "desktop.log"
     $desktopErrLog = Join-Path $logsDir "desktop-error.log"
-    $desktopArgs = @("exec", "tauri", "dev", "--no-dev-server")
+    if (Test-Path $desktopLog) { Remove-Item $desktopLog -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $desktopErrLog) { Remove-Item $desktopErrLog -Force -ErrorAction SilentlyContinue }
+    $desktopArgs = @("exec", "tauri", "dev")
     $desktopProcess = Start-MonorepoChildProcess -command "pnpm" -arguments $desktopArgs -workingDirectory (Join-Path $rootDir "apps/desktop") -redirectOut $desktopLog -redirectErr $desktopErrLog
 }
 
@@ -330,11 +340,23 @@ try {
             break
         }
         if ($desktopProcess -and $desktopProcess.HasExited) {
-            if ($DesktopOnly) {
+            $exitCode = $desktopProcess.ExitCode
+            if ($null -ne $exitCode -and $exitCode -ne 0) {
+                Write-Host "[!] Tauri Desktop process exited with code $exitCode." -ForegroundColor Yellow
+                if (Test-Path $desktopErrLog) {
+                    $errSnippet = Get-Content $desktopErrLog -Tail 10 -ErrorAction SilentlyContinue
+                    if ($errSnippet) {
+                        Write-Host "[!] Desktop error log snippet:" -ForegroundColor Yellow
+                        $errSnippet | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkYellow }
+                    }
+                }
+            } else {
                 Write-Host "[*] Tauri Desktop Client closed." -ForegroundColor Cyan
+            }
+            if ($DesktopOnly) {
                 break
             } else {
-                Write-Host "[*] Tauri Desktop Client closed. Keeping Web and API servers active." -ForegroundColor Cyan
+                Write-Host "[*] Keeping SvelteKit Web and Go API servers active." -ForegroundColor Cyan
                 $desktopProcess = $null
             }
         }

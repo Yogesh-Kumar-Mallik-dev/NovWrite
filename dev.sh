@@ -117,6 +117,11 @@ for tool in go pnpm node curl; do
   fi
 done
 
+# Automatically add standard Cargo bin directory to PATH if not already present
+if [ -d "$HOME/.cargo/bin" ] && [[ ":$PATH:" != *":$HOME/.cargo/bin:"* ]]; then
+  export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
 # Check Rust/Cargo toolchain for Desktop if requested
 if [ "$START_DESKTOP" -eq 1 ]; then
   if ! command -v cargo >/dev/null 2>&1; then
@@ -126,7 +131,7 @@ if [ "$START_DESKTOP" -eq 1 ]; then
       exit 1
     else
       echo "⚠️  Rust/Cargo toolchain not detected in PATH. Tauri Desktop client will be skipped."
-      echo "ℹ️  Install Rust from https://rustup.rs to enable the native desktop client."
+      echo "ℹ️  To enable the native Desktop window, install Rust from: https://rustup.rs"
       START_DESKTOP=0
     fi
   fi
@@ -362,9 +367,10 @@ fi
 if [ "$START_DESKTOP" -eq 1 ]; then
   echo "🖥️  Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..."
   mkdir -p "$ROOT_DIR/logs"
+  rm -f "$ROOT_DIR/logs/desktop.log" "$ROOT_DIR/logs/desktop-error.log"
   (
     cd "$ROOT_DIR/apps/desktop"
-    exec pnpm exec tauri dev --no-dev-server > "$ROOT_DIR/logs/desktop.log" 2>&1 </dev/null
+    exec pnpm exec tauri dev > "$ROOT_DIR/logs/desktop.log" 2>&1 </dev/null
   ) &
   DESKTOP_PID=$!
 fi
@@ -412,6 +418,10 @@ while true; do
       break
     else
       echo "ℹ️  Tauri Desktop Client (PID: $DESKTOP_PID) closed. Keeping Web and API servers active."
+      if [ -f "$ROOT_DIR/logs/desktop.log" ]; then
+        echo "ℹ️  Recent Desktop log output:"
+        tail -n 10 "$ROOT_DIR/logs/desktop.log" 2>/dev/null || true
+      fi
       START_DESKTOP=0
       DESKTOP_PID=""
     fi
