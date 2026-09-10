@@ -24,17 +24,17 @@ foreach ($tool in $requiredTools) {
 }
 
 # 1. Test Bridge Contracts
-Write-Host "`n🔹 [1/5] Testing @novwrite/bridge Contracts & Schemas..." -ForegroundColor Blue
+Write-Host "`n🔹 [1/6] Testing @novwrite/bridge Contracts & Schemas..." -ForegroundColor Blue
 pnpm --filter @novwrite/bridge build
 pnpm --filter @novwrite/bridge test
 
 # 2. Test Data Service Domain Engines
-Write-Host "`n🔹 [2/5] Testing @novwrite/data-service Domain Engines..." -ForegroundColor Blue
+Write-Host "`n🔹 [2/6] Testing @novwrite/data-service Domain Engines..." -ForegroundColor Blue
 pnpm --filter @novwrite/data-service build
 pnpm --filter @novwrite/data-service test
 
 # 3. Test Go API Backend
-Write-Host "`n🔹 [3/5] Testing Go API Backend & HTTP Handlers..." -ForegroundColor Blue
+Write-Host "`n🔹 [3/6] Testing Go API Backend & HTTP Handlers..." -ForegroundColor Blue
 Push-Location (Join-Path $rootDir "apps/api")
 try {
     go test ./...

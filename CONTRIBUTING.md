@@ -128,16 +128,17 @@ Typechecks `@novwrite/bridge`, `@novwrite/data-service`, and `@novwrite/web` wit
 ./check.sh
 ```
 
-### 6.2. 5-Phase Unified Test Runner (`./test.sh` / `.\test.ps1`)
+### 6.2. 6-Phase Unified Test Runner (`./test.sh` / `.\test.ps1`)
 
-Executes the entire monorepo test suite across all 5 verification phases:
+Executes the entire monorepo test suite across all 6 verification phases:
 
 ```text
-Phase 1: @novwrite/bridge Contract & Mock Suite (12 unit tests)
+Phase 1: @novwrite/bridge Contract & Mock Suite
 Phase 2: @novwrite/data-service Dynamic Schemas & State Fold Engine (41 unit tests)
 Phase 3: Go API Backend Handlers & Middlewares Suite
-Phase 4: @novwrite/web Frontend Formula & Project Engines (25 Vitest tests)
-Phase 5: SvelteKit Diagnostic Typecheck
+Phase 4: @novwrite/web Frontend Formula & Project Engines (29 Vitest/Node tests)
+Phase 5: @novwrite/mobile Client Engines & Telemetry (11 unit tests)
+Phase 6: SvelteKit & Monorepo Diagnostic Typecheck
 ```
 
 ```bash

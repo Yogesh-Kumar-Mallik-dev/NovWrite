@@ -27,19 +27,19 @@ done
 
 # 1. Test Bridge Contracts
 echo ""
-echo "🔹 [1/5] Testing @novwrite/bridge Contracts & Schemas..."
+echo "🔹 [1/6] Testing @novwrite/bridge Contracts & Schemas..."
 pnpm --filter @novwrite/bridge build
 pnpm --filter @novwrite/bridge test
 
 # 2. Test Data Service Domain Engines
 echo ""
-echo "🔹 [2/5] Testing @novwrite/data-service Domain Engines..."
+echo "🔹 [2/6] Testing @novwrite/data-service Domain Engines..."
 pnpm --filter @novwrite/data-service build
 pnpm --filter @novwrite/data-service test
 
 # 3. Test Go API Backend
 echo ""
-echo "🔹 [3/5] Testing Go API Backend & HTTP Handlers..."
+echo "🔹 [3/6] Testing Go API Backend & HTTP Handlers..."
 (
   cd apps/api
   go test ./...
