@@ -31,7 +31,7 @@ export default function ProjectsScreen() {
   const router = useRouter();
   const state = useSyncExternalStore(
     (cb) => mobileStore.subscribe(cb),
-    () => mobileStore.getState()
+    () => mobileStore.getState(),
   );
 
   const { width } = useWindowDimensions();
@@ -54,7 +54,9 @@ export default function ProjectsScreen() {
   const chapters = mobileStore.getChaptersForActiveProject();
   const entities = mobileStore.getEntities();
 
-  const isDeleteTitleMatched = activeProject ? deleteConfirmTitle.trim() === activeProject.name : false;
+  const isDeleteTitleMatched = activeProject
+    ? deleteConfirmTitle.trim() === activeProject.name
+    : false;
   const isDeleteReady = isDeleteAcknowledged && isDeleteTitleMatched;
 
   function openCreate() {
@@ -123,12 +125,30 @@ export default function ProjectsScreen() {
           />
         </View>
 
-        <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 26 : 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.5 }}>
+        <Text
+          style={{
+            color: "#fafafa",
+            fontSize: isTabletOrWide ? 26 : 20,
+            fontWeight: "800",
+            textAlign: "center",
+            letterSpacing: -0.5,
+          }}
+        >
           NovWrite Authoring Workspace
         </Text>
 
-        <Text style={{ color: "#a1a1aa", fontSize: 13, textAlign: "center", lineHeight: 18, maxWidth: 500 }}>
-          Professional fictional universe design studio powered by deterministic event folding, 1st-Class Blueprints, AST formulas, and causal timeline auditing.
+        <Text
+          style={{
+            color: "#a1a1aa",
+            fontSize: 13,
+            textAlign: "center",
+            lineHeight: 18,
+            maxWidth: 500,
+          }}
+        >
+          Professional fictional universe design studio powered by deterministic
+          event folding, 1st-Class Blueprints, AST formulas, and causal timeline
+          auditing.
         </Text>
 
         {/* Active Project Pill or Zero Project CTA */}
@@ -149,9 +169,12 @@ export default function ProjectsScreen() {
           >
             <Folder size={14} color="#7c3aed" />
             <Text style={{ color: "#fafafa", fontSize: 12 }}>
-              Active Novel: <Text style={{ fontWeight: "bold" }}>{activeProject.name}</Text>
+              Active Novel:{" "}
+              <Text style={{ fontWeight: "bold" }}>{activeProject.name}</Text>
             </Text>
-            <Text style={{ color: "#a1a1aa", fontSize: 12 }}>({activeProject.genre || "Fiction"})</Text>
+            <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+              ({activeProject.genre || "Fiction"})
+            </Text>
             <TouchableOpacity onPress={openEdit} style={{ padding: 2 }}>
               <Pencil size={12} color="#a1a1aa" />
             </TouchableOpacity>
@@ -171,13 +194,19 @@ export default function ProjectsScreen() {
             }}
           >
             <Plus size={14} color="#ffffff" />
-            <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}>Create Your First Novel Project</Text>
+            <Text
+              style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}
+            >
+              Create Your First Novel Project
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* 2 Core Studio Cards (Faithfully Recreated from web +page.svelte) */}
-      <View style={{ gap: 12, flexDirection: isTabletOrWide ? "row" : "column" }}>
+      <View
+        style={{ gap: 12, flexDirection: isTabletOrWide ? "row" : "column" }}
+      >
         {/* Prose Studio Card */}
         <TouchableOpacity
           onPress={() => router.push("/novel")}
@@ -207,13 +236,30 @@ export default function ProjectsScreen() {
             >
               <BookOpen size={20} color="#7c3aed" />
             </View>
-            <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>Prose Studio</Text>
+            <Text
+              style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}
+            >
+              Prose Studio
+            </Text>
             <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }}>
-              Dedicated novel writing canvas, rich text editor, manuscript hierarchy tree, lore lookup drawer, and collaborative scene leases.
+              Dedicated novel writing canvas, rich text editor, manuscript
+              hierarchy tree, lore lookup drawer, and collaborative scene
+              leases.
             </Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 10 }}>
-            <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "600" }}>Open Studio</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              borderTopWidth: 1,
+              borderTopColor: "#27272a",
+              paddingTop: 10,
+            }}
+          >
+            <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "600" }}>
+              Open Studio
+            </Text>
             <ArrowRight size={14} color="#7c3aed" />
           </View>
         </TouchableOpacity>
@@ -247,13 +293,30 @@ export default function ProjectsScreen() {
             >
               <Globe2 size={20} color="#dc2626" />
             </View>
-            <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>World Studio</Text>
+            <Text
+              style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}
+            >
+              World Studio
+            </Text>
             <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }}>
-              1st-Class Blueprint Archetypes, 2nd-Class Sub-Schemas, AST Math Formulas, Causal Timeline, Invariant Rules, and Continuity Violation Audit.
+              1st-Class Blueprint Archetypes, 2nd-Class Sub-Schemas, AST Math
+              Formulas, Causal Timeline, Invariant Rules, and Continuity
+              Violation Audit.
             </Text>
           </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 10 }}>
-            <Text style={{ color: "#dc2626", fontSize: 12, fontWeight: "600" }}>Open Studio</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              borderTopWidth: 1,
+              borderTopColor: "#27272a",
+              paddingTop: 10,
+            }}
+          >
+            <Text style={{ color: "#dc2626", fontSize: 12, fontWeight: "600" }}>
+              Open Studio
+            </Text>
             <ArrowRight size={14} color="#dc2626" />
           </View>
         </TouchableOpacity>
@@ -271,7 +334,13 @@ export default function ProjectsScreen() {
             gap: 12,
           }}
         >
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <View
               style={{
                 flexDirection: "row",
@@ -286,7 +355,9 @@ export default function ProjectsScreen() {
               }}
             >
               <Sparkles size={12} color="#7c3aed" />
-              <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>
+              <Text
+                style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}
+              >
                 {activeProject?.genre || "Creative Fiction"}
               </Text>
             </View>
@@ -305,7 +376,11 @@ export default function ProjectsScreen() {
                 }}
               >
                 <Pencil size={12} color="#a1a1aa" />
-                <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "600" }}>Edit</Text>
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "600" }}
+                >
+                  Edit
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -321,17 +396,31 @@ export default function ProjectsScreen() {
                 }}
               >
                 <Trash2 size={12} color="#ef4444" />
-                <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "600" }}>Delete</Text>
+                <Text
+                  style={{ color: "#ef4444", fontSize: 11, fontWeight: "600" }}
+                >
+                  Delete
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 20 : 16, fontWeight: "bold" }}>
+          <Text
+            style={{
+              color: "#fafafa",
+              fontSize: isTabletOrWide ? 20 : 16,
+              fontWeight: "bold",
+            }}
+          >
             {activeProject?.name || "Untitled Novel"}
           </Text>
 
-          <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }} numberOfLines={3}>
-            {activeProject?.description || "No universe synopsis provided yet. Define your world canon and write captivating prose."}
+          <Text
+            style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 17 }}
+            numberOfLines={3}
+          >
+            {activeProject?.description ||
+              "No universe synopsis provided yet. Define your world canon and write captivating prose."}
           </Text>
 
           {/* Quick Metric Cards Strip */}
@@ -346,34 +435,90 @@ export default function ProjectsScreen() {
             }}
           >
             <View style={{ alignItems: "center", flex: 1 }}>
-              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+              <Text
+                style={{
+                  color: "#a1a1aa",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                }}
+              >
                 Words
               </Text>
-              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+              <Text
+                style={{
+                  color: "#fafafa",
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  marginTop: 2,
+                }}
+              >
                 {totalWords.toLocaleString()}
               </Text>
             </View>
             <View style={{ alignItems: "center", flex: 1 }}>
-              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+              <Text
+                style={{
+                  color: "#a1a1aa",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                }}
+              >
                 Chapters
               </Text>
-              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+              <Text
+                style={{
+                  color: "#fafafa",
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  marginTop: 2,
+                }}
+              >
                 {chapters.length}
               </Text>
             </View>
             <View style={{ alignItems: "center", flex: 1 }}>
-              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+              <Text
+                style={{
+                  color: "#a1a1aa",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                }}
+              >
                 Entities
               </Text>
-              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+              <Text
+                style={{
+                  color: "#fafafa",
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  marginTop: 2,
+                }}
+              >
                 {entities.length}
               </Text>
             </View>
             <View style={{ alignItems: "center", flex: 1 }}>
-              <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>
+              <Text
+                style={{
+                  color: "#a1a1aa",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  fontWeight: "bold",
+                }}
+              >
                 Read Time
               </Text>
-              <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold", marginTop: 2 }}>
+              <Text
+                style={{
+                  color: "#fafafa",
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  marginTop: 2,
+                }}
+              >
                 {readingTimeMin}m
               </Text>
             </View>
@@ -382,10 +527,18 @@ export default function ProjectsScreen() {
       )}
 
       {/* Projects List Header */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Folder size={18} color="#7c3aed" />
-          <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Your Novel Projects</Text>
+          <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
+            Your Novel Projects
+          </Text>
         </View>
         <TouchableOpacity
           onPress={openCreate}
@@ -401,7 +554,9 @@ export default function ProjectsScreen() {
           }}
         >
           <Plus size={16} color="#ffffff" />
-          <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "600" }}>New Project</Text>
+          <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "600" }}>
+            New Project
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -415,7 +570,13 @@ export default function ProjectsScreen() {
           onAction={openCreate}
         />
       ) : (
-        <View style={{ gap: 10, flexDirection: isTabletOrWide ? "row" : "column", flexWrap: "wrap" }}>
+        <View
+          style={{
+            gap: 10,
+            flexDirection: isTabletOrWide ? "row" : "column",
+            flexWrap: "wrap",
+          }}
+        >
           {state.projects.map((proj) => {
             const isActive = proj.id === state.activeProjectId;
             return (
@@ -424,7 +585,9 @@ export default function ProjectsScreen() {
                 onPress={() => mobileStore.setActiveProject(proj.id)}
                 style={{
                   width: isTabletOrWide ? "48%" : "100%",
-                  backgroundColor: isActive ? "rgba(124, 58, 237, 0.12)" : "#121215",
+                  backgroundColor: isActive
+                    ? "rgba(124, 58, 237, 0.12)"
+                    : "#121215",
                   borderColor: isActive ? "#7c3aed" : "#27272a",
                   borderWidth: 1,
                   borderRadius: 10,
@@ -433,7 +596,13 @@ export default function ProjectsScreen() {
                   minHeight: 44,
                 }}
               >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Text
                     style={{
                       color: isActive ? "#7c3aed" : "#fafafa",
@@ -448,7 +617,10 @@ export default function ProjectsScreen() {
                   {isActive && <CheckCircle2 size={16} color="#7c3aed" />}
                 </View>
 
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }} numberOfLines={2}>
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12 }}
+                  numberOfLines={2}
+                >
                   {proj.description || proj.genre || "Creative Fiction"}
                 </Text>
               </TouchableOpacity>
@@ -459,41 +631,129 @@ export default function ProjectsScreen() {
 
       {/* Edit Project Modal */}
       <Modal visible={isEditModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Edit Project Details</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "#27272a",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              gap: 12,
+            }}
+          >
+            <Text
+              style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+            >
+              Edit Project Details
+            </Text>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Novel Title *</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Novel Title *
+              </Text>
               <TextInput
                 value={nameInput}
                 onChangeText={setNameInput}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                }}
               />
             </View>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Genre / Setting</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Genre / Setting
+              </Text>
               <TextInput
                 value={genreInput}
                 onChangeText={setGenreInput}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                }}
               />
             </View>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Synopsis</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Synopsis
+              </Text>
               <TextInput
                 value={descInput}
                 onChangeText={setDescInput}
                 multiline
                 numberOfLines={3}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                  minHeight: 60,
+                }}
               />
             </View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsEditModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setIsEditModalOpen(false)}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleEdit} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Save</Text>
+              <TouchableOpacity
+                onPress={handleEdit}
+                style={{
+                  backgroundColor: "#7c3aed",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}
+                >
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -502,7 +762,15 @@ export default function ProjectsScreen() {
 
       {/* Delete Project Modal (3-Step Irreversible Deletion Standard) */}
       <Modal visible={isDeleteModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
           <View
             style={{
               backgroundColor: "#121215",
@@ -516,35 +784,113 @@ export default function ProjectsScreen() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <Trash2 size={20} color="#ef4444" />
-              <Text style={{ color: "#ef4444", fontSize: 17, fontWeight: "bold" }}>Delete Novel Project</Text>
+              <Text
+                style={{ color: "#ef4444", fontSize: 17, fontWeight: "bold" }}
+              >
+                Delete Novel Project
+              </Text>
             </View>
 
-            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 12 }}>
+            <ScrollView
+              style={{ maxHeight: 380 }}
+              contentContainerStyle={{ gap: 12 }}
+            >
               {/* Step 1: Scope & Impact Assessment */}
-              <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 12, gap: 6 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+              <View
+                style={{
+                  backgroundColor: "#18181b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  gap: 6,
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}
+                >
                   Step 1: Scope & Impact Assessment
                 </Text>
-                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
-                  Permanently destroys <Text style={{ color: "#fafafa", fontWeight: "bold" }}>{activeProject?.name}</Text> along with:
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}
+                >
+                  Permanently destroys{" "}
+                  <Text style={{ color: "#fafafa", fontWeight: "bold" }}>
+                    {activeProject?.name}
+                  </Text>{" "}
+                  along with:
                 </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.chapters.length} Chapters</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.chapters.length} Chapters
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.scenes.length} Scenes</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.scenes.length} Scenes
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.entities.length} Entities</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.entities.length} Entities
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.blueprints.length} Blueprints</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.blueprints.length} Blueprints
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.timelineEvents.length} Timeline Events</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.timelineEvents.length} Timeline Events
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -556,8 +902,12 @@ export default function ProjectsScreen() {
                   flexDirection: "row",
                   alignItems: "flex-start",
                   gap: 10,
-                  backgroundColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.1)" : "#18181b",
-                  borderColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.4)" : "#27272a",
+                  backgroundColor: isDeleteAcknowledged
+                    ? "rgba(239, 68, 68, 0.1)"
+                    : "#18181b",
+                  borderColor: isDeleteAcknowledged
+                    ? "rgba(239, 68, 68, 0.4)"
+                    : "#27272a",
                   borderWidth: 1,
                   borderRadius: 8,
                   padding: 10,
@@ -570,26 +920,45 @@ export default function ProjectsScreen() {
                     borderRadius: 4,
                     borderWidth: 1.5,
                     borderColor: isDeleteAcknowledged ? "#ef4444" : "#71717a",
-                    backgroundColor: isDeleteAcknowledged ? "#ef4444" : "transparent",
+                    backgroundColor: isDeleteAcknowledged
+                      ? "#ef4444"
+                      : "transparent",
                     alignItems: "center",
                     justifyContent: "center",
                     marginTop: 1,
                   }}
                 >
-                  {isDeleteAcknowledged && <CheckCircle2 size={14} color="#ffffff" />}
+                  {isDeleteAcknowledged && (
+                    <CheckCircle2 size={14} color="#ffffff" />
+                  )}
                 </View>
-                <Text style={{ color: "#fafafa", fontSize: 12, flex: 1, lineHeight: 16 }}>
-                  <Text style={{ fontWeight: "bold" }}>Step 2: </Text>I acknowledge that this action cannot be undone and permanently destroys all prose and world lore.
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 12,
+                    flex: 1,
+                    lineHeight: 16,
+                  }}
+                >
+                  <Text style={{ fontWeight: "bold" }}>Step 2: </Text>I
+                  acknowledge that this action cannot be undone and permanently
+                  destroys all prose and world lore.
                 </Text>
               </TouchableOpacity>
 
               {/* Step 3: Exact Title Verification */}
               <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}
+                >
                   Step 3: Type project title to verify
                 </Text>
                 <Text style={{ color: "#71717a", fontSize: 11 }}>
-                  Type <Text style={{ color: "#fafafa", fontFamily: "monospace" }}>{activeProject?.name}</Text> below:
+                  Type{" "}
+                  <Text style={{ color: "#fafafa", fontFamily: "monospace" }}>
+                    {activeProject?.name}
+                  </Text>{" "}
+                  below:
                 </Text>
                 <TextInput
                   value={deleteConfirmTitle}
@@ -609,18 +978,38 @@ export default function ProjectsScreen() {
               </View>
             </ScrollView>
 
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setIsDeleteModalOpen(false)}
-                style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
               >
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDelete}
                 disabled={!isDeleteReady}
                 style={{
-                  backgroundColor: isDeleteReady ? "#ef4444" : "rgba(239, 68, 68, 0.3)",
+                  backgroundColor: isDeleteReady
+                    ? "#ef4444"
+                    : "rgba(239, 68, 68, 0.3)",
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 8,
@@ -628,7 +1017,13 @@ export default function ProjectsScreen() {
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: isDeleteReady ? "#ffffff" : "#a1a1aa", fontSize: 13, fontWeight: "bold" }}>
+                <Text
+                  style={{
+                    color: isDeleteReady ? "#ffffff" : "#a1a1aa",
+                    fontSize: 13,
+                    fontWeight: "bold",
+                  }}
+                >
                   Delete Project Forever
                 </Text>
               </TouchableOpacity>
@@ -639,4 +1034,3 @@ export default function ProjectsScreen() {
     </ScrollView>
   );
 }
-

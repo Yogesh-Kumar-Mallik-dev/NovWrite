@@ -33,7 +33,7 @@ export default function CreateEntityScreen() {
   const blueprints = mobileStore.getFirstClassBlueprints();
 
   const [selectedBlueprintId, setSelectedBlueprintId] = useState<string>(
-    params.blueprintId || blueprints[0]?.id || ""
+    params.blueprintId || blueprints[0]?.id || "",
   );
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -42,7 +42,7 @@ export default function CreateEntityScreen() {
 
   // Dynamic state properties
   const [properties, setProperties] = useState<Record<string, any>>({});
-  const [rawJson, setRawJson] = useState<string>("{\n  \"status\": \"ALIVE\"\n}");
+  const [rawJson, setRawJson] = useState<string>('{\n  "status": "ALIVE"\n}');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [customKey, setCustomKey] = useState("");
   const [customVal, setCustomVal] = useState("");
@@ -66,9 +66,13 @@ export default function CreateEntityScreen() {
             initialProps[k] = false;
           } else if (field.fieldType === "NUMBER") {
             initialProps[k] = field.min ?? 0;
-          } else if (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") {
+          } else if (
+            field.fieldType === "ENUM" ||
+            field.fieldType === "VALUE_TYPE"
+          ) {
             const firstOpt = field.options?.[0];
-            initialProps[k] = typeof firstOpt === "object" ? firstOpt.value : (firstOpt || "");
+            initialProps[k] =
+              typeof firstOpt === "object" ? firstOpt.value : firstOpt || "";
           } else if (field.fieldType === "STRING") {
             initialProps[k] = "";
           }
@@ -86,7 +90,10 @@ export default function CreateEntityScreen() {
   };
 
   const handleAddCustomProp = () => {
-    const k = customKey.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+    const k = customKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_");
     if (!k) return;
     const v = isNaN(Number(customVal)) ? customVal : Number(customVal);
     handlePropertyChange(k, v);
@@ -373,7 +380,7 @@ export default function CreateEntityScreen() {
                           onChangeText={(t) =>
                             handlePropertyChange(
                               key,
-                              t === "" ? undefined : Number(t)
+                              t === "" ? undefined : Number(t),
                             )
                           }
                           keyboardType="numeric"
@@ -386,7 +393,9 @@ export default function CreateEntityScreen() {
                         <View className="flex-row flex-wrap gap-1.5 pt-1">
                           {(field.options || []).map((opt) => {
                             const optVal =
-                              typeof opt === "string" ? opt : opt.value || opt.label;
+                              typeof opt === "string"
+                                ? opt
+                                : opt.value || opt.label;
                             const optLabel =
                               typeof opt === "string" ? opt : opt.label;
                             const isSelected = val === optVal;
@@ -463,8 +472,8 @@ export default function CreateEntityScreen() {
                   .filter(
                     ([k]) =>
                       !activeBlueprint?.fields.some(
-                        (f) => (f.key || f.name) === k
-                      )
+                        (f) => (f.key || f.name) === k,
+                      ),
                   )
                   .map(([k, v]) => (
                     <View

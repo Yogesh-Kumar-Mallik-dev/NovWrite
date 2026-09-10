@@ -16,4 +16,3 @@ config.resolver.nodeModulesPaths = [
 ];
 
 module.exports = withNativeWind(config, { input: "./src/global.css" });
-

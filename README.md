@@ -36,6 +36,7 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 ### 1.2. 1-Click Monorepo Launch
 
 #### Linux / macOS / Windows (Git Bash / WSL)
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
@@ -50,6 +51,7 @@ cp .env.example .env
 ```
 
 #### Windows (PowerShell / Windows Terminal)
+
 ```powershell
 # 1. Clone repository
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git

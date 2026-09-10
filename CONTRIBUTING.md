@@ -50,6 +50,7 @@ cp .env.example .env
 NovWrite provides universal cross-platform lifecycle scripts:
 
 - **Linux / macOS / Windows (Git Bash / WSL):**
+
   ```bash
   # Boots PostgreSQL, Redis, Go API Backend (:8080), and SvelteKit Web (:5173)
   ./dev.sh
@@ -71,6 +72,7 @@ NovWrite maintains two autonomous engineering fronts across dedicated git branch
 - **`main` Branch:** Production-ready baseline integrating both fronts through typed `@novwrite/bridge` contracts.
 
 ### Branching Convention:
+
 - `feat/<domain>-<short-description>` (e.g. `feat/formula-cycle-detector`, `feat/auth-superadmin-gate`)
 - `fix/<domain>-<short-description>` (e.g. `fix/entity-lowercase-keys`, `fix/manifest-404`)
 - `docs/<short-description>` (e.g. `docs/standards-and-anti-patterns`)
@@ -90,6 +92,7 @@ All commits must strictly follow the conventional commit structure:
 ```
 
 #### Allowed Types:
+
 - `feat`: A new feature or domain capability.
 - `fix`: A bug fix or invariant patch.
 - `docs`: Documentation updates only.
@@ -98,6 +101,7 @@ All commits must strictly follow the conventional commit structure:
 - `chore`: Build script, toolchain, or dependency updates.
 
 #### Example:
+
 ```bash
 git commit -S -m "feat(universe): enforce deterministic DAG cycle detection in formulas"
 ```
@@ -105,6 +109,7 @@ git commit -S -m "feat(universe): enforce deterministic DAG cycle detection in f
 ### 5.2. Mandatory GPG Commit Signing
 
 All commits **must be cryptographically signed** with GPG:
+
 ```bash
 git commit -S -m "..."
 ```
@@ -116,6 +121,7 @@ git commit -S -m "..."
 Before submitting a Pull Request, you must run the project diagnostics and 5-phase test runner. Both must pass with **0 errors and 0 warnings**.
 
 ### 6.1. Diagnostic Typecheck (`./check.sh` / `.\check.ps1`)
+
 Typechecks `@novwrite/bridge`, `@novwrite/data-service`, and `@novwrite/web` with `svelte-check` and `tsc --noEmit`.
 
 ```bash
@@ -143,6 +149,7 @@ Phase 5: SvelteKit Diagnostic Typecheck
 ## 7. Documentation Standards
 
 All documentation contributions must adhere to **[`docs/DOCUMENTATION_STANDARDS.md`](docs/DOCUMENTATION_STANDARDS.md)**:
+
 - Zero AI buzzwords or hollow marketing language.
 - Zero lazy `// TODO` or `...` stubs in code examples.
 - All commands and routes must match real codebase implementations.

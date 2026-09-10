@@ -65,7 +65,7 @@ export default function CreateSceneScreen() {
       chapterId,
       finalTitle,
       tWords,
-      synopsis.trim()
+      synopsis.trim(),
     );
 
     if (status !== "DRAFT") {
@@ -95,9 +95,7 @@ export default function CreateSceneScreen() {
             <Text className="text-base font-bold text-zinc-100">
               Create Scene
             </Text>
-            <Text className="text-xs text-zinc-400">
-              Prose Authoring Unit
-            </Text>
+            <Text className="text-xs text-zinc-400">Prose Authoring Unit</Text>
           </View>
           <TouchableOpacity
             onPress={handleSave}

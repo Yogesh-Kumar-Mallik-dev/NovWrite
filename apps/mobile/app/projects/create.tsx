@@ -48,7 +48,8 @@ export default function CreateProjectScreen() {
       return;
     }
 
-    const finalGenre = (isCustomGenre ? customGenre : genre).trim() || "General Fiction";
+    const finalGenre =
+      (isCustomGenre ? customGenre : genre).trim() || "General Fiction";
 
     const newProject = mobileStore.createProject({
       name: finalName,

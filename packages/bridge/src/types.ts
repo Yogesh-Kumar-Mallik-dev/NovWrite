@@ -377,4 +377,3 @@ export interface AuthLoginResponse {
   user: UserAccount;
   expiresIn: number;
 }
-

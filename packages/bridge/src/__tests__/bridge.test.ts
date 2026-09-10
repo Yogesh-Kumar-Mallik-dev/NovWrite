@@ -284,7 +284,10 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     assert.strictEqual(applied.realm, "Core Formation");
     assert.strictEqual(applied.spiritual_energy, 3500);
     assert.strictEqual(applied.new_core_grade, "Golden Core");
-    assert.strictEqual((applied as Record<string, unknown>).obsolete_field, undefined);
+    assert.strictEqual(
+      (applied as Record<string, unknown>).obsolete_field,
+      undefined,
+    );
   });
 
   it("BLOCK_TEST_BRIDGE_001: should validate User, Admin, and Super Admin accounts and roles", () => {
@@ -333,4 +336,3 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     assert.strictEqual(parsedSuperAdmin.role, "SUPER_ADMIN");
   });
 });
-

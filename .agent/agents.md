@@ -25,6 +25,7 @@ Welcome, Agents! When working in this repository, you must adhere to the followi
      ```
 
      Examples: `feat(editor): implement markdown syntax parser`, `fix(auth): handle token expiration grace period`, `refactor(storage): streamline cache invalidation`.
+
    - **Signed Commits**: Always perform a `git commit -S -m "..."` immediately after completing any functional change, documentation update, or bug fix before passing control back to the user.
 6. **Package Manager Standard (pnpm Only)**:
    - Always use **pnpm** exclusively across the monorepo for workspace orchestration, dependency management, script execution, and tool execution (e.g. `pnpm install`, `pnpm --filter <pkg> <cmd>`, `pnpm dlx <tool>`).

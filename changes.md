@@ -98,11 +98,28 @@ timeline
                : Strict 10 AI Documentation Anti-Patterns Catalog & Prevention Rules
                : Open Source Repository Hygiene (CONTRIBUTING.md & SECURITY.md)
                : Full Code-Doc Parity Across Monorepo Architecture Specs
+    2026-09-10 : Version 2.10.1 (Mobile Bundler Node 22 ESM & CommonJS Resolution Fix)
+               : Explicit .cjs Extensions for Metro, Babel, and Tailwind Configs
+               : Zero-Crash ./dev.sh Universal Multi-Platform Orchestration
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.1] — 2026-09-10
+
+**Scope:** Mobile Expo Metro Bundler CommonJS Extension Migration under Node 22 ESM Environment  
+**Target Documents:** [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **Mobile Expo Metro Bundler CommonJS Config Extension Migration (`apps/mobile`):**
+  - Resolved `ReferenceError: require is not defined in ES module scope` failure in Node.js 22 when `@novwrite/mobile` declares `"type": "module"`.
+  - Migrated `metro.config.js`, `babel.config.js`, and `tailwind.config.js` to explicit `.cjs` extensions: [`apps/mobile/metro.config.cjs`](file:///home/yogesh/Projects/NovWrite/apps/mobile/metro.config.cjs), [`apps/mobile/babel.config.cjs`](file:///home/yogesh/Projects/NovWrite/apps/mobile/babel.config.cjs), and [`apps/mobile/tailwind.config.cjs`](file:///home/yogesh/Projects/NovWrite/apps/mobile/tailwind.config.cjs).
+  - Verified 100% Android JS bundle transformation and full 4-service development orchestration in [`./dev.sh`](file:///home/yogesh/Projects/NovWrite/dev.sh).
+
+---
 
 ### [Version 2.10] — 2026-09-09
 

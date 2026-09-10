@@ -1,4 +1,9 @@
-import React, { useSyncExternalStore, useState, useEffect, useRef } from "react";
+import React, {
+  useSyncExternalStore,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +16,11 @@ import {
 import { useRouter } from "expo-router";
 import { mobileStore } from "../../src/lib/mobileStore.ts";
 import { EmptyState } from "../../src/components/EmptyState.tsx";
-import type { ChapterItem, SceneItem, SceneStatus } from "../../src/lib/types.ts";
+import type {
+  ChapterItem,
+  SceneItem,
+  SceneStatus,
+} from "../../src/lib/types.ts";
 import {
   BookOpen,
   Edit3,
@@ -39,7 +48,7 @@ export default function NovelScreen() {
   const router = useRouter();
   const state = useSyncExternalStore(
     (cb) => mobileStore.subscribe(cb),
-    () => mobileStore.getState()
+    () => mobileStore.getState(),
   );
 
   const { width } = useWindowDimensions();
@@ -47,24 +56,35 @@ export default function NovelScreen() {
 
   const [activeTab, setActiveTab] = useState<ProseSubTab>("OVERVIEW");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
+  const [expandedChapters, setExpandedChapters] = useState<
+    Record<string, boolean>
+  >({});
 
   // Chapter Modals & State
   const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [chapterTitleInput, setChapterTitleInput] = useState("");
   const [chapterSynopsisInput, setChapterSynopsisInput] = useState("");
-  const [chapterToDelete, setChapterToDelete] = useState<{ id: string; title: string; sceneCount: number } | null>(null);
+  const [chapterToDelete, setChapterToDelete] = useState<{
+    id: string;
+    title: string;
+    sceneCount: number;
+  } | null>(null);
 
   // Scene Modals & State
   const [isSceneModalOpen, setIsSceneModalOpen] = useState(false);
   const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
-  const [targetChapterIdForScene, setTargetChapterIdForScene] = useState<string>("");
+  const [targetChapterIdForScene, setTargetChapterIdForScene] =
+    useState<string>("");
   const [sceneTitleInput, setSceneTitleInput] = useState("");
   const [sceneTargetWordsInput, setSceneTargetWordsInput] = useState("1500");
   const [sceneSynopsisInput, setSceneSynopsisInput] = useState("");
-  const [sceneStatusInput, setSceneStatusInput] = useState<SceneStatus>("DRAFT");
-  const [sceneToDelete, setSceneToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [sceneStatusInput, setSceneStatusInput] =
+    useState<SceneStatus>("DRAFT");
+  const [sceneToDelete, setSceneToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
 
   // Editor State
@@ -88,7 +108,8 @@ export default function NovelScreen() {
   const todayWords = state.todayWordsWritten;
   const dailyGoal = state.dailyWordGoal || 1000;
   const goalProgress = mobileStore.getDailyGoalProgress();
-  const avgSceneWords = totalScenes > 0 ? Math.round(totalWords / totalScenes) : 0;
+  const avgSceneWords =
+    totalScenes > 0 ? Math.round(totalWords / totalScenes) : 0;
 
   // Sync editor content when active scene changes
   useEffect(() => {
@@ -116,7 +137,9 @@ export default function NovelScreen() {
       if (activeScene) {
         mobileStore.updateSceneContent(activeScene.id, text);
         const now = new Date();
-        setAutoSaveMessage(`Saved at ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`);
+        setAutoSaveMessage(
+          `Saved at ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`,
+        );
       }
     }, 400);
   }
@@ -137,7 +160,11 @@ export default function NovelScreen() {
 
   function openCreateScene(chapId?: string) {
     const targetId = chapId || chapters[0]?.id || "";
-    router.push(targetId ? `/novel/scenes/create?chapterId=${targetId}` : "/novel/scenes/create");
+    router.push(
+      targetId
+        ? `/novel/scenes/create?chapterId=${targetId}`
+        : "/novel/scenes/create",
+    );
   }
 
   function openEditScene(sc: SceneItem) {
@@ -168,7 +195,14 @@ export default function NovelScreen() {
   // If no project is active, show the authoritative empty state
   if (!activeProject) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#09090b", padding: 16, justifyContent: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#09090b",
+          padding: 16,
+          justifyContent: "center",
+        }}
+      >
         <EmptyState
           icon={BookOpen}
           title="No Active Novel Project"
@@ -180,11 +214,16 @@ export default function NovelScreen() {
     );
   }
 
-  const editorWordCount = proseInputText.trim() ? proseInputText.trim().split(/\s+/).filter(Boolean).length : 0;
+  const editorWordCount = proseInputText.trim()
+    ? proseInputText.trim().split(/\s+/).filter(Boolean).length
+    : 0;
   const editorCharCount = proseInputText.length;
   const editorReadingTime = Math.max(1, Math.ceil(editorWordCount / 200));
   const editorTargetWords = activeScene?.targetWordCount || 1500;
-  const editorProgressPercent = Math.min(100, Math.round((editorWordCount / editorTargetWords) * 100));
+  const editorProgressPercent = Math.min(
+    100,
+    Math.round((editorWordCount / editorTargetWords) * 100),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#09090b" }}>
@@ -212,14 +251,29 @@ export default function NovelScreen() {
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 6,
-              backgroundColor: activeTab === "OVERVIEW" ? "rgba(124, 58, 237, 0.15)" : "transparent",
-              borderColor: activeTab === "OVERVIEW" ? "rgba(124, 58, 237, 0.4)" : "transparent",
+              backgroundColor:
+                activeTab === "OVERVIEW"
+                  ? "rgba(124, 58, 237, 0.15)"
+                  : "transparent",
+              borderColor:
+                activeTab === "OVERVIEW"
+                  ? "rgba(124, 58, 237, 0.4)"
+                  : "transparent",
               borderWidth: 1,
               minHeight: 36,
             }}
           >
-            <BookOpen size={14} color={activeTab === "OVERVIEW" ? "#7c3aed" : "#a1a1aa"} />
-            <Text style={{ color: activeTab === "OVERVIEW" ? "#7c3aed" : "#a1a1aa", fontSize: 12, fontWeight: activeTab === "OVERVIEW" ? "bold" : "500" }}>
+            <BookOpen
+              size={14}
+              color={activeTab === "OVERVIEW" ? "#7c3aed" : "#a1a1aa"}
+            />
+            <Text
+              style={{
+                color: activeTab === "OVERVIEW" ? "#7c3aed" : "#a1a1aa",
+                fontSize: 12,
+                fontWeight: activeTab === "OVERVIEW" ? "bold" : "500",
+              }}
+            >
               Overview
             </Text>
           </TouchableOpacity>
@@ -233,14 +287,29 @@ export default function NovelScreen() {
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 6,
-              backgroundColor: activeTab === "EDITOR" ? "rgba(124, 58, 237, 0.15)" : "transparent",
-              borderColor: activeTab === "EDITOR" ? "rgba(124, 58, 237, 0.4)" : "transparent",
+              backgroundColor:
+                activeTab === "EDITOR"
+                  ? "rgba(124, 58, 237, 0.15)"
+                  : "transparent",
+              borderColor:
+                activeTab === "EDITOR"
+                  ? "rgba(124, 58, 237, 0.4)"
+                  : "transparent",
               borderWidth: 1,
               minHeight: 36,
             }}
           >
-            <Edit3 size={14} color={activeTab === "EDITOR" ? "#7c3aed" : "#a1a1aa"} />
-            <Text style={{ color: activeTab === "EDITOR" ? "#7c3aed" : "#a1a1aa", fontSize: 12, fontWeight: activeTab === "EDITOR" ? "bold" : "500" }}>
+            <Edit3
+              size={14}
+              color={activeTab === "EDITOR" ? "#7c3aed" : "#a1a1aa"}
+            />
+            <Text
+              style={{
+                color: activeTab === "EDITOR" ? "#7c3aed" : "#a1a1aa",
+                fontSize: 12,
+                fontWeight: activeTab === "EDITOR" ? "bold" : "500",
+              }}
+            >
               Canvas Editor
             </Text>
           </TouchableOpacity>
@@ -254,14 +323,29 @@ export default function NovelScreen() {
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 6,
-              backgroundColor: activeTab === "OUTLINE" ? "rgba(124, 58, 237, 0.15)" : "transparent",
-              borderColor: activeTab === "OUTLINE" ? "rgba(124, 58, 237, 0.4)" : "transparent",
+              backgroundColor:
+                activeTab === "OUTLINE"
+                  ? "rgba(124, 58, 237, 0.15)"
+                  : "transparent",
+              borderColor:
+                activeTab === "OUTLINE"
+                  ? "rgba(124, 58, 237, 0.4)"
+                  : "transparent",
               borderWidth: 1,
               minHeight: 36,
             }}
           >
-            <ListTree size={14} color={activeTab === "OUTLINE" ? "#7c3aed" : "#a1a1aa"} />
-            <Text style={{ color: activeTab === "OUTLINE" ? "#7c3aed" : "#a1a1aa", fontSize: 12, fontWeight: activeTab === "OUTLINE" ? "bold" : "500" }}>
+            <ListTree
+              size={14}
+              color={activeTab === "OUTLINE" ? "#7c3aed" : "#a1a1aa"}
+            />
+            <Text
+              style={{
+                color: activeTab === "OUTLINE" ? "#7c3aed" : "#a1a1aa",
+                fontSize: 12,
+                fontWeight: activeTab === "OUTLINE" ? "bold" : "500",
+              }}
+            >
               Outline
             </Text>
           </TouchableOpacity>
@@ -275,14 +359,29 @@ export default function NovelScreen() {
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 6,
-              backgroundColor: activeTab === "STATS" ? "rgba(124, 58, 237, 0.15)" : "transparent",
-              borderColor: activeTab === "STATS" ? "rgba(124, 58, 237, 0.4)" : "transparent",
+              backgroundColor:
+                activeTab === "STATS"
+                  ? "rgba(124, 58, 237, 0.15)"
+                  : "transparent",
+              borderColor:
+                activeTab === "STATS"
+                  ? "rgba(124, 58, 237, 0.4)"
+                  : "transparent",
               borderWidth: 1,
               minHeight: 36,
             }}
           >
-            <BarChart3 size={14} color={activeTab === "STATS" ? "#7c3aed" : "#a1a1aa"} />
-            <Text style={{ color: activeTab === "STATS" ? "#7c3aed" : "#a1a1aa", fontSize: 12, fontWeight: activeTab === "STATS" ? "bold" : "500" }}>
+            <BarChart3
+              size={14}
+              color={activeTab === "STATS" ? "#7c3aed" : "#a1a1aa"}
+            />
+            <Text
+              style={{
+                color: activeTab === "STATS" ? "#7c3aed" : "#a1a1aa",
+                fontSize: 12,
+                fontWeight: activeTab === "STATS" ? "bold" : "500",
+              }}
+            >
               Writing Telemetry
             </Text>
           </TouchableOpacity>
@@ -308,7 +407,13 @@ export default function NovelScreen() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <View
                 style={{
                   flexDirection: "row",
@@ -323,25 +428,43 @@ export default function NovelScreen() {
                 }}
               >
                 <Sparkles size={12} color="#7c3aed" />
-                <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>
+                <Text
+                  style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}
+                >
                   {activeProject.genre || "Creative Fiction"}
                 </Text>
               </View>
               <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
-                Created on {activeProject.createdAt ? new Date(activeProject.createdAt).toLocaleDateString() : "Recent"}
+                Created on{" "}
+                {activeProject.createdAt
+                  ? new Date(activeProject.createdAt).toLocaleDateString()
+                  : "Recent"}
               </Text>
             </View>
 
-            <Text style={{ color: "#fafafa", fontSize: isTabletOrWide ? 22 : 18, fontWeight: "bold" }}>
+            <Text
+              style={{
+                color: "#fafafa",
+                fontSize: isTabletOrWide ? 22 : 18,
+                fontWeight: "bold",
+              }}
+            >
               {activeProject.name || "Untitled Novel"}
             </Text>
 
             <Text style={{ color: "#a1a1aa", fontSize: 13, lineHeight: 18 }}>
-              {activeProject.description || "No universe synopsis provided yet. Define your world canon and write captivating prose."}
+              {activeProject.description ||
+                "No universe synopsis provided yet. Define your world canon and write captivating prose."}
             </Text>
 
             {/* Quick Action Buttons Tray */}
-            <View style={{ flexDirection: isTabletOrWide ? "row" : "column", gap: 8, paddingTop: 4 }}>
+            <View
+              style={{
+                flexDirection: isTabletOrWide ? "row" : "column",
+                gap: 8,
+                paddingTop: 4,
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setActiveTab("EDITOR")}
                 style={{
@@ -357,7 +480,11 @@ export default function NovelScreen() {
                 }}
               >
                 <Edit3 size={15} color="#ffffff" />
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Open Canvas Editor</Text>
+                <Text
+                  style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}
+                >
+                  Open Canvas Editor
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={openCreateChapter}
@@ -377,7 +504,11 @@ export default function NovelScreen() {
                 }}
               >
                 <Plus size={15} color="#7c3aed" />
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "bold" }}>New Chapter</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "bold" }}
+                >
+                  New Chapter
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -393,26 +524,103 @@ export default function NovelScreen() {
               }}
             >
               <View style={{ alignItems: "center", flex: 1 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Total Words</Text>
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold", marginTop: 2 }}>{totalWords.toLocaleString()}</Text>
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Total Words
+                </Text>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    marginTop: 2,
+                  }}
+                >
+                  {totalWords.toLocaleString()}
+                </Text>
               </View>
               <View style={{ alignItems: "center", flex: 1 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Chapters</Text>
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold", marginTop: 2 }}>{totalChapters}</Text>
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Chapters
+                </Text>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    marginTop: 2,
+                  }}
+                >
+                  {totalChapters}
+                </Text>
               </View>
               <View style={{ alignItems: "center", flex: 1 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Scenes</Text>
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold", marginTop: 2 }}>{totalScenes}</Text>
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Scenes
+                </Text>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    marginTop: 2,
+                  }}
+                >
+                  {totalScenes}
+                </Text>
               </View>
               <View style={{ alignItems: "center", flex: 1 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Est. Read Time</Text>
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold", marginTop: 2 }}>{readingTimeMin} min</Text>
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Est. Read Time
+                </Text>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    marginTop: 2,
+                  }}
+                >
+                  {readingTimeMin} min
+                </Text>
               </View>
             </View>
           </View>
 
           {/* Studio Quick Navigation Cards (Faithfully Recreated from web novel/+page.svelte) */}
-          <View style={{ gap: 12, flexDirection: isTabletOrWide ? "row" : "column" }}>
+          <View
+            style={{
+              gap: 12,
+              flexDirection: isTabletOrWide ? "row" : "column",
+            }}
+          >
             <TouchableOpacity
               onPress={() => setActiveTab("EDITOR")}
               style={{
@@ -427,16 +635,45 @@ export default function NovelScreen() {
               }}
             >
               <View style={{ gap: 8 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "rgba(124, 58, 237, 0.12)", alignItems: "center", justifyContent: "center" }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    backgroundColor: "rgba(124, 58, 237, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Edit3 size={18} color="#7c3aed" />
                 </View>
-                <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}>Canvas Prose Editor</Text>
-                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
-                  Distraction-free canvas with live word counts, entity mention autocomplete, and real-time auto-saving.
+                <Text
+                  style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}
+                >
+                  Canvas Prose Editor
+                </Text>
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}
+                >
+                  Distraction-free canvas with live word counts, entity mention
+                  autocomplete, and real-time auto-saving.
                 </Text>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 8 }}>
-                <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>Enter Canvas</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  borderTopWidth: 1,
+                  borderTopColor: "#27272a",
+                  paddingTop: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}
+                >
+                  Enter Canvas
+                </Text>
                 <ChevronRight size={14} color="#7c3aed" />
               </View>
             </TouchableOpacity>
@@ -455,16 +692,45 @@ export default function NovelScreen() {
               }}
             >
               <View style={{ gap: 8 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "rgba(124, 58, 237, 0.12)", alignItems: "center", justifyContent: "center" }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    backgroundColor: "rgba(124, 58, 237, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <ListTree size={18} color="#7c3aed" />
                 </View>
-                <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}>Manuscript Outline</Text>
-                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
-                  Architect acts, chapters, and scene beats. Reorder plot threads and map causal timeline sequences.
+                <Text
+                  style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}
+                >
+                  Manuscript Outline
+                </Text>
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}
+                >
+                  Architect acts, chapters, and scene beats. Reorder plot
+                  threads and map causal timeline sequences.
                 </Text>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 8 }}>
-                <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>View Outline</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  borderTopWidth: 1,
+                  borderTopColor: "#27272a",
+                  paddingTop: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}
+                >
+                  View Outline
+                </Text>
                 <ChevronRight size={14} color="#7c3aed" />
               </View>
             </TouchableOpacity>
@@ -483,16 +749,45 @@ export default function NovelScreen() {
               }}
             >
               <View style={{ gap: 8 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: "rgba(124, 58, 237, 0.12)", alignItems: "center", justifyContent: "center" }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    backgroundColor: "rgba(124, 58, 237, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <BarChart3 size={18} color="#7c3aed" />
                 </View>
-                <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}>Writing Telemetry</Text>
-                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
-                  Monitor writing output, daily word milestones, pacing distribution, and manuscript velocity metrics.
+                <Text
+                  style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}
+                >
+                  Writing Telemetry
+                </Text>
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}
+                >
+                  Monitor writing output, daily word milestones, pacing
+                  distribution, and manuscript velocity metrics.
                 </Text>
               </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 8 }}>
-                <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>Open Analytics</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  borderTopWidth: 1,
+                  borderTopColor: "#27272a",
+                  paddingTop: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}
+                >
+                  Open Analytics
+                </Text>
                 <ChevronRight size={14} color="#7c3aed" />
               </View>
             </TouchableOpacity>
@@ -509,13 +804,29 @@ export default function NovelScreen() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
                 <BookOpen size={16} color="#7c3aed" />
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Manuscript Chapters</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+                >
+                  Manuscript Chapters
+                </Text>
               </View>
               <TouchableOpacity onPress={openCreateChapter}>
-                <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>+ Add Chapter</Text>
+                <Text
+                  style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}
+                >
+                  + Add Chapter
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -531,7 +842,10 @@ export default function NovelScreen() {
               <View style={{ gap: 8 }}>
                 {chapters.map((chapter, idx) => {
                   const scenes = mobileStore.getScenesForChapter(chapter.id);
-                  const chapterWords = scenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
+                  const chapterWords = scenes.reduce(
+                    (acc, s) => acc + (s.wordCount || 0),
+                    0,
+                  );
                   return (
                     <View
                       key={chapter.id}
@@ -544,14 +858,45 @@ export default function NovelScreen() {
                         gap: 8,
                       }}
                     >
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
                         <View style={{ flex: 1, gap: 2 }}>
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>#{idx + 1}</Text>
-                            <Text style={{ color: "#fafafa", fontSize: 14, fontWeight: "bold" }}>{chapter.title}</Text>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "#7c3aed",
+                                fontSize: 11,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              #{idx + 1}
+                            </Text>
+                            <Text
+                              style={{
+                                color: "#fafafa",
+                                fontSize: 14,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {chapter.title}
+                            </Text>
                           </View>
                           {chapter.synopsis ? (
-                            <Text style={{ color: "#a1a1aa", fontSize: 12 }} numberOfLines={1}>
+                            <Text
+                              style={{ color: "#a1a1aa", fontSize: 12 }}
+                              numberOfLines={1}
+                            >
                               {chapter.synopsis}
                             </Text>
                           ) : null}
@@ -568,14 +913,36 @@ export default function NovelScreen() {
                             borderRadius: 6,
                           }}
                         >
-                          <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "600" }}>Open in Editor</Text>
+                          <Text
+                            style={{
+                              color: "#fafafa",
+                              fontSize: 11,
+                              fontWeight: "600",
+                            }}
+                          >
+                            Open in Editor
+                          </Text>
                         </TouchableOpacity>
                       </View>
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "#27272a", paddingTop: 6 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          borderTopWidth: 1,
+                          borderTopColor: "#27272a",
+                          paddingTop: 6,
+                        }}
+                      >
                         <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
                           {scenes.length} scene{scenes.length === 1 ? "" : "s"}
                         </Text>
-                        <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "bold" }}>
+                        <Text
+                          style={{
+                            color: "#fafafa",
+                            fontSize: 11,
+                            fontWeight: "bold",
+                          }}
+                        >
                           {chapterWords.toLocaleString()} words
                         </Text>
                       </View>
@@ -607,7 +974,14 @@ export default function NovelScreen() {
               gap: 8,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                flex: 1,
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setIsSidebarOpen(!isSidebarOpen)}
                 style={{ padding: 4 }}
@@ -615,13 +989,26 @@ export default function NovelScreen() {
               >
                 <List size={18} color="#a1a1aa" />
               </TouchableOpacity>
-              <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "bold", flex: 1 }} numberOfLines={1}>
-                {activeChapter ? `${activeChapter.title} / ` : ""}{activeScene?.title || "No Scene Selected"}
+              <Text
+                style={{
+                  color: "#fafafa",
+                  fontSize: 13,
+                  fontWeight: "bold",
+                  flex: 1,
+                }}
+                numberOfLines={1}
+              >
+                {activeChapter ? `${activeChapter.title} / ` : ""}
+                {activeScene?.title || "No Scene Selected"}
               </Text>
             </View>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
+              <Text
+                style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}
+              >
                 {editorWordCount}w · {editorReadingTime}m
               </Text>
 
@@ -649,13 +1036,19 @@ export default function NovelScreen() {
                         activeScene.status === "COMPLETED"
                           ? "#22c55e"
                           : activeScene.status === "REVISED"
-                          ? "#3b82f6"
-                          : activeScene.status === "IN_PROGRESS"
-                          ? "#f59e0b"
-                          : "#a1a1aa",
+                            ? "#3b82f6"
+                            : activeScene.status === "IN_PROGRESS"
+                              ? "#f59e0b"
+                              : "#a1a1aa",
                     }}
                   />
-                  <Text style={{ color: "#fafafa", fontSize: 10, fontWeight: "bold" }}>
+                  <Text
+                    style={{
+                      color: "#fafafa",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                    }}
+                  >
                     {activeScene.status}
                   </Text>
                 </TouchableOpacity>
@@ -664,7 +1057,12 @@ export default function NovelScreen() {
           </View>
 
           {/* Editor Workspace Split View */}
-          <View style={{ flex: 1, flexDirection: isTabletOrWide ? "row" : "column" }}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: isTabletOrWide ? "row" : "column",
+            }}
+          >
             {/* Manuscript Tree Drawer / Panel */}
             {isSidebarOpen && (
               <View
@@ -679,12 +1077,33 @@ export default function NovelScreen() {
                   gap: 8,
                 }}
               >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text style={{ color: "#a1a1aa", fontSize: 10, fontWeight: "bold", textTransform: "uppercase" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#a1a1aa",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Manuscript Scenes
                   </Text>
                   <TouchableOpacity onPress={() => openCreateScene()}>
-                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>+ Scene</Text>
+                    <Text
+                      style={{
+                        color: "#7c3aed",
+                        fontSize: 11,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      + Scene
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
@@ -695,14 +1114,29 @@ export default function NovelScreen() {
                 >
                   {chapters.length === 0 ? (
                     <TouchableOpacity onPress={openCreateChapter}>
-                      <Text style={{ color: "#7c3aed", fontSize: 12 }}>+ Create Chapter 1</Text>
+                      <Text style={{ color: "#7c3aed", fontSize: 12 }}>
+                        + Create Chapter 1
+                      </Text>
                     </TouchableOpacity>
                   ) : (
                     chapters.map((ch) => {
                       const chScenes = mobileStore.getScenesForChapter(ch.id);
                       return (
-                        <View key={ch.id} style={{ gap: 4, minWidth: isTabletOrWide ? undefined : 140 }}>
-                          <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "bold" }} numberOfLines={1}>
+                        <View
+                          key={ch.id}
+                          style={{
+                            gap: 4,
+                            minWidth: isTabletOrWide ? undefined : 140,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#a1a1aa",
+                              fontSize: 11,
+                              fontWeight: "bold",
+                            }}
+                            numberOfLines={1}
+                          >
                             {ch.title}
                           </Text>
                           {chScenes.map((sc) => {
@@ -718,9 +1152,13 @@ export default function NovelScreen() {
                                   paddingHorizontal: 8,
                                   paddingVertical: 6,
                                   borderRadius: 6,
-                                  backgroundColor: isSelected ? "#7c3aed" : "#1e1e24",
+                                  backgroundColor: isSelected
+                                    ? "#7c3aed"
+                                    : "#1e1e24",
                                   borderWidth: 1,
-                                  borderColor: isSelected ? "#7c3aed" : "#27272a",
+                                  borderColor: isSelected
+                                    ? "#7c3aed"
+                                    : "#27272a",
                                 }}
                               >
                                 <Text
@@ -733,7 +1171,14 @@ export default function NovelScreen() {
                                 >
                                   {sc.title}
                                 </Text>
-                                <Text style={{ color: isSelected ? "rgba(255,255,255,0.8)" : "#a1a1aa", fontSize: 10 }}>
+                                <Text
+                                  style={{
+                                    color: isSelected
+                                      ? "rgba(255,255,255,0.8)"
+                                      : "#a1a1aa",
+                                    fontSize: 10,
+                                  }}
+                                >
                                   {sc.wordCount} words
                                 </Text>
                               </TouchableOpacity>
@@ -748,7 +1193,9 @@ export default function NovelScreen() {
             )}
 
             {/* Prose Canvas Center */}
-            <View style={{ flex: 1, padding: isTabletOrWide ? 20 : 12, gap: 10 }}>
+            <View
+              style={{ flex: 1, padding: isTabletOrWide ? 20 : 12, gap: 10 }}
+            >
               {!activeScene ? (
                 <EmptyState
                   icon={Edit3}
@@ -762,7 +1209,9 @@ export default function NovelScreen() {
                   {/* Scene Title Input */}
                   <TextInput
                     value={activeScene.title}
-                    onChangeText={(t) => mobileStore.updateScene(activeScene.id, { title: t })}
+                    onChangeText={(t) =>
+                      mobileStore.updateScene(activeScene.id, { title: t })
+                    }
                     placeholder="Scene Title..."
                     placeholderTextColor="#71717a"
                     style={{
@@ -777,14 +1226,35 @@ export default function NovelScreen() {
 
                   {/* Target Progress Bar */}
                   <View style={{ gap: 4 }}>
-                    <View style={{ height: 4, backgroundColor: "#27272a", borderRadius: 999, overflow: "hidden" }}>
-                      <View style={{ width: `${editorProgressPercent}%`, height: "100%", backgroundColor: "#7c3aed" }} />
+                    <View
+                      style={{
+                        height: 4,
+                        backgroundColor: "#27272a",
+                        borderRadius: 999,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: `${editorProgressPercent}%`,
+                          height: "100%",
+                          backgroundColor: "#7c3aed",
+                        }}
+                      />
                     </View>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Text style={{ color: "#a1a1aa", fontSize: 10 }}>
-                        {editorWordCount} / {editorTargetWords} words ({editorProgressPercent}%)
+                        {editorWordCount} / {editorTargetWords} words (
+                        {editorProgressPercent}%)
                       </Text>
-                      <Text style={{ color: "#a1a1aa", fontSize: 10 }}>{autoSaveMessage}</Text>
+                      <Text style={{ color: "#a1a1aa", fontSize: 10 }}>
+                        {autoSaveMessage}
+                      </Text>
                     </View>
                   </View>
 
@@ -820,11 +1290,22 @@ export default function NovelScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={{ padding: isTabletOrWide ? 24 : 16, gap: 14 }}
         >
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <View style={{ gap: 2 }}>
-              <Text style={{ color: "#fafafa", fontSize: 18, fontWeight: "bold" }}>Manuscript Outline</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 18, fontWeight: "bold" }}
+              >
+                Manuscript Outline
+              </Text>
               <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
-                Structure your narrative arcs, sequence scenes, and track progression across chapters.
+                Structure your narrative arcs, sequence scenes, and track
+                progression across chapters.
               </Text>
             </View>
             <TouchableOpacity
@@ -841,7 +1322,11 @@ export default function NovelScreen() {
               }}
             >
               <Plus size={14} color="#ffffff" />
-              <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}>Add Chapter</Text>
+              <Text
+                style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}
+              >
+                Add Chapter
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -858,7 +1343,10 @@ export default function NovelScreen() {
               {chapters.map((chapter, cIdx) => {
                 const scenes = mobileStore.getScenesForChapter(chapter.id);
                 const isExpanded = expandedChapters[chapter.id] ?? true;
-                const chapterWordCount = scenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
+                const chapterWordCount = scenes.reduce(
+                  (acc, s) => acc + (s.wordCount || 0),
+                  0,
+                );
 
                 return (
                   <View
@@ -884,40 +1372,99 @@ export default function NovelScreen() {
                     >
                       <TouchableOpacity
                         onPress={() => toggleChapterExpand(chapter.id)}
-                        style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 8,
+                          flex: 1,
+                        }}
                       >
-                        {isExpanded ? <ChevronDown size={16} color="#a1a1aa" /> : <ChevronRight size={16} color="#a1a1aa" />}
+                        {isExpanded ? (
+                          <ChevronDown size={16} color="#a1a1aa" />
+                        ) : (
+                          <ChevronRight size={16} color="#a1a1aa" />
+                        )}
                         <View style={{ flex: 1, gap: 2 }}>
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>Chapter {cIdx + 1}</Text>
-                            <Text style={{ color: "#fafafa", fontSize: 15, fontWeight: "bold" }}>{chapter.title}</Text>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "#7c3aed",
+                                fontSize: 12,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              Chapter {cIdx + 1}
+                            </Text>
+                            <Text
+                              style={{
+                                color: "#fafafa",
+                                fontSize: 15,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {chapter.title}
+                            </Text>
                           </View>
                           {chapter.synopsis ? (
-                            <Text style={{ color: "#a1a1aa", fontSize: 12 }} numberOfLines={1}>{chapter.synopsis}</Text>
+                            <Text
+                              style={{ color: "#a1a1aa", fontSize: 12 }}
+                              numberOfLines={1}
+                            >
+                              {chapter.synopsis}
+                            </Text>
                           ) : null}
                         </View>
                       </TouchableOpacity>
 
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
                         <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
-                          {scenes.length} scenes · {chapterWordCount.toLocaleString()}w
+                          {scenes.length} scenes ·{" "}
+                          {chapterWordCount.toLocaleString()}w
                         </Text>
                         <TouchableOpacity
                           onPress={() => openEditChapter(chapter)}
-                          style={{ backgroundColor: "#1e1e24", borderColor: "#27272a", borderWidth: 1, padding: 6, borderRadius: 6 }}
+                          style={{
+                            backgroundColor: "#1e1e24",
+                            borderColor: "#27272a",
+                            borderWidth: 1,
+                            padding: 6,
+                            borderRadius: 6,
+                          }}
                           accessibilityLabel="Edit Chapter Details"
                         >
                           <Pencil size={13} color="#a1a1aa" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => openCreateScene(chapter.id)}
-                          style={{ backgroundColor: "rgba(124, 58, 237, 0.15)", padding: 6, borderRadius: 6 }}
+                          style={{
+                            backgroundColor: "rgba(124, 58, 237, 0.15)",
+                            padding: 6,
+                            borderRadius: 6,
+                          }}
                           accessibilityLabel="Add Scene to Chapter"
                         >
                           <Plus size={14} color="#7c3aed" />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => setChapterToDelete({ id: chapter.id, title: chapter.title, sceneCount: scenes.length })}
+                          onPress={() =>
+                            setChapterToDelete({
+                              id: chapter.id,
+                              title: chapter.title,
+                              sceneCount: scenes.length,
+                            })
+                          }
                           style={{ padding: 6 }}
                           accessibilityLabel="Delete Chapter"
                         >
@@ -928,12 +1475,31 @@ export default function NovelScreen() {
 
                     {/* Scenes inside Chapter */}
                     {isExpanded && (
-                      <View style={{ padding: 12, gap: 8, backgroundColor: "#09090b" }}>
+                      <View
+                        style={{
+                          padding: 12,
+                          gap: 8,
+                          backgroundColor: "#09090b",
+                        }}
+                      >
                         {scenes.length === 0 ? (
                           <View style={{ padding: 12, alignItems: "center" }}>
-                            <Text style={{ color: "#a1a1aa", fontSize: 12 }}>No scenes in this chapter yet.</Text>
-                            <TouchableOpacity onPress={() => openCreateScene(chapter.id)} style={{ marginTop: 4 }}>
-                              <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>+ Add first scene</Text>
+                            <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                              No scenes in this chapter yet.
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => openCreateScene(chapter.id)}
+                              style={{ marginTop: 4 }}
+                            >
+                              <Text
+                                style={{
+                                  color: "#7c3aed",
+                                  fontSize: 12,
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                + Add first scene
+                              </Text>
                             </TouchableOpacity>
                           </View>
                         ) : (
@@ -949,27 +1515,47 @@ export default function NovelScreen() {
                                 gap: 6,
                               }}
                             >
-                              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                                <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>Scene #{sIdx + 1}</Text>
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    color: "#a1a1aa",
+                                    fontSize: 11,
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  Scene #{sIdx + 1}
+                                </Text>
                                 <TouchableOpacity
                                   onPress={() => {
-                                    const nextStatus: Record<SceneStatus, SceneStatus> = {
+                                    const nextStatus: Record<
+                                      SceneStatus,
+                                      SceneStatus
+                                    > = {
                                       DRAFT: "IN_PROGRESS",
                                       IN_PROGRESS: "REVISED",
                                       REVISED: "COMPLETED",
                                       COMPLETED: "DRAFT",
                                     };
-                                    mobileStore.updateScene(scene.id, { status: nextStatus[scene.status] || "DRAFT" });
+                                    mobileStore.updateScene(scene.id, {
+                                      status:
+                                        nextStatus[scene.status] || "DRAFT",
+                                    });
                                   }}
                                   style={{
                                     backgroundColor:
                                       scene.status === "COMPLETED"
                                         ? "rgba(34, 197, 94, 0.15)"
                                         : scene.status === "REVISED"
-                                        ? "rgba(59, 130, 246, 0.15)"
-                                        : scene.status === "IN_PROGRESS"
-                                        ? "rgba(245, 158, 11, 0.15)"
-                                        : "rgba(255, 255, 255, 0.08)",
+                                          ? "rgba(59, 130, 246, 0.15)"
+                                          : scene.status === "IN_PROGRESS"
+                                            ? "rgba(245, 158, 11, 0.15)"
+                                            : "rgba(255, 255, 255, 0.08)",
                                     paddingHorizontal: 6,
                                     paddingVertical: 2,
                                     borderRadius: 4,
@@ -981,10 +1567,10 @@ export default function NovelScreen() {
                                         scene.status === "COMPLETED"
                                           ? "#22c55e"
                                           : scene.status === "REVISED"
-                                          ? "#3b82f6"
-                                          : scene.status === "IN_PROGRESS"
-                                          ? "#f59e0b"
-                                          : "#a1a1aa",
+                                            ? "#3b82f6"
+                                            : scene.status === "IN_PROGRESS"
+                                              ? "#f59e0b"
+                                              : "#a1a1aa",
                                       fontSize: 10,
                                       fontWeight: "bold",
                                     }}
@@ -994,16 +1580,46 @@ export default function NovelScreen() {
                                 </TouchableOpacity>
                               </View>
 
-                              <Text style={{ color: "#fafafa", fontSize: 14, fontWeight: "bold" }}>{scene.title}</Text>
+                              <Text
+                                style={{
+                                  color: "#fafafa",
+                                  fontSize: 14,
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {scene.title}
+                              </Text>
                               {scene.synopsis ? (
-                                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>{scene.synopsis}</Text>
+                                <Text
+                                  style={{ color: "#a1a1aa", fontSize: 12 }}
+                                >
+                                  {scene.synopsis}
+                                </Text>
                               ) : null}
 
-                              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: "#1e1e24", paddingTop: 8 }}>
-                                <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
-                                  {scene.wordCount} / {scene.targetWordCount || 1500} words
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  borderTopWidth: 1,
+                                  borderTopColor: "#1e1e24",
+                                  paddingTop: 8,
+                                }}
+                              >
+                                <Text
+                                  style={{ color: "#a1a1aa", fontSize: 11 }}
+                                >
+                                  {scene.wordCount} /{" "}
+                                  {scene.targetWordCount || 1500} words
                                 </Text>
-                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    gap: 6,
+                                  }}
+                                >
                                   <TouchableOpacity
                                     onPress={() => openEditScene(scene)}
                                     style={{ padding: 4 }}
@@ -1016,13 +1632,35 @@ export default function NovelScreen() {
                                       mobileStore.selectScene(scene.id);
                                       setActiveTab("EDITOR");
                                     }}
-                                    style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(124, 58, 237, 0.15)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
+                                    style={{
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      gap: 2,
+                                      backgroundColor:
+                                        "rgba(124, 58, 237, 0.15)",
+                                      paddingHorizontal: 8,
+                                      paddingVertical: 4,
+                                      borderRadius: 4,
+                                    }}
                                   >
                                     <Edit3 size={12} color="#7c3aed" />
-                                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>Write</Text>
+                                    <Text
+                                      style={{
+                                        color: "#7c3aed",
+                                        fontSize: 11,
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      Write
+                                    </Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity
-                                    onPress={() => setSceneToDelete({ id: scene.id, title: scene.title })}
+                                    onPress={() =>
+                                      setSceneToDelete({
+                                        id: scene.id,
+                                        title: scene.title,
+                                      })
+                                    }
                                     style={{ padding: 4 }}
                                     accessibilityLabel="Delete Scene"
                                   >
@@ -1052,48 +1690,181 @@ export default function NovelScreen() {
           contentContainerStyle={{ padding: isTabletOrWide ? 24 : 16, gap: 16 }}
         >
           <View style={{ gap: 2 }}>
-            <Text style={{ color: "#fafafa", fontSize: 18, fontWeight: "bold" }}>Writing Telemetry & Analytics</Text>
+            <Text
+              style={{ color: "#fafafa", fontSize: 18, fontWeight: "bold" }}
+            >
+              Writing Telemetry & Analytics
+            </Text>
             <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
-              Live productivity telemetry, chapter word distributions, and pacing velocity.
+              Live productivity telemetry, chapter word distributions, and
+              pacing velocity.
             </Text>
           </View>
 
           {/* Key Telemetry Metrics Grid */}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-            <View style={{ flex: 1, minWidth: 140, backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 10, padding: 14, gap: 4 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Total Manuscript</Text>
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: "#121215",
+                borderColor: "#27272a",
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 14,
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Total Manuscript
+                </Text>
                 <FileText size={14} color="#7c3aed" />
               </View>
-              <Text style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}>{totalWords.toLocaleString()}</Text>
-              <Text style={{ color: "#71717a", fontSize: 11 }}>{totalChapters} chapters · {totalScenes} scenes</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}
+              >
+                {totalWords.toLocaleString()}
+              </Text>
+              <Text style={{ color: "#71717a", fontSize: 11 }}>
+                {totalChapters} chapters · {totalScenes} scenes
+              </Text>
             </View>
 
-            <View style={{ flex: 1, minWidth: 140, backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 10, padding: 14, gap: 4 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Today's Output</Text>
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: "#121215",
+                borderColor: "#27272a",
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 14,
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Today's Output
+                </Text>
                 <Flame size={14} color="#f59e0b" />
               </View>
-              <Text style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}>{todayWords.toLocaleString()}</Text>
-              <Text style={{ color: "#71717a", fontSize: 11 }}>Goal: {dailyGoal.toLocaleString()}w ({goalProgress}%)</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}
+              >
+                {todayWords.toLocaleString()}
+              </Text>
+              <Text style={{ color: "#71717a", fontSize: 11 }}>
+                Goal: {dailyGoal.toLocaleString()}w ({goalProgress}%)
+              </Text>
             </View>
 
-            <View style={{ flex: 1, minWidth: 140, backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 10, padding: 14, gap: 4 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Avg Scene Density</Text>
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: "#121215",
+                borderColor: "#27272a",
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 14,
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Avg Scene Density
+                </Text>
                 <TrendingUp size={14} color="#10b981" />
               </View>
-              <Text style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}>{avgSceneWords.toLocaleString()}</Text>
-              <Text style={{ color: "#71717a", fontSize: 11 }}>words per scene avg</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}
+              >
+                {avgSceneWords.toLocaleString()}
+              </Text>
+              <Text style={{ color: "#71717a", fontSize: 11 }}>
+                words per scene avg
+              </Text>
             </View>
 
-            <View style={{ flex: 1, minWidth: 140, backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 10, padding: 14, gap: 4 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 10, textTransform: "uppercase", fontWeight: "bold" }}>Reading Duration</Text>
+            <View
+              style={{
+                flex: 1,
+                minWidth: 140,
+                backgroundColor: "#121215",
+                borderColor: "#27272a",
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 14,
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#a1a1aa",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Reading Duration
+                </Text>
                 <Clock size={14} color="#3b82f6" />
               </View>
-              <Text style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}>{readingTimeHours} hrs</Text>
-              <Text style={{ color: "#71717a", fontSize: 11 }}>at standard 200 wpm</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 22, fontWeight: "bold" }}
+              >
+                {readingTimeHours} hrs
+              </Text>
+              <Text style={{ color: "#71717a", fontSize: 11 }}>
+                at standard 200 wpm
+              </Text>
             </View>
           </View>
 
@@ -1108,35 +1879,96 @@ export default function NovelScreen() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
                 <Target size={16} color="#7c3aed" />
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Daily Writing Target</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+                >
+                  Daily Writing Target
+                </Text>
               </View>
               {!isEditingGoal ? (
                 <TouchableOpacity onPress={() => setIsEditingGoal(true)}>
-                  <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>Change Goal ({dailyGoal}w)</Text>
+                  <Text
+                    style={{
+                      color: "#7c3aed",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Change Goal ({dailyGoal}w)
+                  </Text>
                 </TouchableOpacity>
               ) : (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                >
                   <TextInput
                     value={goalInputValue}
                     onChangeText={setGoalInputValue}
                     keyboardType="numeric"
-                    style={{ backgroundColor: "#09090b", color: "#fafafa", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, width: 60, fontSize: 12 }}
+                    style={{
+                      backgroundColor: "#09090b",
+                      color: "#fafafa",
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 4,
+                      width: 60,
+                      fontSize: 12,
+                    }}
                   />
-                  <TouchableOpacity onPress={handleSaveGoal} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
-                    <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "bold" }}>Save</Text>
+                  <TouchableOpacity
+                    onPress={handleSaveGoal}
+                    style={{
+                      backgroundColor: "#7c3aed",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#ffffff",
+                        fontSize: 11,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Save
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
 
-            <View style={{ height: 10, backgroundColor: "#27272a", borderRadius: 999, overflow: "hidden" }}>
-              <View style={{ width: `${goalProgress}%`, height: "100%", backgroundColor: "#7c3aed" }} />
+            <View
+              style={{
+                height: 10,
+                backgroundColor: "#27272a",
+                borderRadius: 999,
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  width: `${goalProgress}%`,
+                  height: "100%",
+                  backgroundColor: "#7c3aed",
+                }}
+              />
             </View>
 
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
               <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
                 {todayWords.toLocaleString()} words completed today
               </Text>
@@ -1157,24 +1989,52 @@ export default function NovelScreen() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
                 <BookOpen size={16} color="#7c3aed" />
-                <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Chapter Word Distribution</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+                >
+                  Chapter Word Distribution
+                </Text>
               </View>
-              <Text style={{ color: "#a1a1aa", fontSize: 12 }}>{chapters.length} chapters total</Text>
+              <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                {chapters.length} chapters total
+              </Text>
             </View>
 
             {chapters.length === 0 ? (
-              <Text style={{ color: "#a1a1aa", fontSize: 12, textAlign: "center", paddingVertical: 12 }}>
-                No chapter data available. Create chapters in your manuscript to view distribution charts.
+              <Text
+                style={{
+                  color: "#a1a1aa",
+                  fontSize: 12,
+                  textAlign: "center",
+                  paddingVertical: 12,
+                }}
+              >
+                No chapter data available. Create chapters in your manuscript to
+                view distribution charts.
               </Text>
             ) : (
               <View style={{ gap: 8 }}>
                 {chapters.map((chapter, idx) => {
                   const scenes = mobileStore.getScenesForChapter(chapter.id);
-                  const chapterWords = scenes.reduce((acc, s) => acc + (s.wordCount || 0), 0);
-                  const percentOfTotal = totalWords > 0 ? Math.round((chapterWords / totalWords) * 100) : 0;
+                  const chapterWords = scenes.reduce(
+                    (acc, s) => acc + (s.wordCount || 0),
+                    0,
+                  );
+                  const percentOfTotal =
+                    totalWords > 0
+                      ? Math.round((chapterWords / totalWords) * 100)
+                      : 0;
 
                   return (
                     <View
@@ -1188,16 +2048,41 @@ export default function NovelScreen() {
                         gap: 6,
                       }}
                     >
-                      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                        <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#fafafa",
+                            fontSize: 12,
+                            fontWeight: "bold",
+                          }}
+                        >
                           Ch. {idx + 1} {chapter.title}
                         </Text>
                         <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
-                          {scenes.length} scenes · {chapterWords.toLocaleString()}w ({percentOfTotal}%)
+                          {scenes.length} scenes ·{" "}
+                          {chapterWords.toLocaleString()}w ({percentOfTotal}%)
                         </Text>
                       </View>
-                      <View style={{ height: 6, backgroundColor: "#27272a", borderRadius: 999, overflow: "hidden" }}>
-                        <View style={{ width: `${percentOfTotal}%`, height: "100%", backgroundColor: "#7c3aed" }} />
+                      <View
+                        style={{
+                          height: 6,
+                          backgroundColor: "#27272a",
+                          borderRadius: 999,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: `${percentOfTotal}%`,
+                            height: "100%",
+                            backgroundColor: "#7c3aed",
+                          }}
+                        />
                       </View>
                     </View>
                   );
@@ -1210,28 +2095,102 @@ export default function NovelScreen() {
 
       {/* Delete Chapter Confirmation Modal */}
       <Modal visible={!!chapterToDelete} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, gap: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "rgba(239, 68, 68, 0.4)",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              width: "100%",
+              maxWidth: 450,
+              gap: 12,
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <Trash2 size={18} color="#ef4444" />
-              <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Chapter</Text>
+              <Text
+                style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}
+              >
+                Delete Chapter
+              </Text>
             </View>
             <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
-              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{chapterToDelete?.title}</Text>?
+              Are you sure you want to delete{" "}
+              <Text style={{ fontWeight: "bold" }}>
+                {chapterToDelete?.title}
+              </Text>
+              ?
             </Text>
             {chapterToDelete && chapterToDelete.sceneCount > 0 && (
-              <View style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", borderColor: "rgba(239, 68, 68, 0.3)", borderWidth: 1, borderRadius: 8, padding: 10 }}>
+              <View
+                style={{
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  borderColor: "rgba(239, 68, 68, 0.3)",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                }}
+              >
                 <Text style={{ color: "#ef4444", fontSize: 12 }}>
-                  ⚠️ This chapter contains {chapterToDelete.sceneCount} scene{chapterToDelete.sceneCount === 1 ? "" : "s"}. All scenes and prose inside will be permanently removed.
+                  ⚠️ This chapter contains {chapterToDelete.sceneCount} scene
+                  {chapterToDelete.sceneCount === 1 ? "" : "s"}. All scenes and
+                  prose inside will be permanently removed.
                 </Text>
               </View>
             )}
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setChapterToDelete(null)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setChapterToDelete(null)}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeleteChapter} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Delete Chapter</Text>
+              <TouchableOpacity
+                onPress={handleDeleteChapter}
+                style={{
+                  backgroundColor: "#ef4444",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}
+                >
+                  Delete Chapter
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1240,21 +2199,83 @@ export default function NovelScreen() {
 
       {/* Delete Scene Confirmation Modal */}
       <Modal visible={!!sceneToDelete} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, gap: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "rgba(239, 68, 68, 0.4)",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              width: "100%",
+              maxWidth: 450,
+              gap: 12,
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <Trash2 size={18} color="#ef4444" />
-              <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Scene</Text>
+              <Text
+                style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}
+              >
+                Delete Scene
+              </Text>
             </View>
             <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
-              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{sceneToDelete?.title}</Text>? All prose content in this scene will be deleted.
+              Are you sure you want to delete{" "}
+              <Text style={{ fontWeight: "bold" }}>{sceneToDelete?.title}</Text>
+              ? All prose content in this scene will be deleted.
             </Text>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setSceneToDelete(null)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setSceneToDelete(null)}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeleteScene} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Delete Scene</Text>
+              <TouchableOpacity
+                onPress={handleDeleteScene}
+                style={{
+                  backgroundColor: "#ef4444",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}
+                >
+                  Delete Scene
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1263,11 +2284,41 @@ export default function NovelScreen() {
 
       {/* Quick Status Picker Modal */}
       <Modal visible={isStatusPickerOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 350, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Set Scene Status</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "#27272a",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              width: "100%",
+              maxWidth: 350,
+              gap: 12,
+            }}
+          >
+            <Text
+              style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+            >
+              Set Scene Status
+            </Text>
             <View style={{ gap: 8 }}>
-              {(["DRAFT", "IN_PROGRESS", "REVISED", "COMPLETED"] as SceneStatus[]).map((st) => {
+              {(
+                [
+                  "DRAFT",
+                  "IN_PROGRESS",
+                  "REVISED",
+                  "COMPLETED",
+                ] as SceneStatus[]
+              ).map((st) => {
                 const isSelected = activeScene?.status === st;
                 return (
                   <TouchableOpacity
@@ -1277,14 +2328,22 @@ export default function NovelScreen() {
                       flexDirection: "row",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      backgroundColor: isSelected ? "rgba(124, 58, 237, 0.2)" : "#18181b",
+                      backgroundColor: isSelected
+                        ? "rgba(124, 58, 237, 0.2)"
+                        : "#18181b",
                       borderColor: isSelected ? "#7c3aed" : "#27272a",
                       borderWidth: 1,
                       borderRadius: 8,
                       padding: 12,
                     }}
                   >
-                    <Text style={{ color: isSelected ? "#7c3aed" : "#fafafa", fontSize: 13, fontWeight: "bold" }}>
+                    <Text
+                      style={{
+                        color: isSelected ? "#7c3aed" : "#fafafa",
+                        fontSize: 13,
+                        fontWeight: "bold",
+                      }}
+                    >
                       {st}
                     </Text>
                     {isSelected && <CheckCircle2 size={16} color="#7c3aed" />}
@@ -1294,9 +2353,21 @@ export default function NovelScreen() {
             </View>
             <TouchableOpacity
               onPress={() => setIsStatusPickerOpen(false)}
-              style={{ backgroundColor: "#27272a", paddingVertical: 10, borderRadius: 8, alignItems: "center", marginTop: 4, minHeight: 40, justifyContent: "center" }}
+              style={{
+                backgroundColor: "#27272a",
+                paddingVertical: 10,
+                borderRadius: 8,
+                alignItems: "center",
+                marginTop: 4,
+                minHeight: 40,
+                justifyContent: "center",
+              }}
             >
-              <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+              >
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1304,5 +2375,3 @@ export default function NovelScreen() {
     </View>
   );
 }
-
-

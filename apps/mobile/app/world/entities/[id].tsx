@@ -30,13 +30,19 @@ import { BlueprintDef, EntityItem } from "../../../src/lib/types.ts";
 
 export default function EditEntityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [entity, setEntity] = useState(() => (id ? mobileStore.getEntity(id) : undefined));
+  const [entity, setEntity] = useState(() =>
+    id ? mobileStore.getEntity(id) : undefined,
+  );
 
   const [name, setName] = useState(entity?.name || "");
   const [category, setCategory] = useState(entity?.category || "");
   const [description, setDescription] = useState(entity?.description || "");
-  const [properties, setProperties] = useState<Record<string, any>>(entity?.properties || {});
-  const [rawJson, setRawJson] = useState<string>(() => JSON.stringify(entity?.properties || {}, null, 2));
+  const [properties, setProperties] = useState<Record<string, any>>(
+    entity?.properties || {},
+  );
+  const [rawJson, setRawJson] = useState<string>(() =>
+    JSON.stringify(entity?.properties || {}, null, 2),
+  );
   const [mode, setMode] = useState<"visual" | "json">("visual");
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [customKey, setCustomKey] = useState("");
@@ -84,7 +90,10 @@ export default function EditEntityScreen() {
   };
 
   const handleAddCustomProp = () => {
-    const k = customKey.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+    const k = customKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_");
     if (!k) return;
     const v = isNaN(Number(customVal)) ? customVal : Number(customVal);
     handlePropertyChange(k, v);
@@ -158,7 +167,7 @@ export default function EditEntityScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -371,7 +380,7 @@ export default function EditEntityScreen() {
                           onChangeText={(t) =>
                             handlePropertyChange(
                               key,
-                              t === "" ? undefined : Number(t)
+                              t === "" ? undefined : Number(t),
                             )
                           }
                           keyboardType="numeric"
@@ -384,7 +393,9 @@ export default function EditEntityScreen() {
                         <View className="flex-row flex-wrap gap-1.5 pt-1">
                           {(field.options || []).map((opt) => {
                             const optVal =
-                              typeof opt === "string" ? opt : opt.value || opt.label;
+                              typeof opt === "string"
+                                ? opt
+                                : opt.value || opt.label;
                             const optLabel =
                               typeof opt === "string" ? opt : opt.label;
                             const isSelected = val === optVal;
@@ -460,9 +471,7 @@ export default function EditEntityScreen() {
                 {Object.entries(properties)
                   .filter(
                     ([k]) =>
-                      !blueprint?.fields.some(
-                        (f) => (f.key || f.name) === k
-                      )
+                      !blueprint?.fields.some((f) => (f.key || f.name) === k),
                   )
                   .map(([k, v]) => (
                     <View

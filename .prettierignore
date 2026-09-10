@@ -1,0 +1,9 @@
+node_modules
+dist
+.svelte-kit
+.expo
+bin
+logs
+pnpm-lock.yaml
+*.docx
+*.pdf

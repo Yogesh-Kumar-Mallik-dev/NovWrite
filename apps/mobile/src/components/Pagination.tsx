@@ -30,7 +30,10 @@ export function Pagination({
 }: PaginationProps) {
   const page = propCurrentPage ?? propPage ?? 1;
   const totalCount = propTotalItems ?? propTotalCount ?? 0;
-  const totalPages = propTotalPages !== undefined ? propTotalPages : Math.max(1, Math.ceil(totalCount / pageSize));
+  const totalPages =
+    propTotalPages !== undefined
+      ? propTotalPages
+      : Math.max(1, Math.ceil(totalCount / pageSize));
   const hasNextPage = page < totalPages;
   const hasPreviousPage = page > 1;
 
@@ -53,7 +56,9 @@ export function Pagination({
       }}
     >
       <Text style={{ color: "#a1a1aa", fontSize: 11, fontFamily: "monospace" }}>
-        {totalCount === 0 ? `0 ${itemLabel}` : `Showing ${startItem}–${endItem} of ${totalCount} ${itemLabel}`}
+        {totalCount === 0
+          ? `0 ${itemLabel}`
+          : `Showing ${startItem}–${endItem} of ${totalCount} ${itemLabel}`}
       </Text>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -75,7 +80,9 @@ export function Pagination({
           }}
         >
           <ChevronLeft size={14} color="#fafafa" />
-          <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "600" }}>Prev</Text>
+          <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "600" }}>
+            Prev
+          </Text>
         </TouchableOpacity>
 
         <View
@@ -90,7 +97,9 @@ export function Pagination({
             justifyContent: "center",
           }}
         >
-          <Text style={{ color: "#a1a1aa", fontSize: 11, fontFamily: "monospace" }}>
+          <Text
+            style={{ color: "#a1a1aa", fontSize: 11, fontFamily: "monospace" }}
+          >
             {page} / {totalPages}
           </Text>
         </View>
@@ -112,7 +121,9 @@ export function Pagination({
             minHeight: 32,
           }}
         >
-          <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "600" }}>Next</Text>
+          <Text style={{ color: "#fafafa", fontSize: 11, fontWeight: "600" }}>
+            Next
+          </Text>
           <ChevronRight size={14} color="#fafafa" />
         </TouchableOpacity>
       </View>

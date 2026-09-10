@@ -476,7 +476,6 @@ export function upcastLegacyProperties(
   return result;
 }
 
-
 /**
  * Validates and sanitizes a Blueprint definition on the backend.
  * Enforces lowercase machine keys, uniqueness, and slate wipe on field type changes.

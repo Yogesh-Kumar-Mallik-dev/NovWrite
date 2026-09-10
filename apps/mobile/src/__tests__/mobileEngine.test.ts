@@ -45,7 +45,10 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
       description: "Immortal path cultivation saga.",
     });
 
-    const chap = store.createChapter("Chapter 1: The Awakening", "Introduction to cultivator");
+    const chap = store.createChapter(
+      "Chapter 1: The Awakening",
+      "Introduction to cultivator",
+    );
     assert.ok(chap.id);
     assert.equal(chap.title, "Chapter 1: The Awakening");
 
@@ -65,7 +68,8 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
     const chap = store.createChapter("Chapter 1: The Awakening");
     const scene = store.createScene(chap.id, "Scene 1: Spirit Spring", 1000);
 
-    const proseSample = "Engines ignited with a brilliant crimson roar as the thrusters cleared orbit.";
+    const proseSample =
+      "Engines ignited with a brilliant crimson roar as the thrusters cleared orbit.";
     store.updateSceneContent(scene.id, proseSample);
 
     const updated = store.getActiveScene();
@@ -206,14 +210,20 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
       resistance: 20,
     };
 
-    const res1 = evaluateFormula("(base_power + gear_bonus) * affinity - resistance", context);
+    const res1 = evaluateFormula(
+      "(base_power + gear_bonus) * affinity - resistance",
+      context,
+    );
     // (100 + 50) * 1.5 - 20 = 150 * 1.5 - 20 = 225 - 20 = 205
     assert.equal(res1.value, 205);
 
     const res2 = evaluateFormula("max(base_power, 500)", context);
     assert.equal(res2.value, 500);
 
-    const res3 = evaluateFormula("clamp(base_power * affinity, 0, 120)", context);
+    const res3 = evaluateFormula(
+      "clamp(base_power * affinity, 0, 120)",
+      context,
+    );
     // 100 * 1.5 = 150 -> clamped to 120
     assert.equal(res3.value, 120);
   });
@@ -237,7 +247,7 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
           options: ["Qi Refining", "Foundation"],
           optionPowers: {
             "Qi Refining": 100,
-            "Foundation": 500,
+            Foundation: 500,
           },
         },
         {
@@ -324,7 +334,3 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
     assert.equal(store.getState().activeProjectId, null);
   });
 });
-
-
-
-

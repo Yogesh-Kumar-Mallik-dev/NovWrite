@@ -96,12 +96,14 @@ export default function CreateBlueprintScreen() {
         if (i === index) {
           const updated = { ...f, ...updates };
           if (updates.name && !updates.key) {
-            updated.key = updates.name.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+            updated.key = updates.name
+              .toLowerCase()
+              .replace(/[^a-z0-9_]/g, "_");
           }
           return updated;
         }
         return f;
-      })
+      }),
     );
   };
 
@@ -116,16 +118,17 @@ export default function CreateBlueprintScreen() {
       return;
     }
 
-    const finalCategory = (
-      isCustomCategory ? customCategory : category
-    ).trim() || "General";
+    const finalCategory =
+      (isCustomCategory ? customCategory : category).trim() || "General";
 
     // Validate formula fields
     for (const f of fields) {
       if (f.fieldType === "FORMULA" && f.formulaExpression) {
         const valRes = validateFormulaSyntax(f.formulaExpression);
         if (!valRes.valid) {
-          setError(`Invalid formula in field "${f.label || f.name}": ${valRes.error}`);
+          setError(
+            `Invalid formula in field "${f.label || f.name}": ${valRes.error}`,
+          );
           return;
         }
       }
@@ -487,8 +490,8 @@ export default function CreateBlueprintScreen() {
                         className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-xs text-violet-200"
                       />
                       <Text className="mt-1.5 text-[10px] text-zinc-400">
-                        Supports +, -, *, /, %, POW(x,y), SQRT(x), CLAMP(v,min,max),
-                        MIN, MAX, IF(cond, then, else).
+                        Supports +, -, *, /, %, POW(x,y), SQRT(x),
+                        CLAMP(v,min,max), MIN, MAX, IF(cond, then, else).
                       </Text>
                     </View>
                   )}
@@ -507,7 +510,7 @@ export default function CreateBlueprintScreen() {
                                 .map((o) =>
                                   typeof o === "string"
                                     ? o
-                                    : `${o.label}:${o.power ?? o.numericValue ?? 0}`
+                                    : `${o.label}:${o.power ?? o.numericValue ?? 0}`,
                                 )
                                 .join(", ")
                             : ""

@@ -35,12 +35,16 @@ const STATUSES: { value: SceneStatus; label: string; color: string }[] = [
 
 export default function EditSceneScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [scene, setScene] = useState(() => (id ? mobileStore.getScene(id) : undefined));
+  const [scene, setScene] = useState(() =>
+    id ? mobileStore.getScene(id) : undefined,
+  );
   const chapters = mobileStore.getState().chapters;
 
   const [chapterId, setChapterId] = useState<string>(scene?.chapterId || "");
   const [title, setTitle] = useState(scene?.title || "");
-  const [targetWords, setTargetWords] = useState(String(scene?.targetWordCount || 1500));
+  const [targetWords, setTargetWords] = useState(
+    String(scene?.targetWordCount || 1500),
+  );
   const [status, setStatus] = useState<SceneStatus>(scene?.status || "DRAFT");
   const [synopsis, setSynopsis] = useState(scene?.synopsis || "");
   const [error, setError] = useState<string | null>(null);
@@ -118,7 +122,7 @@ export default function EditSceneScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 

@@ -11,7 +11,8 @@ export function getAllIPv4Interfaces() {
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name] || []) {
       if (iface.family === "IPv4" && !iface.internal) {
-        const isWifi = name.startsWith("wl") || name.toLowerCase().includes("wifi");
+        const isWifi =
+          name.startsWith("wl") || name.toLowerCase().includes("wifi");
         results.push({
           name,
           address: iface.address,
@@ -41,7 +42,9 @@ export function getLocalIP() {
 
 function checkAdbReverse(port) {
   try {
-    const devicesOutput = execSync("adb devices 2>/dev/null", { encoding: "utf8" });
+    const devicesOutput = execSync("adb devices 2>/dev/null", {
+      encoding: "utf8",
+    });
     const lines = devicesOutput.trim().split("\n").slice(1);
     const hasDevice = lines.some((l) => l.includes("\tdevice"));
     if (hasDevice) {
@@ -58,7 +61,9 @@ function checkAdbReverse(port) {
 function checkLinuxFirewall() {
   if (process.platform !== "linux") return null;
   try {
-    const status = execSync("systemctl is-active ufw 2>/dev/null", { encoding: "utf8" }).trim();
+    const status = execSync("systemctl is-active ufw 2>/dev/null", {
+      encoding: "utf8",
+    }).trim();
     if (status === "active") {
       return "ufw";
     }
@@ -87,19 +92,26 @@ async function main() {
     console.log("  📡 Available Network Interfaces:");
     for (const iface of allInterfaces) {
       const tag = iface.isWifi ? "(Wi-Fi - Recommended)" : "(Ethernet/LAN)";
-      console.log(`     • ${iface.name} ${tag}: exp://${iface.address}:${port}`);
+      console.log(
+        `     • ${iface.name} ${tag}: exp://${iface.address}:${port}`,
+      );
     }
   }
 
   if (hasAdb) {
-    console.log("  🔌 USB ADB Reverse: Active (exp://localhost:8081 available over USB)");
+    console.log(
+      "  🔌 USB ADB Reverse: Active (exp://localhost:8081 available over USB)",
+    );
   }
 
   console.log("  📷 Scan the QR code below with the Expo Go app:");
   console.log("--------------------------------------------------------\n");
 
   try {
-    const qrString = await QRCode.toString(expoUrl, { type: "terminal", small: true });
+    const qrString = await QRCode.toString(expoUrl, {
+      type: "terminal",
+      small: true,
+    });
     console.log(qrString);
   } catch (err) {
     console.error("  ❌ Failed to render terminal QR code:", err);
@@ -107,15 +119,22 @@ async function main() {
 
   console.log("--------------------------------------------------------");
   if (activeFirewall === "ufw") {
-    console.log("  ⚠️  Linux UFW Firewall is active! If your phone cannot connect, run:");
+    console.log(
+      "  ⚠️  Linux UFW Firewall is active! If your phone cannot connect, run:",
+    );
     console.log("     👉 sudo ufw allow 8081/tcp && sudo ufw allow 8080/tcp");
-    console.log("     (Or allow LAN subnet: sudo ufw allow from 192.168.1.0/24)");
+    console.log(
+      "     (Or allow LAN subnet: sudo ufw allow from 192.168.1.0/24)",
+    );
     console.log("--------------------------------------------------------");
   }
-  console.log("  💡 Tip: Ensure your phone and PC are on the same Wi-Fi network.");
-  console.log("     If your router blocks LAN connections, launch with: ./dev.sh --tunnel");
+  console.log(
+    "  💡 Tip: Ensure your phone and PC are on the same Wi-Fi network.",
+  );
+  console.log(
+    "     If your router blocks LAN connections, launch with: ./dev.sh --tunnel",
+  );
   console.log("========================================================\n");
 }
 
 main();
-

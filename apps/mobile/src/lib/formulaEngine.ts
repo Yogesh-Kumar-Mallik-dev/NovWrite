@@ -749,4 +749,3 @@ export function detectFormulaDependencyCycle(
   const combined = { ...existingFormulas, [targetKey]: expression };
   return detectFormulaCycles(combined);
 }
-

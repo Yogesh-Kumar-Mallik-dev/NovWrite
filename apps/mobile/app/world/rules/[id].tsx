@@ -40,14 +40,22 @@ const RULE_TYPES: { value: RuleType; label: string }[] = [
 
 export default function EditInvariantRuleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [rule, setRule] = useState(() => (id ? mobileStore.getRule(id) : undefined));
+  const [rule, setRule] = useState(() =>
+    id ? mobileStore.getRule(id) : undefined,
+  );
 
   const [name, setName] = useState(rule?.name || "");
-  const [severity, setSeverity] = useState<RuleSeverity>(rule?.severity || "BLOCKING_ERROR");
+  const [severity, setSeverity] = useState<RuleSeverity>(
+    rule?.severity || "BLOCKING_ERROR",
+  );
   const [type, setType] = useState<RuleType>(rule?.type || "STATE_GUARD");
-  const [predicateExpression, setPredicateExpression] = useState(rule?.predicateExpression || "");
+  const [predicateExpression, setPredicateExpression] = useState(
+    rule?.predicateExpression || "",
+  );
   const [description, setDescription] = useState(rule?.description || "");
-  const [suggestedResolution, setSuggestedResolution] = useState(rule?.suggestedResolution || "");
+  const [suggestedResolution, setSuggestedResolution] = useState(
+    rule?.suggestedResolution || "",
+  );
   const [enabled, setEnabled] = useState(rule?.enabled ?? true);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,7 +135,7 @@ export default function EditInvariantRuleScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -150,9 +158,7 @@ export default function EditInvariantRuleScreen() {
             <Text className="text-base font-bold text-zinc-100">
               Edit Invariant Rule
             </Text>
-            <Text className="text-xs text-zinc-400">
-              {rule.name}
-            </Text>
+            <Text className="text-xs text-zinc-400">{rule.name}</Text>
           </View>
           <TouchableOpacity
             onPress={handleSave}

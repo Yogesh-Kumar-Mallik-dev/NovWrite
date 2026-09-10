@@ -14,7 +14,10 @@ function countWords(text: string): number {
   return trimmed.split(/\s+/).filter(Boolean).length;
 }
 
-function calculateReadingTimeMinutes(words: number, wordsPerMinute = 200): number {
+function calculateReadingTimeMinutes(
+  words: number,
+  wordsPerMinute = 200,
+): number {
   if (words <= 0) return 0;
   return Math.ceil(words / wordsPerMinute);
 }

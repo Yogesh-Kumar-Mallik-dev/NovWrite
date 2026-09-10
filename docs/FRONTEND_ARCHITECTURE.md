@@ -418,10 +418,10 @@ To eliminate flickering, empty input states, and race conditions during SSR and 
 
 The Entity Editor header layout ([`apps/web/src/routes/world/entities/[id]/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/world/entities/[id]/+page.svelte)) resolves toolbar crowding through a strictly tiered 3-level vertical hierarchy:
 
-| Tier Level | Component Purpose | Elements & Structure |
-| :--- | :--- | :--- |
-| **Tier 1: Location & Context** | Breadcrumb navigation | `‹ All Entities / World Studio › Entities › Eldrin the Spellblade` |
-| **Tier 2: Identity Banner** | Entity archetype & metadata | `[ICON] Eldrin the Spellblade` · `Cultivator · Template: Protagonist Archetype · Sequence #12` |
+| Tier Level                      | Component Purpose              | Elements & Structure                                                                               |
+| :------------------------------ | :----------------------------- | :------------------------------------------------------------------------------------------------- |
+| **Tier 1: Location & Context**  | Breadcrumb navigation          | `‹ All Entities / World Studio › Entities › Eldrin the Spellblade`                                 |
+| **Tier 2: Identity Banner**     | Entity archetype & metadata    | `[ICON] Eldrin the Spellblade` · `Cultivator · Template: Protagonist Archetype · Sequence #12`     |
 | **Tier 3: Utilities & Actions** | Operating modes & primary CTAs | `[ Visual Form \| Raw JSON ]` · `[ ⚡ Feather History (3) ]` · `[ ↗ Schema ]` · `[ Save Changes ]` |
 
 1. **Tier 1 (Location & Navigation):** Clean breadcrumb path with back-link (`‹ All Entities`) establishing spatial context without competing with actions.
@@ -485,14 +485,14 @@ NovWrite avoids device-query fragmentation by anchoring layout styling in contai
 
 Responsive design in NovWrite is NOT about compressing desktop layouts into narrow mobile views. When desktop interaction patterns degrade on small viewports, components pivot to dedicated mobile interaction structures:
 
-| Desktop UI Pattern | Dedicated Mobile UI Pattern (< 768px) |
-| :--- | :--- |
-| **Persistent Multi-level Sidebar** | Hamburger `[☰]` + Slide-over Drawer / Sheet |
-| **Horizontal Subnav Tab Strip** | Breadcrumb Header + Mobile Section Dropdown (`Select`) |
-| **Multi-column Data Table** | Dedicated Mobile Entity Card List + Table View Switcher |
-| **Multi-column Form Grid** | Single-column Vertical Stack with $\ge 44\text{px}$ touch targets |
+| Desktop UI Pattern                   | Dedicated Mobile UI Pattern (< 768px)                                |
+| :----------------------------------- | :------------------------------------------------------------------- |
+| **Persistent Multi-level Sidebar**   | Hamburger `[☰]` + Slide-over Drawer / Sheet                         |
+| **Horizontal Subnav Tab Strip**      | Breadcrumb Header + Mobile Section Dropdown (`Select`)               |
+| **Multi-column Data Table**          | Dedicated Mobile Entity Card List + Table View Switcher              |
+| **Multi-column Form Grid**           | Single-column Vertical Stack with $\ge 44\text{px}$ touch targets    |
 | **Side-by-Side Dual-Axis Inspector** | Full-width Segmented Tabbed Sheet (`[Revisions]` vs `[Coordinates]`) |
-| **Horizontal Action Toolbar Tray** | Stacked Full-width Primary CTA above Secondary Sub-actions |
+| **Horizontal Action Toolbar Tray**   | Stacked Full-width Primary CTA above Secondary Sub-actions           |
 
 ### 16.1. Mobile Navigation & Breadcrumb Dropdown Pattern
 
@@ -625,11 +625,11 @@ The Prose Studio provides the dedicated novel drafting and manuscript structurin
 
 NovWrite enforces consistent responsive parity across all three frontend deployment targets:
 
-| Frontend Target | Wide Viewport (≥ 768px / Desktop / Maximized) | Narrow Viewport (< 768px / Mobile / Shrunk Window) |
-| :--- | :--- | :--- |
-| **Web (SvelteKit 2)** | Persistent sub-headers, multi-column master-detail grids, dense table views | Hamburger `[☰]` + slide-over drawer, mobile dropdown switcher, touch cards |
-| **Desktop (Tauri 2)** | Maximized window provides full desktop canvas and sidebars | Resizing / shrinking the window fluidly transitions into the mobile touch-safe layout |
-| **Mobile (React Native)** | Tablet / Foldable / Landscape / DeX expands into multi-column layout | Mobile phone portrait provides dedicated bottom tabs / slide drawer and stacked cards |
+| Frontend Target           | Wide Viewport (≥ 768px / Desktop / Maximized)                               | Narrow Viewport (< 768px / Mobile / Shrunk Window)                                    |
+| :------------------------ | :-------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Web (SvelteKit 2)**     | Persistent sub-headers, multi-column master-detail grids, dense table views | Hamburger `[☰]` + slide-over drawer, mobile dropdown switcher, touch cards           |
+| **Desktop (Tauri 2)**     | Maximized window provides full desktop canvas and sidebars                  | Resizing / shrinking the window fluidly transitions into the mobile touch-safe layout |
+| **Mobile (React Native)** | Tablet / Foldable / Landscape / DeX expands into multi-column layout        | Mobile phone portrait provides dedicated bottom tabs / slide drawer and stacked cards |
 
 ---
 
@@ -647,7 +647,3 @@ The dedicated Mobile Client is powered by **React Native 0.76+**, **Expo SDK 52+
   - **Prose Studio (`app/(tabs)/novel.tsx`):** Distraction-free canvas with horizontal/vertical scene selectors and live word counters.
   - **Entities Registry (`app/(tabs)/world.tsx`):** Dedicated touch entity cards with archetype badges and property inspectors.
   - **Blueprints & Schemas (`app/(tabs)/schemas.tsx`):** 1st & 2nd class archetype viewer with dynamic fields and validation lists.
-
-
-
-

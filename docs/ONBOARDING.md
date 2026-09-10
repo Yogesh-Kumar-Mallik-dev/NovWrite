@@ -302,6 +302,7 @@ pnpm --filter @novwrite/bridge build
 NovWrite provides dedicated top-level lifecycle scripts with universal cross-platform support across Linux, macOS, and Windows:
 
 ### 6.1. Linux, macOS, and Windows (Git Bash / WSL)
+
 ```bash
 # 🚀 1-Click Development Environment
 # (Starts Postgres & Redis containers, verifies health, boots Go API Backend & SvelteKit Web simultaneously)
@@ -325,6 +326,7 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 ```
 
 ### 6.2. Windows (PowerShell / Windows Terminal / pwsh)
+
 ```powershell
 # 🚀 1-Click Development Environment
 .\dev.ps1
@@ -349,26 +351,31 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 If you prefer to run services in separate terminal windows:
 
 ### Terminal 1: Infrastructure
+
 ```bash
 docker compose up postgres redis
 ```
 
 ### Terminal 2: TypeScript Data Service
+
 ```bash
 pnpm --filter @novwrite/data-service dev
 ```
 
 ### Terminal 3: Go API Backend
+
 ```bash
 cd apps/api && go run ./cmd/server
 ```
 
 ### Terminal 4: SvelteKit Web Frontend
+
 ```bash
 pnpm --filter @novwrite/web dev
 ```
 
 Access the applications in your browser:
+
 - **Web Application Workbench:** [http://localhost:5173](http://localhost:5173)
 - **Go API Backend Health Probe:** [http://localhost:8080/healthz](http://localhost:8080/healthz)
 - **Go API Server Projects Route:** [http://localhost:8080/api/v1/projects](http://localhost:8080/api/v1/projects)

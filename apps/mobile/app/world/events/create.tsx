@@ -37,16 +37,20 @@ export default function CreateTimelineEventScreen() {
   const events = mobileStore.getTimelineEvents();
   const entities = mobileStore.getEntities();
 
-  const nextNarrativeSeq = events.length > 0
-    ? Math.max(...events.map((e) => e.narrativeSequenceNumber)) + 10
-    : 10;
-  const nextChronologicalOrder = events.length > 0
-    ? Math.max(...events.map((e) => e.chronologicalOrder)) + 10
-    : 10;
+  const nextNarrativeSeq =
+    events.length > 0
+      ? Math.max(...events.map((e) => e.narrativeSequenceNumber)) + 10
+      : 10;
+  const nextChronologicalOrder =
+    events.length > 0
+      ? Math.max(...events.map((e) => e.chronologicalOrder)) + 10
+      : 10;
 
   const [title, setTitle] = useState("");
   const [narrativeSeq, setNarrativeSeq] = useState(String(nextNarrativeSeq));
-  const [chronoOrder, setChronoOrder] = useState(String(nextChronologicalOrder));
+  const [chronoOrder, setChronoOrder] = useState(
+    String(nextChronologicalOrder),
+  );
   const [description, setDescription] = useState("");
   const [effects, setEffects] = useState<TimelineEffectItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +70,10 @@ export default function CreateTimelineEventScreen() {
     ]);
   };
 
-  const updateEffect = (index: number, updates: Partial<TimelineEffectItem>) => {
+  const updateEffect = (
+    index: number,
+    updates: Partial<TimelineEffectItem>,
+  ) => {
     setEffects((prev) =>
       prev.map((eff, i) => {
         if (i === index) {
@@ -78,7 +85,7 @@ export default function CreateTimelineEventScreen() {
           return updated;
         }
         return eff;
-      })
+      }),
     );
   };
 
@@ -247,7 +254,8 @@ export default function CreateTimelineEventScreen() {
             {effects.length === 0 ? (
               <View className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-5 text-center items-center">
                 <Text className="text-xs text-zinc-400">
-                  No state mutations attached. This milestone will record narrative lore without mutating entity state.
+                  No state mutations attached. This milestone will record
+                  narrative lore without mutating entity state.
                 </Text>
               </View>
             ) : (

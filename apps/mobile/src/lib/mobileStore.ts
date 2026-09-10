@@ -122,11 +122,20 @@ export class MobileStore {
       const rawProse = localStorage.getItem(`novwrite_prose_v1_${projectId}`);
       if (rawProse) {
         const parsed = JSON.parse(rawProse);
-        this.state.chapters = Array.isArray(parsed.chapters) ? parsed.chapters : [];
+        this.state.chapters = Array.isArray(parsed.chapters)
+          ? parsed.chapters
+          : [];
         this.state.scenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
-        this.state.dailyWordGoal = typeof parsed.dailyWordGoal === "number" ? parsed.dailyWordGoal : 1000;
-        this.state.todayWordsWritten = typeof parsed.todayWordsWritten === "number" ? parsed.todayWordsWritten : 0;
-        this.state.activeSceneId = parsed.activeSceneId || (this.state.scenes[0]?.id ?? null);
+        this.state.dailyWordGoal =
+          typeof parsed.dailyWordGoal === "number"
+            ? parsed.dailyWordGoal
+            : 1000;
+        this.state.todayWordsWritten =
+          typeof parsed.todayWordsWritten === "number"
+            ? parsed.todayWordsWritten
+            : 0;
+        this.state.activeSceneId =
+          parsed.activeSceneId || (this.state.scenes[0]?.id ?? null);
       } else {
         this.state.chapters = [];
         this.state.scenes = [];
@@ -135,14 +144,24 @@ export class MobileStore {
       }
 
       // World data
-      const rawWorld = localStorage.getItem(`novwrite_world_state_${projectId}`);
+      const rawWorld = localStorage.getItem(
+        `novwrite_world_state_${projectId}`,
+      );
       if (rawWorld) {
         const parsed = JSON.parse(rawWorld);
-        this.state.blueprints = Array.isArray(parsed.blueprints) ? parsed.blueprints : [];
-        this.state.entities = Array.isArray(parsed.entities) ? parsed.entities : [];
-        this.state.timelineEvents = Array.isArray(parsed.timelineEvents) ? parsed.timelineEvents : [];
+        this.state.blueprints = Array.isArray(parsed.blueprints)
+          ? parsed.blueprints
+          : [];
+        this.state.entities = Array.isArray(parsed.entities)
+          ? parsed.entities
+          : [];
+        this.state.timelineEvents = Array.isArray(parsed.timelineEvents)
+          ? parsed.timelineEvents
+          : [];
         this.state.rules = Array.isArray(parsed.rules) ? parsed.rules : [];
-        this.state.violations = Array.isArray(parsed.violations) ? parsed.violations : [];
+        this.state.violations = Array.isArray(parsed.violations)
+          ? parsed.violations
+          : [];
       } else {
         this.state.blueprints = [];
         this.state.entities = [];
@@ -162,9 +181,15 @@ export class MobileStore {
       return;
     }
     try {
-      localStorage.setItem("novwrite_projects_v1", JSON.stringify(this.state.projects));
+      localStorage.setItem(
+        "novwrite_projects_v1",
+        JSON.stringify(this.state.projects),
+      );
       if (this.state.activeProjectId) {
-        localStorage.setItem("novwrite_active_project_id_v1", this.state.activeProjectId);
+        localStorage.setItem(
+          "novwrite_active_project_id_v1",
+          this.state.activeProjectId,
+        );
 
         const prosePayload = {
           chapters: this.state.chapters,
@@ -173,7 +198,10 @@ export class MobileStore {
           dailyWordGoal: this.state.dailyWordGoal,
           todayWordsWritten: this.state.todayWordsWritten,
         };
-        localStorage.setItem(`novwrite_prose_v1_${this.state.activeProjectId}`, JSON.stringify(prosePayload));
+        localStorage.setItem(
+          `novwrite_prose_v1_${this.state.activeProjectId}`,
+          JSON.stringify(prosePayload),
+        );
 
         const worldPayload = {
           blueprints: this.state.blueprints,
@@ -182,7 +210,10 @@ export class MobileStore {
           rules: this.state.rules,
           violations: this.state.violations,
         };
-        localStorage.setItem(`novwrite_world_state_${this.state.activeProjectId}`, JSON.stringify(worldPayload));
+        localStorage.setItem(
+          `novwrite_world_state_${this.state.activeProjectId}`,
+          JSON.stringify(worldPayload),
+        );
       } else {
         localStorage.removeItem("novwrite_active_project_id_v1");
       }
@@ -196,14 +227,21 @@ export class MobileStore {
   // ==========================================
   getActiveProject(): ProjectItem | null {
     if (!this.state.activeProjectId) return null;
-    return this.state.projects.find((p) => p.id === this.state.activeProjectId) || null;
+    return (
+      this.state.projects.find((p) => p.id === this.state.activeProjectId) ||
+      null
+    );
   }
 
   getProjects(): ProjectItem[] {
     return this.state.projects;
   }
 
-  createProject(params: { name: string; description?: string; genre?: string }): ProjectItem {
+  createProject(params: {
+    name: string;
+    description?: string;
+    genre?: string;
+  }): ProjectItem {
     const name = params.name.trim();
     if (!name) {
       throw new Error("Project name is required.");
@@ -240,14 +278,21 @@ export class MobileStore {
     this.notify();
   }
 
-  updateProject(id: string, updates: Partial<Pick<ProjectItem, "name" | "description" | "genre">>) {
+  updateProject(
+    id: string,
+    updates: Partial<Pick<ProjectItem, "name" | "description" | "genre">>,
+  ) {
     this.state.projects = this.state.projects.map((p) => {
       if (p.id === id) {
         return {
           ...p,
           ...(updates.name !== undefined ? { name: updates.name.trim() } : {}),
-          ...(updates.description !== undefined ? { description: updates.description.trim() } : {}),
-          ...(updates.genre !== undefined ? { genre: updates.genre.trim() } : {}),
+          ...(updates.description !== undefined
+            ? { description: updates.description.trim() }
+            : {}),
+          ...(updates.genre !== undefined
+            ? { genre: updates.genre.trim() }
+            : {}),
           updatedAt: new Date().toISOString(),
         };
       }
@@ -288,7 +333,9 @@ export class MobileStore {
 
   getActiveScene(): SceneItem | null {
     if (!this.state.activeSceneId) return null;
-    return this.state.scenes.find((s) => s.id === this.state.activeSceneId) || null;
+    return (
+      this.state.scenes.find((s) => s.id === this.state.activeSceneId) || null
+    );
   }
 
   getActiveChapter(): ChapterItem | null {
@@ -299,7 +346,10 @@ export class MobileStore {
       }
       return null;
     }
-    return this.state.chapters.find((c) => c.id === this.state.activeChapterId) || null;
+    return (
+      this.state.chapters.find((c) => c.id === this.state.activeChapterId) ||
+      null
+    );
   }
 
   getChapter(id: string): ChapterItem | undefined {
@@ -353,7 +403,12 @@ export class MobileStore {
     this.notify();
   }
 
-  createScene(chapterId: string, title: string, targetWordCount?: number, synopsis?: string): SceneItem {
+  createScene(
+    chapterId: string,
+    title: string,
+    targetWordCount?: number,
+    synopsis?: string,
+  ): SceneItem {
     const projectId = this.state.activeProjectId || "default";
     const existing = this.getScenesForChapter(chapterId);
     const newScene: SceneItem = {
@@ -379,8 +434,14 @@ export class MobileStore {
   updateScene(id: string, updates: Partial<SceneItem>) {
     this.state.scenes = this.state.scenes.map((s) => {
       if (s.id === id) {
-        const nextContent = updates.proseContent !== undefined ? updates.proseContent : s.proseContent;
-        const nextWordCount = updates.proseContent !== undefined ? countWords(nextContent) : s.wordCount;
+        const nextContent =
+          updates.proseContent !== undefined
+            ? updates.proseContent
+            : s.proseContent;
+        const nextWordCount =
+          updates.proseContent !== undefined
+            ? countWords(nextContent)
+            : s.wordCount;
         return {
           ...s,
           ...updates,
@@ -433,7 +494,11 @@ export class MobileStore {
   selectChapter(chapterId: string | null) {
     this.state.activeChapterId = chapterId;
     const chapterScenes = chapterId ? this.getScenesForChapter(chapterId) : [];
-    if (chapterScenes.length > 0 && (!this.state.activeSceneId || !chapterScenes.some((s) => s.id === this.state.activeSceneId))) {
+    if (
+      chapterScenes.length > 0 &&
+      (!this.state.activeSceneId ||
+        !chapterScenes.some((s) => s.id === this.state.activeSceneId))
+    ) {
       this.state.activeSceneId = chapterScenes[0].id;
     }
     this.notify();
@@ -452,11 +517,15 @@ export class MobileStore {
   }
 
   getFirstClassBlueprints(): BlueprintDef[] {
-    return this.state.blueprints.filter((b) => b.blueprintClass === "FIRST_CLASS");
+    return this.state.blueprints.filter(
+      (b) => b.blueprintClass === "FIRST_CLASS",
+    );
   }
 
   getSecondClassBlueprints(): BlueprintDef[] {
-    return this.state.blueprints.filter((b) => b.blueprintClass === "SECOND_CLASS");
+    return this.state.blueprints.filter(
+      (b) => b.blueprintClass === "SECOND_CLASS",
+    );
   }
 
   getBlueprint(id: string): BlueprintDef | undefined {
@@ -477,7 +546,13 @@ export class MobileStore {
       category: params.category.trim() || "Characters",
       description: params.description?.trim() || "",
       fields: params.fields || [
-        { id: `f-${Date.now()}`, name: "name", label: "Entity Name", fieldType: "STRING", required: true },
+        {
+          id: `f-${Date.now()}`,
+          name: "name",
+          label: "Entity Name",
+          fieldType: "STRING",
+          required: true,
+        },
       ],
     };
     this.state.blueprints = [...this.state.blueprints, newBp];
@@ -486,14 +561,18 @@ export class MobileStore {
   }
 
   updateBlueprint(id: string, updates: Partial<BlueprintDef>) {
-    this.state.blueprints = this.state.blueprints.map((b) => (b.id === id ? { ...b, ...updates } : b));
+    this.state.blueprints = this.state.blueprints.map((b) =>
+      b.id === id ? { ...b, ...updates } : b,
+    );
     this.recomputeAllEntityFormulas();
     this.notify();
   }
 
   deleteBlueprint(id: string) {
     this.state.blueprints = this.state.blueprints.filter((b) => b.id !== id);
-    this.state.entities = this.state.entities.filter((e) => e.blueprintId !== id);
+    this.state.entities = this.state.entities.filter(
+      (e) => e.blueprintId !== id,
+    );
     this.notify();
   }
 
@@ -565,24 +644,39 @@ export class MobileStore {
         (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
         field.options
       ) {
-        const val = entity.properties[field.key || field.name] ?? entity.properties[field.name];
+        const val =
+          entity.properties[field.key || field.name] ??
+          entity.properties[field.name];
         if (val !== undefined && val !== null) {
           const matched = field.options.find((o: any) =>
             typeof o === "string"
               ? o === val
-              : o && (o.value === val || o.label === val)
+              : o && (o.value === val || o.label === val),
           );
           let numVal = 0;
           if (matched && typeof matched === "object") {
-            numVal = (matched as any).numericValue ?? (matched as any).power ?? 0;
-          } else if (field.optionPowers && typeof field.optionPowers[val] === "number") {
+            numVal =
+              (matched as any).numericValue ?? (matched as any).power ?? 0;
+          } else if (
+            field.optionPowers &&
+            typeof field.optionPowers[val] === "number"
+          ) {
             numVal = field.optionPowers[val];
           }
 
           const optObj = {
-            label: matched && typeof matched === "object" ? (matched as any).label : val,
-            value: matched && typeof matched === "object" ? (matched as any).value : val,
-            name: matched && typeof matched === "object" ? ((matched as any).name || (matched as any).label) : val,
+            label:
+              matched && typeof matched === "object"
+                ? (matched as any).label
+                : val,
+            value:
+              matched && typeof matched === "object"
+                ? (matched as any).value
+                : val,
+            name:
+              matched && typeof matched === "object"
+                ? (matched as any).name || (matched as any).label
+                : val,
             numericValue: numVal,
             power: numVal,
           };
@@ -592,8 +686,13 @@ export class MobileStore {
           context[`${field.name}_power`] = numVal;
           if (field.key) context[`${field.key}_power`] = numVal;
         }
-      } else if (field.fieldType === "ARRAY" || field.fieldType === "ARRAY_REF") {
-        const arr = entity.properties[field.key || field.name] ?? entity.properties[field.name];
+      } else if (
+        field.fieldType === "ARRAY" ||
+        field.fieldType === "ARRAY_REF"
+      ) {
+        const arr =
+          entity.properties[field.key || field.name] ??
+          entity.properties[field.name];
         if (Array.isArray(arr)) {
           context[field.name] = arr;
           if (field.key) context[field.key] = arr;
@@ -603,7 +702,9 @@ export class MobileStore {
       }
     }
 
-    const formulaFields = bp.fields.filter((f) => f.fieldType === "FORMULA" && f.formulaExpression);
+    const formulaFields = bp.fields.filter(
+      (f) => f.fieldType === "FORMULA" && f.formulaExpression,
+    );
 
     for (const f of formulaFields) {
       if (!f.formulaExpression) continue;
@@ -639,7 +740,9 @@ export class MobileStore {
   // World Studio: Timeline Events
   // ==========================================
   getTimelineEvents(): TimelineEventItem[] {
-    return [...this.state.timelineEvents].sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
+    return [...this.state.timelineEvents].sort(
+      (a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber,
+    );
   }
 
   getTimelineEvent(id: string): TimelineEventItem | undefined {
@@ -672,23 +775,41 @@ export class MobileStore {
   }
 
   updateTimelineEvent(id: string, updates: Partial<TimelineEventItem>) {
-    this.state.timelineEvents = this.state.timelineEvents.map((ev) => (ev.id === id ? { ...ev, ...updates } : ev));
+    this.state.timelineEvents = this.state.timelineEvents.map((ev) =>
+      ev.id === id ? { ...ev, ...updates } : ev,
+    );
     this.notify();
   }
 
   deleteTimelineEvent(id: string) {
-    this.state.timelineEvents = this.state.timelineEvents.filter((ev) => ev.id !== id);
+    this.state.timelineEvents = this.state.timelineEvents.filter(
+      (ev) => ev.id !== id,
+    );
     this.notify();
   }
 
-  getFoldedEntitiesAtSequence(targetSeq: number, mode: "narrative" | "chronological" = "narrative"): EntityItem[] {
+  getFoldedEntitiesAtSequence(
+    targetSeq: number,
+    mode: "narrative" | "chronological" = "narrative",
+  ): EntityItem[] {
     return this.foldStateAtSequence(targetSeq, mode);
   }
 
-  foldStateAtSequence(targetSeq: number, mode: "narrative" | "chronological" = "narrative"): EntityItem[] {
+  foldStateAtSequence(
+    targetSeq: number,
+    mode: "narrative" | "chronological" = "narrative",
+  ): EntityItem[] {
     const eventsToApply = [...this.state.timelineEvents]
-      .filter((ev) => (mode === "narrative" ? ev.narrativeSequenceNumber <= targetSeq : ev.chronologicalOrder <= targetSeq))
-      .sort((a, b) => (mode === "narrative" ? a.narrativeSequenceNumber - b.narrativeSequenceNumber : a.chronologicalOrder - b.chronologicalOrder));
+      .filter((ev) =>
+        mode === "narrative"
+          ? ev.narrativeSequenceNumber <= targetSeq
+          : ev.chronologicalOrder <= targetSeq,
+      )
+      .sort((a, b) =>
+        mode === "narrative"
+          ? a.narrativeSequenceNumber - b.narrativeSequenceNumber
+          : a.chronologicalOrder - b.chronologicalOrder,
+      );
 
     const clonedEntities: Record<string, EntityItem> = {};
     for (const ent of this.state.entities) {
@@ -699,22 +820,52 @@ export class MobileStore {
       for (const eff of ev.effects) {
         const ent = clonedEntities[eff.targetEntityId];
         if (!ent) continue;
-        ent.lastMutatedSeqNumber = mode === "narrative" ? ev.narrativeSequenceNumber : ev.chronologicalOrder;
+        ent.lastMutatedSeqNumber =
+          mode === "narrative"
+            ? ev.narrativeSequenceNumber
+            : ev.chronologicalOrder;
 
         const keys = eff.propertyKey.split(".");
         if (keys.length === 1) {
           const k = keys[0];
           if (eff.operation === "SET") ent.properties[k] = eff.value;
-          else if (eff.operation === "INCREMENT" && typeof ent.properties[k] === "number") ent.properties[k] += Number(eff.value);
-          else if (eff.operation === "DECREMENT" && typeof ent.properties[k] === "number") ent.properties[k] -= Number(eff.value);
-          else if (eff.operation === "APPEND" && Array.isArray(ent.properties[k])) ent.properties[k].push(eff.value);
-          else if (eff.operation === "REMOVE" && Array.isArray(ent.properties[k])) ent.properties[k] = ent.properties[k].filter((x: any) => x !== eff.value);
+          else if (
+            eff.operation === "INCREMENT" &&
+            typeof ent.properties[k] === "number"
+          )
+            ent.properties[k] += Number(eff.value);
+          else if (
+            eff.operation === "DECREMENT" &&
+            typeof ent.properties[k] === "number"
+          )
+            ent.properties[k] -= Number(eff.value);
+          else if (
+            eff.operation === "APPEND" &&
+            Array.isArray(ent.properties[k])
+          )
+            ent.properties[k].push(eff.value);
+          else if (
+            eff.operation === "REMOVE" &&
+            Array.isArray(ent.properties[k])
+          )
+            ent.properties[k] = ent.properties[k].filter(
+              (x: any) => x !== eff.value,
+            );
         } else if (keys.length === 2) {
           const [p1, p2] = keys;
-          if (!ent.properties[p1] || typeof ent.properties[p1] !== "object") ent.properties[p1] = {};
+          if (!ent.properties[p1] || typeof ent.properties[p1] !== "object")
+            ent.properties[p1] = {};
           if (eff.operation === "SET") ent.properties[p1][p2] = eff.value;
-          else if (eff.operation === "INCREMENT" && typeof ent.properties[p1][p2] === "number") ent.properties[p1][p2] += Number(eff.value);
-          else if (eff.operation === "DECREMENT" && typeof ent.properties[p1][p2] === "number") ent.properties[p1][p2] -= Number(eff.value);
+          else if (
+            eff.operation === "INCREMENT" &&
+            typeof ent.properties[p1][p2] === "number"
+          )
+            ent.properties[p1][p2] += Number(eff.value);
+          else if (
+            eff.operation === "DECREMENT" &&
+            typeof ent.properties[p1][p2] === "number"
+          )
+            ent.properties[p1][p2] -= Number(eff.value);
         }
       }
     }
@@ -755,7 +906,9 @@ export class MobileStore {
       targetBlueprintName: params.targetBlueprintName,
       targetCategory: params.targetCategory,
       predicateExpression: params.predicateExpression.trim(),
-      predicateSummary: (params.predicateSummary || params.predicateExpression).trim(),
+      predicateSummary: (
+        params.predicateSummary || params.predicateExpression
+      ).trim(),
       description: params.description.trim(),
       enabled: params.enabled !== undefined ? params.enabled : true,
       suggestedResolution: params.suggestedResolution?.trim(),
@@ -766,7 +919,9 @@ export class MobileStore {
   }
 
   updateRule(id: string, updates: Partial<InvariantRuleItem>) {
-    this.state.rules = this.state.rules.map((r) => (r.id === id ? { ...r, ...updates } : r));
+    this.state.rules = this.state.rules.map((r) =>
+      r.id === id ? { ...r, ...updates } : r,
+    );
     this.notify();
   }
 
@@ -776,7 +931,9 @@ export class MobileStore {
   }
 
   toggleRule(id: string) {
-    this.state.rules = this.state.rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r));
+    this.state.rules = this.state.rules.map((r) =>
+      r.id === id ? { ...r, enabled: !r.enabled } : r,
+    );
     this.notify();
   }
 
@@ -791,7 +948,11 @@ export class MobileStore {
     this.notify();
   }
 
-  overrideViolation(id: string, justification: string, authorName = "Lead Author") {
+  overrideViolation(
+    id: string,
+    justification: string,
+    authorName = "Lead Author",
+  ) {
     this.state.violations = this.state.violations.map((v) => {
       if (v.id === id) {
         return {
@@ -860,8 +1021,12 @@ export class MobileStore {
     return this.addTimelineEvent({
       title: params.title,
       description: params.description,
-      narrativeSequenceNumber: params.narrativeSequenceNumber ?? (this.state.timelineEvents.length + 1) * 10,
-      chronologicalOrder: params.chronologicalOrder ?? (this.state.timelineEvents.length + 1) * 10,
+      narrativeSequenceNumber:
+        params.narrativeSequenceNumber ??
+        (this.state.timelineEvents.length + 1) * 10,
+      chronologicalOrder:
+        params.chronologicalOrder ??
+        (this.state.timelineEvents.length + 1) * 10,
       anchorChapterTitle: params.anchorChapterTitle,
       anchorSceneTitle: params.anchorSceneTitle,
       effects: params.effects ?? [],
@@ -878,7 +1043,12 @@ export class MobileStore {
 
   getDailyGoalProgress(): number {
     if (this.state.dailyWordGoal <= 0) return 0;
-    return Math.min(100, Math.round((this.state.todayWordsWritten / this.state.dailyWordGoal) * 100));
+    return Math.min(
+      100,
+      Math.round(
+        (this.state.todayWordsWritten / this.state.dailyWordGoal) * 100,
+      ),
+    );
   }
 }
 

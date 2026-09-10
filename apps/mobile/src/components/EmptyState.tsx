@@ -107,7 +107,9 @@ export function EmptyState({
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
                 {secondaryActionText}
               </Text>
             </TouchableOpacity>
@@ -126,7 +128,9 @@ export function EmptyState({
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}>
+              <Text
+                style={{ color: "#ffffff", fontSize: 12, fontWeight: "bold" }}
+              >
                 {actionText}
               </Text>
             </TouchableOpacity>

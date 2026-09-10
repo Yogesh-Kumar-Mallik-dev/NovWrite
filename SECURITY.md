@@ -8,11 +8,11 @@ NovWrite takes application security, author privacy, and manuscript integrity ve
 
 Security updates are actively applied to the following release tracks:
 
-| Version Track | Supported | Security Patch Status |
-| :--- | :--- | :--- |
-| **v2.x (Current)** | ✅ Yes | Full security patches & active monitoring |
-| **v1.x (Legacy)** | ⚠️ Limited | Critical CVE fixes only |
-| **< v1.0** | ❌ No | Deprecated |
+| Version Track      | Supported  | Security Patch Status                     |
+| :----------------- | :--------- | :---------------------------------------- |
+| **v2.x (Current)** | ✅ Yes     | Full security patches & active monitoring |
+| **v1.x (Legacy)**  | ⚠️ Limited | Critical CVE fixes only                   |
+| **< v1.0**         | ❌ No      | Deprecated                                |
 
 ---
 
@@ -21,11 +21,14 @@ Security updates are actively applied to the following release tracks:
 If you discover a security vulnerability or sensitive flaw in NovWrite, please report it privately. **Do not create public GitHub issues for security vulnerabilities.**
 
 ### 2.1. Responsible Disclosure Contact
+
 - **Security Team Email:** `security@novwrite.dev`
 - **PGP Key Fingerprint (Optional):** Available upon request from `security@novwrite.dev`
 
 ### 2.2. What to Include in Your Report
+
 To help us triage and resolve the issue quickly, include:
+
 1. **Description:** Clear summary of the vulnerability (e.g. Broken Object Level Authorization, Rate Limiter Bypass, JWT Claim Tampering, Cross-Tenant Leaks).
 2. **Steps to Reproduce:** Exact reproduction steps, curl commands, or script payloads.
 3. **Affected Components:** Specific files, routes, packages, or versions affected.

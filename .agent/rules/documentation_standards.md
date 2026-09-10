@@ -18,7 +18,7 @@ Do NOT:
 
 - ❌ **Invent or Hallucinate Commands/Flags:** Never document CLI arguments, flags, or script names that do not exist in workspace `package.json`, `go.mod`, or shell scripts.
 - ❌ **Use Lazy Placeholders:** Never write `// TODO: add logic here`, `// ... rest of code`, or generic hand-waving stubs in examples.
-- ❌ **Use Robotic Marketing Fluff:** Avoid hyperbolic adjectives (*"revolutionary"*, *"seamless"*, *"cutting-edge"*, *"game-changing"*, *"empowers users with unmatched synergy"*).
+- ❌ **Use Robotic Marketing Fluff:** Avoid hyperbolic adjectives (_"revolutionary"_, _"seamless"_, _"cutting-edge"_, _"game-changing"_, _"empowers users with unmatched synergy"_).
 - ❌ **Allow Code-Doc Drift:** Every documented endpoint route, query param, database column, or schema model must match the Go backend and Prisma schema verbatim.
 - ❌ **Invert Technical Depth:** Do not spend paragraphs on generic programming concepts while glossing over complex AST formulas, state folds, or DAG cycle detection.
 - ❌ **Write Broken/Hypothetical Paths:** Never output fake paths like `file:///path/to/...` or links to non-existent files.

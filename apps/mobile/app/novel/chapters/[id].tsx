@@ -23,7 +23,9 @@ import { mobileStore } from "../../../src/lib/mobileStore.ts";
 
 export default function EditChapterScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [chapter, setChapter] = useState(() => (id ? mobileStore.getChapter(id) : undefined));
+  const [chapter, setChapter] = useState(() =>
+    id ? mobileStore.getChapter(id) : undefined,
+  );
 
   const [title, setTitle] = useState(chapter?.title || "");
   const [synopsis, setSynopsis] = useState(chapter?.synopsis || "");
@@ -91,7 +93,7 @@ export default function EditChapterScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -114,9 +116,7 @@ export default function EditChapterScreen() {
             <Text className="text-base font-bold text-zinc-100">
               Edit Chapter
             </Text>
-            <Text className="text-xs text-zinc-400">
-              {chapter.title}
-            </Text>
+            <Text className="text-xs text-zinc-400">{chapter.title}</Text>
           </View>
           <TouchableOpacity
             onPress={handleSave}

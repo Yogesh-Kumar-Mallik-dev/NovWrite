@@ -7,6 +7,7 @@ A comprehensive cheat-sheet of essential commands for installing dependencies, b
 ## 1. Cross-Platform Dependency Installation Cheat Sheet
 
 ### 1.1. Linux (Ubuntu / Debian)
+
 ```bash
 # Core Tools, Go, Node.js 22 LTS, pnpm, Docker, Protoc & Buf
 sudo apt-get update && sudo apt-get install -y curl wget git build-essential make protobuf-compiler
@@ -17,6 +18,7 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
 ### 1.2. macOS (Homebrew)
+
 ```bash
 # Install toolchain and compilers via Homebrew
 brew install go node@22 pnpm protobuf bufbuild/buf/buf protoc-gen-go protoc-gen-go-grpc git make
@@ -24,6 +26,7 @@ brew install --cask docker
 ```
 
 ### 1.3. Windows (Winget / PowerShell as Admin)
+
 ```powershell
 # Install toolchain and compilers via Winget
 winget install --id Git.Git -e; winget install --id GoLang.Go -e; winget install --id OpenJS.NodeJS.LTS -e; winget install --id pnpm.pnpm -e; winget install --id Google.Protobuf -e; winget install --id BufBuild.Buf -e; winget install --id Docker.DockerDesktop -e
@@ -32,6 +35,7 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
 ### 1.4. Verify All Installations
+
 ```bash
 go version && node -v && pnpm -v && docker --version && protoc --version && buf --version
 ```
@@ -43,6 +47,7 @@ go version && node -v && pnpm -v && docker --version && protoc --version && buf 
 All scripts are universally portable across **Linux**, **macOS (Darwin)**, and **Windows** (Git Bash / MSYS2 / WSL / native PowerShell).
 
 ### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
+
 ```bash
 # 🚀 1-Click Development Server (API + Web)
 ./dev.sh             # or: run repo dev (or simply: run repo / run depo)
@@ -71,6 +76,7 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 ```
 
 ### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
+
 ```powershell
 # 🚀 1-Click Development Server (API + Web)
 .\dev.ps1

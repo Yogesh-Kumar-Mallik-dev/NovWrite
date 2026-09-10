@@ -146,7 +146,8 @@ export class ProjectStateStore {
     const idx = this.projects.findIndex((p) => p.id === projectId);
     if (idx === -1) return false;
 
-    const trimmedName = updates.name !== undefined ? updates.name.trim() : undefined;
+    const trimmedName =
+      updates.name !== undefined ? updates.name.trim() : undefined;
     if (trimmedName !== undefined && !trimmedName) {
       throw new Error("Project name cannot be empty.");
     }

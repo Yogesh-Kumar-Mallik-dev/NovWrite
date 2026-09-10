@@ -54,17 +54,21 @@ const FIELD_TYPES: { value: BlueprintFieldType; label: string }[] = [
 
 export default function EditBlueprintScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [blueprint, setBlueprint] = useState(() => (id ? mobileStore.getBlueprint(id) : undefined));
+  const [blueprint, setBlueprint] = useState(() =>
+    id ? mobileStore.getBlueprint(id) : undefined,
+  );
 
   const [name, setName] = useState(blueprint?.name || "");
   const [blueprintClass, setBlueprintClass] = useState<BlueprintClass>(
-    blueprint?.blueprintClass || "FIRST_CLASS"
+    blueprint?.blueprintClass || "FIRST_CLASS",
   );
   const [category, setCategory] = useState(blueprint?.category || "Characters");
   const [customCategory, setCustomCategory] = useState("");
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [description, setDescription] = useState(blueprint?.description || "");
-  const [fields, setFields] = useState<DynamicFieldDef[]>(blueprint?.fields || []);
+  const [fields, setFields] = useState<DynamicFieldDef[]>(
+    blueprint?.fields || [],
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -119,12 +123,14 @@ export default function EditBlueprintScreen() {
         if (i === index) {
           const updated = { ...f, ...updates };
           if (updates.name && !updates.key) {
-            updated.key = updates.name.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+            updated.key = updates.name
+              .toLowerCase()
+              .replace(/[^a-z0-9_]/g, "_");
           }
           return updated;
         }
         return f;
-      })
+      }),
     );
   };
 
@@ -139,16 +145,17 @@ export default function EditBlueprintScreen() {
       return;
     }
 
-    const finalCategory = (
-      isCustomCategory ? customCategory : category
-    ).trim() || "General";
+    const finalCategory =
+      (isCustomCategory ? customCategory : category).trim() || "General";
 
     // Validate formula fields
     for (const f of fields) {
       if (f.fieldType === "FORMULA" && f.formulaExpression) {
         const valRes = validateFormulaSyntax(f.formulaExpression);
         if (!valRes.valid) {
-          setError(`Invalid formula in field "${f.label || f.name}": ${valRes.error}`);
+          setError(
+            `Invalid formula in field "${f.label || f.name}": ${valRes.error}`,
+          );
           return;
         }
       }
@@ -182,7 +189,7 @@ export default function EditBlueprintScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -205,9 +212,7 @@ export default function EditBlueprintScreen() {
             <Text className="text-base font-bold text-zinc-100">
               Edit Blueprint
             </Text>
-            <Text className="text-xs text-zinc-400">
-              {blueprint.name}
-            </Text>
+            <Text className="text-xs text-zinc-400">{blueprint.name}</Text>
           </View>
           <TouchableOpacity
             onPress={handleSave}
@@ -519,7 +524,7 @@ export default function EditBlueprintScreen() {
                                 .map((o) =>
                                   typeof o === "string"
                                     ? o
-                                    : `${o.label}:${o.power ?? o.numericValue ?? 0}`
+                                    : `${o.label}:${o.power ?? o.numericValue ?? 0}`,
                                 )
                                 .join(", ")
                             : ""

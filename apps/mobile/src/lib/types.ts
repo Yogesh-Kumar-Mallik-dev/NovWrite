@@ -110,12 +110,7 @@ export interface EntityItem {
 }
 
 export type EffectOperation =
-  | "SET"
-  | "INCREMENT"
-  | "DECREMENT"
-  | "APPEND"
-  | "REMOVE"
-  | "TRANSFER";
+  "SET" | "INCREMENT" | "DECREMENT" | "APPEND" | "REMOVE" | "TRANSFER";
 
 export interface TimelineEffectItem {
   id?: string;

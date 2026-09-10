@@ -35,14 +35,22 @@ const OPERATIONS: { value: EffectOperation; label: string }[] = [
 
 export default function EditTimelineEventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [event, setEvent] = useState(() => (id ? mobileStore.getTimelineEvent(id) : undefined));
+  const [event, setEvent] = useState(() =>
+    id ? mobileStore.getTimelineEvent(id) : undefined,
+  );
   const entities = mobileStore.getEntities();
 
   const [title, setTitle] = useState(event?.title || "");
-  const [narrativeSeq, setNarrativeSeq] = useState(String(event?.narrativeSequenceNumber || 10));
-  const [chronoOrder, setChronoOrder] = useState(String(event?.chronologicalOrder || 10));
+  const [narrativeSeq, setNarrativeSeq] = useState(
+    String(event?.narrativeSequenceNumber || 10),
+  );
+  const [chronoOrder, setChronoOrder] = useState(
+    String(event?.chronologicalOrder || 10),
+  );
   const [description, setDescription] = useState(event?.description || "");
-  const [effects, setEffects] = useState<TimelineEffectItem[]>(event?.effects || []);
+  const [effects, setEffects] = useState<TimelineEffectItem[]>(
+    event?.effects || [],
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,7 +99,10 @@ export default function EditTimelineEventScreen() {
     ]);
   };
 
-  const updateEffect = (index: number, updates: Partial<TimelineEffectItem>) => {
+  const updateEffect = (
+    index: number,
+    updates: Partial<TimelineEffectItem>,
+  ) => {
     setEffects((prev) =>
       prev.map((eff, i) => {
         if (i === index) {
@@ -103,7 +114,7 @@ export default function EditTimelineEventScreen() {
           return updated;
         }
         return eff;
-      })
+      }),
     );
   };
 
@@ -153,7 +164,7 @@ export default function EditTimelineEventScreen() {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -336,9 +347,7 @@ export default function EditTimelineEventScreen() {
                           >
                             <Text
                               className={`text-[11px] font-medium ${
-                                isSelected
-                                  ? "text-amber-400"
-                                  : "text-zinc-400"
+                                isSelected ? "text-amber-400" : "text-zinc-400"
                               }`}
                             >
                               {ent.name}
@@ -409,9 +418,7 @@ export default function EditTimelineEventScreen() {
                           >
                             <Text
                               className={`text-[11px] font-medium ${
-                                isSelected
-                                  ? "text-amber-400"
-                                  : "text-zinc-400"
+                                isSelected ? "text-amber-400" : "text-zinc-400"
                               }`}
                             >
                               {op.label}

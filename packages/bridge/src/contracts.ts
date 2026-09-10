@@ -359,7 +359,11 @@ export function diffEntityProperties(
   before: Record<string, unknown> | null | undefined,
   after: Record<string, unknown> | null | undefined,
 ): Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }> {
-  const patches: Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }> = [];
+  const patches: Array<{
+    op: "add" | "remove" | "replace";
+    path: string;
+    value?: unknown;
+  }> = [];
   const b = before || {};
   const a = after || {};
   const allKeys = new Set([...Object.keys(b), ...Object.keys(a)]);
@@ -387,7 +391,11 @@ export function diffEntityProperties(
  */
 export function applyEntityPatch(
   target: Record<string, unknown> | null | undefined,
-  patches: Array<{ op: "add" | "remove" | "replace"; path: string; value?: unknown }>,
+  patches: Array<{
+    op: "add" | "remove" | "replace";
+    path: string;
+    value?: unknown;
+  }>,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = { ...(target || {}) };
 
@@ -463,5 +471,3 @@ export function validateCreateUserRequest(payload: unknown) {
   }
   return result.data;
 }
-
-

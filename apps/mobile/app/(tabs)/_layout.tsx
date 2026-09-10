@@ -28,7 +28,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const state = useSyncExternalStore(
     (cb) => mobileStore.subscribe(cb),
-    () => mobileStore.getState()
+    () => mobileStore.getState(),
   );
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -44,7 +44,9 @@ export default function TabLayout() {
   const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
 
   const activeProject = mobileStore.getActiveProject();
-  const isDeleteTitleMatched = activeProject ? deleteConfirmTitle.trim() === activeProject.name : false;
+  const isDeleteTitleMatched = activeProject
+    ? deleteConfirmTitle.trim() === activeProject.name
+    : false;
   const isDeleteReady = isDeleteAcknowledged && isDeleteTitleMatched;
 
   function openCreate() {
@@ -118,7 +120,9 @@ export default function TabLayout() {
               }}
               resizeMode="contain"
             />
-            <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}>
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", color: "#fafafa" }}
+            >
               <Text style={{ color: "#7c3aed" }}>Nov</Text>Write
             </Text>
           </View>
@@ -177,21 +181,27 @@ export default function TabLayout() {
             name="index"
             options={{
               title: "Projects",
-              tabBarIcon: ({ color, size }) => <Folder color={color} size={size - 2} />,
+              tabBarIcon: ({ color, size }) => (
+                <Folder color={color} size={size - 2} />
+              ),
             }}
           />
           <Tabs.Screen
             name="novel"
             options={{
               title: "Prose Studio",
-              tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size - 2} />,
+              tabBarIcon: ({ color, size }) => (
+                <BookOpen color={color} size={size - 2} />
+              ),
             }}
           />
           <Tabs.Screen
             name="world"
             options={{
               title: "World Studio",
-              tabBarIcon: ({ color, size }) => <Globe2 color={color} size={size - 2} />,
+              tabBarIcon: ({ color, size }) => (
+                <Globe2 color={color} size={size - 2} />
+              ),
             }}
           />
         </Tabs>
@@ -218,8 +228,16 @@ export default function TabLayout() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+              >
                 Switch Novel Workspace
               </Text>
               <TouchableOpacity
@@ -238,17 +256,28 @@ export default function TabLayout() {
                 }}
               >
                 <Plus size={14} color="#ffffff" />
-                <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "600" }}>New</Text>
+                <Text
+                  style={{ color: "#ffffff", fontSize: 12, fontWeight: "600" }}
+                >
+                  New
+                </Text>
               </TouchableOpacity>
             </View>
 
             {state.projects.length === 0 ? (
-              <View style={{ paddingVertical: 20, alignItems: "center", gap: 6 }}>
+              <View
+                style={{ paddingVertical: 20, alignItems: "center", gap: 6 }}
+              >
                 <Folder size={28} color="#a1a1aa" />
-                <Text style={{ color: "#a1a1aa", fontSize: 13 }}>No novel projects created yet.</Text>
+                <Text style={{ color: "#a1a1aa", fontSize: 13 }}>
+                  No novel projects created yet.
+                </Text>
               </View>
             ) : (
-              <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                style={{ maxHeight: 300 }}
+                contentContainerStyle={{ gap: 8 }}
+              >
                 {state.projects.map((proj) => {
                   const isActive = proj.id === state.activeProjectId;
                   return (
@@ -262,7 +291,9 @@ export default function TabLayout() {
                         flexDirection: "row",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        backgroundColor: isActive ? "rgba(124, 58, 237, 0.15)" : "#18181b",
+                        backgroundColor: isActive
+                          ? "rgba(124, 58, 237, 0.15)"
+                          : "#18181b",
                         borderColor: isActive ? "#7c3aed" : "#27272a",
                         borderWidth: 1,
                         borderRadius: 8,
@@ -303,7 +334,11 @@ export default function TabLayout() {
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Close</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+              >
+                Close
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -311,41 +346,129 @@ export default function TabLayout() {
 
       {/* Edit Project Modal */}
       <Modal visible={isEditModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Edit Project Details</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "#27272a",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              gap: 12,
+            }}
+          >
+            <Text
+              style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}
+            >
+              Edit Project Details
+            </Text>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Novel Title *</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Novel Title *
+              </Text>
               <TextInput
                 value={nameInput}
                 onChangeText={setNameInput}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                }}
               />
             </View>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Genre / Setting</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Genre / Setting
+              </Text>
               <TextInput
                 value={genreInput}
                 onChangeText={setGenreInput}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                }}
               />
             </View>
             <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Synopsis</Text>
+              <Text
+                style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}
+              >
+                Synopsis
+              </Text>
               <TextInput
                 value={descInput}
                 onChangeText={setDescInput}
                 multiline
                 numberOfLines={3}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
+                style={{
+                  backgroundColor: "#09090b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                  color: "#fafafa",
+                  fontSize: 14,
+                  minHeight: 60,
+                }}
               />
             </View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsEditModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setIsEditModalOpen(false)}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleEdit} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Save</Text>
+              <TouchableOpacity
+                onPress={handleEdit}
+                style={{
+                  backgroundColor: "#7c3aed",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}
+                >
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -354,7 +477,15 @@ export default function TabLayout() {
 
       {/* Delete Project Modal (3-Step Irreversible Deletion Standard) */}
       <Modal visible={isDeleteModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
           <View
             style={{
               backgroundColor: "#121215",
@@ -368,35 +499,113 @@ export default function TabLayout() {
               gap: 12,
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <Trash2 size={20} color="#ef4444" />
-              <Text style={{ color: "#ef4444", fontSize: 17, fontWeight: "bold" }}>Delete Novel Project</Text>
+              <Text
+                style={{ color: "#ef4444", fontSize: 17, fontWeight: "bold" }}
+              >
+                Delete Novel Project
+              </Text>
             </View>
 
-            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 12 }}>
+            <ScrollView
+              style={{ maxHeight: 380 }}
+              contentContainerStyle={{ gap: 12 }}
+            >
               {/* Step 1: Scope & Impact Assessment */}
-              <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 12, gap: 6 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+              <View
+                style={{
+                  backgroundColor: "#18181b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  gap: 6,
+                }}
+              >
+                <Text
+                  style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}
+                >
                   Step 1: Scope & Impact Assessment
                 </Text>
-                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
-                  Permanently destroys <Text style={{ color: "#fafafa", fontWeight: "bold" }}>{activeProject?.name}</Text> along with:
+                <Text
+                  style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}
+                >
+                  Permanently destroys{" "}
+                  <Text style={{ color: "#fafafa", fontWeight: "bold" }}>
+                    {activeProject?.name}
+                  </Text>{" "}
+                  along with:
                 </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.chapters.length} Chapters</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.chapters.length} Chapters
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.scenes.length} Scenes</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.scenes.length} Scenes
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.entities.length} Entities</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.entities.length} Entities
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.blueprints.length} Blueprints</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.blueprints.length} Blueprints
+                    </Text>
                   </View>
-                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.timelineEvents.length} Timeline Events</Text>
+                  <View
+                    style={{
+                      backgroundColor: "#27272a",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
+                      {state.timelineEvents.length} Timeline Events
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -408,8 +617,12 @@ export default function TabLayout() {
                   flexDirection: "row",
                   alignItems: "flex-start",
                   gap: 10,
-                  backgroundColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.1)" : "#18181b",
-                  borderColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.4)" : "#27272a",
+                  backgroundColor: isDeleteAcknowledged
+                    ? "rgba(239, 68, 68, 0.1)"
+                    : "#18181b",
+                  borderColor: isDeleteAcknowledged
+                    ? "rgba(239, 68, 68, 0.4)"
+                    : "#27272a",
                   borderWidth: 1,
                   borderRadius: 8,
                   padding: 10,
@@ -422,26 +635,45 @@ export default function TabLayout() {
                     borderRadius: 4,
                     borderWidth: 1.5,
                     borderColor: isDeleteAcknowledged ? "#ef4444" : "#71717a",
-                    backgroundColor: isDeleteAcknowledged ? "#ef4444" : "transparent",
+                    backgroundColor: isDeleteAcknowledged
+                      ? "#ef4444"
+                      : "transparent",
                     alignItems: "center",
                     justifyContent: "center",
                     marginTop: 1,
                   }}
                 >
-                  {isDeleteAcknowledged && <CheckCircle2 size={14} color="#ffffff" />}
+                  {isDeleteAcknowledged && (
+                    <CheckCircle2 size={14} color="#ffffff" />
+                  )}
                 </View>
-                <Text style={{ color: "#fafafa", fontSize: 12, flex: 1, lineHeight: 16 }}>
-                  <Text style={{ fontWeight: "bold" }}>Step 2: </Text>I acknowledge that this action cannot be undone and permanently destroys all prose and world lore.
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 12,
+                    flex: 1,
+                    lineHeight: 16,
+                  }}
+                >
+                  <Text style={{ fontWeight: "bold" }}>Step 2: </Text>I
+                  acknowledge that this action cannot be undone and permanently
+                  destroys all prose and world lore.
                 </Text>
               </TouchableOpacity>
 
               {/* Step 3: Exact Title Verification */}
               <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}
+                >
                   Step 3: Type project title to verify
                 </Text>
                 <Text style={{ color: "#71717a", fontSize: 11 }}>
-                  Type <Text style={{ color: "#fafafa", fontFamily: "monospace" }}>{activeProject?.name}</Text> below:
+                  Type{" "}
+                  <Text style={{ color: "#fafafa", fontFamily: "monospace" }}>
+                    {activeProject?.name}
+                  </Text>{" "}
+                  below:
                 </Text>
                 <TextInput
                   value={deleteConfirmTitle}
@@ -461,18 +693,38 @@ export default function TabLayout() {
               </View>
             </ScrollView>
 
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
               <TouchableOpacity
                 onPress={() => setIsDeleteModalOpen(false)}
-                style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}
+                style={{
+                  backgroundColor: "#27272a",
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
               >
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+                <Text
+                  style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleDelete}
                 disabled={!isDeleteReady}
                 style={{
-                  backgroundColor: isDeleteReady ? "#ef4444" : "rgba(239, 68, 68, 0.3)",
+                  backgroundColor: isDeleteReady
+                    ? "#ef4444"
+                    : "rgba(239, 68, 68, 0.3)",
                   paddingHorizontal: 16,
                   paddingVertical: 10,
                   borderRadius: 8,
@@ -480,7 +732,13 @@ export default function TabLayout() {
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: isDeleteReady ? "#ffffff" : "#a1a1aa", fontSize: 13, fontWeight: "bold" }}>
+                <Text
+                  style={{
+                    color: isDeleteReady ? "#ffffff" : "#a1a1aa",
+                    fontSize: 13,
+                    fontWeight: "bold",
+                  }}
+                >
                   Delete Project Forever
                 </Text>
               </TouchableOpacity>

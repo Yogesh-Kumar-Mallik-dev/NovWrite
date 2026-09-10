@@ -212,6 +212,3 @@ This document records the core design principles, trade-offs, and technical deci
   2. **Strict Prohibition of 10 AI Documentation Anti-Patterns:** Enforce zero tolerance for hallucinated commands, placeholder stubs, robotic buzzwords, code-doc drift, broken paths, happy-path exclusivity, and unpinned dependencies.
   3. **Atomic Code-Doc Synchronization:** Mandate that all route, schema, or command changes be updated in the documentation within the exact same atomic commit, validated by `./check.sh` and `./test.sh` before GPG signing.
 - **Consequences:** Establishes permanent architectural fidelity, eliminates cognitive friction for new engineers, and ensures the codebase serves as an authoritative open-source reference.
-
-
-

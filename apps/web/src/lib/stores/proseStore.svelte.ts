@@ -76,7 +76,10 @@ export class ProseStateStore {
   activeChapter = $derived.by(() => {
     if (!this.activeChapterId) {
       if (this.activeScene) {
-        return this.chapters.find((c) => c.id === this.activeScene?.chapterId) || null;
+        return (
+          this.chapters.find((c) => c.id === this.activeScene?.chapterId) ||
+          null
+        );
       }
       return null;
     }
@@ -141,9 +144,18 @@ export class ProseStateStore {
         if (parsed && typeof parsed === "object") {
           this.chapters = Array.isArray(parsed.chapters) ? parsed.chapters : [];
           this.scenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
-          this.dailyWordGoal = typeof parsed.dailyWordGoal === "number" ? parsed.dailyWordGoal : 1000;
-          this.todayWordsWritten = typeof parsed.todayWordsWritten === "number" ? parsed.todayWordsWritten : 0;
-          if (parsed.activeSceneId && this.scenes.some((s) => s.id === parsed.activeSceneId)) {
+          this.dailyWordGoal =
+            typeof parsed.dailyWordGoal === "number"
+              ? parsed.dailyWordGoal
+              : 1000;
+          this.todayWordsWritten =
+            typeof parsed.todayWordsWritten === "number"
+              ? parsed.todayWordsWritten
+              : 0;
+          if (
+            parsed.activeSceneId &&
+            this.scenes.some((s) => s.id === parsed.activeSceneId)
+          ) {
             this.activeSceneId = parsed.activeSceneId;
           } else if (this.scenes.length > 0) {
             this.activeSceneId = this.scenes[0].id;
@@ -167,7 +179,12 @@ export class ProseStateStore {
 
   saveToStorage(): void {
     const projectId = projectStore.activeProjectId;
-    if (!projectId || typeof window === "undefined" || typeof localStorage === "undefined") return;
+    if (
+      !projectId ||
+      typeof window === "undefined" ||
+      typeof localStorage === "undefined"
+    )
+      return;
 
     try {
       const key = this.getStorageKey(projectId);
@@ -271,8 +288,14 @@ export class ProseStateStore {
   updateScene(id: string, updates: Partial<SceneItem>): void {
     this.scenes = this.scenes.map((s) => {
       if (s.id === id) {
-        const nextContent = updates.proseContent !== undefined ? updates.proseContent : s.proseContent;
-        const nextWordCount = updates.proseContent !== undefined ? countWords(nextContent) : s.wordCount;
+        const nextContent =
+          updates.proseContent !== undefined
+            ? updates.proseContent
+            : s.proseContent;
+        const nextWordCount =
+          updates.proseContent !== undefined
+            ? countWords(nextContent)
+            : s.wordCount;
         return {
           ...s,
           ...updates,
@@ -330,7 +353,11 @@ export class ProseStateStore {
   selectChapter(chapterId: string | null): void {
     this.activeChapterId = chapterId;
     const chapterScenes = chapterId ? this.getScenesForChapter(chapterId) : [];
-    if (chapterScenes.length > 0 && (!this.activeSceneId || !chapterScenes.some((s) => s.id === this.activeSceneId))) {
+    if (
+      chapterScenes.length > 0 &&
+      (!this.activeSceneId ||
+        !chapterScenes.some((s) => s.id === this.activeSceneId))
+    ) {
       this.activeSceneId = chapterScenes[0].id;
     }
     this.saveToStorage();
