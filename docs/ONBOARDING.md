@@ -231,126 +231,91 @@ echo "========================================"
 
 ---
 
-## 4. Clone & Setup Workspace
+## 4. 1-Click Workspace Bootstrap & Quickstart
 
-### 4.1. Clone Repository
+Once your system toolchains are verified, initialize your complete NovWrite development workspace with a single command:
+
+### 4.1. Linux / macOS / Windows (Git Bash / WSL)
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
-```
 
-### 4.2. Install Node.js Monorepo Dependencies
-
-```bash
-pnpm install
-```
-
-### 4.3. Configure Environment Variables
-
-Copy the example environment configuration:
-
-```bash
-cp .env.example .env
-```
-
-Review the core environment keys in `.env`:
-
-```ini
-# Application Ports & Service Endpoints
-PORT=8080
-DATA_SERVICE_ADDR=localhost:50051
-
-# Database & Cache Connection Strings
-DATABASE_URL="postgresql://novwrite:novwrite_dev@localhost:5432/novwrite_db?sslmode=disable"
-REDIS_URL="redis://localhost:6379/0"
-
-# Security & Secrets
-JWT_SECRET="novwrite-super-secret-jwt-signing-key-dev-environment-only"
-
-# AI Grounding Gateway (Optional for local testing)
-OPENAI_API_KEY=""
-```
-
----
-
-## 5. Local Infrastructure & Database Initialization
-
-### 5.1. Start PostgreSQL & Redis Containers
-
-```bash
-docker compose up -d postgres redis
-```
-
-### 5.2. Push Prisma Schema & Generate Client
-
-```bash
-# Push database tables and extensions to PostgreSQL
-pnpm --filter @novwrite/data-service db:push
-
-# Generate typed Prisma client bindings
-pnpm --filter @novwrite/data-service db:generate
-
-# Build shared communication bridge contracts
-pnpm --filter @novwrite/bridge build
-```
-
----
-
-## 6. Monorepo 1-Click Orchestration Scripts
-
-NovWrite provides dedicated top-level lifecycle scripts with universal cross-platform support across Linux, macOS, and Windows:
-
-### 6.1. Linux, macOS, and Windows (Git Bash / WSL)
-
-```bash
-# 🚀 1-Click Development Environment
-# (Starts Postgres & Redis containers, verifies health, boots Go API Backend & SvelteKit Web simultaneously)
-./dev.sh
-
-# 🏗️ 1-Click Monorepo Production Build
-# (Compiles bridge contracts, data-service dist, Go binary, and web bundle)
-./build.sh
-
-# 🔍 1-Click Monorepo Typecheck & Diagnostics
-# (Runs svelte-check and tsc across all workspace packages with 0 warnings/errors tolerance)
-./check.sh
-
-# 🧪 1-Click 6-Phase Monorepo Test Runner
-# (Executes bridge tests -> data-service tests -> Go backend tests -> web tests -> mobile tests -> typecheck)
-./test.sh
-
-# 📦 1-Click Dependency Installation & Update
-# (Installs/updates pnpm workspace packages, Go modules, Prisma client, and contracts)
-./deps.sh
-
-# ⚙️ 1-Click Environment Setup Utility
-# (Installs dependencies, creates .env, boots Docker infra, generates Prisma & compiles contracts)
+# 2. 1-Click Full Environment Setup
+# (Creates .env, starts Postgres & Redis containers, installs all dependencies, generates Prisma 8 & builds bridge contracts)
 ./envi.sh
 
-# 🛑 1-Click Environment Teardown & Reset
-# (Stops running dev servers, shuts down Docker containers, purges logs & build outputs)
+# 3. 1-Click Launch Development Stack
+# (Boots Go API Backend on :8080 and SvelteKit Web on :5173)
+./dev.sh
+```
+
+> [!TIP]
+> If your Docker infrastructure is already running and you only need to install or update dependencies across Node.js/pnpm, Go modules, and Prisma 8, run `./deps.sh` (or `pnpm deps`).
+
+### 4.2. Windows (PowerShell as Administrator / Windows Terminal)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. 1-Click Full Environment Setup
+.\envi.ps1
+
+# 3. 1-Click Launch Development Stack
+.\dev.ps1
+```
+
+> [!TIP]
+> On Windows PowerShell, run `.\deps.ps1` to install or update dependencies in under 5 seconds.
+
+---
+
+## 5. 1-Click Monorepo Lifecycle Scripts
+
+NovWrite provides dedicated, cross-platform 1-click lifecycle scripts eliminating tedious manual commands:
+
+### 5.1. Linux, macOS, and Windows (Git Bash / WSL)
+
+```bash
+# 🚀 1-Click Development Environment (API :8080 + Web :5173)
+./dev.sh
+
+# 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
+./dev.sh --all
+
+# 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma 8, bridge)
+./deps.sh
+
+# ⚙️ 1-Click Environment Setup Utility (Full cold bootstrap)
+./envi.sh
+
+# 🛑 1-Click Environment Teardown & Reset (Stops servers, shuts down containers, purges logs)
 ./uenvi.sh
 
+# 🧪 1-Click 6-Phase Monorepo Test Runner
+./test.sh
+
+# 🔍 1-Click Monorepo Typecheck & Diagnostics (0 warnings/errors tolerance)
+./check.sh
+
+# 🏗️ 1-Click Monorepo Production Build
+./build.sh
+
 # 🧹 Clean Slate Database & Redis Reset Utility
-# (Flushes Redis 7.2 keys via FLUSHALL and resets PostgreSQL tables to 0 records)
 ./flush_db.sh
 ```
 
-### 6.2. Windows (PowerShell / Windows Terminal / pwsh)
+### 5.2. Windows (PowerShell / Windows Terminal / pwsh)
 
 ```powershell
 # 🚀 1-Click Development Environment
 .\dev.ps1
 
-# 🏗️ 1-Click Monorepo Production Build
-.\build.ps1
-
-# 🔍 1-Click Monorepo Typecheck & Diagnostics
-.\check.ps1
-
-# 🧪 1-Click 6-Phase Monorepo Test Runner
-.\test.ps1
+# 🌐📱🖥️ Launch All 3 Clients
+.\dev.ps1 -All
 
 # 📦 1-Click Dependency Installation & Update
 .\deps.ps1
@@ -361,8 +326,50 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 # 🛑 1-Click Environment Teardown & Reset
 .\uenvi.ps1
 
+# 🧪 1-Click 6-Phase Monorepo Test Runner
+.\test.ps1
+
+# 🔍 1-Click Monorepo Typecheck & Diagnostics
+.\check.ps1
+
+# 🏗️ 1-Click Monorepo Production Build
+.\build.ps1
+
 # 🧹 Clean Slate Database & Redis Reset Utility
 .\flush_db.ps1
+```
+
+---
+
+## 6. Under the Hood: Manual Step-by-Step Reference
+
+For advanced developers debugging specific services or CI/CD pipelines, the 1-click scripts automate the following underlying steps:
+
+### 6.1. Environment Configuration
+
+```bash
+cp .env.example .env
+```
+
+### 6.2. Granular Dependency Installation
+
+```bash
+# Install workspace npm dependencies & Go modules
+pnpm install
+cd apps/api && go mod download && cd ../..
+
+# Push Prisma 8 schema & generate client bindings
+pnpm --filter @novwrite/data-service db:push
+pnpm --filter @novwrite/data-service db:generate
+
+# Build shared communication bridge contracts
+pnpm --filter @novwrite/bridge build
+```
+
+### 6.3. Docker Infrastructure
+
+```bash
+docker compose up -d postgres redis
 ```
 
 ---
