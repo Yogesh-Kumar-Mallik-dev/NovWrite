@@ -131,11 +131,41 @@ timeline
                : deps.sh / deps.ps1 for Fast Monorepo Dependency Management (pnpm, Go, Prisma 8, Contracts)
                : Non-Blocking Default Execution (<5s) with Optional -Rust Flag for Cargo Crates
                : Automatic DATABASE_URL Fallback for Isolated Prisma Client Generation
+    2026-09-10 : Version 2.11 (Tiered Local-First Architecture & Canonical Backend Synchronization)
+               : Bridge AST Formula Engine & DAG Cycle Detector Deduplication (@novwrite/bridge)
+               : Go Backend REST Handlers (Novel Chapters/Scenes, Rules & SSE Realtime Event Hub)
+               : Web & Desktop Svelte 5 Runes Optimistic Hydration (projectStore, proseStore, worldStore)
+               : Mobile Expo React Native Backend Synchronization (MobileStore & MobileApiClient)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.11] — 2026-09-10
+
+**Scope:** Tiered Local-First Architecture & Canonical Backend Synchronization Across All 3 Frontends  
+**Target Documents:** [`packages/bridge/src/engine/formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/engine/formulaEngine.ts), [`apps/api/internal/handlers/novel_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/novel_handler.go), [`apps/api/internal/handlers/rule_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/rule_handler.go), [`apps/api/internal/handlers/event_hub.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/event_hub.go), [`apps/web/src/lib/api/apiClient.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/api/apiClient.ts), [`apps/web/src/lib/stores/projectStore.svelte.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/stores/projectStore.svelte.ts), [`apps/web/src/lib/stores/proseStore.svelte.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/stores/proseStore.svelte.ts), [`apps/web/src/lib/stores/worldStore.svelte.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/stores/worldStore.svelte.ts), [`apps/mobile/src/lib/apiClient.ts`](file:///home/yogesh/Projects/NovWrite/apps/mobile/src/lib/apiClient.ts), [`apps/mobile/src/lib/mobileStore.ts`](file:///home/yogesh/Projects/NovWrite/apps/mobile/src/lib/mobileStore.ts), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`docs/ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/ARCHITECTURE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md)
+
+#### Added & Refactored
+
+- **Bridge Engine Deduplication & Canonical Consolidation (`@novwrite/bridge`):**
+  - Consolidated duplicate client/backend AST formula parsers into canonical [`packages/bridge/src/engine/formulaEngine.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/engine/formulaEngine.ts).
+  - Re-exported from `@novwrite/bridge` for `@novwrite/web`, `@novwrite/data-service`, and `@novwrite/mobile`.
+- **Go API Persistence & Realtime Server-Sent Events (`apps/api`):**
+  - Created [`novel_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/novel_handler.go) implementing REST endpoints for chapters and scenes with automated word counting and cascading deletions.
+  - Created [`rule_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/rule_handler.go) managing invariant rules and continuity audit overrides.
+  - Created [`event_hub.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/event_hub.go) providing project-scoped SSE pub/sub multiplexing and heartbeat keep-alives.
+  - Added comprehensive test suites (`novel_handler_test.go`, `rule_handler_test.go`, `event_hub_test.go`).
+- **Web & Desktop Svelte 5 Runes Optimistic Hydration (`apps/web`):**
+  - Enhanced [`apiClient.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/api/apiClient.ts) with full REST methods, automatic URL discovery (browser, Vite proxy, Tauri desktop), and SSE subscriber.
+  - Refactored `projectStore.svelte.ts`, `proseStore.svelte.ts`, and `worldStore.svelte.ts` with local-first cache fallback, asynchronous backend write-behind, and SSE stream invalidation.
+- **Mobile React Native Backend Synchronization (`apps/mobile`):**
+  - Created [`apiClient.ts`](file:///home/yogesh/Projects/NovWrite/apps/mobile/src/lib/apiClient.ts) and updated [`mobileStore.ts`](file:///home/yogesh/Projects/NovWrite/apps/mobile/src/lib/mobileStore.ts) with optimistic synchronization and offline persistence.
+- **6-Phase Monorepo Test Runner Verification:**
+  - Full suite (Phase 1–Phase 6, 81+ tests) passing with 0 errors and 0 warnings across all workspaces.
+
+---
 
 ### [Version 2.10.9] — 2026-09-10
 

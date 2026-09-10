@@ -1,10 +1,11 @@
 /**
  * @file mobileStore.ts
- * @description Mobile client reactive state engine matching web stores (projectStore, proseStore, worldStore) with real application state and formula evaluation.
+ * @description Mobile client reactive state engine matching web stores (projectStore, proseStore, worldStore) with real application state, formula evaluation, and optimistic backend synchronization.
  * Block Standard: BLOCK_MOBILE_STORE_002
  */
 
 import { evaluateFormula } from "./formulaEngine.ts";
+import { mobileApiClient } from "./apiClient.ts";
 import type {
   ProjectItem,
   ChapterItem,
@@ -63,6 +64,7 @@ export class MobileStore {
     todayWordsWritten: 0,
   };
 
+  isSyncing = false;
   private listeners: Set<Listener> = new Set();
 
   constructor() {
@@ -222,6 +224,223 @@ export class MobileStore {
     }
   }
 
+  /**
+   * Reconciles mobile store state with the Go backend.
+   */
+  async syncWithBackend(projectId?: string): Promise<void> {
+    const targetProject = projectId || this.state.activeProjectId;
+    this.isSyncing = true;
+    try {
+      const projRes = await mobileApiClient.listProjects({ pageSize: 100 });
+      if (projRes && projRes.data) {
+        const backendProjects: ProjectItem[] = projRes.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || "",
+          genre: p.genre || "General Fiction",
+          createdAt: p.createdAt || new Date().toISOString(),
+          updatedAt: p.updatedAt || new Date().toISOString(),
+        }));
+        const bIds = new Set(backendProjects.map((p) => p.id));
+        const localOnly = this.state.projects.filter((p) => !bIds.has(p.id));
+        this.state.projects = [...backendProjects, ...localOnly];
+      }
+
+      if (targetProject) {
+        const [chapRes, sceneRes, bpRes, entRes, tlRes, ruleRes, auditRes] =
+          await Promise.allSettled([
+            mobileApiClient.listChapters(targetProject, { pageSize: 100 }),
+            mobileApiClient.listScenes(targetProject, undefined, {
+              pageSize: 100,
+            }),
+            mobileApiClient.listBlueprints(targetProject, { pageSize: 100 }),
+            mobileApiClient.listEntities(targetProject, { pageSize: 100 }),
+            mobileApiClient.listTimelineEvents(targetProject, {
+              pageSize: 100,
+            }),
+            mobileApiClient.listRules(targetProject, { pageSize: 100 }),
+            mobileApiClient.getAudit(targetProject, { pageSize: 100 }),
+          ]);
+
+        if (chapRes.status === "fulfilled" && chapRes.value?.data) {
+          const backendChaps: ChapterItem[] = chapRes.value.data.map(
+            (c: any) => ({
+              id: c.id,
+              projectId: c.projectId || targetProject,
+              title: c.title,
+              orderIndex: c.orderIndex ?? 0,
+              synopsis: c.synopsis || "",
+              createdAt: c.createdAt || new Date().toISOString(),
+              updatedAt: c.updatedAt || new Date().toISOString(),
+            }),
+          );
+          const cIds = new Set(backendChaps.map((c) => c.id));
+          const localOnlyChaps = this.state.chapters.filter(
+            (c) => !cIds.has(c.id),
+          );
+          this.state.chapters = [...backendChaps, ...localOnlyChaps].sort(
+            (a, b) => a.orderIndex - b.orderIndex,
+          );
+        }
+
+        if (sceneRes.status === "fulfilled" && sceneRes.value?.data) {
+          const backendScenes: SceneItem[] = sceneRes.value.data.map(
+            (s: any) => ({
+              id: s.id,
+              chapterId: s.chapterId,
+              projectId: s.projectId || targetProject,
+              title: s.title,
+              orderIndex: s.orderIndex ?? 0,
+              proseContent: s.proseContent || "",
+              wordCount: s.wordCount ?? countWords(s.proseContent || ""),
+              status: s.status || "DRAFT",
+              povCharacterId: s.povCharacterId,
+              timelineSequenceNumber: s.timelineSequenceNumber,
+              targetWordCount: s.targetWordCount || 1500,
+              synopsis: s.synopsis || "",
+              createdAt: s.createdAt || new Date().toISOString(),
+              updatedAt: s.updatedAt || new Date().toISOString(),
+            }),
+          );
+          const sIds = new Set(backendScenes.map((s) => s.id));
+          const localOnlyScenes = this.state.scenes.filter(
+            (s) => !sIds.has(s.id),
+          );
+          this.state.scenes = [...backendScenes, ...localOnlyScenes].sort(
+            (a, b) => a.orderIndex - b.orderIndex,
+          );
+        }
+
+        if (bpRes.status === "fulfilled" && bpRes.value?.data) {
+          const backendBps: BlueprintDef[] = bpRes.value.data.map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            blueprintClass: b.blueprintClass || "FIRST_CLASS",
+            category: b.category || "General",
+            description: b.description || "",
+            fields: b.fields || [],
+            isSystemDefault: b.isSystemDefault,
+          }));
+          const bpIds = new Set(backendBps.map((b) => b.id));
+          const localOnlyBps = this.state.blueprints.filter(
+            (b) => !bpIds.has(b.id),
+          );
+          this.state.blueprints = [...backendBps, ...localOnlyBps];
+        }
+
+        if (entRes.status === "fulfilled" && entRes.value?.data) {
+          const backendEnts: EntityItem[] = entRes.value.data.map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            blueprintId: e.blueprintId,
+            blueprintName: e.blueprintName || "",
+            category: e.category || "General",
+            description: e.description || "",
+            properties: e.properties || {},
+            computedFormulas: e.computedFormulas || {},
+            lastMutatedSeqNumber: e.lastMutatedSeqNumber ?? 0,
+          }));
+          const entIds = new Set(backendEnts.map((e) => e.id));
+          const localOnlyEnts = this.state.entities.filter(
+            (e) => !entIds.has(e.id),
+          );
+          this.state.entities = [...backendEnts, ...localOnlyEnts];
+        }
+
+        if (tlRes.status === "fulfilled" && tlRes.value?.data) {
+          const backendTls: TimelineEventItem[] = tlRes.value.data.map(
+            (ev: any) => ({
+              id: ev.id,
+              narrativeSequenceNumber: ev.narrativeSequenceNumber ?? 0,
+              chronologicalOrder: ev.chronologicalOrder ?? 0,
+              title: ev.title,
+              description: ev.description || "",
+              anchorChapterTitle: ev.anchorChapterTitle,
+              anchorSceneTitle: ev.anchorSceneTitle,
+              effects: (ev.effects || []).map((eff: any) => ({
+                id: eff.id,
+                targetEntityId: eff.targetEntity || eff.targetEntityId,
+                entityName: eff.entityName,
+                propertyKey: eff.propertyKey,
+                operation: eff.operation || "SET",
+                value: eff.value,
+              })),
+              createdAt: ev.createdAt || new Date().toISOString(),
+            }),
+          );
+          const tlIds = new Set(backendTls.map((t) => t.id));
+          const localOnlyTls = this.state.timelineEvents.filter(
+            (t) => !tlIds.has(t.id),
+          );
+          this.state.timelineEvents = [...backendTls, ...localOnlyTls];
+        }
+
+        if (ruleRes.status === "fulfilled" && ruleRes.value?.data) {
+          const backendRules: InvariantRuleItem[] = ruleRes.value.data.map(
+            (r: any) => ({
+              id: r.id,
+              name: r.name,
+              severity: r.severity || "BLOCKING_ERROR",
+              type: r.type || "STATE_GUARD",
+              targetBlueprintId: r.targetBlueprintId,
+              targetBlueprintName: r.targetBlueprintName,
+              targetCategory: r.targetCategory,
+              predicateExpression: r.predicateExpression || "",
+              predicateSummary: r.predicateSummary || "",
+              description: r.description || "",
+              enabled: r.enabled ?? true,
+              suggestedResolution: r.suggestedResolution,
+            }),
+          );
+          const rIds = new Set(backendRules.map((r) => r.id));
+          const localOnlyRules = this.state.rules.filter(
+            (r) => !rIds.has(r.id),
+          );
+          this.state.rules = [...backendRules, ...localOnlyRules];
+        }
+
+        if (auditRes.status === "fulfilled" && auditRes.value?.data) {
+          const backendAudit: ContinuityViolationItem[] =
+            auditRes.value.data.map((v: any) => ({
+              id: v.id,
+              code: v.code || "INVARIANT_STATE_ILLEGAL_ACTION",
+              ruleId: v.ruleId,
+              ruleName: v.ruleName || "Invariant Guard",
+              severity: v.severity || "BLOCKING_ERROR",
+              sceneId: v.sceneId || "",
+              sceneTitle: v.sceneTitle || "",
+              sequenceNumber: v.sequenceNumber ?? 0,
+              entityId: v.entityId || "",
+              entityName: v.entityName || "",
+              property: v.property || "",
+              expectedValue: v.expectedValue || "",
+              calculatedValue: v.calculatedValue || "",
+              historicalCausalEventId: v.historicalCausalEventId,
+              historicalCausalEventTitle: v.historicalCausalEventTitle,
+              historicalCausalSequence: v.historicalCausalSequence,
+              message: v.message || "",
+              rfc7807Uri:
+                v.rfc7807Uri || "https://novwrite.io/errors/continuity-audit",
+              suggestedResolution: v.suggestedResolution || "",
+              overridden: v.overridden ?? false,
+              overrideJustification: v.overrideJustification,
+              overriddenBy: v.overriddenBy,
+              overriddenAt: v.overriddenAt,
+            }));
+          this.state.violations = backendAudit;
+        }
+
+        this.recomputeAllEntityFormulas();
+      }
+
+      this.notify();
+    } catch {
+      // Offline fallback
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
   // ==========================================
   // Project Management Operations
   // ==========================================
@@ -258,6 +477,29 @@ export class MobileStore {
 
     this.state.projects = [newProj, ...this.state.projects];
     this.setActiveProject(newProj.id);
+
+    // Asynchronous Backend Write-Behind
+    mobileApiClient
+      .createProject({
+        name: newProj.name,
+        description: newProj.description,
+        genre: newProj.genre,
+      })
+      .then((res) => {
+        if (res?.data?.id && res.data.id !== newProj.id) {
+          const oldId = newProj.id;
+          const newId = res.data.id;
+          this.state.projects = this.state.projects.map((p) =>
+            p.id === oldId ? { ...p, id: newId } : p,
+          );
+          if (this.state.activeProjectId === oldId) {
+            this.state.activeProjectId = newId;
+          }
+          this.notify();
+        }
+      })
+      .catch(() => {});
+
     return newProj;
   }
 
@@ -299,6 +541,14 @@ export class MobileStore {
       return p;
     });
     this.notify();
+
+    mobileApiClient
+      .updateProject(id, {
+        name: updates.name,
+        description: updates.description,
+        genre: updates.genre,
+      })
+      .catch(() => {});
   }
 
   deleteProject(id: string) {
@@ -316,6 +566,8 @@ export class MobileStore {
     } else {
       this.notify();
     }
+
+    mobileApiClient.deleteProject(id).catch(() => {});
   }
 
   // ==========================================
@@ -374,10 +626,38 @@ export class MobileStore {
     this.state.chapters = [...this.state.chapters, newChap];
     this.state.activeChapterId = newChap.id;
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createChapter(projectId, {
+          title: newChap.title,
+          synopsis: newChap.synopsis,
+          orderIndex: newChap.orderIndex,
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newChap.id) {
+            const oldId = newChap.id;
+            const newId = res.data.id;
+            this.state.chapters = this.state.chapters.map((c) =>
+              c.id === oldId ? { ...c, id: newId } : c,
+            );
+            if (this.state.activeChapterId === oldId) {
+              this.state.activeChapterId = newId;
+            }
+            this.state.scenes = this.state.scenes.map((s) =>
+              s.chapterId === oldId ? { ...s, chapterId: newId } : s,
+            );
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newChap;
   }
 
   updateChapter(id: string, updates: Partial<ChapterItem>) {
+    const projectId = this.state.activeProjectId;
     this.state.chapters = this.state.chapters.map((c) => {
       if (c.id === id) {
         return {
@@ -389,9 +669,14 @@ export class MobileStore {
       return c;
     });
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.updateChapter(projectId, id, updates).catch(() => {});
+    }
   }
 
   deleteChapter(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.chapters = this.state.chapters.filter((c) => c.id !== id);
     this.state.scenes = this.state.scenes.filter((s) => s.chapterId !== id);
     if (this.state.activeChapterId === id) {
@@ -401,6 +686,10 @@ export class MobileStore {
       this.state.activeSceneId = this.state.scenes[0]?.id || null;
     }
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteChapter(projectId, id).catch(() => {});
+    }
   }
 
   createScene(
@@ -428,10 +717,37 @@ export class MobileStore {
     this.state.scenes = [...this.state.scenes, newScene];
     this.state.activeSceneId = newScene.id;
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createScene(projectId, {
+          chapterId: newScene.chapterId,
+          title: newScene.title,
+          synopsis: newScene.synopsis,
+          targetWordCount: newScene.targetWordCount,
+          orderIndex: newScene.orderIndex,
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newScene.id) {
+            const oldId = newScene.id;
+            const newId = res.data.id;
+            this.state.scenes = this.state.scenes.map((s) =>
+              s.id === oldId ? { ...s, id: newId } : s,
+            );
+            if (this.state.activeSceneId === oldId) {
+              this.state.activeSceneId = newId;
+            }
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newScene;
   }
 
   updateScene(id: string, updates: Partial<SceneItem>) {
+    const projectId = this.state.activeProjectId;
     this.state.scenes = this.state.scenes.map((s) => {
       if (s.id === id) {
         const nextContent =
@@ -452,9 +768,22 @@ export class MobileStore {
       return s;
     });
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .updateScene(projectId, id, {
+          ...updates,
+          wordCount:
+            updates.proseContent !== undefined
+              ? countWords(updates.proseContent)
+              : undefined,
+        })
+        .catch(() => {});
+    }
   }
 
   updateSceneContent(id: string, content: string) {
+    const projectId = this.state.activeProjectId;
     const words = countWords(content);
     this.state.scenes = this.state.scenes.map((s) => {
       if (s.id === id) {
@@ -470,14 +799,28 @@ export class MobileStore {
       return s;
     });
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .updateScene(projectId, id, {
+          proseContent: content,
+          wordCount: words,
+        })
+        .catch(() => {});
+    }
   }
 
   deleteScene(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.scenes = this.state.scenes.filter((s) => s.id !== id);
     if (this.state.activeSceneId === id) {
       this.state.activeSceneId = this.state.scenes[0]?.id || null;
     }
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteScene(projectId, id).catch(() => {});
+    }
   }
 
   selectScene(sceneId: string | null) {
@@ -539,6 +882,7 @@ export class MobileStore {
     description?: string;
     fields?: DynamicFieldDef[];
   }): BlueprintDef {
+    const projectId = this.state.activeProjectId || "default";
     const newBp: BlueprintDef = {
       id: `bp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       name: params.name.trim(),
@@ -557,23 +901,59 @@ export class MobileStore {
     };
     this.state.blueprints = [...this.state.blueprints, newBp];
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createBlueprint(projectId, {
+          name: newBp.name,
+          blueprintClass: newBp.blueprintClass,
+          category: newBp.category,
+          description: newBp.description,
+          fields: newBp.fields,
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newBp.id) {
+            const oldId = newBp.id;
+            const newId = res.data.id;
+            this.state.blueprints = this.state.blueprints.map((b) =>
+              b.id === oldId ? { ...b, id: newId } : b,
+            );
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newBp;
   }
 
   updateBlueprint(id: string, updates: Partial<BlueprintDef>) {
+    const projectId = this.state.activeProjectId;
     this.state.blueprints = this.state.blueprints.map((b) =>
       b.id === id ? { ...b, ...updates } : b,
     );
     this.recomputeAllEntityFormulas();
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      const bp = this.getBlueprint(id);
+      if (bp) {
+        mobileApiClient.updateBlueprint(projectId, id, bp).catch(() => {});
+      }
+    }
   }
 
   deleteBlueprint(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.blueprints = this.state.blueprints.filter((b) => b.id !== id);
     this.state.entities = this.state.entities.filter(
       (e) => e.blueprintId !== id,
     );
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteBlueprint(projectId, id).catch(() => {});
+    }
   }
 
   // ==========================================
@@ -594,6 +974,7 @@ export class MobileStore {
     description?: string;
     properties?: Record<string, any>;
   }): EntityItem {
+    const projectId = this.state.activeProjectId || "default";
     const bp = this.getBlueprint(params.blueprintId);
     const newEnt: EntityItem = {
       id: `ent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -611,10 +992,35 @@ export class MobileStore {
 
     this.state.entities = [newEnt, ...this.state.entities];
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createEntity(projectId, {
+          name: newEnt.name,
+          blueprintId: newEnt.blueprintId,
+          blueprintName: newEnt.blueprintName,
+          category: newEnt.category,
+          description: newEnt.description,
+          properties: newEnt.properties,
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newEnt.id) {
+            const oldId = newEnt.id;
+            const newId = res.data.id;
+            this.state.entities = this.state.entities.map((e) =>
+              e.id === oldId ? { ...e, id: newId } : e,
+            );
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newEnt;
   }
 
   updateEntity(id: string, updates: Partial<EntityItem>) {
+    const projectId = this.state.activeProjectId;
     this.state.entities = this.state.entities.map((e) => {
       if (e.id === id) {
         const updated = { ...e, ...updates };
@@ -624,11 +1030,27 @@ export class MobileStore {
       return e;
     });
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .updateEntity(projectId, id, {
+          name: updates.name,
+          category: updates.category,
+          description: updates.description,
+          properties: updates.properties,
+        })
+        .catch(() => {});
+    }
   }
 
   deleteEntity(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.entities = this.state.entities.filter((e) => e.id !== id);
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteEntity(projectId, id).catch(() => {});
+    }
   }
 
   private computeEntityFormulas(entity: EntityItem): Record<string, number> {
@@ -758,6 +1180,7 @@ export class MobileStore {
     anchorSceneTitle?: string;
     effects?: TimelineEffectItem[];
   }): TimelineEventItem {
+    const projectId = this.state.activeProjectId || "default";
     const newEv: TimelineEventItem = {
       id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       title: params.title.trim(),
@@ -771,21 +1194,75 @@ export class MobileStore {
     };
     this.state.timelineEvents = [...this.state.timelineEvents, newEv];
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createTimelineEvent(projectId, {
+          title: newEv.title,
+          description: newEv.description,
+          narrativeSequenceNumber: newEv.narrativeSequenceNumber,
+          chronologicalOrder: newEv.chronologicalOrder,
+          effects: newEv.effects.map((eff) => ({
+            targetEntity: eff.targetEntityId,
+            propertyKey: eff.propertyKey,
+            operation: eff.operation,
+            value: eff.value,
+          })),
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newEv.id) {
+            const oldId = newEv.id;
+            const newId = res.data.id;
+            this.state.timelineEvents = this.state.timelineEvents.map((ev) =>
+              ev.id === oldId ? { ...ev, id: newId } : ev,
+            );
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newEv;
   }
 
   updateTimelineEvent(id: string, updates: Partial<TimelineEventItem>) {
+    const projectId = this.state.activeProjectId;
     this.state.timelineEvents = this.state.timelineEvents.map((ev) =>
       ev.id === id ? { ...ev, ...updates } : ev,
     );
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      const ev = this.getTimelineEvent(id);
+      if (ev) {
+        mobileApiClient
+          .updateTimelineEvent(projectId, id, {
+            title: ev.title,
+            description: ev.description,
+            narrativeSequenceNumber: ev.narrativeSequenceNumber,
+            chronologicalOrder: ev.chronologicalOrder,
+            effects: ev.effects.map((eff) => ({
+              targetEntity: eff.targetEntityId,
+              propertyKey: eff.propertyKey,
+              operation: eff.operation,
+              value: eff.value,
+            })),
+          })
+          .catch(() => {});
+      }
+    }
   }
 
   deleteTimelineEvent(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.timelineEvents = this.state.timelineEvents.filter(
       (ev) => ev.id !== id,
     );
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteTimelineEvent(projectId, id).catch(() => {});
+    }
   }
 
   getFoldedEntitiesAtSequence(
@@ -897,6 +1374,7 @@ export class MobileStore {
     enabled?: boolean;
     suggestedResolution?: string;
   }): InvariantRuleItem {
+    const projectId = this.state.activeProjectId || "default";
     const newRule: InvariantRuleItem = {
       id: `r-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       name: params.name.trim(),
@@ -915,26 +1393,73 @@ export class MobileStore {
     };
     this.state.rules = [...this.state.rules, newRule];
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .createRule(projectId, {
+          name: newRule.name,
+          severity: newRule.severity,
+          type: newRule.type,
+          targetBlueprintId: newRule.targetBlueprintId,
+          targetBlueprintName: newRule.targetBlueprintName,
+          targetCategory: newRule.targetCategory,
+          predicateExpression: newRule.predicateExpression,
+          predicateSummary: newRule.predicateSummary,
+          description: newRule.description,
+          enabled: newRule.enabled,
+          suggestedResolution: newRule.suggestedResolution,
+        })
+        .then((res) => {
+          if (res?.data?.id && res.data.id !== newRule.id) {
+            const oldId = newRule.id;
+            const newId = res.data.id;
+            this.state.rules = this.state.rules.map((r) =>
+              r.id === oldId ? { ...r, id: newId } : r,
+            );
+            this.notify();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newRule;
   }
 
   updateRule(id: string, updates: Partial<InvariantRuleItem>) {
+    const projectId = this.state.activeProjectId;
     this.state.rules = this.state.rules.map((r) =>
       r.id === id ? { ...r, ...updates } : r,
     );
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.updateRule(projectId, id, updates).catch(() => {});
+    }
   }
 
   deleteRule(id: string) {
+    const projectId = this.state.activeProjectId;
     this.state.rules = this.state.rules.filter((r) => r.id !== id);
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient.deleteRule(projectId, id).catch(() => {});
+    }
   }
 
   toggleRule(id: string) {
-    this.state.rules = this.state.rules.map((r) =>
-      r.id === id ? { ...r, enabled: !r.enabled } : r,
+    const r = this.getRule(id);
+    const projectId = this.state.activeProjectId;
+    this.state.rules = this.state.rules.map((item) =>
+      item.id === id ? { ...item, enabled: !item.enabled } : item,
     );
     this.notify();
+
+    if (projectId && projectId !== "default" && r) {
+      mobileApiClient
+        .updateRule(projectId, id, { enabled: !r.enabled })
+        .catch(() => {});
+    }
   }
 
   // ==========================================
@@ -953,6 +1478,7 @@ export class MobileStore {
     justification: string,
     authorName = "Lead Author",
   ) {
+    const projectId = this.state.activeProjectId;
     this.state.violations = this.state.violations.map((v) => {
       if (v.id === id) {
         return {
@@ -966,6 +1492,12 @@ export class MobileStore {
       return v;
     });
     this.notify();
+
+    if (projectId && projectId !== "default") {
+      mobileApiClient
+        .overrideViolation(projectId, id, justification.trim(), authorName)
+        .catch(() => {});
+    }
   }
 
   reconcileViolation(id: string, actionType: string): boolean {

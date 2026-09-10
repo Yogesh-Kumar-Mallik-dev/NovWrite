@@ -1,6 +1,6 @@
 # Backend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.10.9 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 6-Phase Monorepo Test Runner)  
+**Status:** Locked Baseline (Version 2.11 - Tiered Local-First Architecture, Canonical Backend Synchronization, Realtime SSE Hub & 6-Phase Monorepo Test Runner)  
 **Primary Application Engine:** Go 1.23+ (`apps/api/`)  
 **Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`apps/data-service/`)  
 **Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`) & `@novwrite/bridge`  
