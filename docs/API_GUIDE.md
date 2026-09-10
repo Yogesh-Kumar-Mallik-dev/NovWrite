@@ -152,6 +152,23 @@ When rate limits are exceeded, the API returns HTTP 429:
 - `PUT /api/v1/projects/{projectId}` / `PATCH /api/v1/projects/{projectId}` — Update project title, synopsis, and freeform genre string.
 - `DELETE /api/v1/projects/{projectId}` — Irreversibly delete project workspace and cascade-remove scoped blueprints, entities, scenes, and timeline events (`204 No Content`). Guarded by frontend 3-step confirmation sequence (`DeleteProjectDialog.svelte`).
 
+### 3.2.1 Novel Prose Manuscript & Collaborative Scene Leases
+
+- `GET /api/v1/projects/{projectId}/chapters` — List chapters in order with pagination.
+- `POST /api/v1/projects/{projectId}/chapters` — Create a new chapter.
+- `GET /api/v1/projects/{projectId}/chapters/{chapterId}` — Get chapter metadata and synopsis.
+- `PUT /api/v1/projects/{projectId}/chapters/{chapterId}` — Update chapter title, order, or synopsis.
+- `DELETE /api/v1/projects/{projectId}/chapters/{chapterId}` — Delete chapter and cascade delete child scenes.
+- `GET /api/v1/projects/{projectId}/scenes` — List scenes for a project or filtered by chapter (`?chapterId=...`).
+- `POST /api/v1/projects/{projectId}/scenes` — Create a new scene with target word count and POV character assignment.
+- `GET /api/v1/projects/{projectId}/scenes/{sceneId}` — Retrieve scene details and manuscript prose content.
+- `PUT /api/v1/projects/{projectId}/scenes/{sceneId}` — Update scene prose text and word counts. Guarded against concurrent edits if held under another author's active distributed lease (`409 Conflict`).
+- `DELETE /api/v1/projects/{projectId}/scenes/{sceneId}` — Remove a scene.
+- `GET /api/v1/projects/{projectId}/scenes/{sceneId}/lease` — Query distributed Redis lease status and remaining TTL seconds.
+- `POST /api/v1/projects/{projectId}/scenes/{sceneId}/lease/acquire` — Atomically acquire a 60-second distributed editing lease in Redis. Returns `409 Conflict` if held by another author.
+- `POST /api/v1/projects/{projectId}/scenes/{sceneId}/lease/renew` — Heartbeat renewal extending the active lease by 60 seconds.
+- `POST /api/v1/projects/{projectId}/scenes/{sceneId}/lease/release` — Voluntarily release the editing lease and broadcast `SCENE_LEASE_RELEASED` over SSE.
+
 ### 3.3 Blueprints (Schemas)
 
 - `GET /api/v1/projects/{projectId}/blueprints` — List blueprints with pagination, search, and category filters.
