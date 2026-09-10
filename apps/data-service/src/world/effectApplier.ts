@@ -1,165 +1,55 @@
-/**
- * @file effectApplier.ts
- * @description Deterministic state mutation and effect application logic for timeline events.
- * Block Standard: BLOCK_WORLD_TIMELINE_ENGINE_002
- */
-
+import {
+  applyEffectToEntityState as bridgeApplyEffect,
+  TimelineEffectItem,
+} from "@novwrite/bridge";
 import { EventEffectPayload, TransferPayload } from "./timelineTypes.js";
 
 /**
- * Sets a value at a potentially nested dot-notation path inside an object immutably.
- */
-function setNestedProperty(
-  obj: Record<string, unknown>,
-  path: string,
-  value: unknown,
-): Record<string, unknown> {
-  const next = { ...obj };
-  const keys = path.split(".");
-  if (keys.length === 1) {
-    next[path] = value;
-    return next;
-  }
-
-  let current: any = next;
-  for (let i = 0; i < keys.length - 1; i++) {
-    const k = keys[i];
-    current[k] =
-      typeof current[k] === "object" && current[k] !== null
-        ? { ...current[k] }
-        : {};
-    current = current[k];
-  }
-  current[keys[keys.length - 1]] = value;
-  return next;
-}
-
-/**
- * Gets a value from a potentially nested dot-notation path inside an object.
- */
-function getNestedProperty(
-  obj: Record<string, unknown>,
-  path: string,
-): unknown {
-  const keys = path.split(".");
-  let current: any = obj;
-  for (const k of keys) {
-    if (current === undefined || current === null) return undefined;
-    current = current[k];
-  }
-  return current;
-}
-
-/**
  * Applies a single event effect to an entity's mutable property state map.
- * Returns a new immutably updated state map.
+ * Delegated to canonical @novwrite/bridge engine.
  */
 export function applyEffectToEntityState(
   currentState: Record<string, unknown>,
-  effect: EventEffectPayload,
+  effect: EventEffectPayload | TimelineEffectItem,
 ): Record<string, unknown> {
-  const { propertyKey, operation, value } = effect;
+  const eff: TimelineEffectItem = {
+    targetEntityId:
+      (effect as EventEffectPayload).targetEntity ||
+      (effect as TimelineEffectItem).targetEntityId ||
+      "",
+    propertyKey: effect.propertyKey,
+    operation: effect.operation,
+    value: effect.value,
+  };
 
-  switch (operation) {
-    case "SET": {
-      return setNestedProperty(currentState, propertyKey, value);
-    }
-
-    case "INCREMENT": {
-      const currentVal = Number(
-        getNestedProperty(currentState, propertyKey) ?? 0,
-      );
-      const incVal = Number(value);
-      if (isNaN(incVal)) {
-        throw new Error(
-          `BLOCK_WORLD_TIMELINE_ENGINE_002: INCREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
-        );
-      }
-      return setNestedProperty(currentState, propertyKey, currentVal + incVal);
-    }
-
-    case "DECREMENT": {
-      const currentVal = Number(
-        getNestedProperty(currentState, propertyKey) ?? 0,
-      );
-      const decVal = Number(value);
-      if (isNaN(decVal)) {
-        throw new Error(
-          `BLOCK_WORLD_TIMELINE_ENGINE_002: DECREMENT operation requires numeric value for property '${propertyKey}'. Received: ${JSON.stringify(value)}`,
-        );
-      }
-      return setNestedProperty(currentState, propertyKey, currentVal - decVal);
-    }
-
-    case "APPEND": {
-      const existing = getNestedProperty(currentState, propertyKey);
-      const currentList = Array.isArray(existing)
-        ? [...existing]
-        : existing !== undefined && existing !== null
-          ? [existing]
-          : [];
-
-      const nextList = Array.isArray(value)
-        ? [...currentList, ...value]
-        : [...currentList, value];
-
-      return setNestedProperty(currentState, propertyKey, nextList);
-    }
-
-    case "REMOVE": {
-      const existing = getNestedProperty(currentState, propertyKey);
-      if (!Array.isArray(existing)) {
-        return currentState;
-      }
-      const toRemove = Array.isArray(value) ? value : [value];
-      const nextList = existing.filter(
-        (item) =>
-          !toRemove.some((rem) =>
-            typeof item === "object" &&
-            item !== null &&
-            typeof rem === "object" &&
-            rem !== null
-              ? JSON.stringify(item) === JSON.stringify(rem)
-              : item === rem,
-          ),
-      );
-      return setNestedProperty(currentState, propertyKey, nextList);
-    }
-
-    case "TRANSFER": {
-      const existingVal = Number(
-        getNestedProperty(currentState, propertyKey) ?? 0,
-      );
-      if (typeof value === "object" && value !== null) {
-        const transfer = value as TransferPayload;
-        if (typeof transfer.amount === "number") {
-          return setNestedProperty(
-            currentState,
-            propertyKey,
-            existingVal - transfer.amount,
-          );
-        } else if (transfer.item !== undefined) {
-          const list = Array.isArray(existingVal) ? (existingVal as any[]) : [];
-          const nextList = list.filter(
+  if (effect.operation === "TRANSFER") {
+    const existingVal = Number(currentState[effect.propertyKey] ?? 0);
+    if (typeof effect.value === "object" && effect.value !== null) {
+      const transfer = effect.value as TransferPayload;
+      if (typeof transfer.amount === "number") {
+        return {
+          ...currentState,
+          [effect.propertyKey]: existingVal - transfer.amount,
+        };
+      } else if (transfer.item !== undefined) {
+        const list = Array.isArray(existingVal) ? (existingVal as any[]) : [];
+        return {
+          ...currentState,
+          [effect.propertyKey]: list.filter(
             (i) => JSON.stringify(i) !== JSON.stringify(transfer.item),
-          );
-          return setNestedProperty(currentState, propertyKey, nextList);
-        }
-      } else if (typeof value === "number") {
-        return setNestedProperty(
-          currentState,
-          propertyKey,
-          existingVal - value,
-        );
+          ),
+        };
       }
-      return currentState;
+    } else if (typeof effect.value === "number") {
+      return {
+        ...currentState,
+        [effect.propertyKey]: existingVal - effect.value,
+      };
     }
-
-    default:
-      throw new Error(
-        `BLOCK_WORLD_TIMELINE_ENGINE_002: Unsupported effect operation '${operation}'`,
-      );
+    return currentState;
   }
+
+  return bridgeApplyEffect(currentState, eff);
 }
 
 /**

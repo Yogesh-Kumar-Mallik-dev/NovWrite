@@ -167,8 +167,12 @@ timeline
   - Enforced collaborative edit protection in `UpdateScene`: prevents concurrent prose overwrites when a scene is locked by another author (`409 Conflict`).
 - **Mobile Screen Decomposition (`apps/mobile`):**
   - Decomposed 1,000+ line monolithic `world.tsx` and `novel.tsx` screens into 10 modular subcomponents in `apps/mobile/src/components/world/` (`WorldHeader`, `WorldSearchBar`, `WorldSegmentBar`, `WorldBlueprintsList`, `WorldEntitiesList`, `WorldTimelineList`) and `apps/mobile/src/components/novel/` (`ProseHeader`, `ProseChaptersList`, `ProseScenesList`, `ProseEditorModal`).
+- **Canonical Revision Engine Consolidation & Store Thinning (`@novwrite/bridge`):**
+  - Centralized `computeEntityRevisionPatch`, `EditTreeEngine`, and `resolveBitemporalEntityState` in [`packages/bridge/src/engine/revisionEngine.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/engine/revisionEngine.ts).
+  - Thinned out [`apps/data-service/src/world/revisionEngine.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/src/world/revisionEngine.ts) (from 455 lines to 180 lines) and [`apps/data-service/src/world/effectApplier.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/src/world/effectApplier.ts) by delegating directly to `@novwrite/bridge`.
+  - Streamlined [`apps/web/src/lib/stores/worldStore.svelte.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/stores/worldStore.svelte.ts) by removing 160+ lines of duplicated property diffing and coordinate resolution.
 - **Unified 6-Phase Test Runner Verification:**
-  - 100% pass across all 6 verification phases (81+ tests, 0 errors, 0 warnings).
+  - 100% pass across all 6 verification phases (83+ tests, 0 errors, 0 warnings).
 
 ---
 

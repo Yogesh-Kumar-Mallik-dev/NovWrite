@@ -9,4 +9,5 @@ export * from "./contracts.js";
 export * from "./mock.js";
 export * from "./engine/formulaEngine.js";
 export * from "./engine/stateFoldEngine.js";
+export * from "./engine/revisionEngine.js";
 export * from "./client/apiClient.js";

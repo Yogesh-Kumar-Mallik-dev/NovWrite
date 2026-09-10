@@ -37,6 +37,9 @@ import {
   NovWriteApiClient,
   computeEntityFormulas,
   foldTimelineState,
+  computeEntityRevisionPatch,
+  EditTreeEngine,
+  resolveBitemporalEntityState,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -545,5 +548,127 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     const foldedSeq5 = foldTimelineState(baseEntities, events, 5);
     assert.strictEqual(foldedSeq5[0].properties.spirit_stones, 300);
     assert.strictEqual(foldedSeq5[0].lastMutatedSeqNumber, 5);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should compute granular entity revision patches and manage edit trees", () => {
+    const beforeEntity = {
+      id: "ent-1",
+      blueprintId: "bp-1",
+      name: "Eldrin",
+      category: "Hero",
+      description: "Apprentice",
+      properties: { level: 1, rank: "Novice" },
+      computedFormulas: { power: 10 },
+    };
+
+    const afterEntity = {
+      id: "ent-1",
+      blueprintId: "bp-1",
+      name: "Eldrin the Archmage",
+      category: "Hero",
+      description: "Master of Arcana",
+      properties: { level: 50, rank: "Grandmaster" },
+      computedFormulas: { power: 500 },
+    };
+
+    const patch = computeEntityRevisionPatch(beforeEntity, afterEntity);
+    assert.strictEqual(patch.name?.after, "Eldrin the Archmage");
+    assert.strictEqual(patch.description?.after, "Master of Arcana");
+    assert.strictEqual(patch.propertiesChanged?.level.after, 50);
+    assert.strictEqual(patch.formulasChanged?.power.after, 500);
+
+    // Edit Tree
+    const treeEngine = new EditTreeEngine<typeof beforeEntity>();
+    const root = treeEngine.initTree("ent-1", beforeEntity, "Initial creation");
+    assert.strictEqual(root.revisionNumber, 0);
+
+    const edit1 = treeEngine.addEdit(
+      "ent-1",
+      afterEntity,
+      "BASELINE_EDIT",
+      "Leveled up",
+    );
+    assert.strictEqual(edit1.revisionNumber, 1);
+    assert.strictEqual(
+      treeEngine.getActiveSnapshot("ent-1")?.name,
+      "Eldrin the Archmage",
+    );
+
+    treeEngine.checkoutHead("ent-1", root.id);
+    assert.strictEqual(treeEngine.getActiveSnapshot("ent-1")?.name, "Eldrin");
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should resolve bitemporal entity state across revision and timeline coordinates", () => {
+    const entity = {
+      id: "ent-1",
+      blueprintId: "bp-1",
+      name: "Eldrin",
+      category: "Hero",
+      properties: { hp: 100, mana: 50 },
+    };
+
+    const revisions = [
+      {
+        id: "rev-1",
+        entityId: "ent-1",
+        parentRevisionId: null,
+        revisionNumber: 0,
+        createdAt: new Date().toISOString(),
+        type: "BASELINE_EDIT" as const,
+        patch: {},
+        snapshot: entity,
+      },
+      {
+        id: "rev-2",
+        entityId: "ent-1",
+        parentRevisionId: "rev-1",
+        revisionNumber: 1,
+        createdAt: new Date().toISOString(),
+        type: "BASELINE_EDIT" as const,
+        patch: {},
+        snapshot: {
+          ...entity,
+          properties: { hp: 150, mana: 80 },
+        },
+      },
+    ];
+
+    const timelineEvents = [
+      {
+        id: "ev-1",
+        narrativeSequenceNumber: 10,
+        chronologicalOrder: 10,
+        title: "Dragon Breath Attack",
+        description: "Took damage",
+        effects: [
+          {
+            targetEntityId: "ent-1",
+            propertyKey: "hp",
+            operation: "DECREMENT" as const,
+            value: 40,
+          },
+        ],
+      },
+    ];
+
+    const resolvedRev1Seq0 = resolveBitemporalEntityState({
+      entityId: "ent-1",
+      revisions,
+      targetSequenceNumber: 0,
+      targetRevisionId: "rev-1",
+      events: timelineEvents,
+    });
+    assert.strictEqual(resolvedRev1Seq0?.properties.hp, 100);
+    assert.strictEqual(resolvedRev1Seq0?.appliedEventsCount, 0);
+
+    const resolvedRev2Seq10 = resolveBitemporalEntityState({
+      entityId: "ent-1",
+      revisions,
+      targetSequenceNumber: 10,
+      targetRevisionId: "rev-2",
+      events: timelineEvents,
+    });
+    assert.strictEqual(resolvedRev2Seq10?.properties.hp, 110); // 150 - 40
+    assert.strictEqual(resolvedRev2Seq10?.appliedEventsCount, 1);
   });
 });

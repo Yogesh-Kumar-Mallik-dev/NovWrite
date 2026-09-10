@@ -9,6 +9,8 @@ import {
   extractFormulaVariables,
   computeEntityFormulas,
   foldTimelineState,
+  computeEntityRevisionPatch,
+  resolveBitemporalEntityState,
 } from "@novwrite/bridge";
 import { apiClient } from "../api/apiClient";
 import { projectStore } from "./projectStore.svelte";
@@ -899,73 +901,7 @@ export class WorldStateStore {
     before: EntityItem | null,
     after: EntityItem,
   ): EntityRevisionPatch {
-    const patch: EntityRevisionPatch = {};
-    if (!before) {
-      patch.name = { before: "", after: after.name };
-      patch.propertiesChanged = {};
-      for (const [k, v] of Object.entries(after.properties || {})) {
-        patch.propertiesChanged[k] = { before: undefined, after: v };
-      }
-      return patch;
-    }
-
-    if (before.name !== after.name) {
-      patch.name = { before: before.name, after: after.name };
-    }
-    if ((before.description || "") !== (after.description || "")) {
-      patch.description = {
-        before: before.description || "",
-        after: after.description || "",
-      };
-    }
-    if ((before.category || "") !== (after.category || "")) {
-      patch.category = {
-        before: before.category || "",
-        after: after.category || "",
-      };
-    }
-
-    const propsChanged: Record<string, { before: unknown; after: unknown }> =
-      {};
-    const allKeys = new Set([
-      ...Object.keys(before.properties || {}),
-      ...Object.keys(after.properties || {}),
-    ]);
-    for (const k of allKeys) {
-      const bVal = before.properties ? before.properties[k] : undefined;
-      const aVal = after.properties ? after.properties[k] : undefined;
-      if (JSON.stringify(bVal) !== JSON.stringify(aVal)) {
-        propsChanged[k] = { before: bVal, after: aVal };
-      }
-    }
-    if (Object.keys(propsChanged).length > 0) {
-      patch.propertiesChanged = propsChanged;
-    }
-
-    if (before.computedFormulas || after.computedFormulas) {
-      const formulasChanged: Record<string, { before: number; after: number }> =
-        {};
-      const allFKeys = new Set([
-        ...Object.keys(before.computedFormulas || {}),
-        ...Object.keys(after.computedFormulas || {}),
-      ]);
-      for (const k of allFKeys) {
-        const bVal = before.computedFormulas
-          ? before.computedFormulas[k]
-          : undefined;
-        const aVal = after.computedFormulas
-          ? after.computedFormulas[k]
-          : undefined;
-        if (bVal !== aVal && (bVal !== undefined || aVal !== undefined)) {
-          formulasChanged[k] = { before: bVal ?? 0, after: aVal ?? 0 };
-        }
-      }
-      if (Object.keys(formulasChanged).length > 0) {
-        patch.formulasChanged = formulasChanged;
-      }
-    }
-
-    return patch;
+    return computeEntityRevisionPatch(before, after);
   }
 
   recordEntityRevision(
@@ -1053,93 +989,14 @@ export class WorldStateStore {
     const ent = this.getEntity(entityId);
     if (!ent) return undefined;
 
-    const history = this.revisions[entityId] || [];
-    let baseRevision: EntityRevision | undefined;
-
-    if (targetRevisionId) {
-      baseRevision = history.find((r) => r.id === targetRevisionId);
-    } else if (history.length > 0) {
-      baseRevision = history[history.length - 1];
-    }
-
-    const snapshot = baseRevision ? baseRevision.snapshot : ent;
-    let computedProps: Record<string, any> = JSON.parse(
-      JSON.stringify(snapshot.properties || {}),
-    );
-
-    const activeEvents = [...this.timelineEvents]
-      .filter(
-        (ev) => targetSeq === 0 || ev.narrativeSequenceNumber <= targetSeq,
-      )
-      .sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
-
-    const activeMutations: BitemporalEntityState["activeMutations"] = [];
-    let appliedCount = 0;
-
-    for (const ev of activeEvents) {
-      if (targetSeq > 0 && ev.narrativeSequenceNumber > targetSeq) break;
-      for (const eff of ev.effects) {
-        if (eff.targetEntityId === entityId || eff.entityName === ent.name) {
-          const keys = eff.propertyKey.split(".");
-          let curr: any = computedProps;
-          for (let i = 0; i < keys.length - 1; i++) {
-            const k = keys[i];
-            if (!curr[k] || typeof curr[k] !== "object") curr[k] = {};
-            curr = curr[k];
-          }
-          const finalKey = keys[keys.length - 1];
-
-          switch (eff.operation) {
-            case "SET":
-            case "TRANSFER":
-              curr[finalKey] = eff.value;
-              break;
-            case "INCREMENT":
-              curr[finalKey] =
-                (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
-              break;
-            case "DECREMENT":
-              curr[finalKey] =
-                (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
-              break;
-            case "APPEND":
-              if (Array.isArray(curr[finalKey])) curr[finalKey].push(eff.value);
-              else curr[finalKey] = [eff.value];
-              break;
-            case "REMOVE":
-              if (Array.isArray(curr[finalKey]))
-                curr[finalKey] = curr[finalKey].filter(
-                  (x: any) => x !== eff.value,
-                );
-              break;
-          }
-
-          activeMutations.push({
-            eventId: ev.id,
-            eventTitle: ev.title,
-            sequenceNumber: ev.narrativeSequenceNumber,
-            propertyKey: eff.propertyKey,
-            operation: eff.operation,
-            value: eff.value,
-          });
-          appliedCount++;
-        }
-      }
-    }
-
-    return {
+    return resolveBitemporalEntityState({
       entityId,
-      entityName: snapshot.name,
-      category: snapshot.category || "General",
-      narrativeSequenceNumber: targetSeq,
-      revisionId: baseRevision ? baseRevision.id : "initial",
-      revisionNumber: baseRevision ? baseRevision.revisionNumber : 0,
-      revisionType: baseRevision ? baseRevision.type : "BASELINE_EDIT",
-      properties: computedProps,
-      computedFormulas: snapshot.computedFormulas,
-      appliedEventsCount: appliedCount,
-      activeMutations,
-    };
+      revisions: this.revisions[entityId] || [],
+      targetSequenceNumber: targetSeq,
+      targetRevisionId,
+      events: this.timelineEvents,
+      fallbackEntity: ent,
+    });
   }
 
   // =====================================
