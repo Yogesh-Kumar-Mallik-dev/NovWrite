@@ -151,7 +151,7 @@ if ($Update) {
 }
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  Next steps:"
-Write-Host "    - Run '.\dev.ps1' to start the development servers"
-Write-Host "    - Run '.\check.ps1' to run type checks and lints"
-Write-Host "    - Run '.\test.ps1' to run all monorepo test suites"
+Write-Host "    - Run '.\run.ps1 dev' to start the development servers"
+Write-Host "    - Run '.\run.ps1 check' to run type checks and lints"
+Write-Host "    - Run '.\run.ps1 test' to run all monorepo test suites"
 Write-Host "========================================================" -ForegroundColor Cyan

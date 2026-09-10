@@ -18,12 +18,12 @@
 >
 > - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
 >   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
->   - **Windows PowerShell**: `.\deps.ps1`
+>   - **Linux / macOS / WSL**: `./run.sh deps` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\run.ps1 deps`
 > - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
 >   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps.ps1 -Update`
+>   - **Linux / macOS / WSL**: `./run.sh deps --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\run.ps1 deps -Update`
 
 ---
 
@@ -31,7 +31,7 @@
 
 > 💡 _For full workstation setup, prerequisites, and developer workflows, visit the **[Developer Onboarding Guide](docs/ONBOARDING.md)**._
 
-Our 1-click scripts are the **official, fastest, and recommended** way to set up and run NovWrite:
+Our unified runner is the **official, fastest, and recommended** way to set up and run NovWrite:
 
 ### 1.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -41,10 +41,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
-./envi.sh
+./run.sh envi
 
 # 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
-./dev.sh
+./run.sh dev
 ```
 
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
@@ -55,10 +55,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup
-.\envi.ps1
+.\run.ps1 envi
 
 # 3. 1-Click Launch Full Dev Environment
-.\dev.ps1
+.\run.ps1 dev
 ```
 
 ---
@@ -95,7 +95,7 @@ cd NovWrite
 ### 2.2. Manual Step-by-Step Installation (Without 1-Click Scripts)
 
 > [!NOTE]
-> The 1-click scripts above (`envi.sh` / `deps.sh` / `dev.sh`) are the official and recommended way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
+> The single root entrypoint (`./run.sh` / `.\run.ps1`) is the official and recommended way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
 
 ```bash
 # 1. Clone & prepare environment
@@ -129,7 +129,7 @@ pnpm --filter @novwrite/bridge build
   - Dynamic Project Switcher with instant switching, freeform genre text input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), pure **Clean Slate** universe creation (zero starter archetypes or dummy entity bloat), and zero-state "No Active Project Selected" guidance cards.
   - Project Settings & Edit modal (`EditProjectDialog`) with title, genre, and synopsis modification.
   - **3-Step Irreversible Project Deletion** (`DeleteProjectDialog`): Sequential confirmation sequence assessing affected asset scope, requiring an irreversibility acknowledgment checkbox, and exact project title verification before deletion.
-  - Complete database & Redis reset lifecycle (`./flush_db.sh` / `.\flush_db.ps1`) for testing fresh user onboarding.
+  - Complete database & Redis reset lifecycle (`./run.sh flush-db` / `.\run.ps1 flush-db`) for testing fresh user onboarding.
 - **Zero Redundant Close Buttons Standard**:
   - Clean, distraction-free modal dialogs, drawers, and toasts with zero redundant top-right cross `(X)` buttons.
   - Consistent dismissal across all viewports via backdrop click, keyboard `Escape`, and explicit bottom action buttons (`[Cancel]`, `[Close]`).
@@ -164,7 +164,7 @@ pnpm --filter @novwrite/bridge build
   - Single-icon purple theme toggle (`#7c3aed`) rendering exactly one icon at a time matching both light and dark themes.
 - **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking & Evidence-Based Continuity Warnings**: At any scene, reconstructs exact world state and flags prose contradictions citing historical causal events.
-- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: 1-click dev server (`./dev.sh` / `.\dev.ps1`), dependency manager (`./deps.sh` / `.\deps.ps1`), environment setup (`./envi.sh` / `.\envi.ps1`), teardown (`./uenvi.sh` / `.\uenvi.ps1`), build (`./build.sh` / `.\build.ps1`), typecheck (`./check.sh` / `.\check.ps1`), unified 6-phase test runner (`./test.sh` / `.\test.ps1`), and database flusher (`./flush_db.sh` / `.\flush_db.ps1`) supporting Linux, macOS, and Windows.
+- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: Unified entrypoint CLI (`./run.sh` / `.\run.ps1`) orchestrating dev server (`dev`), dependency manager (`deps`), environment setup (`envi`), teardown (`uenvi`), build (`build`), typecheck (`check`), unified 6-phase test runner (`test`), and database flusher (`flush-db`) supporting Linux, macOS, and Windows.
 
 ---
 
@@ -217,7 +217,7 @@ flowchart TB
 
 - **Academic & Formal Specifications:**
   - **[NovWrite B.Tech Capstone Project Report (`docs/Novwrite.docx`)](docs/Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
-  - **[Documentation & Specification Changelog (`changes.md`)](changes.md)** — Chronological timeline of specification and report revisions.
+  - **[Documentation & Specification Changelog (`docs/changes.md`)](docs/changes.md)** — Chronological timeline of specification and report revisions.
 - **Core Architecture Specifications:**
   - [Frontend Architecture Specification](docs/FRONTEND_ARCHITECTURE.md)
   - [Database Architecture Specification](docs/DATABASE_ARCHITECTURE.md)

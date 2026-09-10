@@ -23,9 +23,10 @@
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "envi": "./envi.sh",
-    "uenvi": "./uenvi.sh",
-    "deps": "./deps.sh",
+    "envi": "./run.sh envi",
+    "uenvi": "./run.sh uenvi",
+    "deps": "./run.sh deps",
+    "flush-db": "./run.sh flush-db",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   },

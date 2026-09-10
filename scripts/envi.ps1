@@ -203,9 +203,9 @@ Write-Host ""
 Write-Host "========================================================" -ForegroundColor Green
 Write-Host "  [OK] NovWrite Environment Setup Complete!" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
-Write-Host "  -> Start Development Servers:  .\dev.ps1"
-Write-Host "  -> Run Full Test Suite:        .\test.ps1"
-Write-Host "  -> Run Typechecks:             .\check.ps1"
-Write-Host "  -> Teardown / Reset:           .\uenvi.ps1"
+Write-Host "  -> Start Development Servers:  .\run.ps1 dev"
+Write-Host "  -> Run Full Test Suite:        .\run.ps1 test"
+Write-Host "  -> Run Typechecks:             .\run.ps1 check"
+Write-Host "  -> Teardown / Reset:           .\run.ps1 uenvi"
 Write-Host "========================================================" -ForegroundColor Green
 Write-Host ""

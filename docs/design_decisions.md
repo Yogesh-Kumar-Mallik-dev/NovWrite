@@ -158,13 +158,14 @@ This document records the core design principles, trade-offs, and technical deci
 
 ---
 
-## Decision 19: Universal Cross-Platform Scripting Architecture (POSIX Bash + PowerShell)
+## Decision 19: Universal Cross-Platform Scripting Architecture & Single Root Entrypoint (`run.sh` / `run.ps1`)
 
-- **Context:** Developers and CI environments work across heterogeneous operating systems: Linux distributions, macOS (Darwin), and Windows (PowerShell, Command Prompt, Git Bash, MSYS2, WSL). Hardcoded GNU utilities (such as `xargs -r`), Linux-specific port killers, or un-extended binary paths (`bin/api-server` vs `bin/api-server.exe`) fail on macOS and Windows.
+- **Context:** Developers and CI environments work across heterogeneous operating systems: Linux distributions, macOS (Darwin), and Windows (PowerShell, Command Prompt, Git Bash, MSYS2, WSL). Having multiple scattered root scripts clutters the repository, whereas hardcoded GNU utilities or un-extended binary paths fail on macOS and Windows.
 - **Decision:**
-  1. Make all 5 top-level `.sh` scripts (`dev.sh`, `build.sh`, `check.sh`, `test.sh`, `flush_db.sh`) universally portable by adding runtime OS detection, `.exe` extension awareness, BSD-safe port freeing without `xargs -r`, Docker Compose v1/v2 compatibility, and portable signal trapping.
-  2. Provide native companion PowerShell scripts (`dev.ps1`, `build.ps1`, `check.ps1`, `test.ps1`, `flush_db.ps1`) providing 1-click parity for Windows developers executing directly in PowerShell / Windows Terminal.
-- **Consequences:** Delivers seamless, zero-friction developer onboarding and flawless script execution on every major operating system.
+  1. Centralize all core lifecycle script implementations within a dedicated [`scripts/`](file:///home/yogesh/Projects/NovWrite/scripts/) directory (`dev.sh`, `build.sh`, `check.sh`, `test.sh`, `deps.sh`, `envi.sh`, `uenvi.sh`, `flush_db.sh`).
+  2. Provide a single unified root entrypoint script ([`run.sh`](file:///home/yogesh/Projects/NovWrite/run.sh) for Bash and [`run.ps1`](file:///home/yogesh/Projects/NovWrite/run.ps1) for PowerShell) that orchestrates subcommands (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`) and forwards all arguments and flags transparently.
+  3. Ensure all scripts calculate workspace root dynamically via `dirname/..` or `Split-Path -Parent`, guaranteeing 100% cross-platform parity with zero path fragility.
+- **Consequences:** Delivers a spotless repository root, seamless zero-friction developer onboarding, and flawless lifecycle script execution on every major operating system.
 
 ---
 
@@ -210,7 +211,7 @@ This document records the core design principles, trade-offs, and technical deci
 - **Decision:**
   1. **Gold-Standard Documentation Framework:** Mandate an authoritative documentation hierarchy modeled after premier open-source repositories (Kubernetes, Vite, Next.js, FastAPI, Rust, Svelte): `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/DOCUMENTATION_STANDARDS.md`, `docs/ONBOARDING.md`, `docs/API_GUIDE.md`, and domain architecture specs.
   2. **Strict Prohibition of 10 AI Documentation Anti-Patterns:** Enforce zero tolerance for hallucinated commands, placeholder stubs, robotic buzzwords, code-doc drift, broken paths, happy-path exclusivity, and unpinned dependencies.
-  3. **Atomic Code-Doc Synchronization:** Mandate that all route, schema, or command changes be updated in the documentation within the exact same atomic commit, validated by `./check.sh` and `./test.sh` before GPG signing.
+  3. **Atomic Code-Doc Synchronization:** Mandate that all route, schema, or command changes be updated in the documentation within the exact same atomic commit, validated by `./run.sh check` and `./run.sh test` before GPG signing.
 - **Consequences:** Establishes permanent architectural fidelity, eliminates cognitive friction for new engineers, and ensures the codebase serves as an authoritative open-source reference.
 
 ---

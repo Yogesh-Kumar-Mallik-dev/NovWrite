@@ -134,7 +134,7 @@ async function main() {
     "  💡 Tip: Ensure your phone and PC are on the same Wi-Fi network.",
   );
   console.log(
-    "     If your router blocks LAN connections, launch with: ./dev.sh --tunnel",
+    "     If your router blocks LAN connections, launch with: ./run.sh dev --tunnel",
   );
   console.log("========================================================\n");
 }

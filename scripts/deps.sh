@@ -169,7 +169,7 @@ else
 fi
 echo "========================================================"
 echo "  Next steps:"
-echo "    - Run './dev.sh' to start the development servers"
-echo "    - Run './check.sh' to run type checks and lints"
-echo "    - Run './test.sh' to run all monorepo test suites"
+echo "    - Run './run.sh dev' to start the development servers"
+echo "    - Run './run.sh check' to run type checks and lints"
+echo "    - Run './run.sh test' to run all monorepo test suites"
 echo "========================================================"

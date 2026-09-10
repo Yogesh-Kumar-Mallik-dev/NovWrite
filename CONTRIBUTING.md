@@ -42,31 +42,31 @@ cd NovWrite
 cp .env.example .env
 
 # 📦 First-Time Clone: Install & build all dependencies (pnpm, Go, Prisma 8, bridge)
-./deps.sh
+./run.sh deps
 # Or on Windows PowerShell:
-# .\deps.ps1
+# .\run.ps1 deps
 ```
 
 > [!IMPORTANT]
 > **Updating Dependencies as per Repo**: Whenever you pull latest commits or switch git branches, run the exact same command in **update mode**:
 >
-> - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
-> - **Windows PowerShell**: `.\deps.ps1 -Update`
+> - **Linux / macOS / WSL**: `./run.sh deps --update` (or `pnpm deps --update`)
+> - **Windows PowerShell**: `.\run.ps1 deps -Update`
 
 ### 3.2. 1-Click Development Server
 
-NovWrite provides universal cross-platform lifecycle scripts:
+NovWrite provides a unified single root entrypoint for all lifecycle commands:
 
 - **Linux / macOS / Windows (Git Bash / WSL):**
 
   ```bash
   # Boots PostgreSQL, Redis, Go API Backend (:8080), and SvelteKit Web (:5173)
-  ./dev.sh
+  ./run.sh dev
   ```
 
 - **Windows (PowerShell):**
   ```powershell
-  .\dev.ps1
+  .\run.ps1 dev
   ```
 
 ---
@@ -128,15 +128,15 @@ git commit -S -m "..."
 
 Before submitting a Pull Request, you must run the project diagnostics and 6-phase test runner. Both must pass with **0 errors and 0 warnings**.
 
-### 6.1. Diagnostic Typecheck (`./check.sh` / `.\check.ps1`)
+### 6.1. Diagnostic Typecheck (`./run.sh check` / `.\run.ps1 check`)
 
 Typechecks `@novwrite/bridge`, `@novwrite/data-service`, and `@novwrite/web` with `svelte-check` and `tsc --noEmit`.
 
 ```bash
-./check.sh
+./run.sh check
 ```
 
-### 6.2. 6-Phase Unified Test Runner (`./test.sh` / `.\test.ps1`)
+### 6.2. 6-Phase Unified Test Runner (`./run.sh test` / `.\run.ps1 test`)
 
 Executes the entire monorepo test suite across all 6 verification phases:
 
@@ -150,7 +150,7 @@ Phase 6: SvelteKit & Monorepo Diagnostic Typecheck
 ```
 
 ```bash
-./test.sh
+./run.sh test
 ```
 
 ---
@@ -172,8 +172,8 @@ When opening a Pull Request, ensure:
 
 - [ ] Branch is rebased onto the latest target branch (`world`, `novel`, or `main`).
 - [ ] Commits are GPG signed (`git commit -S`).
-- [ ] `./check.sh` passes with **0 errors and 0 warnings**.
-- [ ] `./test.sh` passes all 6 test phases.
+- [ ] `./run.sh check` passes with **0 errors and 0 warnings**.
+- [ ] `./run.sh test` passes all 6 test phases.
 - [ ] Documentation in `docs/` is updated to reflect any API, schema, or UI changes.
-- [ ] `changes.md` records the release changes.
+- [ ] `docs/changes.md` records the release changes.
 - [ ] PR description includes the exact rationale, components touched, and verification output.

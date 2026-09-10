@@ -9,18 +9,18 @@ Welcome to the **NovWrite** engineering codebase. This guide outlines workstatio
 >
 > - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
 >   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
->   - **Windows PowerShell**: `.\deps.ps1`
+>   - **Linux / macOS / WSL**: `./run.sh deps` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\run.ps1 deps`
 > - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
 >   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps.ps1 -Update`
+>   - **Linux / macOS / WSL**: `./run.sh deps --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\run.ps1 deps -Update`
 
 ---
 
 ## 1. 5-Minute 1-Click Quickstart (Recommended & First Choice)
 
-Our 1-click scripts are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
+Our single root entrypoint (`./run.sh` / `.\run.ps1`) is the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
 
 ### 1.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -31,11 +31,11 @@ cd NovWrite
 
 # 2. 1-Click Full Environment Setup
 # (Creates .env, starts Postgres & Redis containers, installs all dependencies, generates Prisma 8 & builds bridge contracts)
-./envi.sh
+./run.sh envi
 
 # 3. 1-Click Launch Development Stack
 # (Boots Go API Backend on :8080 and SvelteKit Web on :5173)
-./dev.sh
+./run.sh dev
 ```
 
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
@@ -46,78 +46,78 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Full Environment Setup
-.\envi.ps1
+.\run.ps1 envi
 
 # 3. 1-Click Launch Development Stack
-.\dev.ps1
+.\run.ps1 dev
 ```
 
 ---
 
-## 2. 1-Click Monorepo Lifecycle Scripts
+## 2. Unified Monorepo Lifecycle Commands
 
-NovWrite provides dedicated, cross-platform 1-click lifecycle scripts eliminating tedious manual commands:
+NovWrite provides a unified root CLI (`./run.sh` and `.\run.ps1`) eliminating tedious manual commands:
 
 ### 2.1. Linux, macOS, and Windows (Git Bash / WSL)
 
 ```bash
 # 🚀 1-Click Development Environment (API :8080 + Web :5173)
-./dev.sh
+./run.sh dev
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
-./dev.sh --all
+./run.sh dev --all
 
 # 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma 8, bridge)
-./deps.sh
+./run.sh deps
 
 # ⚙️ 1-Click Environment Setup Utility (Full cold bootstrap)
-./envi.sh
+./run.sh envi
 
 # 🛑 1-Click Environment Teardown & Reset (Stops servers, shuts down containers, purges logs)
-./uenvi.sh
+./run.sh uenvi
 
 # 🧪 1-Click 6-Phase Monorepo Test Runner
-./test.sh
+./run.sh test
 
 # 🔍 1-Click Monorepo Typecheck & Diagnostics (0 warnings/errors tolerance)
-./check.sh
+./run.sh check
 
 # 🏗️ 1-Click Monorepo Production Build
-./build.sh
+./run.sh build
 
 # 🧹 Clean Slate Database & Redis Reset Utility
-./flush_db.sh
+./run.sh flush-db
 ```
 
 ### 2.2. Windows (PowerShell / Windows Terminal / pwsh)
 
 ```powershell
 # 🚀 1-Click Development Environment
-.\dev.ps1
+.\run.ps1 dev
 
 # 🌐📱🖥️ Launch All 3 Clients
-.\dev.ps1 -All
+.\run.ps1 dev -All
 
 # 📦 1-Click Dependency Installation & Update
-.\deps.ps1
+.\run.ps1 deps
 
 # ⚙️ 1-Click Environment Setup Utility
-.\envi.ps1
+.\run.ps1 envi
 
 # 🛑 1-Click Environment Teardown & Reset
-.\uenvi.ps1
+.\run.ps1 uenvi
 
 # 🧪 1-Click 6-Phase Monorepo Test Runner
-.\test.ps1
+.\run.ps1 test
 
 # 🔍 1-Click Monorepo Typecheck & Diagnostics
-.\check.ps1
+.\run.ps1 check
 
 # 🏗️ 1-Click Monorepo Production Build
-.\build.ps1
+.\run.ps1 build
 
 # 🧹 Clean Slate Database & Redis Reset Utility
-.\flush_db.ps1
+.\run.ps1 flush-db
 ```
 
 ---

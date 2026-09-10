@@ -459,7 +459,7 @@ The frontend test suite ([`apps/web`](file:///home/yogesh/Projects/NovWrite/apps
 - **Unit Tests:** AST formula engine evaluation (`formulaEngine.test.ts`), bitemporal coordinate resolution, and schema validation.
 - **Store Tests:** Svelte 5 Runes store reactivity, entity formula caching, and revision checkout operations (`worldStore.test.ts`).
 - **Component Tests:** `PipeTreeVisualizer.test.ts`, `JsonEditor.test.ts`, and archetype carousel interaction tests.
-- **Automated Execution:** Tested automatically as Phase 4 in [`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) and typechecked via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+- **Automated Execution:** Tested automatically as Phase 4 in [`./run.sh test`](file:///home/yogesh/Projects/NovWrite/run.sh) and typechecked via [`./run.sh check`](file:///home/yogesh/Projects/NovWrite/run.sh).
 
 ---
 
