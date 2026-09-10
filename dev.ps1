@@ -45,16 +45,16 @@ $apiHost = "127.0.0.1"
 $webHost = "127.0.0.1"
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  🚀 Starting NovWrite Development Environment" -ForegroundColor Cyan
-Write-Host "  🖥️  Platform: PowerShell / Cross-Platform" -ForegroundColor Cyan
-Write-Host "  📦 Targets: API=on Web=$(if ($startWeb) {'on'} else {'off'}) Mobile=$(if ($startMobile) {'on'} else {'off'}) Desktop=$(if ($startDesktop) {'on'} else {'off'})" -ForegroundColor Cyan
+Write-Host "  [*] Starting NovWrite Development Environment" -ForegroundColor Cyan
+Write-Host "  [*] Platform: PowerShell / Cross-Platform" -ForegroundColor Cyan
+Write-Host "  [*] Targets: API=on Web=$(if ($startWeb) {'on'} else {'off'}) Mobile=$(if ($startMobile) {'on'} else {'off'}) Desktop=$(if ($startDesktop) {'on'} else {'off'})" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
 # Pre-flight check for required tools
 $requiredTools = @("go", "pnpm", "node")
 foreach ($tool in $requiredTools) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
-        Write-Error "❌ Error: Required tool '$tool' is not installed or not in PATH."
+        Write-Error "[!] Error: Required tool '$tool' is not installed or not in PATH."
         exit 1
     }
 }
@@ -68,7 +68,7 @@ function Free-Port($port, $name) {
             foreach ($conn in $connections) {
                 $pidToKill = $conn.OwningProcess
                 if ($pidToKill -gt 0 -and -not $pidsKilled.ContainsKey($pidToKill)) {
-                    Write-Host "⚠️  Port $port is in use (PID: $pidToKill). Terminating stale $name process..." -ForegroundColor Yellow
+                    Write-Host "[!] Port $port is in use (PID: $pidToKill). Terminating stale $name process..." -ForegroundColor Yellow
                     Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
                     $pidsKilled[$pidToKill] = $true
                 }
@@ -82,7 +82,7 @@ function Free-Port($port, $name) {
             if ($match.Matches[0].Groups[1].Value) {
                 $p = [int]$match.Matches[0].Groups[1].Value
                 if ($p -gt 0 -and -not $pidsKilled.ContainsKey($p)) {
-                    Write-Host "⚠️  Port $port is in use (PID: $p). Terminating stale $name process..." -ForegroundColor Yellow
+                    Write-Host "[!] Port $port is in use (PID: $p). Terminating stale $name process..." -ForegroundColor Yellow
                     Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
                     $pidsKilled[$p] = $true
                 }
@@ -109,10 +109,10 @@ if (-not (Test-Path $logsDir)) {
 # STEP 1: If Mobile is enabled, display Expo QR Code upfront & launch non-hijacking Metro
 # ------------------------------------------------------------------------------
 if ($startMobile) {
-    Write-Host "📱 Displaying Expo QR Code upfront before starting service logs..." -ForegroundColor Magenta
+    Write-Host "[*] Displaying Expo QR Code upfront before starting service logs..." -ForegroundColor Magenta
     node (Join-Path $rootDir "scripts/show-mobile-qr.mjs")
 
-    Write-Host "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..." -ForegroundColor Blue
+    Write-Host "[*] Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..." -ForegroundColor Blue
     $env:EXPO_PORT = "$mobilePort"
     if ($Tunnel) {
         $env:EXPO_TUNNEL = "1"
@@ -125,7 +125,7 @@ if ($startMobile) {
     $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
     
     # Probe Metro until accepting Expo Go connections
-    Write-Host "⏳ Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
+    Write-Host "[*] Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
     $metroReady = $false
     for ($i = 0; $i -lt 30; $i++) {
         try {
@@ -141,16 +141,16 @@ if ($startMobile) {
     }
 
     if ($metroReady) {
-        Write-Host "✅ Expo Mobile Metro Bundler is live and ready for Expo Go! (PID: $($mobileProcess.Id))" -ForegroundColor Green
+        Write-Host "[OK] Expo Mobile Metro Bundler is live and ready for Expo Go! (PID: $($mobileProcess.Id))" -ForegroundColor Green
     } else {
-        Write-Host "⚠️  Expo Metro Bundler took longer than expected to initialize, proceeding..." -ForegroundColor Yellow
+        Write-Host "[WARN] Expo Metro Bundler took longer than expected to initialize, proceeding..." -ForegroundColor Yellow
     }
 }
 
 # ------------------------------------------------------------------------------
 # STEP 2: Build & Start Go API Server in background
 # ------------------------------------------------------------------------------
-Write-Host "📦 Preparing Go API Server on http://${apiHost}:${apiPort}..." -ForegroundColor Blue
+Write-Host "[*] Preparing Go API Server on http://${apiHost}:${apiPort}..." -ForegroundColor Blue
 $binDir = Join-Path $rootDir "bin"
 if (-not (Test-Path $binDir)) {
     New-Item -ItemType Directory -Path $binDir -Force | Out-Null
@@ -172,7 +172,7 @@ $env:ENVIRONMENT = "development"
 $apiProcess = Start-Process -FilePath $apiExe -WorkingDirectory (Join-Path $rootDir "apps/api") -PassThru
 
 # Probe Go API health endpoint until ready
-Write-Host "⏳ Waiting for Go API server to become ready..." -ForegroundColor DarkGray
+Write-Host "[*] Waiting for Go API server to become ready..." -ForegroundColor DarkGray
 $apiReady = $false
 for ($i = 0; $i -lt 30; $i++) {
     try {
@@ -187,20 +187,20 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 
 if ($apiReady) {
-    Write-Host "✅ Go API Server is live and healthy! (PID: $($apiProcess.Id))" -ForegroundColor Green
+    Write-Host "[OK] Go API Server is live and healthy! (PID: $($apiProcess.Id))" -ForegroundColor Green
 } else {
-    Write-Host "⚠️  Go API Server took longer than expected to report healthy, proceeding..." -ForegroundColor Yellow
+    Write-Host "[WARN] Go API Server took longer than expected to report healthy, proceeding..." -ForegroundColor Yellow
 }
 
 # ------------------------------------------------------------------------------
 # STEP 3: Start SvelteKit Web Workbench in background
 # ------------------------------------------------------------------------------
 if ($startWeb) {
-    Write-Host "🌐 Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
+    Write-Host "[*] Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
     $webProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "vite", "dev", "--host", $webHost, "--port", $webPort -WorkingDirectory (Join-Path $rootDir "apps/web") -PassThru
 
     # Probe Web Server until accepting connections
-    Write-Host "⏳ Waiting for SvelteKit Web Workbench to initialize..." -ForegroundColor DarkGray
+    Write-Host "[*] Waiting for SvelteKit Web Workbench to initialize..." -ForegroundColor DarkGray
     $webReady = $false
     for ($i = 0; $i -lt 30; $i++) {
         try {
@@ -215,7 +215,7 @@ if ($startWeb) {
     }
 
     if ($webReady) {
-        Write-Host "✅ SvelteKit Web Workbench is live! (PID: $($webProcess.Id))" -ForegroundColor Green
+        Write-Host "[OK] SvelteKit Web Workbench is live! (PID: $($webProcess.Id))" -ForegroundColor Green
     }
 }
 
@@ -223,25 +223,25 @@ if ($startWeb) {
 # STEP 4: If Desktop is enabled, start Tauri 2 Native Client
 # ------------------------------------------------------------------------------
 if ($startDesktop) {
-    Write-Host "🖥️  Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
+    Write-Host "[*] Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
     $desktopLog = Join-Path $logsDir "desktop.log"
     $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -RedirectStandardOutput $desktopLog -RedirectStandardError $desktopLog -PassThru
 }
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  🌟 NovWrite Development Environment is LIVE" -ForegroundColor Cyan
+Write-Host "  [*] NovWrite Development Environment is LIVE" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  🔗 Web Workbench:   http://${webHost}:${webPort}"
-Write-Host "  🔗 API Backend:     http://${apiHost}:${apiPort}"
-Write-Host "  🔗 Health Probe:    http://${apiHost}:${apiPort}/healthz"
+Write-Host "  -> Web Workbench:   http://${webHost}:${webPort}"
+Write-Host "  -> API Backend:     http://${apiHost}:${apiPort}"
+Write-Host "  -> Health Probe:    http://${apiHost}:${apiPort}/healthz"
 if ($startMobile) {
-    Write-Host "  📱 Mobile (Expo):   http://127.0.0.1:${mobilePort} (QR printed above)"
+    Write-Host "  -> Mobile (Expo):   http://127.0.0.1:${mobilePort} (QR printed above)"
 }
 if ($startDesktop) {
-    Write-Host "  🖥️  Desktop (Tauri): Active (PID: $($desktopProcess.Id))"
+    Write-Host "  -> Desktop (Tauri): Active (PID: $($desktopProcess.Id))"
 }
-Write-Host "  🛑 Press Ctrl+C at any time for graceful shutdown"
+Write-Host "  [!] Press Ctrl+C at any time for graceful shutdown"
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -249,25 +249,26 @@ Write-Host ""
 try {
     while ($true) {
         if ($apiProcess.HasExited) {
-            Write-Host "⚠️  Go API server stopped unexpectedly." -ForegroundColor Yellow
+            Write-Host "[!] Go API server stopped unexpectedly." -ForegroundColor Yellow
             break
         }
         if ($webProcess.HasExited) {
-            Write-Host "⚠️  SvelteKit Web server stopped unexpectedly." -ForegroundColor Yellow
+            Write-Host "[!] SvelteKit Web server stopped unexpectedly." -ForegroundColor Yellow
             break
         }
         if ($mobileProcess -and $mobileProcess.HasExited) {
-            Write-Host "⚠️  Expo Mobile Metro Bundler stopped unexpectedly." -ForegroundColor Yellow
+            Write-Host "[!] Expo Mobile Metro Bundler stopped unexpectedly." -ForegroundColor Yellow
             break
         }
         if ($desktopProcess -and $desktopProcess.HasExited) {
-            Write-Host "⚠️  Tauri Desktop Client stopped unexpectedly." -ForegroundColor Yellow
+            Write-Host "[!] Tauri Desktop Client stopped unexpectedly." -ForegroundColor Yellow
             break
         }
         Start-Sleep -Seconds 1
     }
 } finally {
-    Write-Host "`n🛑 Initiating graceful shutdown of NovWrite services..." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "[!] Initiating graceful shutdown of NovWrite services..." -ForegroundColor Yellow
     if ($desktopProcess -and -not $desktopProcess.HasExited) {
         Stop-Process -Id $desktopProcess.Id -Force -ErrorAction SilentlyContinue
     }
@@ -280,6 +281,6 @@ try {
     if ($apiProcess -and -not $apiProcess.HasExited) {
         Stop-Process -Id $apiProcess.Id -Force -ErrorAction SilentlyContinue
     }
-    Write-Host "✨ All NovWrite development servers stopped cleanly." -ForegroundColor Green
+    Write-Host "[OK] All NovWrite development servers stopped cleanly." -ForegroundColor Green
 }
 

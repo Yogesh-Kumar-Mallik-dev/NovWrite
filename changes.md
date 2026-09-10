@@ -110,11 +110,28 @@ timeline
     2026-09-10 : Version 2.10.4 (PowerShell Script Suite Hardening & Cross-Version Parity)
                : PowerShell 5.1 & PowerShell 7+ Dual-Version Process Environment Inheritance
                : Robust Multi-PID Port Freeing & Zero-Crash Lifecycle Orchestration
+    2026-09-10 : Version 2.10.5 (Windows PowerShell 5.1 Unicode ANSI Sanitization & Zero Parser Errors)
+               : Complete Elimination of Multi-Byte Unicode Emojis from .ps1 Scripts
+               : Zero-Fault Parsing Guarantee for Windows-1252 ANSI Default Code Page
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.5] — 2026-09-10
+
+**Scope:** Windows PowerShell 5.1 Unicode ANSI Sanitization & Zero Parser Errors across `.ps1` Scripts  
+**Target Documents:** [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1), [`build.ps1`](file:///home/yogesh/Projects/NovWrite/build.ps1), [`check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1), [`flush_db.ps1`](file:///home/yogesh/Projects/NovWrite/flush_db.ps1), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **Windows PowerShell 5.1 Unicode ANSI Sanitization:**
+  - Resolved `The string is missing the terminator: "` and `Missing closing '}' in statement block` parser errors triggered by Windows PowerShell 5.1's default Windows-1252 ANSI decoding of UTF-8 emoji bytes.
+  - Fully sanitized all 5 core PowerShell scripts ([`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1), [`build.ps1`](file:///home/yogesh/Projects/NovWrite/build.ps1), [`check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1), [`flush_db.ps1`](file:///home/yogesh/Projects/NovWrite/flush_db.ps1)) to 100% pure ASCII indicator tokens (`[*]`, `[OK]`, `[!]`, `[WARN]`, `->`, `==`).
+  - Preserved rich console coloring via `-ForegroundColor` (Cyan, Green, Yellow, Blue, Magenta).
+
+---
 
 ### [Version 2.10.4] — 2026-09-10
 
