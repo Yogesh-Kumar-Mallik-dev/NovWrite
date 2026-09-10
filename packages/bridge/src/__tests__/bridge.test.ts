@@ -27,6 +27,11 @@ import {
   diffEntityProperties,
   applyEntityPatch,
   validateUserAccount,
+  evaluateFormula,
+  extractFormulaVariables,
+  validateFormulaSyntax,
+  detectFormulaCycles,
+  detectFormulaDependencyCycle,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -334,5 +339,64 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     };
     const parsedSuperAdmin = validateUserAccount(superAdmin);
     assert.strictEqual(parsedSuperAdmin.role, "SUPER_ADMIN");
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should evaluate AST arithmetic and nested dot variable formulas", () => {
+    const context = {
+      cultivation: {
+        major_realm: 3,
+        minor_realm: 9,
+      },
+      special_Physique: 2,
+      attack: 1500,
+      attack_technique_Mastery: 1.5,
+      defence: 400,
+      defence_technique_mastery: 0.5,
+    };
+
+    const formula =
+      "(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery";
+    const res = evaluateFormula(formula, context);
+
+    assert.strictEqual(res.success, true);
+    // (3 * 9) * 2 + 1500 * 1.5 - 400 * 0.5 = 54 + 2250 - 200 = 2104
+    assert.strictEqual(res.value, 2104);
+    assert.strictEqual(res.formattedValue, "2,104");
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should evaluate mathematical functions and logical IF conditions", () => {
+    const context = { level: 25, bonus: 10 };
+    const formula = "IF(level >= 20, CLAMP(level * 2 + bonus, 0, 100), 5)";
+    const res = evaluateFormula(formula, context);
+
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.value, 60);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should extract formula variables and validate syntax", () => {
+    const formula = "MIN(hp, max_hp) + shield.current * 1.2";
+    const vars = extractFormulaVariables(formula);
+    assert.deepStrictEqual(
+      vars.sort(),
+      ["hp", "max_hp", "shield.current"].sort(),
+    );
+
+    const validRes = validateFormulaSyntax(formula);
+    assert.strictEqual(validRes.valid, true);
+
+    const invalidRes = validateFormulaSyntax("hp + * 2");
+    assert.strictEqual(invalidRes.valid, false);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should detect circular formula dependencies using DAG traversal", () => {
+    const formulas = {
+      stat_a: "stat_b * 2",
+      stat_b: "stat_c + 10",
+      stat_c: "stat_a - 5",
+    };
+
+    const cycleRes = detectFormulaCycles(formulas);
+    assert.strictEqual(cycleRes.hasCycle, true);
+    assert.ok(cycleRes.error?.includes("BLOCK_WORLD_FORMULA_DAG_001"));
   });
 });
