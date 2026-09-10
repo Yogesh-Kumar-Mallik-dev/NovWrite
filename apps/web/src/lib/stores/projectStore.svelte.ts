@@ -6,6 +6,10 @@
 
 import { toastStore } from "./toastStore.svelte";
 import { apiClient } from "../api/apiClient";
+import {
+  generateProjectId,
+  validateProjectInput,
+} from "../engine/projectEngine";
 
 import type { ProjectItem, CreateProjectParams } from "@novwrite/bridge";
 
@@ -191,16 +195,18 @@ export class ProjectStateStore {
   }
 
   createProject(params: CreateProjectParams): ProjectItem {
-    const name = params.name.trim();
-    if (!name) {
-      throw new Error("Project name is required.");
+    const validation = validateProjectInput(params);
+    if (!validation.valid || !validation.sanitized) {
+      const firstError =
+        Object.values(validation.errors)[0] || "Invalid project input.";
+      throw new Error(firstError);
     }
 
     const newProject: ProjectItem = {
-      id: `proj-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
-      name,
-      description: params.description?.trim() || "",
-      genre: params.genre?.trim() || "General Fiction",
+      id: generateProjectId(),
+      name: validation.sanitized.name,
+      description: validation.sanitized.description,
+      genre: validation.sanitized.genre,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

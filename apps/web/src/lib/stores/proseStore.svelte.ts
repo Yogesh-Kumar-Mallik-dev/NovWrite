@@ -7,6 +7,7 @@
 import { toastStore } from "./toastStore.svelte";
 import { projectStore } from "./projectStore.svelte";
 import { apiClient } from "../api/apiClient";
+import { countWords } from "../engine/proseEngine";
 
 import type {
   SceneStatus,
@@ -23,13 +24,6 @@ export type {
   CreateChapterParams,
   CreateSceneParams,
 };
-
-function countWords(text: string): number {
-  if (!text || typeof text !== "string") return 0;
-  const trimmed = text.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).filter(Boolean).length;
-}
 
 export class ProseStateStore {
   chapters = $state<ChapterItem[]>([]);

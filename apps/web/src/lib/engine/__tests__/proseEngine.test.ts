@@ -6,26 +6,11 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-
-function countWords(text: string): number {
-  if (!text || typeof text !== "string") return 0;
-  const trimmed = text.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).filter(Boolean).length;
-}
-
-function calculateReadingTimeMinutes(
-  words: number,
-  wordsPerMinute = 200,
-): number {
-  if (words <= 0) return 0;
-  return Math.ceil(words / wordsPerMinute);
-}
-
-function calculatePacingScore(wordCount: number, targetCount: number): number {
-  if (targetCount <= 0) return 0;
-  return Math.min(100, Math.round((wordCount / targetCount) * 100));
-}
+import {
+  countWords,
+  calculateReadingTimeMinutes,
+  calculatePacingScore,
+} from "../proseEngine.ts";
 
 describe("BLOCK_TEST_PROSE_ENGINE_001: Prose Studio Calculation & Telemetry Engine", () => {
   it("should accurately count words ignoring extra whitespace, newlines and tabs", () => {

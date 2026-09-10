@@ -240,7 +240,7 @@ mindmap
 Before committing any documentation changes, verify:
 
 - [ ] **Run Diagnostics:** `./check.sh` passes with 0 errors and 0 warnings.
-- [ ] **Run Test Suites:** `./test.sh` passes all 5 phases.
+- [ ] **Run Test Suites:** `./test.sh` passes all 6 phases.
 - [ ] **Check Routes:** All documented API paths match routes in `apps/api/cmd/server/main.go`.
 - [ ] **Check Schemas:** All documented database models match `apps/data-service/prisma/schema.prisma`.
 - [ ] **Verify Commands:** All CLI commands and flags are runnable as documented.
