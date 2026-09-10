@@ -61,6 +61,7 @@ CURRENT_STEP="[2/4] @novwrite/data-service"
 echo "📦 $CURRENT_STEP: Generating Prisma client & compiling TypeScript data engines..."
 (
   cd apps/data-service
+  export DATABASE_URL="${DATABASE_URL:-postgresql://novwrite:novwrite_dev@localhost:5433/novwrite_db?schema=public}"
   pnpm run prisma:generate
   pnpm run build
 )

@@ -34,6 +34,9 @@ pnpm --filter @novwrite/bridge run build
 Write-Host "[*] [2/4] @novwrite/data-service: Generating Prisma client & compiling TypeScript data engines..." -ForegroundColor Blue
 Push-Location (Join-Path $rootDir "apps/data-service")
 try {
+    if (-not $env:DATABASE_URL) {
+        $env:DATABASE_URL = "postgresql://novwrite:novwrite_dev@localhost:5433/novwrite_db?schema=public"
+    }
     pnpm run prisma:generate
     pnpm run build
 } finally {
