@@ -58,10 +58,7 @@ export default function ProjectsScreen() {
   const isDeleteReady = isDeleteAcknowledged && isDeleteTitleMatched;
 
   function openCreate() {
-    setNameInput("");
-    setGenreInput("");
-    setDescInput("");
-    setIsCreateModalOpen(true);
+    router.push("/projects/create");
   }
 
   function openEdit() {
@@ -76,16 +73,6 @@ export default function ProjectsScreen() {
     setIsDeleteAcknowledged(false);
     setDeleteConfirmTitle("");
     setIsDeleteModalOpen(true);
-  }
-
-  function handleCreate() {
-    if (!nameInput.trim()) return;
-    mobileStore.createProject({
-      name: nameInput.trim(),
-      genre: genreInput.trim() || undefined,
-      description: descInput.trim() || undefined,
-    });
-    setIsCreateModalOpen(false);
   }
 
   function handleEdit() {
@@ -469,55 +456,6 @@ export default function ProjectsScreen() {
           })}
         </View>
       )}
-
-      {/* Create Project Modal */}
-      <Modal visible={isCreateModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Create Novel Project</Text>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Novel Title *</Text>
-              <TextInput
-                value={nameInput}
-                onChangeText={setNameInput}
-                placeholder="e.g. Whispers of the Star Sea"
-                placeholderTextColor="#71717a"
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-              />
-            </View>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Genre / Setting</Text>
-              <TextInput
-                value={genreInput}
-                onChangeText={setGenreInput}
-                placeholder="e.g. Space Opera / Sci-Fi"
-                placeholderTextColor="#71717a"
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-              />
-            </View>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Synopsis</Text>
-              <TextInput
-                value={descInput}
-                onChangeText={setDescInput}
-                placeholder="Brief universe setting and core premise..."
-                placeholderTextColor="#71717a"
-                multiline
-                numberOfLines={3}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
-              />
-            </View>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsCreateModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleCreate} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Edit Project Modal */}
       <Modal visible={isEditModalOpen} transparent animationType="fade">

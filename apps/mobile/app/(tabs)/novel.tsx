@@ -122,30 +122,11 @@ export default function NovelScreen() {
   }
 
   function openCreateChapter() {
-    setEditingChapterId(null);
-    setChapterTitleInput("");
-    setChapterSynopsisInput("");
-    setIsChapterModalOpen(true);
+    router.push("/novel/chapters/create");
   }
 
   function openEditChapter(chap: ChapterItem) {
-    setEditingChapterId(chap.id);
-    setChapterTitleInput(chap.title);
-    setChapterSynopsisInput(chap.synopsis || "");
-    setIsChapterModalOpen(true);
-  }
-
-  function handleSaveChapter() {
-    if (!chapterTitleInput.trim()) return;
-    if (editingChapterId) {
-      mobileStore.updateChapter(editingChapterId, {
-        title: chapterTitleInput.trim(),
-        synopsis: chapterSynopsisInput.trim() || undefined,
-      });
-    } else {
-      mobileStore.createChapter(chapterTitleInput.trim(), chapterSynopsisInput.trim() || undefined);
-    }
-    setIsChapterModalOpen(false);
+    router.push(`/novel/chapters/${chap.id}`);
   }
 
   function handleDeleteChapter() {
@@ -155,47 +136,12 @@ export default function NovelScreen() {
   }
 
   function openCreateScene(chapId?: string) {
-    setEditingSceneId(null);
-    setTargetChapterIdForScene(chapId || chapters[0]?.id || "");
-    setSceneTitleInput("");
-    setSceneTargetWordsInput("1500");
-    setSceneSynopsisInput("");
-    setSceneStatusInput("DRAFT");
-    setIsSceneModalOpen(true);
+    const targetId = chapId || chapters[0]?.id || "";
+    router.push(targetId ? `/novel/scenes/create?chapterId=${targetId}` : "/novel/scenes/create");
   }
 
   function openEditScene(sc: SceneItem) {
-    setEditingSceneId(sc.id);
-    setTargetChapterIdForScene(sc.chapterId);
-    setSceneTitleInput(sc.title);
-    setSceneTargetWordsInput(String(sc.targetWordCount || 1500));
-    setSceneSynopsisInput(sc.synopsis || "");
-    setSceneStatusInput(sc.status);
-    setIsSceneModalOpen(true);
-  }
-
-  function handleSaveScene() {
-    if (!sceneTitleInput.trim()) return;
-    const targetWords = parseInt(sceneTargetWordsInput, 10) || 1500;
-    if (editingSceneId) {
-      mobileStore.updateScene(editingSceneId, {
-        title: sceneTitleInput.trim(),
-        targetWordCount: targetWords,
-        synopsis: sceneSynopsisInput.trim() || undefined,
-        status: sceneStatusInput,
-      });
-    } else {
-      if (!targetChapterIdForScene) return;
-      const sc = mobileStore.createScene(
-        targetChapterIdForScene,
-        sceneTitleInput.trim(),
-        targetWords,
-        sceneSynopsisInput.trim() || undefined
-      );
-      mobileStore.selectScene(sc.id);
-      setActiveTab("EDITOR");
-    }
-    setIsSceneModalOpen(false);
+    router.push(`/novel/scenes/${sc.id}`);
   }
 
   function handleDeleteScene() {
@@ -1261,131 +1207,6 @@ export default function NovelScreen() {
           </View>
         </ScrollView>
       )}
-
-      {/* ========================================== */}
-      {/* MODALS */}
-      {/* ========================================== */}
-      {/* Create / Edit Chapter Modal */}
-      <Modal visible={isChapterModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
-              {editingChapterId ? "Edit Chapter Details" : "Create New Chapter"}
-            </Text>
-            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 10 }}>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Title *</Text>
-                <TextInput
-                  value={chapterTitleInput}
-                  onChangeText={setChapterTitleInput}
-                  placeholder="e.g. Chapter 1: The Gathering Storm"
-                  placeholderTextColor="#71717a"
-                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-                />
-              </View>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Synopsis / Arc</Text>
-                <TextInput
-                  value={chapterSynopsisInput}
-                  onChangeText={setChapterSynopsisInput}
-                  placeholder="Brief description of what occurs in this chapter..."
-                  placeholderTextColor="#71717a"
-                  multiline
-                  numberOfLines={3}
-                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
-                />
-              </View>
-            </ScrollView>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsChapterModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveChapter} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>
-                  {editingChapterId ? "Save Changes" : "Create Chapter"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Create / Edit Scene Modal */}
-      <Modal visible={isSceneModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
-              {editingSceneId ? "Edit Scene Details" : "Create New Scene"}
-            </Text>
-            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 10 }}>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Title *</Text>
-                <TextInput
-                  value={sceneTitleInput}
-                  onChangeText={setSceneTitleInput}
-                  placeholder="e.g. Confrontation at Dawn"
-                  placeholderTextColor="#71717a"
-                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-                />
-              </View>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Target Word Count</Text>
-                <TextInput
-                  value={sceneTargetWordsInput}
-                  onChangeText={setSceneTargetWordsInput}
-                  keyboardType="numeric"
-                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-                />
-              </View>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Status</Text>
-                <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-                  {(["DRAFT", "IN_PROGRESS", "REVISED", "COMPLETED"] as SceneStatus[]).map((st) => (
-                    <TouchableOpacity
-                      key={st}
-                      onPress={() => setSceneStatusInput(st)}
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 6,
-                        backgroundColor: sceneStatusInput === st ? "rgba(124, 58, 237, 0.25)" : "#18181b",
-                        borderColor: sceneStatusInput === st ? "#7c3aed" : "#27272a",
-                        borderWidth: 1,
-                      }}
-                    >
-                      <Text style={{ color: sceneStatusInput === st ? "#7c3aed" : "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>
-                        {st}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Synopsis / Objective</Text>
-                <TextInput
-                  value={sceneSynopsisInput}
-                  onChangeText={setSceneSynopsisInput}
-                  placeholder="What happens in this scene? Key plot beats..."
-                  placeholderTextColor="#71717a"
-                  multiline
-                  numberOfLines={3}
-                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
-                />
-              </View>
-            </ScrollView>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsSceneModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveScene} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>
-                  {editingSceneId ? "Save Changes" : "Create Scene"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Delete Chapter Confirmation Modal */}
       <Modal visible={!!chapterToDelete} transparent animationType="fade">

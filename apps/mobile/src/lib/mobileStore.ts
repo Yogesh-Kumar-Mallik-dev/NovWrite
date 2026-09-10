@@ -302,6 +302,14 @@ export class MobileStore {
     return this.state.chapters.find((c) => c.id === this.state.activeChapterId) || null;
   }
 
+  getChapter(id: string): ChapterItem | undefined {
+    return this.state.chapters.find((c) => c.id === id);
+  }
+
+  getScene(id: string): SceneItem | undefined {
+    return this.state.scenes.find((s) => s.id === id);
+  }
+
   createChapter(title: string, synopsis?: string): ChapterItem {
     const projectId = this.state.activeProjectId || "default";
     const newChap: ChapterItem = {
@@ -632,6 +640,10 @@ export class MobileStore {
   // ==========================================
   getTimelineEvents(): TimelineEventItem[] {
     return [...this.state.timelineEvents].sort((a, b) => a.narrativeSequenceNumber - b.narrativeSequenceNumber);
+  }
+
+  getTimelineEvent(id: string): TimelineEventItem | undefined {
+    return this.state.timelineEvents.find((e) => e.id === id);
   }
 
   addTimelineEvent(params: {
