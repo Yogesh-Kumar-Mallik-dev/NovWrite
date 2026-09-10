@@ -8,3 +8,4 @@ export * from "./types.js";
 export * from "./contracts.js";
 export * from "./mock.js";
 export * from "./engine/formulaEngine.js";
+export * from "./client/apiClient.js";

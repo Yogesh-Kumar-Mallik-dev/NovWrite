@@ -11,237 +11,53 @@ import {
 import { apiClient } from "../api/apiClient";
 import { projectStore } from "./projectStore.svelte";
 
-export type BlueprintClass = "FIRST_CLASS" | "SECOND_CLASS";
+import type {
+  BlueprintClass,
+  BlueprintFieldType,
+  ValueTypeOptionItem,
+  EnumOptionItem,
+  DynamicFieldDef,
+  BlueprintDef,
+  EntityItem,
+  EffectOperation,
+  TimelineEffectItem,
+  TimelineEventItem,
+  RuleSeverity,
+  RuleType,
+  InvariantRuleItem,
+  ContinuityViolationItem,
+  RevisionType,
+  EntityRevisionPatch,
+  EntityRevision,
+  BitemporalEntityState,
+  EditNode,
+  EditTree,
+  TimelineEventWithTree,
+} from "@novwrite/bridge";
 
-export type BlueprintFieldType =
-  | "STRING"
-  | "NUMBER"
-  | "BOOLEAN"
-  | "ENUM"
-  | "VALUE_TYPE"
-  | "ARRAY"
-  | "BLUEPRINT_REF"
-  | "ARRAY_REF"
-  | "FORMULA";
-
-export interface ValueTypeOptionItem {
-  label: string; // Display Name (e.g. "Qi Refining")
-  value: string; // Storage key / code (e.g. "qi_refining")
-  numericValue?: number; // Numeric Power / Score (e.g. 100)
-  power?: number; // Alias for numeric power
-  description?: string;
-}
-
-export type EnumOptionItem = ValueTypeOptionItem;
-
-export interface DynamicFieldDef {
-  id: string;
-  name: string; // Machine key e.g. "gender", "romantic_feelings", "total_combat_power"
-  label: string; // Human readable label
-  fieldType: BlueprintFieldType;
-  description?: string;
-  required?: boolean;
-  defaultValue?: any;
-
-  // For ENUM (supporting both simple strings and dual-valued {name, power} items):
-  options?: (string | EnumOptionItem)[];
-
-  // For BLUEPRINT_REF:
-  targetBlueprintId?: string; // ID of referenced blueprint (1st or 2nd class)
-  targetBlueprintName?: string;
-  referenceCardinality?: "ONE" | "MANY";
-
-  // For NUMBER:
-  min?: number;
-  max?: number;
-  step?: number;
-  unit?: string; // e.g. "Pts", "Rank", "Atk"
-
-  // For FORMULA:
-  formulaExpression?: string; // e.g. "(cultivation.major_realm * cultivation.minor_realm) * special_Physique + attack * attack_technique_Mastery - defence * defence_technique_mastery"
-  formulaDependencies?: string[];
-}
-
-export interface BlueprintDef {
-  id: string;
-  name: string;
-  blueprintClass: BlueprintClass; // FIRST_CLASS (Entities) | SECOND_CLASS (Sub-Schemas/Value Objects)
-  category: string; // Freeform category tag e.g. "Characters", "Relics", "Systems & Affection", "Factions & Sects"
-  description: string;
-  fields: DynamicFieldDef[];
-  isSystemDefault?: boolean;
-}
-
-export interface EntityItem {
-  id: string;
-  name: string;
-  blueprintId: string;
-  blueprintName: string;
-  category: string;
-  description: string;
-  properties: Record<string, any>;
-  computedFormulas?: Record<string, number>;
-  lastMutatedSeqNumber: number;
-}
-
-// =====================================
-// Timeline & Event Sourcing Types
-// =====================================
-
-export type EffectOperation =
-  "SET" | "INCREMENT" | "DECREMENT" | "APPEND" | "REMOVE" | "TRANSFER";
-
-export interface TimelineEffectItem {
-  id?: string;
-  targetEntityId: string;
-  entityName?: string;
-  propertyKey: string; // Direct or dot notation e.g. "attack" or "cultivation.major_realm"
-  operation: EffectOperation;
-  value: any;
-}
-
-export interface TimelineEventItem {
-  id: string;
-  narrativeSequenceNumber: number;
-  chronologicalOrder: number;
-  title: string;
-  description: string;
-  anchorChapterTitle?: string;
-  anchorSceneTitle?: string;
-  anchorSceneId?: string;
-  effects: TimelineEffectItem[];
-  createdAt?: string;
-}
-
-// =====================================
-// Invariant Rules Types
-// =====================================
-
-export type RuleSeverity = "BLOCKING_ERROR" | "WARNING" | "ADVISORY_NOTE";
-
-export type RuleType =
-  | "STATE_GUARD"
-  | "NUMERIC_BOUNDS"
-  | "PREREQUISITE"
-  | "RELATIONAL_GUARD"
-  | "FORMULA_BOUNDARY";
-
-export interface InvariantRuleItem {
-  id: string;
-  name: string;
-  severity: RuleSeverity;
-  type: RuleType;
-  targetBlueprintId?: string;
-  targetBlueprintName?: string;
-  targetCategory?: string;
-  predicateExpression: string;
-  predicateSummary: string;
-  description: string;
-  enabled: boolean;
-  suggestedResolution?: string;
-}
-
-// =====================================
-// Continuity Audit & RFC 7807 Types
-// =====================================
-
-export interface ContinuityViolationItem {
-  id: string;
-  code: string; // e.g. "INVARIANT_STATE_ILLEGAL_ACTION"
-  ruleId?: string;
-  ruleName: string;
-  severity: RuleSeverity;
-  sceneId: string;
-  sceneTitle: string;
-  sequenceNumber: number;
-  entityId: string;
-  entityName: string;
-  property: string;
-  expectedValue: string;
-  calculatedValue: string;
-  historicalCausalEventId?: string;
-  historicalCausalEventTitle?: string;
-  historicalCausalSequence?: number;
-  message: string;
-  rfc7807Uri: string;
-  suggestedResolution: string;
-  overridden?: boolean;
-  overrideJustification?: string;
-  overriddenBy?: string;
-  overriddenAt?: string;
-}
-
-// =====================================
-// Bitemporal & Dual-Axis Revision Types
-// =====================================
-
-export type RevisionType =
-  "TYPO_FIX" | "BASELINE_EDIT" | "RETROACTIVE_PLOT_FIX" | "REVERT";
-
-export interface EntityRevisionPatch {
-  name?: { before: string; after: string };
-  description?: { before: string; after: string };
-  category?: { before: string; after: string };
-  propertiesChanged?: Record<string, { before: unknown; after: unknown }>;
-  formulasChanged?: Record<string, { before: number; after: number }>;
-}
-
-export interface EntityRevision {
-  id: string;
-  entityId: string;
-  parentRevisionId: string | null;
-  revisionNumber: number;
-  createdAt: string;
-  type: RevisionType;
-  authorNote?: string;
-  patch: EntityRevisionPatch;
-  snapshot: EntityItem;
-}
-
-export interface BitemporalEntityState {
-  entityId: string;
-  entityName: string;
-  category: string;
-  narrativeSequenceNumber: number;
-  revisionId: string;
-  revisionNumber: number;
-  revisionType: RevisionType;
-  properties: Record<string, unknown>;
-  computedFormulas?: Record<string, number>;
-  appliedEventsCount: number;
-  activeMutations: Array<{
-    eventId: string;
-    eventTitle: string;
-    sequenceNumber: number;
-    propertyKey: string;
-    operation: string;
-    value: unknown;
-  }>;
-}
-
-export interface EditNode<T = unknown> {
-  id: string;
-  parentId: string | null;
-  childrenIds: string[];
-  revisionNumber: number;
-  label?: string;
-  authorNote?: string;
-  type: RevisionType;
-  createdAt: string;
-  patch?: unknown;
-  snapshot: T;
-}
-
-export interface EditTree<T = unknown> {
-  rootId: string;
-  activeEditId: string; // Current EDIT Head
-  nodes: Record<string, EditNode<T>>;
-}
-
-export interface TimelineEventWithTree {
-  event: TimelineEventItem;
-  editTree: EditTree<TimelineEventItem>;
-}
+export type {
+  BlueprintClass,
+  BlueprintFieldType,
+  ValueTypeOptionItem,
+  EnumOptionItem,
+  DynamicFieldDef,
+  BlueprintDef,
+  EntityItem,
+  EffectOperation,
+  TimelineEffectItem,
+  TimelineEventItem,
+  RuleSeverity,
+  RuleType,
+  InvariantRuleItem,
+  ContinuityViolationItem,
+  RevisionType,
+  EntityRevisionPatch,
+  EntityRevision,
+  BitemporalEntityState,
+  EditNode,
+  EditTree,
+  TimelineEventWithTree,
+};
 
 const WORLD_STATE_STORAGE_KEY = "novwrite_world_state_v1";
 

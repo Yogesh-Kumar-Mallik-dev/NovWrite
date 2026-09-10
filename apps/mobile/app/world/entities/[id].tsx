@@ -55,8 +55,8 @@ export default function EditEntityScreen() {
       if (ent) {
         setEntity(ent);
         setName(ent.name);
-        setCategory(ent.category);
-        setDescription(ent.description);
+        setCategory(ent.category || "");
+        setDescription(ent.description || "");
         setProperties(ent.properties);
         setRawJson(JSON.stringify(ent.properties, null, 2));
       }

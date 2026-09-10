@@ -215,8 +215,8 @@
     }
   }
 
-  function getEntityIcon(category: string) {
-    const lower = category.toLowerCase();
+  function getEntityIcon(category?: string) {
+    const lower = (category || '').toLowerCase();
     if (lower.includes('char')) return User;
     if (lower.includes('relic') || lower.includes('weapon') || lower.includes('art')) return Sword;
     if (lower.includes('loc') || lower.includes('geo') || lower.includes('cosmo')) return MapPin;

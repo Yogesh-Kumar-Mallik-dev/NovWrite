@@ -34,24 +34,36 @@ export interface ValueTypeOption {
   label: string;
   value: string;
   power?: number;
+  numericValue?: number;
+  description?: string;
 }
 
-// Backwards-compatible alias
+// Backwards-compatible aliases
 export type EnumOption = ValueTypeOption;
+export type ValueTypeOptionItem = ValueTypeOption;
+export type EnumOptionItem = ValueTypeOption;
 
 export interface DynamicFieldDef {
   id: string;
   name: string;
-  label: string;
+  key?: string; // Compatibility alias for machine name
+  label?: string;
   fieldType: BlueprintFieldType;
+  description?: string;
+  required?: boolean;
+  isRequired?: boolean;
+  defaultValue?: any;
   options?: (string | EnumOption)[];
+  optionPowers?: Record<string, number>; // Mobile enum power mapping
   targetBlueprintId?: string;
+  targetBlueprintName?: string;
+  referenceCardinality?: "ONE" | "MANY";
   min?: number;
   max?: number;
   step?: number;
   unit?: string;
   formulaExpression?: string;
-  isRequired?: boolean;
+  formulaDependencies?: string[];
   orderIndex?: number;
 }
 
@@ -66,17 +78,19 @@ export interface BlueprintDef {
   iconName?: string;
   fields: DynamicFieldDef[];
   isBuiltIn?: boolean;
+  isSystemDefault?: boolean;
 }
 
 export interface EntityItem {
   id: string;
   projectId?: string;
   blueprintId: string;
+  blueprintName?: string;
   name: string;
   aliases?: string[];
   category?: string;
   description?: string;
-  properties: Record<string, unknown>;
+  properties: Record<string, any>;
   computedFormulas?: Record<string, number>;
   status?: string;
   lastMutatedSeqNumber?: number;
@@ -319,24 +333,6 @@ export interface EditTree<T = unknown> {
   nodes: Record<string, EditNode<T>>;
 }
 
-export interface TimelineEventWithTree {
-  event: {
-    id: string;
-    narrativeSequenceNumber: number;
-    chronologicalOrder: number;
-    title: string;
-    description?: string;
-    anchorSceneId?: string;
-  };
-  editTree: EditTree<{
-    title: string;
-    description?: string;
-    narrativeSequenceNumber: number;
-    chronologicalOrder: number;
-    effects: unknown[];
-  }>;
-}
-
 // =====================================
 // Multi-User Hierarchy & Identity Types
 // =====================================
@@ -376,4 +372,158 @@ export interface AuthLoginResponse {
   token: string;
   user: UserAccount;
   expiresIn: number;
+}
+
+// =====================================
+// Project & Creative Workspace Models
+// =====================================
+
+export interface ProjectItem {
+  id: string;
+  name: string;
+  description?: string;
+  genre?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectParams {
+  name: string;
+  description?: string;
+  genre?: string;
+}
+
+// =====================================
+// Novel Prose Manuscript Models
+// =====================================
+
+export type SceneStatus = "DRAFT" | "IN_PROGRESS" | "REVISED" | "COMPLETED";
+
+export interface ChapterItem {
+  id: string;
+  projectId: string;
+  title: string;
+  orderIndex: number;
+  synopsis?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SceneItem {
+  id: string;
+  chapterId: string;
+  projectId: string;
+  title: string;
+  orderIndex: number;
+  proseContent: string;
+  wordCount: number;
+  status: SceneStatus;
+  povCharacterId?: string;
+  timelineSequenceNumber?: number;
+  targetWordCount?: number;
+  synopsis?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateChapterParams {
+  title: string;
+  synopsis?: string;
+}
+
+export interface CreateSceneParams {
+  chapterId: string;
+  title: string;
+  synopsis?: string;
+  targetWordCount?: number;
+  povCharacterId?: string;
+  timelineSequenceNumber?: number;
+}
+
+// =====================================
+// Timeline & Event Sourcing Models
+// =====================================
+
+export type EffectOperation =
+  "SET" | "INCREMENT" | "DECREMENT" | "APPEND" | "REMOVE" | "TRANSFER";
+
+export interface TimelineEffectItem {
+  id?: string;
+  targetEntityId: string;
+  entityName?: string;
+  propertyKey: string;
+  operation: EffectOperation;
+  value: any;
+}
+
+export interface TimelineEventItem {
+  id: string;
+  narrativeSequenceNumber: number;
+  chronologicalOrder: number;
+  title: string;
+  description: string;
+  anchorChapterTitle?: string;
+  anchorSceneTitle?: string;
+  anchorSceneId?: string;
+  effects: TimelineEffectItem[];
+  createdAt?: string;
+}
+
+export interface TimelineEventWithTree {
+  event: TimelineEventItem;
+  editTree: EditTree<TimelineEventItem>;
+}
+
+// =====================================
+// Invariant Rules & Continuity Audit Models
+// =====================================
+
+export type RuleSeverity = "BLOCKING_ERROR" | "WARNING" | "ADVISORY_NOTE";
+
+export type RuleType =
+  | "STATE_GUARD"
+  | "NUMERIC_BOUNDS"
+  | "PREREQUISITE"
+  | "RELATIONAL_GUARD"
+  | "FORMULA_BOUNDARY";
+
+export interface InvariantRuleItem {
+  id: string;
+  name: string;
+  severity: RuleSeverity;
+  type: RuleType;
+  targetBlueprintId?: string;
+  targetBlueprintName?: string;
+  targetCategory?: string;
+  predicateExpression: string;
+  predicateSummary: string;
+  description: string;
+  enabled: boolean;
+  suggestedResolution?: string;
+}
+
+export interface ContinuityViolationItem {
+  id: string;
+  code: string;
+  ruleId?: string;
+  ruleName: string;
+  severity: RuleSeverity;
+  sceneId: string;
+  sceneTitle: string;
+  sequenceNumber: number;
+  entityId: string;
+  entityName: string;
+  property: string;
+  expectedValue: string;
+  calculatedValue: string;
+  historicalCausalEventId?: string;
+  historicalCausalEventTitle?: string;
+  historicalCausalSequence?: number;
+  message: string;
+  rfc7807Uri: string;
+  suggestedResolution: string;
+  overridden?: boolean;
+  overrideJustification?: string;
+  overriddenBy?: string;
+  overriddenAt?: string;
 }

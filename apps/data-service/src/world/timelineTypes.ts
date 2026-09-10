@@ -4,8 +4,8 @@
  * Block Standard: BLOCK_WORLD_TIMELINE_ENGINE_001
  */
 
-export type EffectOperation =
-  "SET" | "INCREMENT" | "DECREMENT" | "APPEND" | "REMOVE" | "TRANSFER";
+import type { EffectOperation } from "@novwrite/bridge";
+export type { EffectOperation };
 
 export interface TransferPayload {
   toEntityId: string;

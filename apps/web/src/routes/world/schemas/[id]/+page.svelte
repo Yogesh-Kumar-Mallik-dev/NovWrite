@@ -70,7 +70,7 @@
       name = blueprint.name;
       blueprintClass = blueprint.blueprintClass;
       category = blueprint.category;
-      description = blueprint.description;
+      description = blueprint.description || '';
     }
   });
 

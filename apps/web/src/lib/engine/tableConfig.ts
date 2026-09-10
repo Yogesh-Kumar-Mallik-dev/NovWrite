@@ -16,10 +16,10 @@ export interface TableEntityItem {
   id: string;
   name: string;
   blueprintId: string;
-  blueprintName: string;
-  category: string;
+  blueprintName?: string;
+  category?: string;
   description?: string;
-  lastMutatedSeqNumber: number;
+  lastMutatedSeqNumber?: number;
   properties: Record<string, any>;
   computedFormulas?: Record<string, number>;
 }
@@ -131,16 +131,21 @@ export function formatTableCellValue(
     return { text: entity.name };
   }
   if (columnId === "blueprintName") {
-    return { text: entity.blueprintName };
+    return { text: entity.blueprintName || "—" };
   }
   if (columnId === "category") {
-    return { text: entity.category };
+    return { text: entity.category || "—" };
   }
   if (columnId === "description") {
     return { text: entity.description || "—" };
   }
   if (columnId === "lastMutatedSeqNumber") {
-    return { text: `#${entity.lastMutatedSeqNumber}` };
+    return {
+      text:
+        entity.lastMutatedSeqNumber !== undefined
+          ? `#${entity.lastMutatedSeqNumber}`
+          : "—",
+    };
   }
   if (columnId === "computed_formulas") {
     if (

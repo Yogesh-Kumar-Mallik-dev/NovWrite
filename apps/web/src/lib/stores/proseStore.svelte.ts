@@ -8,48 +8,21 @@ import { toastStore } from "./toastStore.svelte";
 import { projectStore } from "./projectStore.svelte";
 import { apiClient } from "../api/apiClient";
 
-export type SceneStatus = "DRAFT" | "IN_PROGRESS" | "REVISED" | "COMPLETED";
+import type {
+  SceneStatus,
+  ChapterItem,
+  SceneItem,
+  CreateChapterParams,
+  CreateSceneParams,
+} from "@novwrite/bridge";
 
-export interface ChapterItem {
-  id: string;
-  projectId: string;
-  title: string;
-  orderIndex: number;
-  synopsis?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SceneItem {
-  id: string;
-  chapterId: string;
-  projectId: string;
-  title: string;
-  orderIndex: number;
-  proseContent: string;
-  wordCount: number;
-  status: SceneStatus;
-  povCharacterId?: string;
-  timelineSequenceNumber?: number;
-  targetWordCount?: number;
-  synopsis?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateChapterParams {
-  title: string;
-  synopsis?: string;
-}
-
-export interface CreateSceneParams {
-  chapterId: string;
-  title: string;
-  synopsis?: string;
-  targetWordCount?: number;
-  povCharacterId?: string;
-  timelineSequenceNumber?: number;
-}
+export type {
+  SceneStatus,
+  ChapterItem,
+  SceneItem,
+  CreateChapterParams,
+  CreateSceneParams,
+};
 
 function countWords(text: string): number {
   if (!text || typeof text !== "string") return 0;

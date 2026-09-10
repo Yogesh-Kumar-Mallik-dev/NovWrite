@@ -7,20 +7,9 @@
 import { toastStore } from "./toastStore.svelte";
 import { apiClient } from "../api/apiClient";
 
-export interface ProjectItem {
-  id: string;
-  name: string;
-  description?: string;
-  genre?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ProjectItem, CreateProjectParams } from "@novwrite/bridge";
 
-export interface CreateProjectParams {
-  name: string;
-  description?: string;
-  genre?: string;
-}
+export type { ProjectItem, CreateProjectParams };
 
 const PROJECTS_STORAGE_KEY = "novwrite_projects_v1";
 const ACTIVE_PROJECT_STORAGE_KEY = "novwrite_active_project_id_v1";

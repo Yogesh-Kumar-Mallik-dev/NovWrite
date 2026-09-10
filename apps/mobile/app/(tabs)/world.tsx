@@ -165,7 +165,7 @@ export default function WorldStudioScreen() {
     );
   }
 
-  function getEntityIcon(category: string) {
+  function getEntityIcon(category?: string) {
     const lower = (category || "").toLowerCase();
     if (lower.includes("char")) return User;
     if (

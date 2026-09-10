@@ -79,7 +79,7 @@ export default function EditBlueprintScreen() {
         setName(bp.name);
         setBlueprintClass(bp.blueprintClass);
         setCategory(bp.category);
-        setDescription(bp.description);
+        setDescription(bp.description || "");
         setFields(bp.fields);
       }
     }

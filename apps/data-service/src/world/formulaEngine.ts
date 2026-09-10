@@ -4,4 +4,17 @@
  * Block Standard: BLOCK_WORLD_FORMULA_ENGINE_001
  */
 
-export * from "@novwrite/bridge";
+export {
+  evaluateFormula,
+  extractFormulaVariables,
+  validateFormulaSyntax,
+  detectFormulaCycles,
+  detectFormulaDependencyCycle,
+  resolveContextValue,
+} from "@novwrite/bridge";
+
+export type {
+  FormulaEvaluationResult,
+  FormulaValidationResult,
+  FormulaCycleResult,
+} from "@novwrite/bridge";

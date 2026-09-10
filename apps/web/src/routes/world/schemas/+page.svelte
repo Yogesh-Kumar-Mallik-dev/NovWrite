@@ -56,9 +56,9 @@
       const matchSearch =
         !q ||
         b.name.toLowerCase().includes(q) ||
-        b.description.toLowerCase().includes(q) ||
+        b.description?.toLowerCase().includes(q) ||
         b.category.toLowerCase().includes(q) ||
-        b.fields.some((f: DynamicFieldDef) => f.name.toLowerCase().includes(q) || f.label.toLowerCase().includes(q));
+        b.fields.some((f: DynamicFieldDef) => f.name.toLowerCase().includes(q) || f.label?.toLowerCase().includes(q));
 
       return matchClass && matchCat && matchSearch;
     })

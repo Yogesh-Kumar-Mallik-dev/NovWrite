@@ -32,6 +32,9 @@ import {
   validateFormulaSyntax,
   detectFormulaCycles,
   detectFormulaDependencyCycle,
+  paginateArray,
+  ApiError,
+  NovWriteApiClient,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -398,5 +401,37 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     const cycleRes = detectFormulaCycles(formulas);
     assert.strictEqual(cycleRes.hasCycle, true);
     assert.ok(cycleRes.error?.includes("BLOCK_WORLD_FORMULA_DAG_001"));
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should paginate arrays into standard 10-item pages", () => {
+    const items = Array.from({ length: 25 }, (_, i) => ({
+      id: `item-${i + 1}`,
+    }));
+    const page1 = paginateArray(items, { page: 1, pageSize: 10 });
+
+    assert.strictEqual(page1.data.length, 10);
+    assert.strictEqual(page1.pagination.page, 1);
+    assert.strictEqual(page1.pagination.totalPages, 3);
+    assert.strictEqual(page1.pagination.hasNextPage, true);
+    assert.strictEqual(page1.pagination.hasPreviousPage, false);
+
+    const page3 = paginateArray(items, { page: 3, pageSize: 10 });
+    assert.strictEqual(page3.data.length, 5);
+    assert.strictEqual(page3.pagination.hasNextPage, false);
+    assert.strictEqual(page3.pagination.hasPreviousPage, true);
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should construct ApiError with RFC 7807 problem details", () => {
+    const err = new ApiError({
+      type: "https://novwrite.io/errors/not-found",
+      title: "Not Found",
+      status: 404,
+      detail: "The requested project does not exist.",
+      timestamp: new Date().toISOString(),
+    });
+
+    assert.strictEqual(err.name, "ApiError");
+    assert.strictEqual(err.problem.status, 404);
+    assert.strictEqual(err.message, "The requested project does not exist.");
   });
 });
