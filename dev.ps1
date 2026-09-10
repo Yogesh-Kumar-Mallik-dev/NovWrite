@@ -97,6 +97,34 @@ if ($startMobile) {
     Free-Port -port $mobilePort -name "Expo Metro Bundler"
 }
 
+# Cross-platform child process launcher that supports Windows batch/script runners (pnpm/npm)
+function Start-MonorepoChildProcess($command, $arguments, $workingDirectory, $redirectOut = $null, $redirectErr = $null) {
+    $isWin = $IsWindows -or ($null -eq $IsWindows -and $env:OS -like "*Windows*")
+    if ($isWin) {
+        $cmdExe = if ($env:ComSpec) { $env:ComSpec } else { "cmd.exe" }
+        $cmdArgs = @("/c", $command) + $arguments
+        $params = @{
+            FilePath = $cmdExe
+            ArgumentList = $cmdArgs
+            WorkingDirectory = $workingDirectory
+            PassThru = $true
+        }
+        if ($redirectOut) { $params["RedirectStandardOutput"] = $redirectOut }
+        if ($redirectErr) { $params["RedirectStandardError"] = $redirectErr }
+        return Start-Process @params
+    } else {
+        $params = @{
+            FilePath = $command
+            ArgumentList = $arguments
+            WorkingDirectory = $workingDirectory
+            PassThru = $true
+        }
+        if ($redirectOut) { $params["RedirectStandardOutput"] = $redirectOut }
+        if ($redirectErr) { $params["RedirectStandardError"] = $redirectErr }
+        return Start-Process @params
+    }
+}
+
 $mobileProcess = $null
 $desktopProcess = $null
 
@@ -123,7 +151,7 @@ if ($startMobile) {
 
     $expoLog = Join-Path $logsDir "expo.log"
     $expoErrLog = Join-Path $logsDir "expo-error.log"
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -RedirectStandardOutput $expoLog -RedirectStandardError $expoErrLog -PassThru
+    $mobileProcess = Start-MonorepoChildProcess -command "pnpm" -arguments $expoArgs -workingDirectory (Join-Path $rootDir "apps/mobile") -redirectOut $expoLog -redirectErr $expoErrLog
     
     # Probe Metro until accepting Expo Go connections
     Write-Host "[*] Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
@@ -198,7 +226,8 @@ if ($apiReady) {
 # ------------------------------------------------------------------------------
 if ($startWeb) {
     Write-Host "[*] Starting SvelteKit Web Workbench on http://${webHost}:${webPort}..." -ForegroundColor Blue
-    $webProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "vite", "dev", "--host", $webHost, "--port", $webPort -WorkingDirectory (Join-Path $rootDir "apps/web") -PassThru
+    $webArgs = @("exec", "vite", "dev", "--host", $webHost, "--port", $webPort)
+    $webProcess = Start-MonorepoChildProcess -command "pnpm" -arguments $webArgs -workingDirectory (Join-Path $rootDir "apps/web")
 
     # Probe Web Server until accepting connections
     Write-Host "[*] Waiting for SvelteKit Web Workbench to initialize..." -ForegroundColor DarkGray
@@ -227,7 +256,8 @@ if ($startDesktop) {
     Write-Host "[*] Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
     $desktopLog = Join-Path $logsDir "desktop.log"
     $desktopErrLog = Join-Path $logsDir "desktop-error.log"
-    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -RedirectStandardOutput $desktopLog -RedirectStandardError $desktopErrLog -PassThru
+    $desktopArgs = @("exec", "tauri", "dev", "--no-dev-server")
+    $desktopProcess = Start-MonorepoChildProcess -command "pnpm" -arguments $desktopArgs -workingDirectory (Join-Path $rootDir "apps/desktop") -redirectOut $desktopLog -redirectErr $desktopErrLog
 }
 
 Write-Host ""
@@ -282,6 +312,11 @@ try {
     }
     if ($apiProcess -and -not $apiProcess.HasExited) {
         Stop-Process -Id $apiProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+    Free-Port -port $apiPort -name "Go API Server"
+    Free-Port -port $webPort -name "SvelteKit Web Client"
+    if ($startMobile) {
+        Free-Port -port $mobilePort -name "Expo Metro Bundler"
     }
     Write-Host "[OK] All NovWrite development servers stopped cleanly." -ForegroundColor Green
 }
