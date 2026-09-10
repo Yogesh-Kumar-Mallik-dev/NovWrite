@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/cache"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
 	"github.com/go-chi/chi/v5"
 )
@@ -150,11 +151,18 @@ func ValidateProjectAccess(w http.ResponseWriter, r *http.Request, projectStore 
 // ProjectHandler handles REST operations for Project collections and items.
 type ProjectHandler struct {
 	store ProjectStore
+	cache cache.CacheManager
 }
 
 // NewProjectHandler constructs a new ProjectHandler.
-func NewProjectHandler(store ProjectStore) *ProjectHandler {
-	return &ProjectHandler{store: store}
+func NewProjectHandler(store ProjectStore, cacheManagers ...cache.CacheManager) *ProjectHandler {
+	var c cache.CacheManager
+	if len(cacheManagers) > 0 && cacheManagers[0] != nil {
+		c = cacheManagers[0]
+	} else {
+		c = cache.NewMemoryCacheManager()
+	}
+	return &ProjectHandler{store: store, cache: c}
 }
 
 // List handles GET /api/v1/projects with standard 10-item pagination & search filtering.
@@ -241,15 +249,43 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	created := h.store.Save(proj)
+
+	if h.cache != nil {
+		if raw, err := json.Marshal(created); err == nil {
+			_ = h.cache.SetActiveProjectContext(r.Context(), created.ID, raw, 10*time.Minute)
+		}
+	}
+
 	httputil.RespondCreated(w, r, fmt.Sprintf("/api/v1/projects/%s", created.ID), created)
 }
 
 // Get handles GET /api/v1/projects/{projectId}.
 func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
+
+	if h.cache != nil {
+		if raw, err := h.cache.GetActiveProjectContext(r.Context(), projectID); err == nil && len(raw) > 0 {
+			var cached Project
+			if err := json.Unmarshal(raw, &cached); err == nil {
+				// Verify User Ownership if X-User-ID is supplied
+				userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
+				if userID == "" || cached.OwnerID == "" || cached.OwnerID == userID {
+					httputil.RespondJSON(w, r, http.StatusOK, cached)
+					return
+				}
+			}
+		}
+	}
+
 	proj, ok := ValidateProjectAccess(w, r, h.store, projectID)
 	if !ok {
 		return
+	}
+
+	if h.cache != nil {
+		if raw, err := json.Marshal(proj); err == nil {
+			_ = h.cache.SetActiveProjectContext(r.Context(), proj.ID, raw, 10*time.Minute)
+		}
 	}
 
 	httputil.RespondJSON(w, r, http.StatusOK, proj)
@@ -297,6 +333,13 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated := h.store.Save(*existing)
+
+	if h.cache != nil {
+		if raw, err := json.Marshal(updated); err == nil {
+			_ = h.cache.SetActiveProjectContext(r.Context(), updated.ID, raw, 10*time.Minute)
+		}
+	}
+
 	httputil.RespondJSON(w, r, http.StatusOK, updated)
 }
 
@@ -311,6 +354,10 @@ func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !h.store.Delete(projectID) {
 		httputil.RespondNotFound(w, r, "Project", projectID)
 		return
+	}
+
+	if h.cache != nil {
+		_ = h.cache.InvalidateProjectContext(r.Context(), projectID)
 	}
 
 	httputil.RespondNoContent(w)

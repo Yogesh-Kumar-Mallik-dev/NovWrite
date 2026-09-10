@@ -440,6 +440,26 @@ export interface CreateSceneParams {
   timelineSequenceNumber?: number;
 }
 
+export interface SceneLeaseInfo {
+  sceneId: string;
+  active: boolean;
+  authorId?: string;
+  remainingSeconds: number;
+}
+
+export interface AcquireSceneLeaseParams {
+  authorId: string;
+}
+
+export interface SceneLeaseResponse {
+  sceneId: string;
+  authorId?: string;
+  expiresInSeconds?: number;
+  acquired?: boolean;
+  renewed?: boolean;
+  released?: boolean;
+}
+
 // =====================================
 // Timeline & Event Sourcing Models
 // =====================================

@@ -471,3 +471,18 @@ export function validateCreateUserRequest(payload: unknown) {
   }
   return result.data;
 }
+
+// =====================================
+// Distributed Scene Lease Zod Schemas
+// =====================================
+
+export const SceneLeaseSchema = z.object({
+  sceneId: z.string(),
+  active: z.boolean(),
+  authorId: z.string().optional(),
+  remainingSeconds: z.number().int().nonnegative(),
+});
+
+export const AcquireSceneLeaseRequestSchema = z.object({
+  authorId: z.string().min(1),
+});

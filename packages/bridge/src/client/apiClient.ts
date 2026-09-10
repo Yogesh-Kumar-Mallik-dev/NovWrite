@@ -5,6 +5,8 @@
  * Block Standard: BLOCK_COMM_BRIDGE_API_CLIENT_001
  */
 
+import type { SceneLeaseInfo, SceneLeaseResponse } from "../types.js";
+
 export interface PaginationParams {
   page?: number;
   pageSize?: number;
@@ -352,6 +354,42 @@ export class NovWriteApiClient {
     return this.delete(`/projects/${projectId}/scenes/${sceneId}`);
   }
 
+  // Scene Leases (Collaborative Locks)
+  async getSceneLease(projectId: string, sceneId: string) {
+    return this.getSingle<SceneLeaseInfo>(
+      `/projects/${projectId}/scenes/${sceneId}/lease`,
+    );
+  }
+
+  async acquireSceneLease(
+    projectId: string,
+    sceneId: string,
+    authorId: string,
+  ) {
+    return this.post<SceneLeaseResponse>(
+      `/projects/${projectId}/scenes/${sceneId}/lease/acquire`,
+      { authorId },
+    );
+  }
+
+  async renewSceneLease(projectId: string, sceneId: string, authorId: string) {
+    return this.post<SceneLeaseResponse>(
+      `/projects/${projectId}/scenes/${sceneId}/lease/renew`,
+      { authorId },
+    );
+  }
+
+  async releaseSceneLease(
+    projectId: string,
+    sceneId: string,
+    authorId: string,
+  ) {
+    return this.post<SceneLeaseResponse>(
+      `/projects/${projectId}/scenes/${sceneId}/lease/release`,
+      { authorId },
+    );
+  }
+
   // Blueprints & Schemas
   async listBlueprints(projectId: string, params?: PaginationParams) {
     return this.getPaginated<any>(`/projects/${projectId}/blueprints`, params);
@@ -473,6 +511,8 @@ export class NovWriteApiClient {
         "SCENE_CREATED",
         "SCENE_UPDATED",
         "SCENE_DELETED",
+        "SCENE_LEASE_ACQUIRED",
+        "SCENE_LEASE_RELEASED",
         "BLUEPRINT_CREATED",
         "BLUEPRINT_UPDATED",
         "BLUEPRINT_DELETED",

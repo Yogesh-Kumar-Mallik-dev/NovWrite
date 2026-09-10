@@ -205,3 +205,67 @@ func TestProjectHandler_ArbitraryGenreStrings(t *testing.T) {
 	}
 }
 
+func TestProjectHandler_ActiveContextCache(t *testing.T) {
+	store := NewInMemoryProjectStore()
+	handler := NewProjectHandler(store)
+	router := setupProjectRouter(handler)
+
+	// 1. Create a project
+	createBody := map[string]string{
+		"name":        "Cached Universe Project",
+		"description": "Hot active project stored in Redis cache layer.",
+		"genre":       "Science Fiction",
+	}
+	bodyBytes, _ := json.Marshal(createBody)
+
+	req := httptest.NewRequest("POST", "/api/v1/projects", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected status 201 Created, got %d", rec.Code)
+	}
+
+	var createResp struct {
+		Data Project `json:"data"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &createResp)
+	projectID := createResp.Data.ID
+
+	// 2. Query project (hits cache / populates cache)
+	req = httptest.NewRequest("GET", "/api/v1/projects/"+projectID, nil)
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200 OK from cache, got %d", rec.Code)
+	}
+
+	var fetchResp struct {
+		Data Project `json:"data"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &fetchResp)
+	if fetchResp.Data.Name != "Cached Universe Project" {
+		t.Errorf("expected name 'Cached Universe Project', got '%s'", fetchResp.Data.Name)
+	}
+
+	// 3. Delete project (invalidates cache)
+	req = httptest.NewRequest("DELETE", "/api/v1/projects/"+projectID, nil)
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204 No Content, got %d", rec.Code)
+	}
+
+	// 4. Verify project is 404
+	req = httptest.NewRequest("GET", "/api/v1/projects/"+projectID, nil)
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404 Not Found after cache invalidation, got %d", rec.Code)
+	}
+}
+

@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/cache"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/handlers"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
 	"github.com/go-chi/chi/v5"
@@ -69,6 +70,9 @@ func BuildRouter() *chi.Mux {
 		MaxAge:           300,
 	}))
 
+	// Cache & State Manager
+	cacheManager := cache.NewDefaultCacheManager(os.Getenv("REDIS_URL"))
+
 	// Initial Stores & Handlers
 	projectStore := handlers.NewInMemoryProjectStore()
 	blueprintStore := handlers.NewInMemoryBlueprintStore()
@@ -82,11 +86,11 @@ func BuildRouter() *chi.Mux {
 
 	healthHandler := handlers.NewHealthHandler()
 	userHandler := handlers.NewUserHandler(userStore, os.Getenv("JWT_SECRET"))
-	projectHandler := handlers.NewProjectHandler(projectStore)
+	projectHandler := handlers.NewProjectHandler(projectStore, cacheManager)
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore, projectStore)
 	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, projectStore, timelineStore)
 	timelineHandler := handlers.NewTimelineHandler(timelineStore, entityStore, projectStore)
-	novelHandler := handlers.NewNovelHandler(chapterStore, sceneStore, projectStore, eventHub)
+	novelHandler := handlers.NewNovelHandler(chapterStore, sceneStore, projectStore, eventHub, cacheManager)
 	ruleHandler := handlers.NewRuleHandler(ruleStore, projectStore, entityStore, timelineStore, eventHub)
 	sseHandler := handlers.NewSSEHandler(eventHub)
 	formulaHandler := handlers.NewFormulaHandler()
@@ -175,6 +179,12 @@ func BuildRouter() *chi.Mux {
 				r.Get("/{sceneId}", novelHandler.GetScene)
 				r.Put("/{sceneId}", novelHandler.UpdateScene)
 				r.Delete("/{sceneId}", novelHandler.DeleteScene)
+
+				// Distributed Scene Leases (Collaborative Locks)
+				r.Get("/{sceneId}/lease", novelHandler.GetSceneLease)
+				r.Post("/{sceneId}/lease/acquire", novelHandler.AcquireSceneLease)
+				r.Post("/{sceneId}/lease/renew", novelHandler.RenewSceneLease)
+				r.Post("/{sceneId}/lease/release", novelHandler.ReleaseSceneLease)
 			})
 
 			// Invariant Rules & Continuity Audits

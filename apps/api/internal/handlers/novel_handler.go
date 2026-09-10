@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/cache"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
 	"github.com/go-chi/chi/v5"
 )
@@ -249,15 +250,23 @@ type NovelHandler struct {
 	sceneStore   SceneStore
 	projectStore ProjectStore
 	eventHub     *EventHub
+	cache        cache.CacheManager
 }
 
 // NewNovelHandler constructs a novel handler instance.
-func NewNovelHandler(chapterStore ChapterStore, sceneStore SceneStore, projectStore ProjectStore, eventHub *EventHub) *NovelHandler {
+func NewNovelHandler(chapterStore ChapterStore, sceneStore SceneStore, projectStore ProjectStore, eventHub *EventHub, cacheManagers ...cache.CacheManager) *NovelHandler {
+	var c cache.CacheManager
+	if len(cacheManagers) > 0 && cacheManagers[0] != nil {
+		c = cacheManagers[0]
+	} else {
+		c = cache.NewMemoryCacheManager()
+	}
 	return &NovelHandler{
 		chapterStore: chapterStore,
 		sceneStore:   sceneStore,
 		projectStore: projectStore,
 		eventHub:     eventHub,
+		cache:        c,
 	}
 }
 
@@ -582,6 +591,21 @@ func (h *NovelHandler) UpdateScene(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	callerAuthor := strings.TrimSpace(r.Header.Get("X-User-ID"))
+	if h.cache != nil {
+		leaseHolder, remaining, active, _ := h.cache.GetSceneLease(r.Context(), sceneID)
+		if active && leaseHolder != "" && callerAuthor != "" && leaseHolder != callerAuthor {
+			httputil.RespondProblem(w, r, httputil.ProblemDetail{
+				Type:   "https://novwrite.com/errors/scene-lease-conflict",
+				Title:  "Scene Lease Conflict",
+				Status: http.StatusConflict,
+				Detail: fmt.Sprintf("Cannot update scene '%s': lease is actively held by author '%s' with %d seconds remaining.", sceneID, leaseHolder, int(remaining.Seconds())),
+				Code:   "SCENE_LEASE_CONFLICT",
+			})
+			return
+		}
+	}
+
 	var req struct {
 		Title                  *string      `json:"title,omitempty"`
 		OrderIndex             *int         `json:"orderIndex,omitempty"`
@@ -673,4 +697,213 @@ func (h *NovelHandler) DeleteScene(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.RespondNoContent(w)
+}
+
+// GetSceneLease returns the current distributed lease status for a scene.
+func (h *NovelHandler) GetSceneLease(w http.ResponseWriter, r *http.Request) {
+	sceneID := chi.URLParam(r, "sceneId")
+	if sceneID == "" {
+		httputil.RespondBadRequest(w, r, "Scene ID is required.", "MISSING_SCENE_ID")
+		return
+	}
+
+	if h.cache == nil {
+		httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+			"sceneId":          sceneID,
+			"active":           false,
+			"authorId":         "",
+			"remainingSeconds": 0,
+		})
+		return
+	}
+
+	authorID, ttl, active, err := h.cache.GetSceneLease(r.Context(), sceneID)
+	if err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/cache-error",
+			Title:  "Cache Error",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Code:   "CACHE_ERROR",
+		})
+		return
+	}
+
+	remSec := int(ttl.Seconds())
+	if remSec < 0 {
+		remSec = 0
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"sceneId":          sceneID,
+		"active":           active,
+		"authorId":         authorID,
+		"remainingSeconds": remSec,
+	})
+}
+
+// AcquireSceneLease acquires a 60-second distributed lease on a scene.
+func (h *NovelHandler) AcquireSceneLease(w http.ResponseWriter, r *http.Request) {
+	sceneID := chi.URLParam(r, "sceneId")
+	projectID := chi.URLParam(r, "projectId")
+
+	var req struct {
+		AuthorID string `json:"authorId"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	authorID := strings.TrimSpace(req.AuthorID)
+	if authorID == "" {
+		authorID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+	}
+	if authorID == "" {
+		httputil.RespondValidationProblem(w, r, "Validation failed for lease acquisition.", []httputil.InvalidParam{
+			{Name: "authorId", Reason: "Author ID is required to acquire scene lease.", ReceivedValue: req.AuthorID},
+		})
+		return
+	}
+
+	if _, found := h.sceneStore.Get(sceneID); !found {
+		httputil.RespondNotFound(w, r, "Scene", sceneID)
+		return
+	}
+
+	ttl := 60 * time.Second
+	acquired, err := h.cache.AcquireSceneLease(r.Context(), sceneID, authorID, ttl)
+	if err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/cache-error",
+			Title:  "Cache Error",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Code:   "CACHE_ERROR",
+		})
+		return
+	}
+
+	if !acquired {
+		currentAuthor, remaining, _, _ := h.cache.GetSceneLease(r.Context(), sceneID)
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/scene-lease-conflict",
+			Title:  "Scene Lease Conflict",
+			Status: http.StatusConflict,
+			Detail: fmt.Sprintf("Scene '%s' is currently locked by author '%s' with %d seconds remaining.", sceneID, currentAuthor, int(remaining.Seconds())),
+			Code:   "SCENE_LEASE_CONFLICT",
+		})
+		return
+	}
+
+	if h.eventHub != nil {
+		h.eventHub.Broadcast(SSEEvent{
+			Event:     "SCENE_LEASE_ACQUIRED",
+			ProjectID: projectID,
+			Payload: map[string]any{
+				"sceneId":          sceneID,
+				"authorId":         authorID,
+				"expiresInSeconds": 60,
+			},
+		})
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"sceneId":          sceneID,
+		"authorId":         authorID,
+		"expiresInSeconds": 60,
+		"acquired":         true,
+	})
+}
+
+// RenewSceneLease renews an existing lease for 60 seconds if held by the caller.
+func (h *NovelHandler) RenewSceneLease(w http.ResponseWriter, r *http.Request) {
+	sceneID := chi.URLParam(r, "sceneId")
+
+	var req struct {
+		AuthorID string `json:"authorId"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	authorID := strings.TrimSpace(req.AuthorID)
+	if authorID == "" {
+		authorID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+	}
+	if authorID == "" {
+		httputil.RespondValidationProblem(w, r, "Validation failed for lease renewal.", []httputil.InvalidParam{
+			{Name: "authorId", Reason: "Author ID is required to renew scene lease.", ReceivedValue: req.AuthorID},
+		})
+		return
+	}
+
+	ttl := 60 * time.Second
+	renewed, err := h.cache.RenewSceneLease(r.Context(), sceneID, authorID, ttl)
+	if err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/cache-error",
+			Title:  "Cache Error",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Code:   "CACHE_ERROR",
+		})
+		return
+	}
+
+	if !renewed {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/scene-lease-expired",
+			Title:  "Scene Lease Not Held or Expired",
+			Status: http.StatusConflict,
+			Detail: fmt.Sprintf("Cannot renew lease on scene '%s': lease is not held by '%s' or has expired.", sceneID, authorID),
+			Code:   "SCENE_LEASE_EXPIRED",
+		})
+		return
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"sceneId":          sceneID,
+		"authorId":         authorID,
+		"expiresInSeconds": 60,
+		"renewed":          true,
+	})
+}
+
+// ReleaseSceneLease unlocks a scene lease held by the caller.
+func (h *NovelHandler) ReleaseSceneLease(w http.ResponseWriter, r *http.Request) {
+	sceneID := chi.URLParam(r, "sceneId")
+	projectID := chi.URLParam(r, "projectId")
+
+	var req struct {
+		AuthorID string `json:"authorId"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	authorID := strings.TrimSpace(req.AuthorID)
+	if authorID == "" {
+		authorID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+	}
+
+	if err := h.cache.ReleaseSceneLease(r.Context(), sceneID, authorID); err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/cache-error",
+			Title:  "Cache Error",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Code:   "CACHE_ERROR",
+		})
+		return
+	}
+
+	if h.eventHub != nil {
+		h.eventHub.Broadcast(SSEEvent{
+			Event:     "SCENE_LEASE_RELEASED",
+			ProjectID: projectID,
+			Payload: map[string]any{
+				"sceneId":  sceneID,
+				"authorId": authorID,
+			},
+		})
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"sceneId":  sceneID,
+		"released": true,
+	})
 }
