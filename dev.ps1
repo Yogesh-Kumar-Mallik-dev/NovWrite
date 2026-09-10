@@ -61,30 +61,34 @@ foreach ($tool in $requiredTools) {
 
 # Cross-platform port freeing function
 function Free-Port($port, $name) {
+    $pidsKilled = @{}
     try {
-        if ($IsWindows -or ($null -eq $IsWindows -and $env:OS -like "*Windows*")) {
-            $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-            if ($connections) {
-                foreach ($conn in $connections) {
-                    $pidToKill = $conn.OwningProcess
-                    if ($pidToKill -gt 0) {
-                        Write-Host "⚠️  Port $port is in use (PID: $pidToKill). Terminating stale $name process..." -ForegroundColor Yellow
-                        Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
-                    }
+        $connections = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+        if ($connections) {
+            foreach ($conn in $connections) {
+                $pidToKill = $conn.OwningProcess
+                if ($pidToKill -gt 0 -and -not $pidsKilled.ContainsKey($pidToKill)) {
+                    Write-Host "⚠️  Port $port is in use (PID: $pidToKill). Terminating stale $name process..." -ForegroundColor Yellow
+                    Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
+                    $pidsKilled[$pidToKill] = $true
                 }
             }
         }
-    } catch {
+    } catch {}
+
+    try {
         $netstatOut = netstat -ano 2>$null | Select-String ":$port\s+.*LISTENING\s+(\d+)"
         foreach ($match in $netstatOut) {
             if ($match.Matches[0].Groups[1].Value) {
                 $p = [int]$match.Matches[0].Groups[1].Value
-                if ($p -gt 0) {
+                if ($p -gt 0 -and -not $pidsKilled.ContainsKey($p)) {
+                    Write-Host "⚠️  Port $port is in use (PID: $p). Terminating stale $name process..." -ForegroundColor Yellow
                     Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
+                    $pidsKilled[$p] = $true
                 }
             }
         }
-    }
+    } catch {}
 }
 
 Free-Port -port $apiPort -name "Go API Server"
@@ -109,9 +113,7 @@ if ($startMobile) {
     node (Join-Path $rootDir "scripts/show-mobile-qr.mjs")
 
     Write-Host "🚀 Launching Expo Mobile Metro Bundler in background (logs -> logs/expo.log)..." -ForegroundColor Blue
-    $mobileEnv = @{
-        EXPO_PORT = "$mobilePort"
-    }
+    $env:EXPO_PORT = "$mobilePort"
     if ($Tunnel) {
         $env:EXPO_TUNNEL = "1"
     }
@@ -120,7 +122,7 @@ if ($startMobile) {
     if ($Clear) { $expoArgs += "--clear" }
 
     $expoLog = Join-Path $logsDir "expo.log"
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -Environment $mobileEnv -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
     
     # Probe Metro until accepting Expo Go connections
     Write-Host "⏳ Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
@@ -164,12 +166,10 @@ try {
     Pop-Location
 }
 
-$apiEnv = @{
-    PORT = "$apiPort"
-    ENVIRONMENT = "development"
-}
+$env:PORT = "$apiPort"
+$env:ENVIRONMENT = "development"
 
-$apiProcess = Start-Process -FilePath $apiExe -WorkingDirectory (Join-Path $rootDir "apps/api") -Environment $apiEnv -PassThru
+$apiProcess = Start-Process -FilePath $apiExe -WorkingDirectory (Join-Path $rootDir "apps/api") -PassThru
 
 # Probe Go API health endpoint until ready
 Write-Host "⏳ Waiting for Go API server to become ready..." -ForegroundColor DarkGray

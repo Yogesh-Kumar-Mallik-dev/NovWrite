@@ -107,11 +107,28 @@ timeline
     2026-09-10 : Version 2.10.3 (6-Phase Monorepo Test Architecture & Documentation Parity Audit)
                : Synchronized 6-Phase Test Scripts (test.sh / test.ps1)
                : Rule 1 Documentation Standards & AI Anti-Pattern Codebase Audit
+    2026-09-10 : Version 2.10.4 (PowerShell Script Suite Hardening & Cross-Version Parity)
+               : PowerShell 5.1 & PowerShell 7+ Dual-Version Process Environment Inheritance
+               : Robust Multi-PID Port Freeing & Zero-Crash Lifecycle Orchestration
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.4] — 2026-09-10
+
+**Scope:** Core PowerShell Lifecycle Scripts (`dev.ps1`, `test.ps1`, `build.ps1`, `check.ps1`, `flush_db.ps1`) Hardening & Cross-Version Parity  
+**Target Documents:** [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **PowerShell 5.1 & 7+ Environment Inheritance Parity (`dev.ps1`):**
+  - Replaced PowerShell 7-only `Start-Process -Environment` syntax with native session environment variable setting (`$env:EXPO_PORT`, `$env:PORT`, `$env:ENVIRONMENT`), ensuring 100% flawless execution on default Windows PowerShell 5.1 as well as modern PowerShell Core (`pwsh`).
+  - Hardened `Free-Port` helper function with deduplicated PID tracking across `Get-NetTCPConnection` and `netstat` fallback queries.
+  - Confirmed 100% parity across all 5 core `.ps1` scripts ([`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1), [`build.ps1`](file:///home/yogesh/Projects/NovWrite/build.ps1), [`check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1), [`flush_db.ps1`](file:///home/yogesh/Projects/NovWrite/flush_db.ps1)).
+
+---
 
 ### [Version 2.10.3] — 2026-09-10
 

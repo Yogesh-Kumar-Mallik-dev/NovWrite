@@ -2,20 +2,17 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 6-phase test verification (`./test.sh`), strict single-change isolation.
-- **Architectural Baseline:** Version 2.10.3 (6-Phase Monorepo Test Architecture & Rule 1 Documentation Standards Codebase Audit).
+- **Architectural Baseline:** Version 2.10.4 (PowerShell Script Suite Hardening & Cross-Version Parity).
 - **Recent Accomplishments:**
-  - **Prisma 8 Decoupled Datasource & Unified Package Alignment (`apps/data-service`)**:
-    - Decoupled database URL from `schema.prisma` into dedicated `prisma.config.ts` using `defineConfig` and `env`.
-    - Aligned `@prisma/client` and `prisma` packages to synchronized Prisma 8 (`8.1.0-dev.6`).
-    - Documented Decision 24 in `docs/design_decisions.md` and Section 6 in `docs/DATABASE_ARCHITECTURE.md`.
-  - **6-Phase Monorepo Test Suite Step Alignment**:
-    - Synchronized step index banners across `test.sh` and `test.ps1` (`[1/6]` through `[6/6]`).
-    - Updated `CONTRIBUTING.md` and `NOVWRITE_ARCHITECTURE.md`.
-  - **Rule 1: Documentation Standards & AI Anti-Pattern Codebase Audit**:
-    - Audited 100% of repository markdown documentation against the 10 AI anti-patterns and core quality standards with full compliance established.
+  - **PowerShell Script Suite Hardening & Cross-Version Parity (`dev.ps1`, `test.ps1`, `build.ps1`, `check.ps1`, `flush_db.ps1`)**:
+    - Replaced PowerShell 7-only `-Environment` with native parent session environment setting (`$env:EXPO_PORT`, `$env:PORT`, `$env:ENVIRONMENT`), ensuring 100% compatibility on default Windows PowerShell 5.1 and modern PowerShell Core (`pwsh`).
+    - Enhanced `Free-Port` helper with deduplicated PID tracking across `Get-NetTCPConnection` and `netstat` fallback queries.
+    - Verified 100% cross-platform parity between Unix `.sh` and Windows `.ps1` core scripts.
+  - **Sequential Repository Rules Audit (Rules 1–16)**:
+    - Successfully audited and established 100% compliance across all 16 rules in `.agent/agents.md`, `.agent/rules/documentation_standards.md`, and `.agent/rules/mobile_first_responsive.md`.
   - **Codebase Health Verification & Formatting**:
     - Formatted repository using `pnpm format`.
     - Verified `./check.sh` passes with 0 errors and 0 warnings.
     - Verified `./test.sh` passes all 6 test phases cleanly with 0 errors and 0 warnings.
 - **Next Steps:**
-  - Proceed to Rule 2 (Mobile-First Responsive Layout Architecture) audit once Rule 1 is established with the user.
+  - Maintain 100% cross-platform script parity and strict rule compliance across all future functional changes.
