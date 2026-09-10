@@ -637,16 +637,24 @@ NovWrite enforces consistent responsive parity across all three frontend deploym
 
 The dedicated Mobile Client is powered by **React Native 0.76+**, **Expo SDK 52+**, **Expo Router**, and **NativeWind v4**:
 
-- **Shared Domain Contracts (`@novwrite/bridge`):** Direct contract-first binding to the universe schema models, entity structures, and causal invariants without duplicate type definitions.
-- **Mobile Reactive Store (`src/lib/mobileStore.ts`):** Lightweight client state store providing active project context isolation, chapter/scene progression, distraction-free drafting, and telemetry synchronization.
+- **Shared Domain Contracts & Pure Engines (`@novwrite/bridge`):** Direct contract-first binding to the canonical universe schema models, entity structures, causal invariants, AST mathematical formula evaluators (`computeEntityFormulas`), and timeline state-folding engines (`foldTimelineState`) without duplicate type definitions or redundant in-file parsing logic.
+- **Mobile Reactive Store (`src/lib/mobileStore.ts`):** Lightweight client state store providing active project context isolation, chapter/scene progression, distraction-free drafting, and telemetry synchronization, delegating complex formula AST computation and timeline state folds to `@novwrite/bridge`.
 - **Tab Navigation & Responsive Tablet Expansion (`app/(tabs)/_layout.tsx`):**
   - **Phone (< 768px):** Bottom tab navigation (`Projects`, `Prose Studio`, `Entities`, `Blueprints`) with $\ge 44\text{px}$ touch targets.
   - **Tablet / Foldable (≥ 768px):** Expands into master-detail split views, multi-column card grids, and persistent sidebar drawers.
-- **Screens:**
-  - **Projects Dashboard (`app/(tabs)/index.tsx`):** Active project telemetry card, project list, and creation modal.
-  - **Prose Studio (`app/(tabs)/novel.tsx`):** Distraction-free canvas with horizontal/vertical scene selectors and live word counters.
-  - **Entities Registry (`app/(tabs)/world.tsx`):** Dedicated touch entity cards with archetype badges and property inspectors.
-  - **Blueprints & Schemas (`app/(tabs)/schemas.tsx`):** 1st & 2nd class archetype viewer with dynamic fields and validation lists.
+- **Modular Subcomponent Decomposed Architecture:**
+  - **World Studio (`app/(tabs)/world.tsx` & `src/components/world/`):**
+    - `WorldOverviewTab.tsx`: Universe identity hero, lore specifications, and domain workbench switcher.
+    - `WorldEntitiesTab.tsx`: Dedicated touch entity cards, dynamic property chips, evaluated AST formula badges, schema filter chips, and standard 10-item pagination positioned at the top.
+    - `WorldBlueprintsTab.tsx`: 1st-Class Archetypes & 2nd-Class Sub-Schemas explorer with class filters and top pagination.
+    - `WorldTimelineTab.tsx`: Dual-index delta event stream (narrative reading order vs universe chronology) and interactive state-folding scrubber.
+    - `WorldRulesTab.tsx`: Invariant boundary laws explorer with active rule counters, severity badges, and toggle switches.
+    - `WorldAuditTab.tsx`: Continuity contradiction reports with health summary cards and RFC 7807 author override modal integration.
+  - **Prose Studio (`app/(tabs)/novel.tsx` & `src/components/novel/`):**
+    - `NovelOverviewTab.tsx`: Manuscript identity header, quick statistics strip, and chapter breakdown cards.
+    - `NovelEditorTab.tsx`: Prose textarea canvas with live word counts, reading time estimates, target progress bar, and manuscript scene switcher.
+    - `NovelOutlineTab.tsx`: Manuscript acts/chapters tree with collapsible scene lists and status pills.
+    - `NovelStatsTab.tsx`: Productivity telemetry metrics grid, daily writing target progress bar, and chapter word distributions.
 
 ---
 
