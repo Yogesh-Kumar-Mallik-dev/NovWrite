@@ -212,3 +212,11 @@ This document records the core design principles, trade-offs, and technical deci
   2. **Strict Prohibition of 10 AI Documentation Anti-Patterns:** Enforce zero tolerance for hallucinated commands, placeholder stubs, robotic buzzwords, code-doc drift, broken paths, happy-path exclusivity, and unpinned dependencies.
   3. **Atomic Code-Doc Synchronization:** Mandate that all route, schema, or command changes be updated in the documentation within the exact same atomic commit, validated by `./check.sh` and `./test.sh` before GPG signing.
 - **Consequences:** Establishes permanent architectural fidelity, eliminates cognitive friction for new engineers, and ensures the codebase serves as an authoritative open-source reference.
+
+---
+
+## Decision 24: Prisma 8 Decoupled Datasource Configuration & Dedicated Configuration Document
+
+- **Context:** Coupling connection strings and environment evaluation directly inside `schema.prisma` mixes transport/infrastructure configuration with pure domain data modeling. In modern Prisma 8 architecture, data modeling is strictly separated from runtime datasource orchestration.
+- **Decision:** Remove the `url` property from the `datasource db` block in [`apps/data-service/prisma/schema.prisma`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma/schema.prisma) and establish a dedicated configuration document [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts) utilizing `definePrismaConfig` from `prisma/config` with safe local environment fallbacks.
+- **Consequences:** Keeps the Prisma schema purely focused on entities, blueprints, and relational graphs, while isolating infrastructure connection strings into standard, type-safe TypeScript configuration.

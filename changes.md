@@ -101,11 +101,28 @@ timeline
     2026-09-10 : Version 2.10.1 (Mobile Bundler Node 22 ESM & CommonJS Resolution Fix)
                : Explicit .cjs Extensions for Metro, Babel, and Tailwind Configs
                : Zero-Crash ./dev.sh Universal Multi-Platform Orchestration
+    2026-09-10 : Version 2.10.2 (Prisma 8 Decoupled Datasource & Dedicated Configuration Document)
+               : Pure Schema Model Definition without Embedded Database URL
+               : Dedicated Configuration Document (prisma.config.ts)
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.2] — 2026-09-10
+
+**Scope:** Prisma 8 Decoupled Datasource Architecture & Dedicated Configuration Document  
+**Target Documents:** [`apps/data-service/prisma/schema.prisma`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma/schema.prisma), [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts), [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md), [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **Prisma 8 Decoupled Datasource Configuration (`apps/data-service`):**
+  - Updated [`apps/data-service/prisma/schema.prisma`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma/schema.prisma) removing the legacy embedded `url` attribute from the `datasource db` block to maintain a pure entity data contract.
+  - Created the dedicated Prisma configuration document [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts) leveraging `definePrismaConfig` from `prisma/config` with runtime environment fallbacks.
+  - Documented Decision 24 in [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md) and Section 6 in [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md).
+
+---
 
 ### [Version 2.10.1] — 2026-09-10
 

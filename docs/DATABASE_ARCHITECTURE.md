@@ -479,3 +479,38 @@ To compute the authoritative state of an entity at chapter sequence $N$:
    - `TRANSFER`: Change ownership or location reference.
 4. Trigger AST formula engine recalculation to update `computed_formulas` JSONB cache.
 5. Output the deterministic, explainable point-in-time universe state.
+
+---
+
+## 6. Prisma 8 Decoupled Datasource Configuration & Dedicated Config Document
+
+In accordance with **Prisma 8** specifications, the database connection URL is completely decoupled from the data model schema file (`schema.prisma`) and isolated in a dedicated configuration document (`prisma.config.ts`):
+
+### 6.1. Dedicated Configuration Document (`apps/data-service/prisma.config.ts`)
+
+```typescript
+import { definePrismaConfig } from "prisma/config";
+
+export default definePrismaConfig({
+  schema: "prisma/schema.prisma",
+  datasource: {
+    url:
+      process.env.DATABASE_URL ||
+      "postgresql://novwrite:novwrite_dev@localhost:5433/novwrite_db?sslmode=disable",
+  },
+});
+```
+
+### 6.2. Pure Schema Model Definition (`apps/data-service/prisma/schema.prisma`)
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  // Note: Database connection URL is decoupled from schema.prisma in Prisma 8
+  // and configured exclusively in prisma.config.ts
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+```
