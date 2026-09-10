@@ -35,6 +35,8 @@ import {
   paginateArray,
   ApiError,
   NovWriteApiClient,
+  computeEntityFormulas,
+  foldTimelineState,
 } from "../index.js";
 
 describe("NovWrite Bridge Contracts & Mock Service", () => {
@@ -433,5 +435,115 @@ describe("NovWrite Bridge Contracts & Mock Service", () => {
     assert.strictEqual(err.name, "ApiError");
     assert.strictEqual(err.problem.status, 404);
     assert.strictEqual(err.message, "The requested project does not exist.");
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should compute dynamic entity formulas with context enrichment", () => {
+    const bp = {
+      id: "bp-cultivator",
+      name: "Cultivator",
+      blueprintClass: "FIRST_CLASS" as const,
+      category: "Characters",
+      description: "Cultivator archetype",
+      fields: [
+        {
+          id: "f-realm",
+          name: "realm",
+          label: "Cultivation Realm",
+          fieldType: "ENUM" as const,
+          options: [
+            { label: "Qi Refining", value: "qi_refining", power: 100 },
+            { label: "Foundation", value: "foundation", power: 500 },
+          ],
+        },
+        {
+          id: "f-atk",
+          name: "attack",
+          label: "Attack",
+          fieldType: "NUMBER" as const,
+          defaultValue: 50,
+        },
+        {
+          id: "f-combat-power",
+          name: "combat_power",
+          label: "Combat Power",
+          fieldType: "FORMULA" as const,
+          formulaExpression: "realm.power * 2 + attack",
+        },
+      ],
+    };
+
+    const ent = {
+      id: "ent-1",
+      blueprintId: "bp-cultivator",
+      name: "Zhang Chen",
+      category: "Characters",
+      description: "Protagonist",
+      properties: {
+        realm: "qi_refining",
+        attack: 80,
+      },
+      lastMutatedSeqNumber: 1,
+    };
+
+    const computed = computeEntityFormulas(ent, bp);
+    assert.strictEqual(computed.combat_power, 280); // 100 * 2 + 80
+  });
+
+  it("BLOCK_TEST_BRIDGE_001: should deterministically fold timeline delta effects onto entities", () => {
+    const baseEntities = [
+      {
+        id: "ent-1",
+        blueprintId: "bp-cultivator",
+        name: "Zhang Chen",
+        category: "Characters",
+        description: "Protagonist",
+        properties: {
+          spirit_stones: 100,
+          status: "ALIVE",
+        },
+        lastMutatedSeqNumber: 0,
+      },
+    ];
+
+    const events = [
+      {
+        id: "ev-1",
+        narrativeSequenceNumber: 1,
+        chronologicalOrder: 1,
+        title: "Found Treasure",
+        description: "Gained spirit stones",
+        effects: [
+          {
+            targetEntityId: "ent-1",
+            propertyKey: "spirit_stones",
+            operation: "INCREMENT" as const,
+            value: 250,
+          },
+        ],
+      },
+      {
+        id: "ev-2",
+        narrativeSequenceNumber: 5,
+        chronologicalOrder: 5,
+        title: "Spent on Elixirs",
+        description: "Bought elixirs",
+        effects: [
+          {
+            targetEntityId: "ent-1",
+            propertyKey: "spirit_stones",
+            operation: "DECREMENT" as const,
+            value: 50,
+          },
+        ],
+      },
+    ];
+
+    const foldedSeq1 = foldTimelineState(baseEntities, events, 1);
+    assert.strictEqual(foldedSeq1[0].properties.spirit_stones, 350);
+    assert.strictEqual(foldedSeq1[0].lastMutatedSeqNumber, 1);
+
+    const foldedSeq5 = foldTimelineState(baseEntities, events, 5);
+    assert.strictEqual(foldedSeq5[0].properties.spirit_stones, 300);
+    assert.strictEqual(foldedSeq5[0].lastMutatedSeqNumber, 5);
   });
 });

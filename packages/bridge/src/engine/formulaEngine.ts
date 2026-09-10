@@ -11,6 +11,8 @@
  * - Logical conditions: IF(cond, trueVal, falseVal), >, <, >=, <=, ==, !=, AND, OR, NOT
  */
 
+import type { BlueprintDef, EntityItem } from "../types.js";
+
 export interface FormulaEvaluationResult {
   success: boolean;
   value?: number;
@@ -748,4 +750,156 @@ export function detectFormulaDependencyCycle(
 ): FormulaCycleResult {
   const combined = { ...existingFormulas, [targetKey]: expression };
   return detectFormulaCycles(combined);
+}
+
+/**
+ * Evaluates all dynamic formula fields on an entity given its properties and blueprint definition.
+ * Enriches formula context with dual-valued enums/value-types, blueprint reference lookups, and array lengths.
+ */
+export function computeEntityFormulas(
+  entity: { properties?: Record<string, any>; blueprintId?: string },
+  blueprint?: BlueprintDef,
+  allEntities?: EntityItem[],
+  allBlueprints?: BlueprintDef[],
+): Record<string, number> {
+  if (!blueprint) return {};
+
+  const computed: Record<string, number> = {};
+  const props = entity.properties || {};
+  const context: Record<string, any> = { ...props };
+
+  // 1. Enrich context with dual-valued value_type / enum options and resolved references
+  for (const field of blueprint.fields || []) {
+    const rawVal = props[field.key || field.name] ?? props[field.name];
+
+    if (
+      (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
+      field.options
+    ) {
+      if (rawVal !== undefined && rawVal !== null) {
+        const matchingOpt = field.options.find((opt: any) => {
+          if (typeof opt === "string") return opt === rawVal;
+          return opt && (opt.value === rawVal || opt.label === rawVal);
+        });
+
+        let numVal = 0;
+        if (matchingOpt && typeof matchingOpt === "object") {
+          numVal = matchingOpt.numericValue ?? matchingOpt.power ?? 0;
+        } else if (
+          field.optionPowers &&
+          typeof field.optionPowers[rawVal] === "number"
+        ) {
+          numVal = field.optionPowers[rawVal];
+        }
+
+        const optObj = {
+          label:
+            matchingOpt && typeof matchingOpt === "object"
+              ? matchingOpt.label
+              : rawVal,
+          value:
+            matchingOpt && typeof matchingOpt === "object"
+              ? matchingOpt.value
+              : rawVal,
+          name:
+            matchingOpt && typeof matchingOpt === "object"
+              ? (matchingOpt as any).name || matchingOpt.label
+              : rawVal,
+          numericValue: numVal,
+          power: numVal,
+        };
+
+        context[field.name] = optObj;
+        if (field.key) context[field.key] = optObj;
+        context[`${field.name}_power`] = numVal;
+        if (field.key) context[`${field.key}_power`] = numVal;
+      }
+    } else if (field.fieldType === "BLUEPRINT_REF" && field.targetBlueprintId) {
+      const targetBp = allBlueprints?.find(
+        (b) => b.id === field.targetBlueprintId,
+      );
+      if (targetBp && targetBp.blueprintClass === "SECOND_CLASS") {
+        const subProps = rawVal;
+        if (subProps && typeof subProps === "object") {
+          const enrichedSub: Record<string, any> = { ...subProps };
+          for (const subF of targetBp.fields || []) {
+            if (
+              (subF.fieldType === "ENUM" || subF.fieldType === "VALUE_TYPE") &&
+              subF.options
+            ) {
+              const subRawVal =
+                subProps[subF.key || subF.name] ?? subProps[subF.name];
+              if (subRawVal !== undefined && subRawVal !== null) {
+                const subMatchingOpt = subF.options.find((opt: any) => {
+                  if (typeof opt === "string") return opt === subRawVal;
+                  return (
+                    opt && (opt.value === subRawVal || opt.label === subRawVal)
+                  );
+                });
+                if (subMatchingOpt && typeof subMatchingOpt === "object") {
+                  const numVal =
+                    subMatchingOpt.numericValue ?? subMatchingOpt.power ?? 0;
+                  enrichedSub[subF.name] = {
+                    label: subMatchingOpt.label,
+                    value: subMatchingOpt.value,
+                    name: subMatchingOpt.label,
+                    numericValue: numVal,
+                    power: numVal,
+                  };
+                }
+              }
+            }
+          }
+          context[field.name] = enrichedSub;
+          if (field.key) context[field.key] = enrichedSub;
+        }
+      } else if (allEntities && typeof rawVal === "string") {
+        const linkedEntity = allEntities.find((e) => e.id === rawVal);
+        if (linkedEntity) {
+          context[field.name] = {
+            ...linkedEntity.properties,
+            id: linkedEntity.id,
+            name: linkedEntity.name,
+            category: linkedEntity.category,
+            ...(linkedEntity.computedFormulas || {}),
+          };
+          if (field.key) context[field.key] = context[field.name];
+        }
+      }
+    } else if (field.fieldType === "ARRAY" || field.fieldType === "ARRAY_REF") {
+      if (Array.isArray(rawVal)) {
+        if (field.fieldType === "ARRAY_REF" && allEntities) {
+          const resolved = rawVal
+            .map((id) => allEntities.find((e) => e.id === id))
+            .filter(Boolean);
+          context[field.name] = resolved;
+        } else {
+          context[field.name] = rawVal;
+        }
+        if (field.key) context[field.key] = context[field.name];
+        context[`${field.name}_count`] = rawVal.length;
+        if (field.key) context[`${field.key}_count`] = rawVal.length;
+      } else {
+        context[field.name] = [];
+        if (field.key) context[field.key] = [];
+        context[`${field.name}_count`] = 0;
+        if (field.key) context[`${field.key}_count`] = 0;
+      }
+    }
+  }
+
+  // 2. Evaluate formula expressions in declared order
+  for (const field of blueprint.fields || []) {
+    if (field.fieldType === "FORMULA" && field.formulaExpression) {
+      const evalRes = evaluateFormula(field.formulaExpression, context);
+      if (evalRes.success && typeof evalRes.value === "number") {
+        computed[field.name] = evalRes.value;
+        if (field.key) computed[field.key] = evalRes.value;
+        context[field.name] = evalRes.value;
+        if (field.key) context[field.key] = evalRes.value;
+      }
+    }
+  }
+
+  return computed;
 }

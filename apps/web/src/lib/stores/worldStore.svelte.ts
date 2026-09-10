@@ -7,7 +7,9 @@
 import {
   evaluateFormula,
   extractFormulaVariables,
-} from "../engine/formulaEngine";
+  computeEntityFormulas,
+  foldTimelineState,
+} from "@novwrite/bridge";
 import { apiClient } from "../api/apiClient";
 import { projectStore } from "./projectStore.svelte";
 
@@ -1149,125 +1151,12 @@ export class WorldStateStore {
     bp?: BlueprintDef,
   ): Record<string, number> {
     const blueprint = bp || this.getBlueprint(entity.blueprintId);
-    if (!blueprint) return {};
-
-    const computed: Record<string, number> = {};
-    const context: Record<string, any> = { ...entity.properties };
-
-    // Enrich context with dual-valued value_type/enum options and resolved references
-    for (const field of blueprint.fields) {
-      if (
-        (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
-        field.options
-      ) {
-        const rawVal = entity.properties[field.name];
-        if (rawVal !== undefined && rawVal !== null) {
-          const matchingOpt = field.options.find((opt) => {
-            if (typeof opt === "string") return opt === rawVal;
-            return opt.value === rawVal || opt.label === rawVal;
-          });
-
-          if (matchingOpt && typeof matchingOpt === "object") {
-            const numVal = matchingOpt.numericValue ?? matchingOpt.power ?? 0;
-            context[field.name] = {
-              label: matchingOpt.label,
-              value: matchingOpt.value,
-              name: matchingOpt.label,
-              numericValue: numVal,
-              power: numVal,
-            };
-          }
-        }
-      } else if (
-        field.fieldType === "BLUEPRINT_REF" &&
-        field.targetBlueprintId
-      ) {
-        const targetBp = this.getBlueprint(field.targetBlueprintId);
-        if (targetBp && targetBp.blueprintClass === "SECOND_CLASS") {
-          const subProps = entity.properties[field.name];
-          if (subProps && typeof subProps === "object") {
-            const enrichedSub: Record<string, any> = { ...subProps };
-            for (const subF of targetBp.fields) {
-              if (
-                (subF.fieldType === "ENUM" ||
-                  subF.fieldType === "VALUE_TYPE") &&
-                subF.options
-              ) {
-                const subRawVal = subProps[subF.name];
-                if (subRawVal !== undefined && subRawVal !== null) {
-                  const subMatchingOpt = subF.options.find((opt) => {
-                    if (typeof opt === "string") return opt === subRawVal;
-                    return opt.value === subRawVal || opt.label === subRawVal;
-                  });
-                  if (subMatchingOpt && typeof subMatchingOpt === "object") {
-                    const numVal =
-                      subMatchingOpt.numericValue ?? subMatchingOpt.power ?? 0;
-                    enrichedSub[subF.name] = {
-                      label: subMatchingOpt.label,
-                      value: subMatchingOpt.value,
-                      name: subMatchingOpt.label,
-                      numericValue: numVal,
-                      power: numVal,
-                    };
-                  }
-                }
-              }
-            }
-            context[field.name] = enrichedSub;
-          }
-        } else if (targetBp && targetBp.blueprintClass === "FIRST_CLASS") {
-          const targetEntityId = entity.properties[field.name];
-          if (targetEntityId && typeof targetEntityId === "string") {
-            const linkedEntity = this.entities.find(
-              (e) => e.id === targetEntityId,
-            );
-            if (linkedEntity) {
-              context[field.name] = {
-                ...linkedEntity.properties,
-                id: linkedEntity.id,
-                name: linkedEntity.name,
-                category: linkedEntity.category,
-                ...(linkedEntity.computedFormulas || {}),
-              };
-            }
-          }
-        }
-      } else if (field.fieldType === "ARRAY") {
-        const arr = entity.properties[field.name];
-        if (Array.isArray(arr)) {
-          context[field.name] = arr;
-          context[`${field.name}_count`] = arr.length;
-        } else {
-          context[field.name] = [];
-          context[`${field.name}_count`] = 0;
-        }
-      } else if (field.fieldType === "ARRAY_REF") {
-        const arr = entity.properties[field.name];
-        if (Array.isArray(arr)) {
-          const resolved = arr
-            .map((id) => this.entities.find((e) => e.id === id))
-            .filter(Boolean);
-          context[field.name] = resolved;
-          context[`${field.name}_count`] = resolved.length;
-        } else {
-          context[field.name] = [];
-          context[`${field.name}_count`] = 0;
-        }
-      }
-    }
-
-    // Find all formula fields in the blueprint
-    for (const field of blueprint.fields) {
-      if (field.fieldType === "FORMULA" && field.formulaExpression) {
-        const evalRes = evaluateFormula(field.formulaExpression, context);
-        if (evalRes.success && evalRes.value !== undefined) {
-          computed[field.name] = evalRes.value;
-          context[field.name] = evalRes.value; // Allow subsequent formulas to reference computed fields
-        }
-      }
-    }
-
-    return computed;
+    return computeEntityFormulas(
+      entity,
+      blueprint,
+      this.entities,
+      this.blueprints,
+    );
   }
 
   // =====================================
@@ -1615,89 +1504,21 @@ export class WorldStateStore {
     targetSeq: number,
     mode: "narrative" | "chronological" = "narrative",
   ): EntityItem[] {
-    const baseEntities: EntityItem[] = JSON.parse(
-      JSON.stringify(this.entities),
-    );
-    const activeEvents = [...this.timelineEvents]
-      .map((ev) => {
-        const tree = this.eventEditTrees[ev.id];
-        if (tree && tree.nodes[tree.activeEditId]) {
-          return tree.nodes[tree.activeEditId].snapshot;
-        }
-        return ev;
-      })
-      .filter((ev) =>
-        mode === "narrative"
-          ? ev.narrativeSequenceNumber <= targetSeq
-          : ev.chronologicalOrder <= targetSeq,
-      )
-      .sort((a, b) =>
-        mode === "narrative"
-          ? a.narrativeSequenceNumber - b.narrativeSequenceNumber
-          : a.chronologicalOrder - b.chronologicalOrder,
-      );
-
-    for (const ev of activeEvents) {
-      for (const eff of ev.effects) {
-        const targetEntity = baseEntities.find(
-          (e) =>
-            e.id === eff.targetEntityId ||
-            e.name === eff.entityName ||
-            e.name === eff.targetEntityId,
-        );
-        if (!targetEntity) continue;
-
-        targetEntity.lastMutatedSeqNumber = ev.narrativeSequenceNumber;
-
-        const keys = eff.propertyKey.split(".");
-        let curr: any = targetEntity.properties;
-
-        for (let i = 0; i < keys.length - 1; i++) {
-          const k = keys[i];
-          if (!curr[k] || typeof curr[k] !== "object") {
-            curr[k] = {};
-          }
-          curr = curr[k];
-        }
-
-        const finalKey = keys[keys.length - 1];
-
-        switch (eff.operation) {
-          case "SET":
-          case "TRANSFER":
-            curr[finalKey] = eff.value;
-            break;
-          case "INCREMENT":
-            curr[finalKey] =
-              (Number(curr[finalKey]) || 0) + (Number(eff.value) || 0);
-            break;
-          case "DECREMENT":
-            curr[finalKey] =
-              (Number(curr[finalKey]) || 0) - (Number(eff.value) || 0);
-            break;
-          case "APPEND":
-            if (Array.isArray(curr[finalKey])) {
-              curr[finalKey].push(eff.value);
-            } else {
-              curr[finalKey] = [eff.value];
-            }
-            break;
-          case "REMOVE":
-            if (Array.isArray(curr[finalKey])) {
-              curr[finalKey] = curr[finalKey].filter(
-                (x: any) => x !== eff.value,
-              );
-            }
-            break;
-        }
+    const activeEvents = [...this.timelineEvents].map((ev) => {
+      const tree = this.eventEditTrees[ev.id];
+      if (tree && tree.nodes[tree.activeEditId]) {
+        return tree.nodes[tree.activeEditId].snapshot;
       }
-    }
+      return ev;
+    });
 
-    for (const ent of baseEntities) {
-      ent.computedFormulas = this.evaluateEntityFormulas(ent);
-    }
-
-    return baseEntities;
+    return foldTimelineState(
+      this.entities,
+      activeEvents,
+      targetSeq,
+      mode,
+      this.blueprints,
+    );
   }
 
   // =====================================

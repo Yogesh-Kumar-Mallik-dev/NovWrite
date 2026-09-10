@@ -4,8 +4,8 @@
  * Block Standard: BLOCK_MOBILE_STORE_002
  */
 
-import { evaluateFormula } from "./formulaEngine.ts";
 import { mobileApiClient } from "./apiClient.ts";
+import { computeEntityFormulas, foldTimelineState } from "./types.ts";
 import type {
   ProjectItem,
   ChapterItem,
@@ -1055,94 +1055,12 @@ export class MobileStore {
 
   private computeEntityFormulas(entity: EntityItem): Record<string, number> {
     const bp = this.getBlueprint(entity.blueprintId);
-    if (!bp) return {};
-
-    const computed: Record<string, number> = {};
-    const context: Record<string, any> = { ...entity.properties };
-
-    // Inject enum power ratings and structured objects into formula context
-    for (const field of bp.fields) {
-      if (
-        (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
-        field.options
-      ) {
-        const val =
-          entity.properties[field.key || field.name] ??
-          entity.properties[field.name];
-        if (val !== undefined && val !== null) {
-          const matched = field.options.find((o: any) =>
-            typeof o === "string"
-              ? o === val
-              : o && (o.value === val || o.label === val),
-          );
-          let numVal = 0;
-          if (matched && typeof matched === "object") {
-            numVal =
-              (matched as any).numericValue ?? (matched as any).power ?? 0;
-          } else if (
-            field.optionPowers &&
-            typeof field.optionPowers[val] === "number"
-          ) {
-            numVal = field.optionPowers[val];
-          }
-
-          const optObj = {
-            label:
-              matched && typeof matched === "object"
-                ? (matched as any).label
-                : val,
-            value:
-              matched && typeof matched === "object"
-                ? (matched as any).value
-                : val,
-            name:
-              matched && typeof matched === "object"
-                ? (matched as any).name || (matched as any).label
-                : val,
-            numericValue: numVal,
-            power: numVal,
-          };
-
-          context[field.name] = optObj;
-          if (field.key) context[field.key] = optObj;
-          context[`${field.name}_power`] = numVal;
-          if (field.key) context[`${field.key}_power`] = numVal;
-        }
-      } else if (
-        field.fieldType === "ARRAY" ||
-        field.fieldType === "ARRAY_REF"
-      ) {
-        const arr =
-          entity.properties[field.key || field.name] ??
-          entity.properties[field.name];
-        if (Array.isArray(arr)) {
-          context[field.name] = arr;
-          if (field.key) context[field.key] = arr;
-          context[`${field.name}_count`] = arr.length;
-          if (field.key) context[`${field.key}_count`] = arr.length;
-        }
-      }
-    }
-
-    const formulaFields = bp.fields.filter(
-      (f) => f.fieldType === "FORMULA" && f.formulaExpression,
+    return computeEntityFormulas(
+      entity,
+      bp,
+      this.state.entities,
+      this.state.blueprints,
     );
-
-    for (const f of formulaFields) {
-      if (!f.formulaExpression) continue;
-      const res = evaluateFormula(f.formulaExpression, context);
-      if (res.success && typeof res.value === "number") {
-        computed[f.name] = res.value;
-        if (f.key) {
-          computed[f.key] = res.value;
-        }
-        context[f.name] = res.value;
-        if (f.key) {
-          context[f.key] = res.value;
-        }
-      }
-    }
-    return computed;
   }
 
   evaluateEntityFormulas(entityId: string): Record<string, number> {
@@ -1276,78 +1194,13 @@ export class MobileStore {
     targetSeq: number,
     mode: "narrative" | "chronological" = "narrative",
   ): EntityItem[] {
-    const eventsToApply = [...this.state.timelineEvents]
-      .filter((ev) =>
-        mode === "narrative"
-          ? ev.narrativeSequenceNumber <= targetSeq
-          : ev.chronologicalOrder <= targetSeq,
-      )
-      .sort((a, b) =>
-        mode === "narrative"
-          ? a.narrativeSequenceNumber - b.narrativeSequenceNumber
-          : a.chronologicalOrder - b.chronologicalOrder,
-      );
-
-    const clonedEntities: Record<string, EntityItem> = {};
-    for (const ent of this.state.entities) {
-      clonedEntities[ent.id] = JSON.parse(JSON.stringify(ent));
-    }
-
-    for (const ev of eventsToApply) {
-      for (const eff of ev.effects) {
-        const ent = clonedEntities[eff.targetEntityId];
-        if (!ent) continue;
-        ent.lastMutatedSeqNumber =
-          mode === "narrative"
-            ? ev.narrativeSequenceNumber
-            : ev.chronologicalOrder;
-
-        const keys = eff.propertyKey.split(".");
-        if (keys.length === 1) {
-          const k = keys[0];
-          if (eff.operation === "SET") ent.properties[k] = eff.value;
-          else if (
-            eff.operation === "INCREMENT" &&
-            typeof ent.properties[k] === "number"
-          )
-            ent.properties[k] += Number(eff.value);
-          else if (
-            eff.operation === "DECREMENT" &&
-            typeof ent.properties[k] === "number"
-          )
-            ent.properties[k] -= Number(eff.value);
-          else if (
-            eff.operation === "APPEND" &&
-            Array.isArray(ent.properties[k])
-          )
-            ent.properties[k].push(eff.value);
-          else if (
-            eff.operation === "REMOVE" &&
-            Array.isArray(ent.properties[k])
-          )
-            ent.properties[k] = ent.properties[k].filter(
-              (x: any) => x !== eff.value,
-            );
-        } else if (keys.length === 2) {
-          const [p1, p2] = keys;
-          if (!ent.properties[p1] || typeof ent.properties[p1] !== "object")
-            ent.properties[p1] = {};
-          if (eff.operation === "SET") ent.properties[p1][p2] = eff.value;
-          else if (
-            eff.operation === "INCREMENT" &&
-            typeof ent.properties[p1][p2] === "number"
-          )
-            ent.properties[p1][p2] += Number(eff.value);
-          else if (
-            eff.operation === "DECREMENT" &&
-            typeof ent.properties[p1][p2] === "number"
-          )
-            ent.properties[p1][p2] -= Number(eff.value);
-        }
-      }
-    }
-
-    return Object.values(clonedEntities);
+    return foldTimelineState(
+      this.state.entities,
+      this.state.timelineEvents,
+      targetSeq,
+      mode,
+      this.state.blueprints,
+    );
   }
 
   // ==========================================
