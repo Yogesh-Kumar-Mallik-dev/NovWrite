@@ -7,11 +7,49 @@
 
 ---
 
-## 1. Quick Start & Prerequisites
+## 1. 1-Click Quickstart (Recommended & First Choice)
 
-### 1.1. Install System Dependencies (Linux, macOS, Windows)
+Our 1-click scripts are the **official, fastest, and recommended** way to set up and run NovWrite:
 
-NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**, and **Protocol Buffers (`protoc`)**.
+### 1.1. Linux / macOS / Windows (Git Bash / WSL)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
+./envi.sh
+
+# 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
+./dev.sh
+```
+
+> [!TIP]
+> To quickly install or update dependencies in under 5 seconds without restarting containers, run `./deps.sh` (or `pnpm deps`).
+
+### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
+
+```powershell
+# 1. Clone repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. 1-Click Environment Setup
+.\envi.ps1
+
+# 3. 1-Click Launch Full Dev Environment
+.\dev.ps1
+```
+
+> [!TIP]
+> On Windows PowerShell, run `.\deps.ps1` for fast 1-click dependency resolution.
+
+---
+
+## 2. Workstation Prerequisites & Manual Setup (Alternative / Not Recommended)
+
+### 2.1. System Toolchains (Go 1.23+, Node 22 LTS, pnpm, Docker, Protoc)
 
 - **Linux (Ubuntu / Debian):**
 
@@ -38,48 +76,10 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 
 > 📖 For full setup guides (including Fedora, Arch Linux, WSL2, and direct downloads), see the **[Developer Onboarding Guide](docs/ONBOARDING.md)**.
 
-### 1.2. 1-Click Monorepo Launch (Recommended & First Choice)
-
-Our 1-click scripts are the **official, fastest, and recommended** way to set up and run NovWrite:
-
-#### Linux / macOS / Windows (Git Bash / WSL)
-
-```bash
-# 1. Clone repository
-git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
-cd NovWrite
-
-# 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
-./envi.sh
-
-# 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
-./dev.sh
-```
-
-> [!TIP]
-> To quickly install or update dependencies in under 5 seconds without restarting containers, run `./deps.sh` (or `pnpm deps`).
-
-#### Windows (PowerShell as Administrator / Windows Terminal)
-
-```powershell
-# 1. Clone repository
-git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
-cd NovWrite
-
-# 2. 1-Click Environment Setup
-.\envi.ps1
-
-# 3. 1-Click Launch Full Dev Environment
-.\dev.ps1
-```
-
-> [!TIP]
-> On Windows PowerShell, run `.\deps.ps1` for fast 1-click dependency resolution.
-
-### 1.3. Manual Step-by-Step Installation (Alternative / Not Recommended)
+### 2.2. Manual Step-by-Step Installation (Without 1-Click Scripts)
 
 > [!NOTE]
-> The 1-click scripts above are the preferred and supported way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
+> The 1-click scripts above (`envi.sh` / `deps.sh` / `dev.sh`) are the official and recommended way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
 
 ```bash
 # 1. Clone & prepare environment

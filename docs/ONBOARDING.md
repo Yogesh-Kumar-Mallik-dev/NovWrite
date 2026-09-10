@@ -4,9 +4,119 @@ Welcome to the **NovWrite** engineering codebase. This guide outlines workstatio
 
 ---
 
-## 1. System Prerequisites
+## 1. 5-Minute 1-Click Quickstart (Recommended & First Choice)
 
-The NovWrite monorepo requires the following toolchains and runtimes:
+Our 1-click scripts are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
+
+### 1.1. Linux / macOS / Windows (Git Bash / WSL)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. 1-Click Full Environment Setup
+# (Creates .env, starts Postgres & Redis containers, installs all dependencies, generates Prisma 8 & builds bridge contracts)
+./envi.sh
+
+# 3. 1-Click Launch Development Stack
+# (Boots Go API Backend on :8080 and SvelteKit Web on :5173)
+./dev.sh
+```
+
+> [!TIP]
+> If your Docker infrastructure is already running and you only need to install or update dependencies across Node.js/pnpm, Go modules, and Prisma 8, run `./deps.sh` (or `pnpm deps`).
+
+### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+
+# 2. 1-Click Full Environment Setup
+.\envi.ps1
+
+# 3. 1-Click Launch Development Stack
+.\dev.ps1
+```
+
+> [!TIP]
+> On Windows PowerShell, run `.\deps.ps1` to install or update dependencies in under 5 seconds.
+
+---
+
+## 2. 1-Click Monorepo Lifecycle Scripts
+
+NovWrite provides dedicated, cross-platform 1-click lifecycle scripts eliminating tedious manual commands:
+
+### 2.1. Linux, macOS, and Windows (Git Bash / WSL)
+
+```bash
+# 🚀 1-Click Development Environment (API :8080 + Web :5173)
+./dev.sh
+
+# 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
+./dev.sh --all
+
+# 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma 8, bridge)
+./deps.sh
+
+# ⚙️ 1-Click Environment Setup Utility (Full cold bootstrap)
+./envi.sh
+
+# 🛑 1-Click Environment Teardown & Reset (Stops servers, shuts down containers, purges logs)
+./uenvi.sh
+
+# 🧪 1-Click 6-Phase Monorepo Test Runner
+./test.sh
+
+# 🔍 1-Click Monorepo Typecheck & Diagnostics (0 warnings/errors tolerance)
+./check.sh
+
+# 🏗️ 1-Click Monorepo Production Build
+./build.sh
+
+# 🧹 Clean Slate Database & Redis Reset Utility
+./flush_db.sh
+```
+
+### 2.2. Windows (PowerShell / Windows Terminal / pwsh)
+
+```powershell
+# 🚀 1-Click Development Environment
+.\dev.ps1
+
+# 🌐📱🖥️ Launch All 3 Clients
+.\dev.ps1 -All
+
+# 📦 1-Click Dependency Installation & Update
+.\deps.ps1
+
+# ⚙️ 1-Click Environment Setup Utility
+.\envi.ps1
+
+# 🛑 1-Click Environment Teardown & Reset
+.\uenvi.ps1
+
+# 🧪 1-Click 6-Phase Monorepo Test Runner
+.\test.ps1
+
+# 🔍 1-Click Monorepo Typecheck & Diagnostics
+.\check.ps1
+
+# 🏗️ 1-Click Monorepo Production Build
+.\build.ps1
+
+# 🧹 Clean Slate Database & Redis Reset Utility
+.\flush_db.ps1
+```
+
+---
+
+## 3. System Prerequisites & Toolchain Verification
+
+NovWrite requires the following toolchains and runtimes:
 
 - **Go (1.23+)**: Application API backend (`apps/api`).
 - **Node.js (22+ LTS) & pnpm (9+ / 10+)**: SvelteKit web frontend (`apps/web`), TypeScript data service (`apps/data-service`), and shared contracts (`packages/bridge`).
@@ -16,13 +126,30 @@ The NovWrite monorepo requires the following toolchains and runtimes:
 - **Git (with GPG signing support)**: Source control and signed commit verification.
 - **C/C++ Build Essentials / Make**: Native module compilation and local build helpers.
 
+### Verify Toolchain Installation
+
+Run this verification block in your terminal to ensure all required binaries are in your `$PATH`:
+
+```bash
+echo "=== NovWrite Toolchain Verification ==="
+echo "Go:       $(go version 2>&1 || echo 'NOT FOUND')"
+echo "Node.js:  $(node -v 2>&1 || echo 'NOT FOUND')"
+echo "pnpm:     $(pnpm -v 2>&1 || echo 'NOT FOUND')"
+echo "Docker:   $(docker --version 2>&1 || echo 'NOT FOUND')"
+echo "Compose:  $(docker compose version 2>&1 || echo 'NOT FOUND')"
+echo "Protoc:   $(protoc --version 2>&1 || echo 'NOT FOUND')"
+echo "Buf:      $(buf --version 2>&1 || echo 'NOT FOUND')"
+echo "Git:      $(git --version 2>&1 || echo 'NOT FOUND')"
+echo "========================================"
+```
+
 ---
 
-## 2. Cross-Platform Dependency Installation
+## 4. Workstation System Toolchain Installation
 
-Select your operating system below for complete copy-pasteable installation commands.
+If you need to install system toolchains on a clean workstation, select your operating system below:
 
-### 2.1. Linux (Ubuntu / Debian / Linux Mint)
+### 4.1. Linux (Ubuntu / Debian / Linux Mint)
 
 ```bash
 # Update package repositories
@@ -204,155 +331,20 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 
-#### Option D: Windows Subsystem for Linux (WSL2 - Recommended for Windows Users)
-
-1. Enable WSL2 in PowerShell: `wsl --install -d Ubuntu`
-2. Restart your computer if prompted.
-3. Open Ubuntu from your Start Menu and follow the **[Linux (Ubuntu / Debian)](#21-linux-ubuntu--debian--linux-mint)** installation instructions above.
-
 ---
 
-## 3. Verify Toolchain Installation
-
-Run this verification block in your terminal to ensure all required binaries are in your `$PATH`:
-
-```bash
-echo "=== NovWrite Toolchain Verification ==="
-echo "Go:       $(go version 2>&1 || echo 'NOT FOUND')"
-echo "Node.js:  $(node -v 2>&1 || echo 'NOT FOUND')"
-echo "pnpm:     $(pnpm -v 2>&1 || echo 'NOT FOUND')"
-echo "Docker:   $(docker --version 2>&1 || echo 'NOT FOUND')"
-echo "Compose:  $(docker compose version 2>&1 || echo 'NOT FOUND')"
-echo "Protoc:   $(protoc --version 2>&1 || echo 'NOT FOUND')"
-echo "Buf:      $(buf --version 2>&1 || echo 'NOT FOUND')"
-echo "Git:      $(git --version 2>&1 || echo 'NOT FOUND')"
-echo "========================================"
-```
-
----
-
-## 4. 1-Click Workspace Bootstrap & Quickstart (Recommended & First Choice)
-
-Our 1-click scripts are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace with a single command:
-
-### 4.1. Linux / macOS / Windows (Git Bash / WSL)
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
-cd NovWrite
-
-# 2. 1-Click Full Environment Setup
-# (Creates .env, starts Postgres & Redis containers, installs all dependencies, generates Prisma 8 & builds bridge contracts)
-./envi.sh
-
-# 3. 1-Click Launch Development Stack
-# (Boots Go API Backend on :8080 and SvelteKit Web on :5173)
-./dev.sh
-```
-
-> [!TIP]
-> If your Docker infrastructure is already running and you only need to install or update dependencies across Node.js/pnpm, Go modules, and Prisma 8, run `./deps.sh` (or `pnpm deps`).
-
-### 4.2. Windows (PowerShell as Administrator / Windows Terminal)
-
-```powershell
-# 1. Clone the repository
-git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
-cd NovWrite
-
-# 2. 1-Click Full Environment Setup
-.\envi.ps1
-
-# 3. 1-Click Launch Development Stack
-.\dev.ps1
-```
-
-> [!TIP]
-> On Windows PowerShell, run `.\deps.ps1` to install or update dependencies in under 5 seconds.
-
----
-
-## 5. 1-Click Monorepo Lifecycle Scripts
-
-NovWrite provides dedicated, cross-platform 1-click lifecycle scripts eliminating tedious manual commands:
-
-### 5.1. Linux, macOS, and Windows (Git Bash / WSL)
-
-```bash
-# 🚀 1-Click Development Environment (API :8080 + Web :5173)
-./dev.sh
-
-# 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
-./dev.sh --all
-
-# 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma 8, bridge)
-./deps.sh
-
-# ⚙️ 1-Click Environment Setup Utility (Full cold bootstrap)
-./envi.sh
-
-# 🛑 1-Click Environment Teardown & Reset (Stops servers, shuts down containers, purges logs)
-./uenvi.sh
-
-# 🧪 1-Click 6-Phase Monorepo Test Runner
-./test.sh
-
-# 🔍 1-Click Monorepo Typecheck & Diagnostics (0 warnings/errors tolerance)
-./check.sh
-
-# 🏗️ 1-Click Monorepo Production Build
-./build.sh
-
-# 🧹 Clean Slate Database & Redis Reset Utility
-./flush_db.sh
-```
-
-### 5.2. Windows (PowerShell / Windows Terminal / pwsh)
-
-```powershell
-# 🚀 1-Click Development Environment
-.\dev.ps1
-
-# 🌐📱🖥️ Launch All 3 Clients
-.\dev.ps1 -All
-
-# 📦 1-Click Dependency Installation & Update
-.\deps.ps1
-
-# ⚙️ 1-Click Environment Setup Utility
-.\envi.ps1
-
-# 🛑 1-Click Environment Teardown & Reset
-.\uenvi.ps1
-
-# 🧪 1-Click 6-Phase Monorepo Test Runner
-.\test.ps1
-
-# 🔍 1-Click Monorepo Typecheck & Diagnostics
-.\check.ps1
-
-# 🏗️ 1-Click Monorepo Production Build
-.\build.ps1
-
-# 🧹 Clean Slate Database & Redis Reset Utility
-.\flush_db.ps1
-```
-
----
-
-## 6. Manual Step-by-Step Installation (Alternative / Not Recommended)
+## 5. Manual Step-by-Step Installation (Alternative / Not Recommended)
 
 > [!NOTE]
 > The 1-click scripts above are the official and recommended way to initialize and manage NovWrite. Manual step-by-step setup is provided below as an alternative for debugging individual components, custom container topologies, or specialized CI/CD pipelines:
 
-### 6.1. Environment Configuration
+### 5.1. Environment Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-### 6.2. Granular Dependency Installation
+### 5.2. Granular Dependency Installation
 
 ```bash
 # Install workspace npm dependencies & Go modules
@@ -367,7 +359,7 @@ pnpm --filter @novwrite/data-service db:generate
 pnpm --filter @novwrite/bridge build
 ```
 
-### 6.3. Docker Infrastructure
+### 5.3. Docker Infrastructure
 
 ```bash
 docker compose up -d postgres redis
@@ -375,7 +367,7 @@ docker compose up -d postgres redis
 
 ---
 
-## 7. Granular Manual Service Execution
+## 6. Granular Manual Service Execution
 
 If you prefer to run services in separate terminal windows:
 
@@ -412,7 +404,7 @@ Access the applications in your browser:
 
 ---
 
-## 8. Development Workflow & Engineering Rules
+## 7. Development Workflow & Engineering Rules
 
 All contributors and AI agents must strictly follow the repository standards defined in [`.agent/agents.md`](../.agent/agents.md):
 
