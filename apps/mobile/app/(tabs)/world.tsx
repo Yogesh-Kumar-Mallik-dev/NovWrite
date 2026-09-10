@@ -14,13 +14,18 @@ import { mobileStore } from "../../src/lib/mobileStore.ts";
 import { EmptyState } from "../../src/components/EmptyState.tsx";
 import { Pagination } from "../../src/components/Pagination.tsx";
 import type {
+  BlueprintClass,
   BlueprintDef,
+  BlueprintFieldType,
+  DynamicFieldDef,
+  EffectOperation,
   EntityItem,
-  TimelineEventItem,
   InvariantRuleItem,
   ContinuityViolationItem,
   RuleSeverity,
   RuleType,
+  TimelineEffectItem,
+  TimelineEventItem,
 } from "../../src/lib/types.ts";
 import {
   Globe2,
@@ -51,6 +56,7 @@ import {
   Check,
   X,
   Lock,
+  Code,
 } from "lucide-react-native";
 
 type WorldSubTab = "OVERVIEW" | "ENTITIES" | "SCHEMAS" | "TIMELINE" | "RULES" | "AUDIT";
@@ -76,13 +82,17 @@ export default function WorldStudioScreen() {
   const pageSize = 10;
 
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
+  const [entityModalMode, setEntityModalMode] = useState<"VISUAL" | "RAW_JSON">("VISUAL");
   const [editingEntityId, setEditingEntityId] = useState<string | null>(null);
   const [entityFormName, setEntityFormName] = useState("");
   const [entityFormBlueprintId, setEntityFormBlueprintId] = useState("");
   const [entityFormCategory, setEntityFormCategory] = useState("Characters");
   const [entityFormDescription, setEntityFormDescription] = useState("");
-  const [entityFormPropKey, setEntityFormPropKey] = useState("");
-  const [entityFormPropVal, setEntityFormPropVal] = useState("");
+  const [entityProperties, setEntityProperties] = useState<Record<string, any>>({});
+  const [entityRawJson, setEntityRawJson] = useState("{}");
+  const [jsonParseError, setJsonParseError] = useState<string | null>(null);
+  const [customPropKey, setCustomPropKey] = useState("");
+  const [customPropVal, setCustomPropVal] = useState("");
   const [entityToDelete, setEntityToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // ==========================================
@@ -98,6 +108,12 @@ export default function WorldStudioScreen() {
   const [bpFormCategory, setBpFormCategory] = useState("Characters");
   const [bpFormClass, setBpFormClass] = useState<"FIRST_CLASS" | "SECOND_CLASS">("FIRST_CLASS");
   const [bpFormDescription, setBpFormDescription] = useState("");
+  const [bpFormFields, setBpFormFields] = useState<DynamicFieldDef[]>([]);
+  const [isAddingField, setIsAddingField] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldType, setNewFieldType] = useState<BlueprintFieldType>("STRING");
+  const [newFieldDefault, setNewFieldDefault] = useState("");
+  const [newFieldFormula, setNewFieldFormula] = useState("");
   const [bpToDelete, setBpToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // ==========================================
@@ -114,6 +130,12 @@ export default function WorldStudioScreen() {
   const [eventFormNarrativeSeq, setEventFormNarrativeSeq] = useState("10");
   const [eventFormChronoOrder, setEventFormChronoOrder] = useState("10");
   const [eventFormDescription, setEventFormDescription] = useState("");
+  const [eventFormEffects, setEventFormEffects] = useState<TimelineEffectItem[]>([]);
+  const [isAddingEffect, setIsAddingEffect] = useState(false);
+  const [newEffectEntityId, setNewEffectEntityId] = useState("");
+  const [newEffectPropKey, setNewEffectPropKey] = useState("");
+  const [newEffectOp, setNewEffectOp] = useState<EffectOperation>("SET");
+  const [newEffectVal, setNewEffectVal] = useState("");
   const [eventToDelete, setEventToDelete] = useState<TimelineEventItem | null>(null);
 
   // ==========================================
@@ -184,13 +206,25 @@ export default function WorldStudioScreen() {
   const paginatedEntities = filteredEntities.slice((entityPage - 1) * pageSize, entityPage * pageSize);
 
   function openCreateEntity(blueprintId?: string) {
+    const targetBpId = blueprintId || firstClassBlueprints[0]?.id || "";
+    const targetBp = blueprints.find((b) => b.id === targetBpId);
+    const initialProps: Record<string, any> = {};
+    if (targetBp) {
+      for (const f of targetBp.fields || []) {
+        if (f.defaultValue !== undefined) initialProps[f.name] = f.defaultValue;
+      }
+    }
     setEditingEntityId(null);
     setEntityFormName("");
-    setEntityFormBlueprintId(blueprintId || firstClassBlueprints[0]?.id || "");
-    setEntityFormCategory(firstClassBlueprints[0]?.category || "Characters");
+    setEntityFormBlueprintId(targetBpId);
+    setEntityFormCategory(targetBp?.category || "Characters");
     setEntityFormDescription("");
-    setEntityFormPropKey("");
-    setEntityFormPropVal("");
+    setEntityProperties(initialProps);
+    setEntityRawJson(JSON.stringify(initialProps, null, 2));
+    setJsonParseError(null);
+    setEntityModalMode("VISUAL");
+    setCustomPropKey("");
+    setCustomPropVal("");
     setIsEntityModalOpen(true);
   }
 
@@ -200,19 +234,70 @@ export default function WorldStudioScreen() {
     setEntityFormBlueprintId(ent.blueprintId);
     setEntityFormCategory(ent.category);
     setEntityFormDescription(ent.description || "");
-    const firstKey = Object.keys(ent.properties || {})[0] || "";
-    setEntityFormPropKey(firstKey);
-    setEntityFormPropVal(firstKey ? String(ent.properties[firstKey]) : "");
+    const props = ent.properties ? { ...ent.properties } : {};
+    setEntityProperties(props);
+    setEntityRawJson(JSON.stringify(props, null, 2));
+    setJsonParseError(null);
+    setEntityModalMode("VISUAL");
+    setCustomPropKey("");
+    setCustomPropVal("");
     setIsEntityModalOpen(true);
+  }
+
+  function handleEntityBlueprintChange(bpId: string) {
+    setEntityFormBlueprintId(bpId);
+    const targetBp = blueprints.find((b) => b.id === bpId);
+    if (targetBp) {
+      setEntityFormCategory(targetBp.category);
+      const updated = { ...entityProperties };
+      for (const f of targetBp.fields || []) {
+        if (updated[f.name] === undefined && f.defaultValue !== undefined) {
+          updated[f.name] = f.defaultValue;
+        }
+      }
+      setEntityProperties(updated);
+      setEntityRawJson(JSON.stringify(updated, null, 2));
+    }
+  }
+
+  function handleRawJsonChange(text: string) {
+    setEntityRawJson(text);
+    try {
+      const parsed = JSON.parse(text);
+      setJsonParseError(null);
+      setEntityProperties(parsed);
+    } catch (e: any) {
+      setJsonParseError(e.message || "Invalid JSON syntax");
+    }
+  }
+
+  function handleAddCustomProperty() {
+    if (!customPropKey.trim()) return;
+    const val = isNaN(Number(customPropVal)) ? customPropVal.trim() : Number(customPropVal);
+    const updated = { ...entityProperties, [customPropKey.trim()]: val };
+    setEntityProperties(updated);
+    setEntityRawJson(JSON.stringify(updated, null, 2));
+    setCustomPropKey("");
+    setCustomPropVal("");
+  }
+
+  function handleRemoveProperty(key: string) {
+    const updated = { ...entityProperties };
+    delete updated[key];
+    setEntityProperties(updated);
+    setEntityRawJson(JSON.stringify(updated, null, 2));
   }
 
   function handleSaveEntity() {
     if (!entityFormName.trim() || !entityFormBlueprintId) return;
-    const props: Record<string, any> = {};
-    if (entityFormPropKey.trim() && entityFormPropVal.trim()) {
-      props[entityFormPropKey.trim()] = isNaN(Number(entityFormPropVal))
-        ? entityFormPropVal.trim()
-        : Number(entityFormPropVal);
+    let finalProps = entityProperties;
+    if (entityModalMode === "RAW_JSON") {
+      try {
+        finalProps = JSON.parse(entityRawJson);
+      } catch (e: any) {
+        setJsonParseError("Cannot save: fix JSON syntax error first.");
+        return;
+      }
     }
 
     if (editingEntityId) {
@@ -221,7 +306,7 @@ export default function WorldStudioScreen() {
         blueprintId: entityFormBlueprintId,
         category: entityFormCategory.trim() || "General",
         description: entityFormDescription.trim() || "",
-        properties: props,
+        properties: finalProps,
       });
     } else {
       mobileStore.createEntity({
@@ -229,7 +314,7 @@ export default function WorldStudioScreen() {
         blueprintId: entityFormBlueprintId,
         category: entityFormCategory.trim() || undefined,
         description: entityFormDescription.trim() || undefined,
-        properties: props,
+        properties: finalProps,
       });
     }
     setIsEntityModalOpen(false);
@@ -253,6 +338,12 @@ export default function WorldStudioScreen() {
     setBpFormCategory("Characters");
     setBpFormClass("FIRST_CLASS");
     setBpFormDescription("");
+    setBpFormFields([]);
+    setIsAddingField(false);
+    setNewFieldName("");
+    setNewFieldType("STRING");
+    setNewFieldDefault("");
+    setNewFieldFormula("");
     setIsBlueprintModalOpen(true);
   }
 
@@ -262,7 +353,33 @@ export default function WorldStudioScreen() {
     setBpFormCategory(bp.category);
     setBpFormClass(bp.blueprintClass);
     setBpFormDescription(bp.description || "");
+    setBpFormFields(bp.fields ? [...bp.fields] : []);
+    setIsAddingField(false);
+    setNewFieldName("");
+    setNewFieldType("STRING");
+    setNewFieldDefault("");
+    setNewFieldFormula("");
     setIsBlueprintModalOpen(true);
+  }
+
+  function handleAddFieldToBlueprint() {
+    if (!newFieldName.trim()) return;
+    const field: DynamicFieldDef = {
+      id: "f_" + Date.now(),
+      name: newFieldName.trim(),
+      fieldType: newFieldType,
+      defaultValue: newFieldDefault.trim() || undefined,
+      formulaExpression: newFieldType === "FORMULA" ? newFieldFormula.trim() : undefined,
+    };
+    setBpFormFields([...bpFormFields, field]);
+    setNewFieldName("");
+    setNewFieldDefault("");
+    setNewFieldFormula("");
+    setIsAddingField(false);
+  }
+
+  function handleRemoveFieldFromBlueprint(index: number) {
+    setBpFormFields(bpFormFields.filter((_, i) => i !== index));
   }
 
   function handleSaveBlueprint() {
@@ -273,6 +390,7 @@ export default function WorldStudioScreen() {
         category: bpFormCategory.trim() || "Characters",
         blueprintClass: bpFormClass,
         description: bpFormDescription.trim() || "",
+        fields: bpFormFields,
       });
     } else {
       mobileStore.createBlueprint({
@@ -280,6 +398,7 @@ export default function WorldStudioScreen() {
         category: bpFormCategory.trim() || "Characters",
         blueprintClass: bpFormClass,
         description: bpFormDescription.trim() || undefined,
+        fields: bpFormFields,
       });
     }
     setIsBlueprintModalOpen(false);
@@ -306,6 +425,12 @@ export default function WorldStudioScreen() {
     setEventFormNarrativeSeq(String(lastNSeq + 10));
     setEventFormChronoOrder(String(lastCOrd + 10));
     setEventFormDescription("");
+    setEventFormEffects([]);
+    setIsAddingEffect(false);
+    setNewEffectEntityId(entities[0]?.id || "");
+    setNewEffectPropKey("");
+    setNewEffectOp("SET");
+    setNewEffectVal("");
     setIsEventModalOpen(true);
   }
 
@@ -315,7 +440,35 @@ export default function WorldStudioScreen() {
     setEventFormNarrativeSeq(String(ev.narrativeSequenceNumber));
     setEventFormChronoOrder(String(ev.chronologicalOrder));
     setEventFormDescription(ev.description || "");
+    setEventFormEffects(ev.effects ? [...ev.effects] : []);
+    setIsAddingEffect(false);
+    setNewEffectEntityId(entities[0]?.id || "");
+    setNewEffectPropKey("");
+    setNewEffectOp("SET");
+    setNewEffectVal("");
     setIsEventModalOpen(true);
+  }
+
+  function handleAddEffectToEvent() {
+    if (!newEffectEntityId || !newEffectPropKey.trim()) return;
+    const val = isNaN(Number(newEffectVal)) ? newEffectVal.trim() : Number(newEffectVal);
+    const targetEnt = entities.find((e) => e.id === newEffectEntityId);
+    const effect: TimelineEffectItem = {
+      id: "eff_" + Date.now(),
+      targetEntityId: newEffectEntityId,
+      entityName: targetEnt?.name || "Entity",
+      propertyKey: newEffectPropKey.trim(),
+      operation: newEffectOp,
+      value: val,
+    };
+    setEventFormEffects([...eventFormEffects, effect]);
+    setNewEffectPropKey("");
+    setNewEffectVal("");
+    setIsAddingEffect(false);
+  }
+
+  function handleRemoveEffectFromEvent(index: number) {
+    setEventFormEffects(eventFormEffects.filter((_, i) => i !== index));
   }
 
   function handleSaveEvent() {
@@ -329,6 +482,7 @@ export default function WorldStudioScreen() {
         narrativeSequenceNumber: nSeq,
         chronologicalOrder: cOrd,
         description: eventFormDescription.trim(),
+        effects: eventFormEffects,
       });
     } else {
       mobileStore.addTimelineEvent({
@@ -336,6 +490,7 @@ export default function WorldStudioScreen() {
         narrativeSequenceNumber: nSeq,
         chronologicalOrder: cOrd,
         description: eventFormDescription.trim(),
+        effects: eventFormEffects,
       });
     }
     setIsEventModalOpen(false);
@@ -1473,89 +1628,222 @@ export default function WorldStudioScreen() {
       {/* Entity Modal */}
       <Modal visible={isEntityModalOpen} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>
-              {editingEntityId ? "Edit Universe Entity" : "Instantiate Universe Entity"}
-            </Text>
-            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 10 }}>
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Entity Name *</Text>
-                <TextInput
-                  value={entityFormName}
-                  onChangeText={setEntityFormName}
-                  placeholder="e.g. Eldrin Stormweaver"
-                  placeholderTextColor="#71717a"
-                  style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 44 }}
-                />
-              </View>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 480, maxHeight: "90%", gap: 12 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
+                {editingEntityId ? "Edit Universe Entity" : "Instantiate Universe Entity"}
+              </Text>
 
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Blueprint *</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                  {firstClassBlueprints.map((bp) => (
-                    <TouchableOpacity
-                      key={bp.id}
-                      onPress={() => { setEntityFormBlueprintId(bp.id); setEntityFormCategory(bp.category); }}
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 6,
-                        backgroundColor: entityFormBlueprintId === bp.id ? "rgba(45, 212, 191, 0.2)" : "#18181b",
-                        borderColor: entityFormBlueprintId === bp.id ? "#2dd4bf" : "#27272a",
-                        borderWidth: 1,
-                        minHeight: 36,
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text style={{ color: entityFormBlueprintId === bp.id ? "#2dd4bf" : "#a1a1aa", fontSize: 11, fontWeight: "600" }}>{bp.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+              {/* Visual Form / Raw JSON Segmented Switcher */}
+              <View style={{ flexDirection: "row", backgroundColor: "#09090b", borderRadius: 8, padding: 2, borderWidth: 1, borderColor: "#27272a" }}>
+                <TouchableOpacity
+                  onPress={() => setEntityModalMode("VISUAL")}
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    backgroundColor: entityModalMode === "VISUAL" ? "#7c3aed" : "transparent",
+                  }}
+                >
+                  <Text style={{ color: entityModalMode === "VISUAL" ? "#ffffff" : "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>
+                    Visual
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEntityRawJson(JSON.stringify(entityProperties, null, 2));
+                    setEntityModalMode("RAW_JSON");
+                  }}
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    backgroundColor: entityModalMode === "RAW_JSON" ? "#7c3aed" : "transparent",
+                  }}
+                >
+                  <Text style={{ color: entityModalMode === "RAW_JSON" ? "#ffffff" : "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>
+                    Raw JSON
+                  </Text>
+                </TouchableOpacity>
               </View>
+            </View>
 
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Category</Text>
-                <TextInput
-                  value={entityFormCategory}
-                  onChangeText={setEntityFormCategory}
-                  placeholder="e.g. Characters"
-                  placeholderTextColor="#71717a"
-                  style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 44 }}
-                />
-              </View>
+            <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ gap: 10 }}>
+              {entityModalMode === "VISUAL" ? (
+                <>
+                  <View style={{ gap: 4 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Entity Name *</Text>
+                    <TextInput
+                      value={entityFormName}
+                      onChangeText={setEntityFormName}
+                      placeholder="e.g. Eldrin Stormweaver"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 44 }}
+                    />
+                  </View>
 
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Description</Text>
-                <TextInput
-                  value={entityFormDescription}
-                  onChangeText={setEntityFormDescription}
-                  placeholder="Lore summary and background notes..."
-                  placeholderTextColor="#71717a"
-                  multiline
-                  numberOfLines={3}
-                  style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 60, textAlignVertical: "top" }}
-                />
-              </View>
+                  <View style={{ gap: 4 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Blueprint Archetype *</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                      {firstClassBlueprints.map((bp) => (
+                        <TouchableOpacity
+                          key={bp.id}
+                          onPress={() => handleEntityBlueprintChange(bp.id)}
+                          style={{
+                            paddingHorizontal: 10,
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor: entityFormBlueprintId === bp.id ? "rgba(45, 212, 191, 0.2)" : "#18181b",
+                            borderColor: entityFormBlueprintId === bp.id ? "#2dd4bf" : "#27272a",
+                            borderWidth: 1,
+                            minHeight: 36,
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text style={{ color: entityFormBlueprintId === bp.id ? "#2dd4bf" : "#a1a1aa", fontSize: 11, fontWeight: "600" }}>{bp.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
 
-              <View style={{ gap: 4 }}>
-                <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Custom Property (Key / Value)</Text>
-                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <View style={{ gap: 4 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Category</Text>
+                    <TextInput
+                      value={entityFormCategory}
+                      onChangeText={setEntityFormCategory}
+                      placeholder="e.g. Characters"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 44 }}
+                    />
+                  </View>
+
+                  <View style={{ gap: 4 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 12 }}>Description</Text>
+                    <TextInput
+                      value={entityFormDescription}
+                      onChangeText={setEntityFormDescription}
+                      placeholder="Lore summary and background notes..."
+                      placeholderTextColor="#71717a"
+                      multiline
+                      numberOfLines={3}
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 60, textAlignVertical: "top" }}
+                    />
+                  </View>
+
+                  {/* Blueprint Fields Dynamic Form */}
+                  {(() => {
+                    const selBp = blueprints.find((b) => b.id === entityFormBlueprintId);
+                    if (!selBp || !selBp.fields || selBp.fields.length === 0) return null;
+                    return (
+                      <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, gap: 8 }}>
+                        <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                          Archetype Schema Fields ({selBp.name})
+                        </Text>
+                        {selBp.fields.map((f) => {
+                          const currentVal = entityProperties[f.name];
+                          return (
+                            <View key={f.id} style={{ gap: 4 }}>
+                              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{f.name}</Text>
+                                <Text style={{ color: "#71717a", fontSize: 10, fontFamily: "monospace" }}>{f.fieldType}</Text>
+                              </View>
+                              {f.fieldType === "FORMULA" ? (
+                                <View style={{ backgroundColor: "#09090b", padding: 8, borderRadius: 6, borderWidth: 1, borderColor: "#27272a" }}>
+                                  <Text style={{ color: "#7c3aed", fontSize: 12, fontFamily: "monospace" }}>
+                                    {f.formulaExpression || "AST Formula"} (Evaluated deterministically)
+                                  </Text>
+                                </View>
+                              ) : (
+                                <TextInput
+                                  value={currentVal !== undefined ? String(currentVal) : ""}
+                                  onChangeText={(txt) => {
+                                    const parsed = f.fieldType === "NUMBER" ? (isNaN(Number(txt)) ? txt : Number(txt)) : txt;
+                                    const updated = { ...entityProperties, [f.name]: parsed };
+                                    setEntityProperties(updated);
+                                    setEntityRawJson(JSON.stringify(updated, null, 2));
+                                  }}
+                                  keyboardType={f.fieldType === "NUMBER" ? "numeric" : "default"}
+                                  placeholder={f.defaultValue !== undefined ? String(f.defaultValue) : `Enter ${f.name}...`}
+                                  placeholderTextColor="#71717a"
+                                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                                />
+                              )}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
+
+                  {/* Custom Properties List */}
+                  <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, gap: 8 }}>
+                    <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>Custom State Properties</Text>
+                    {Object.entries(entityProperties).map(([k, v]) => (
+                      <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#09090b", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }}>
+                        <View style={{ flex: 1, flexDirection: "row", gap: 6 }}>
+                          <Text style={{ color: "#a1a1aa", fontSize: 11, fontFamily: "monospace" }}>{k}:</Text>
+                          <Text style={{ color: "#fafafa", fontSize: 11, fontFamily: "monospace" }}>{typeof v === "object" ? JSON.stringify(v) : String(v)}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => handleRemoveProperty(k)} style={{ padding: 2 }}>
+                          <Trash2 size={13} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+                      <TextInput
+                        value={customPropKey}
+                        onChangeText={setCustomPropKey}
+                        placeholder="Key (e.g. title)"
+                        placeholderTextColor="#71717a"
+                        style={{ flex: 1, backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                      />
+                      <TextInput
+                        value={customPropVal}
+                        onChangeText={setCustomPropVal}
+                        placeholder="Value (e.g. Grand Elder)"
+                        placeholderTextColor="#71717a"
+                        style={{ flex: 1, backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                      />
+                      <TouchableOpacity
+                        onPress={handleAddCustomProperty}
+                        style={{ backgroundColor: "#7c3aed", paddingHorizontal: 10, borderRadius: 6, justifyContent: "center" }}
+                      >
+                        <Plus size={14} color="#ffffff" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                    Direct JSON property graph editor with live validation:
+                  </Text>
                   <TextInput
-                    value={entityFormPropKey}
-                    onChangeText={setEntityFormPropKey}
-                    placeholder="Key (e.g. realm)"
-                    placeholderTextColor="#71717a"
-                    style={{ flex: 1, backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, color: "#fafafa", fontSize: 12, minHeight: 44 }}
+                    value={entityRawJson}
+                    onChangeText={handleRawJsonChange}
+                    multiline
+                    textAlignVertical="top"
+                    style={{
+                      backgroundColor: "#09090b",
+                      borderColor: jsonParseError ? "#ef4444" : "#27272a",
+                      borderWidth: 1,
+                      borderRadius: 8,
+                      padding: 10,
+                      color: "#fafafa",
+                      fontSize: 12,
+                      fontFamily: "monospace",
+                      minHeight: 220,
+                    }}
                   />
-                  <TextInput
-                    value={entityFormPropVal}
-                    onChangeText={setEntityFormPropVal}
-                    placeholder="Value (e.g. Golden Core)"
-                    placeholderTextColor="#71717a"
-                    style={{ flex: 1, backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, color: "#fafafa", fontSize: 12, minHeight: 44 }}
-                  />
+                  {jsonParseError && (
+                    <View style={{ backgroundColor: "rgba(239, 68, 68, 0.15)", borderColor: "#ef4444", borderWidth: 1, borderRadius: 6, padding: 8, flexDirection: "row", gap: 6, alignItems: "center" }}>
+                      <AlertTriangle size={14} color="#ef4444" />
+                      <Text style={{ color: "#ef4444", fontSize: 11, flex: 1 }}>{jsonParseError}</Text>
+                    </View>
+                  )}
                 </View>
-              </View>
+              )}
             </ScrollView>
 
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
@@ -1579,7 +1867,7 @@ export default function WorldStudioScreen() {
       {/* Blueprint Modal */}
       <Modal visible={isBlueprintModalOpen} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 480, maxHeight: "90%", gap: 12 }}>
             <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>
               {editingBlueprintId ? "Edit Blueprint Schema" : "Architect New Blueprint"}
             </Text>
@@ -1656,6 +1944,96 @@ export default function WorldStudioScreen() {
                   style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 60, textAlignVertical: "top" }}
                 />
               </View>
+
+              {/* Dynamic Field Definitions Section */}
+              <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, gap: 8 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                  Dynamic Fields ({bpFormFields.length})
+                </Text>
+
+                {bpFormFields.map((f, fIdx) => (
+                  <View key={f.id || fIdx} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#09090b", padding: 8, borderRadius: 6 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>{f.name}</Text>
+                        <View style={{ backgroundColor: "rgba(124, 58, 237, 0.2)", paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                          <Text style={{ color: "#7c3aed", fontSize: 9, fontWeight: "bold" }}>{f.fieldType}</Text>
+                        </View>
+                      </View>
+                      {f.defaultValue !== undefined && (
+                        <Text style={{ color: "#a1a1aa", fontSize: 10 }}>Default: {String(f.defaultValue)}</Text>
+                      )}
+                      {f.formulaExpression && (
+                        <Text style={{ color: "#7c3aed", fontSize: 10, fontFamily: "monospace" }}>Formula: {f.formulaExpression}</Text>
+                      )}
+                    </View>
+                    <TouchableOpacity onPress={() => handleRemoveFieldFromBlueprint(fIdx)} style={{ padding: 4 }}>
+                      <Trash2 size={13} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {isAddingField ? (
+                  <View style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 6, padding: 8, gap: 6 }}>
+                    <TextInput
+                      value={newFieldName}
+                      onChangeText={setNewFieldName}
+                      placeholder="Field Name (e.g. cultivationLevel)"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                    />
+                    <View style={{ flexDirection: "row", gap: 4, flexWrap: "wrap" }}>
+                      {(["STRING", "NUMBER", "BOOLEAN", "ENUM", "FORMULA"] as BlueprintFieldType[]).map((t) => (
+                        <TouchableOpacity
+                          key={t}
+                          onPress={() => setNewFieldType(t)}
+                          style={{
+                            paddingHorizontal: 6,
+                            paddingVertical: 3,
+                            borderRadius: 4,
+                            backgroundColor: newFieldType === t ? "#7c3aed" : "#18181b",
+                          }}
+                        >
+                          <Text style={{ color: newFieldType === t ? "#ffffff" : "#a1a1aa", fontSize: 10, fontWeight: "bold" }}>{t}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    {newFieldType === "FORMULA" ? (
+                      <TextInput
+                        value={newFieldFormula}
+                        onChangeText={setNewFieldFormula}
+                        placeholder="Formula (e.g. base_power * realm_multiplier)"
+                        placeholderTextColor="#71717a"
+                        style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12, fontFamily: "monospace" }}
+                      />
+                    ) : (
+                      <TextInput
+                        value={newFieldDefault}
+                        onChangeText={setNewFieldDefault}
+                        placeholder="Default Value"
+                        placeholderTextColor="#71717a"
+                        style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                      />
+                    )}
+                    <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 6, marginTop: 2 }}>
+                      <TouchableOpacity onPress={() => setIsAddingField(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4 }}>
+                        <Text style={{ color: "#a1a1aa", fontSize: 11 }}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleAddFieldToBlueprint} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "bold" }}>Add Field</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setIsAddingField(true)}
+                    style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "rgba(124, 58, 237, 0.15)", borderColor: "rgba(124, 58, 237, 0.3)", borderWidth: 1, borderRadius: 6, paddingVertical: 6 }}
+                  >
+                    <Plus size={13} color="#7c3aed" />
+                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>Add Field Definition</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </ScrollView>
 
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
@@ -1679,7 +2057,7 @@ export default function WorldStudioScreen() {
       {/* Timeline Event Modal */}
       <Modal visible={isEventModalOpen} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 480, maxHeight: "90%", gap: 12 }}>
             <Text style={{ color: "#fafafa", fontSize: 17, fontWeight: "bold" }}>
               {editingEventId ? "Edit Timeline Event" : "Log Timeline Delta Event"}
             </Text>
@@ -1725,12 +2103,110 @@ export default function WorldStudioScreen() {
                 <TextInput
                   value={eventFormDescription}
                   onChangeText={setEventFormDescription}
-                  placeholder="Causal mutations and lore changes..."
+                  placeholder="Causal lore narrative summary..."
                   placeholderTextColor="#71717a"
                   multiline
                   numberOfLines={3}
                   style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: "#fafafa", fontSize: 13, minHeight: 60, textAlignVertical: "top" }}
                 />
+              </View>
+
+              {/* Causal Mutations / Effects Builder */}
+              <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, gap: 8 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                  Causal State Mutations ({eventFormEffects.length})
+                </Text>
+
+                {eventFormEffects.map((eff, effIdx) => (
+                  <View key={eff.id || effIdx} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#09090b", padding: 8, borderRadius: 6 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={{ color: "#2dd4bf", fontSize: 11, fontWeight: "bold" }}>{eff.entityName || "Entity"}</Text>
+                        <Text style={{ color: "#a1a1aa", fontSize: 11 }}>.{eff.propertyKey}</Text>
+                        <View style={{ backgroundColor: "rgba(124, 58, 237, 0.2)", paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                          <Text style={{ color: "#7c3aed", fontSize: 9, fontWeight: "bold" }}>{eff.operation}</Text>
+                        </View>
+                      </View>
+                      <Text style={{ color: "#fafafa", fontSize: 11, fontFamily: "monospace" }}>Value: {String(eff.value)}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => handleRemoveEffectFromEvent(effIdx)} style={{ padding: 4 }}>
+                      <Trash2 size={13} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {isAddingEffect ? (
+                  <View style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 6, padding: 8, gap: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>Target Entity:</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+                      {entities.map((e) => (
+                        <TouchableOpacity
+                          key={e.id}
+                          onPress={() => setNewEffectEntityId(e.id)}
+                          style={{
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 4,
+                            backgroundColor: newEffectEntityId === e.id ? "#7c3aed" : "#18181b",
+                          }}
+                        >
+                          <Text style={{ color: newEffectEntityId === e.id ? "#ffffff" : "#a1a1aa", fontSize: 10, fontWeight: "bold" }}>{e.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+
+                    <TextInput
+                      value={newEffectPropKey}
+                      onChangeText={setNewEffectPropKey}
+                      placeholder="Property Key (e.g. hp, cultivationStage)"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                    />
+
+                    <View style={{ flexDirection: "row", gap: 4 }}>
+                      {(["SET", "INCREMENT", "DECREMENT"] as EffectOperation[]).map((op) => (
+                        <TouchableOpacity
+                          key={op}
+                          onPress={() => setNewEffectOp(op)}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 4,
+                            borderRadius: 4,
+                            backgroundColor: newEffectOp === op ? "#7c3aed" : "#18181b",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ color: newEffectOp === op ? "#ffffff" : "#a1a1aa", fontSize: 10, fontWeight: "bold" }}>{op}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <TextInput
+                      value={newEffectVal}
+                      onChangeText={setNewEffectVal}
+                      placeholder="Payload Value (e.g. 100 or 'Core Formation')"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 6, color: "#fafafa", fontSize: 12 }}
+                    />
+
+                    <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 6, marginTop: 2 }}>
+                      <TouchableOpacity onPress={() => setIsAddingEffect(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4 }}>
+                        <Text style={{ color: "#a1a1aa", fontSize: 11 }}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleAddEffectToEvent} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4 }}>
+                        <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "bold" }}>Add Mutation</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setIsAddingEffect(true)}
+                    style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "rgba(124, 58, 237, 0.15)", borderColor: "rgba(124, 58, 237, 0.3)", borderWidth: 1, borderRadius: 6, paddingVertical: 6 }}
+                  >
+                    <Plus size={13} color="#7c3aed" />
+                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>Add Causal Mutation</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </ScrollView>
 

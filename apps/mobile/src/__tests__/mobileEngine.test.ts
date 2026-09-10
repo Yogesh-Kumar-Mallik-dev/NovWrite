@@ -217,6 +217,112 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
     // 100 * 1.5 = 150 -> clamped to 120
     assert.equal(res3.value, 120);
   });
+
+  it("should support chained formulas and inject option power into formula context", () => {
+    store.createProject({
+      name: "Dao Formula Realm",
+      genre: "Cultivation",
+    });
+
+    const bp = store.createBlueprint({
+      name: "Cultivator Realm",
+      category: "Characters",
+      blueprintClass: "FIRST_CLASS",
+      fields: [
+        {
+          id: "f_realm",
+          name: "Cultivation Realm",
+          key: "realm",
+          fieldType: "ENUM",
+          options: ["Qi Refining", "Foundation"],
+          optionPowers: {
+            "Qi Refining": 100,
+            "Foundation": 500,
+          },
+        },
+        {
+          id: "f_multiplier",
+          name: "Base Multiplier",
+          key: "multiplier",
+          fieldType: "NUMBER",
+          defaultValue: 2,
+        },
+        {
+          id: "f_subtotal",
+          name: "Subtotal Power",
+          key: "subtotal_power",
+          fieldType: "FORMULA",
+          formulaExpression: "realm_power * multiplier",
+        },
+        {
+          id: "f_total",
+          name: "Total Power",
+          key: "total_power",
+          fieldType: "FORMULA",
+          formulaExpression: "subtotal_power + 50",
+        },
+      ],
+    });
+
+    const entity = store.createEntity({
+      name: "Lin Dong",
+      blueprintId: bp.id,
+      category: "Characters",
+      properties: {
+        realm: "Foundation",
+        multiplier: 3,
+      },
+    });
+
+    const evals = store.evaluateEntityFormulas(entity.id);
+    // realm_power = 500
+    // subtotal_power = 500 * 3 = 1500
+    // total_power = 1500 + 50 = 1550
+    assert.equal(evals["subtotal_power"], 1500);
+    assert.equal(evals["total_power"], 1550);
+  });
+
+  it("should delete chapter and cascading scenes", () => {
+    store.createProject({
+      name: "Epic Saga",
+      genre: "Fantasy",
+    });
+
+    const chap1 = store.createChapter("Chapter 1");
+    const chap2 = store.createChapter("Chapter 2");
+
+    const s1 = store.createScene(chap1.id, "Scene 1.1");
+    const s2 = store.createScene(chap1.id, "Scene 1.2");
+    const s3 = store.createScene(chap2.id, "Scene 2.1");
+
+    assert.equal(store.getState().scenes.length, 3);
+    assert.equal(store.getState().chapters.length, 2);
+
+    store.deleteChapter(chap1.id);
+    assert.equal(store.getState().chapters.length, 1);
+    assert.equal(store.getState().chapters[0].id, chap2.id);
+    assert.equal(store.getState().scenes.length, 1);
+    assert.equal(store.getState().scenes[0].id, s3.id);
+
+    store.deleteScene(s3.id);
+    assert.equal(store.getState().scenes.length, 0);
+  });
+
+  it("should delete project and clean up active project context", () => {
+    const p1 = store.createProject({ name: "Project 1", genre: "Fantasy" });
+    const p2 = store.createProject({ name: "Project 2", genre: "Sci-Fi" });
+
+    store.setActiveProject(p1.id);
+    assert.equal(store.getState().activeProjectId, p1.id);
+
+    store.deleteProject(p1.id);
+    assert.equal(store.getState().projects.length, 1);
+    assert.equal(store.getState().activeProjectId, p2.id);
+
+    store.deleteProject(p2.id);
+    assert.equal(store.getState().projects.length, 0);
+    assert.equal(store.getState().activeProjectId, null);
+  });
 });
 
 

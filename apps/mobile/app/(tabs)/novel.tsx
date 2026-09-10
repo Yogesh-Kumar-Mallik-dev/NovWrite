@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { mobileStore } from "../../src/lib/mobileStore.ts";
 import { EmptyState } from "../../src/components/EmptyState.tsx";
-import type { SceneStatus } from "../../src/lib/types.ts";
+import type { ChapterItem, SceneItem, SceneStatus } from "../../src/lib/types.ts";
 import {
   BookOpen,
   Edit3,
@@ -28,6 +28,7 @@ import {
   Flame,
   TrendingUp,
   Trash2,
+  Pencil,
   List,
   SlidersHorizontal,
 } from "lucide-react-native";
@@ -48,17 +49,23 @@ export default function NovelScreen() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
 
-  // Modals
+  // Chapter Modals & State
   const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [chapterTitleInput, setChapterTitleInput] = useState("");
+  const [chapterSynopsisInput, setChapterSynopsisInput] = useState("");
+  const [chapterToDelete, setChapterToDelete] = useState<{ id: string; title: string; sceneCount: number } | null>(null);
+
+  // Scene Modals & State
   const [isSceneModalOpen, setIsSceneModalOpen] = useState(false);
+  const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
   const [targetChapterIdForScene, setTargetChapterIdForScene] = useState<string>("");
-
-  const [newChapterTitle, setNewChapterTitle] = useState("");
-  const [newChapterSynopsis, setNewChapterSynopsis] = useState("");
-
-  const [newSceneTitle, setNewSceneTitle] = useState("");
-  const [newSceneTargetWords, setNewSceneTargetWords] = useState("1500");
-  const [newSceneSynopsis, setNewSceneSynopsis] = useState("");
+  const [sceneTitleInput, setSceneTitleInput] = useState("");
+  const [sceneTargetWordsInput, setSceneTargetWordsInput] = useState("1500");
+  const [sceneSynopsisInput, setSceneSynopsisInput] = useState("");
+  const [sceneStatusInput, setSceneStatusInput] = useState<SceneStatus>("DRAFT");
+  const [sceneToDelete, setSceneToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
 
   // Editor State
   const [proseInputText, setProseInputText] = useState("");
@@ -114,40 +121,94 @@ export default function NovelScreen() {
     }, 400);
   }
 
-  function openNewScene(chapId?: string) {
-    setTargetChapterIdForScene(chapId || chapters[0]?.id || "");
-    setNewSceneTitle("");
-    setNewSceneTargetWords("1500");
-    setNewSceneSynopsis("");
-    setIsSceneModalOpen(true);
+  function openCreateChapter() {
+    setEditingChapterId(null);
+    setChapterTitleInput("");
+    setChapterSynopsisInput("");
+    setIsChapterModalOpen(true);
   }
 
-  function handleCreateChapter() {
-    if (!newChapterTitle.trim()) return;
-    const ch = mobileStore.createChapter(newChapterTitle.trim(), newChapterSynopsis.trim() || undefined);
-    setNewChapterTitle("");
-    setNewChapterSynopsis("");
+  function openEditChapter(chap: ChapterItem) {
+    setEditingChapterId(chap.id);
+    setChapterTitleInput(chap.title);
+    setChapterSynopsisInput(chap.synopsis || "");
+    setIsChapterModalOpen(true);
+  }
+
+  function handleSaveChapter() {
+    if (!chapterTitleInput.trim()) return;
+    if (editingChapterId) {
+      mobileStore.updateChapter(editingChapterId, {
+        title: chapterTitleInput.trim(),
+        synopsis: chapterSynopsisInput.trim() || undefined,
+      });
+    } else {
+      mobileStore.createChapter(chapterTitleInput.trim(), chapterSynopsisInput.trim() || undefined);
+    }
     setIsChapterModalOpen(false);
   }
 
-  function handleCreateScene() {
-    if (!newSceneTitle.trim() || !targetChapterIdForScene) return;
-    const targetWords = parseInt(newSceneTargetWords, 10) || 1500;
-    const sc = mobileStore.createScene(
-      targetChapterIdForScene,
-      newSceneTitle.trim(),
-      targetWords,
-      newSceneSynopsis.trim() || undefined
-    );
+  function handleDeleteChapter() {
+    if (!chapterToDelete) return;
+    mobileStore.deleteChapter(chapterToDelete.id);
+    setChapterToDelete(null);
+  }
+
+  function openCreateScene(chapId?: string) {
+    setEditingSceneId(null);
+    setTargetChapterIdForScene(chapId || chapters[0]?.id || "");
+    setSceneTitleInput("");
+    setSceneTargetWordsInput("1500");
+    setSceneSynopsisInput("");
+    setSceneStatusInput("DRAFT");
+    setIsSceneModalOpen(true);
+  }
+
+  function openEditScene(sc: SceneItem) {
+    setEditingSceneId(sc.id);
+    setTargetChapterIdForScene(sc.chapterId);
+    setSceneTitleInput(sc.title);
+    setSceneTargetWordsInput(String(sc.targetWordCount || 1500));
+    setSceneSynopsisInput(sc.synopsis || "");
+    setSceneStatusInput(sc.status);
+    setIsSceneModalOpen(true);
+  }
+
+  function handleSaveScene() {
+    if (!sceneTitleInput.trim()) return;
+    const targetWords = parseInt(sceneTargetWordsInput, 10) || 1500;
+    if (editingSceneId) {
+      mobileStore.updateScene(editingSceneId, {
+        title: sceneTitleInput.trim(),
+        targetWordCount: targetWords,
+        synopsis: sceneSynopsisInput.trim() || undefined,
+        status: sceneStatusInput,
+      });
+    } else {
+      if (!targetChapterIdForScene) return;
+      const sc = mobileStore.createScene(
+        targetChapterIdForScene,
+        sceneTitleInput.trim(),
+        targetWords,
+        sceneSynopsisInput.trim() || undefined
+      );
+      mobileStore.selectScene(sc.id);
+      setActiveTab("EDITOR");
+    }
     setIsSceneModalOpen(false);
-    mobileStore.selectScene(sc.id);
-    setActiveTab("EDITOR");
+  }
+
+  function handleDeleteScene() {
+    if (!sceneToDelete) return;
+    mobileStore.deleteScene(sceneToDelete.id);
+    setSceneToDelete(null);
   }
 
   function handleStatusChange(status: SceneStatus) {
     if (activeScene) {
       mobileStore.updateScene(activeScene.id, { status });
     }
+    setIsStatusPickerOpen(false);
   }
 
   function handleSaveGoal() {
@@ -353,7 +414,7 @@ export default function NovelScreen() {
                 <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Open Canvas Editor</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setIsChapterModalOpen(true)}
+                onPress={openCreateChapter}
                 style={{
                   flex: isTabletOrWide ? undefined : 1,
                   flexDirection: "row",
@@ -507,7 +568,7 @@ export default function NovelScreen() {
                 <BookOpen size={16} color="#7c3aed" />
                 <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Manuscript Chapters</Text>
               </View>
-              <TouchableOpacity onPress={() => setIsChapterModalOpen(true)}>
+              <TouchableOpacity onPress={openCreateChapter}>
                 <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>+ Add Chapter</Text>
               </TouchableOpacity>
             </View>
@@ -518,7 +579,7 @@ export default function NovelScreen() {
                 title="No Chapters Created Yet"
                 description="Every great epic begins with Chapter One. Scaffold your first chapter to start writing scenes."
                 actionText="Create Chapter 1"
-                onAction={() => setIsChapterModalOpen(true)}
+                onAction={openCreateChapter}
               />
             ) : (
               <View style={{ gap: 8 }}>
@@ -619,20 +680,39 @@ export default function NovelScreen() {
               </Text>
 
               {activeScene && (
-                <View
+                <TouchableOpacity
+                  onPress={() => setIsStatusPickerOpen(true)}
                   style={{
                     backgroundColor: "#1e1e24",
                     borderColor: "#27272a",
                     borderWidth: 1,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                    borderRadius: 4,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 6,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor:
+                        activeScene.status === "COMPLETED"
+                          ? "#22c55e"
+                          : activeScene.status === "REVISED"
+                          ? "#3b82f6"
+                          : activeScene.status === "IN_PROGRESS"
+                          ? "#f59e0b"
+                          : "#a1a1aa",
+                    }}
+                  />
                   <Text style={{ color: "#fafafa", fontSize: 10, fontWeight: "bold" }}>
                     {activeScene.status}
                   </Text>
-                </View>
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -657,7 +737,7 @@ export default function NovelScreen() {
                   <Text style={{ color: "#a1a1aa", fontSize: 10, fontWeight: "bold", textTransform: "uppercase" }}>
                     Manuscript Scenes
                   </Text>
-                  <TouchableOpacity onPress={() => openNewScene()}>
+                  <TouchableOpacity onPress={() => openCreateScene()}>
                     <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>+ Scene</Text>
                   </TouchableOpacity>
                 </View>
@@ -668,7 +748,7 @@ export default function NovelScreen() {
                   contentContainerStyle={{ gap: 6 }}
                 >
                   {chapters.length === 0 ? (
-                    <TouchableOpacity onPress={() => setIsChapterModalOpen(true)}>
+                    <TouchableOpacity onPress={openCreateChapter}>
                       <Text style={{ color: "#7c3aed", fontSize: 12 }}>+ Create Chapter 1</Text>
                     </TouchableOpacity>
                   ) : (
@@ -729,7 +809,7 @@ export default function NovelScreen() {
                   title="No Scene Selected"
                   description="Select a scene from the left navigation tree or create a new scene to start drafting prose."
                   actionText="+ Create New Scene"
-                  onAction={() => openNewScene(chapters[0]?.id || "")}
+                  onAction={() => openCreateScene(chapters[0]?.id || "")}
                 />
               ) : (
                 <View style={{ flex: 1, gap: 8 }}>
@@ -825,7 +905,7 @@ export default function NovelScreen() {
               title="Your Outline is Empty"
               description="Add your first chapter to begin scaffolding your novel's manuscript outline."
               actionText="Create Chapter 1"
-              onAction={() => setIsChapterModalOpen(true)}
+              onAction={openCreateChapter}
             />
           ) : (
             <View style={{ gap: 12 }}>
@@ -872,19 +952,28 @@ export default function NovelScreen() {
                         </View>
                       </TouchableOpacity>
 
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
                           {scenes.length} scenes · {chapterWordCount.toLocaleString()}w
                         </Text>
                         <TouchableOpacity
-                          onPress={() => openNewScene(chapter.id)}
+                          onPress={() => openEditChapter(chapter)}
+                          style={{ backgroundColor: "#1e1e24", borderColor: "#27272a", borderWidth: 1, padding: 6, borderRadius: 6 }}
+                          accessibilityLabel="Edit Chapter Details"
+                        >
+                          <Pencil size={13} color="#a1a1aa" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => openCreateScene(chapter.id)}
                           style={{ backgroundColor: "rgba(124, 58, 237, 0.15)", padding: 6, borderRadius: 6 }}
+                          accessibilityLabel="Add Scene to Chapter"
                         >
                           <Plus size={14} color="#7c3aed" />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => mobileStore.deleteChapter(chapter.id)}
+                          onPress={() => setChapterToDelete({ id: chapter.id, title: chapter.title, sceneCount: scenes.length })}
                           style={{ padding: 6 }}
+                          accessibilityLabel="Delete Chapter"
                         >
                           <Trash2 size={14} color="#ef4444" />
                         </TouchableOpacity>
@@ -897,7 +986,7 @@ export default function NovelScreen() {
                         {scenes.length === 0 ? (
                           <View style={{ padding: 12, alignItems: "center" }}>
                             <Text style={{ color: "#a1a1aa", fontSize: 12 }}>No scenes in this chapter yet.</Text>
-                            <TouchableOpacity onPress={() => openNewScene(chapter.id)} style={{ marginTop: 4 }}>
+                            <TouchableOpacity onPress={() => openCreateScene(chapter.id)} style={{ marginTop: 4 }}>
                               <Text style={{ color: "#7c3aed", fontSize: 12, fontWeight: "bold" }}>+ Add first scene</Text>
                             </TouchableOpacity>
                           </View>
@@ -916,13 +1005,24 @@ export default function NovelScreen() {
                             >
                               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                 <Text style={{ color: "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>Scene #{sIdx + 1}</Text>
-                                <View
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    const nextStatus: Record<SceneStatus, SceneStatus> = {
+                                      DRAFT: "IN_PROGRESS",
+                                      IN_PROGRESS: "REVISED",
+                                      REVISED: "COMPLETED",
+                                      COMPLETED: "DRAFT",
+                                    };
+                                    mobileStore.updateScene(scene.id, { status: nextStatus[scene.status] || "DRAFT" });
+                                  }}
                                   style={{
                                     backgroundColor:
                                       scene.status === "COMPLETED"
                                         ? "rgba(34, 197, 94, 0.15)"
                                         : scene.status === "REVISED"
                                         ? "rgba(59, 130, 246, 0.15)"
+                                        : scene.status === "IN_PROGRESS"
+                                        ? "rgba(245, 158, 11, 0.15)"
                                         : "rgba(255, 255, 255, 0.08)",
                                     paddingHorizontal: 6,
                                     paddingVertical: 2,
@@ -936,6 +1036,8 @@ export default function NovelScreen() {
                                           ? "#22c55e"
                                           : scene.status === "REVISED"
                                           ? "#3b82f6"
+                                          : scene.status === "IN_PROGRESS"
+                                          ? "#f59e0b"
                                           : "#a1a1aa",
                                       fontSize: 10,
                                       fontWeight: "bold",
@@ -943,7 +1045,7 @@ export default function NovelScreen() {
                                   >
                                     {scene.status}
                                   </Text>
-                                </View>
+                                </TouchableOpacity>
                               </View>
 
                               <Text style={{ color: "#fafafa", fontSize: 14, fontWeight: "bold" }}>{scene.title}</Text>
@@ -955,18 +1057,29 @@ export default function NovelScreen() {
                                 <Text style={{ color: "#a1a1aa", fontSize: 11 }}>
                                   {scene.wordCount} / {scene.targetWordCount || 1500} words
                                 </Text>
-                                <View style={{ flexDirection: "row", gap: 8 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                  <TouchableOpacity
+                                    onPress={() => openEditScene(scene)}
+                                    style={{ padding: 4 }}
+                                    accessibilityLabel="Edit Scene Details"
+                                  >
+                                    <Pencil size={13} color="#a1a1aa" />
+                                  </TouchableOpacity>
                                   <TouchableOpacity
                                     onPress={() => {
                                       mobileStore.selectScene(scene.id);
                                       setActiveTab("EDITOR");
                                     }}
-                                    style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+                                    style={{ flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(124, 58, 237, 0.15)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
                                   >
-                                    <Edit3 size={13} color="#7c3aed" />
-                                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>Edit</Text>
+                                    <Edit3 size={12} color="#7c3aed" />
+                                    <Text style={{ color: "#7c3aed", fontSize: 11, fontWeight: "bold" }}>Write</Text>
                                   </TouchableOpacity>
-                                  <TouchableOpacity onPress={() => mobileStore.deleteScene(scene.id)}>
+                                  <TouchableOpacity
+                                    onPress={() => setSceneToDelete({ id: scene.id, title: scene.title })}
+                                    style={{ padding: 4 }}
+                                    accessibilityLabel="Delete Scene"
+                                  >
                                     <Trash2 size={13} color="#ef4444" />
                                   </TouchableOpacity>
                                 </View>
@@ -1152,89 +1265,218 @@ export default function NovelScreen() {
       {/* ========================================== */}
       {/* MODALS */}
       {/* ========================================== */}
-      {/* Create Chapter Modal */}
+      {/* Create / Edit Chapter Modal */}
       <Modal visible={isChapterModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Create New Chapter</Text>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Title *</Text>
-              <TextInput
-                value={newChapterTitle}
-                onChangeText={setNewChapterTitle}
-                placeholder="e.g. Chapter 1: The Gathering Storm"
-                placeholderTextColor="#71717a"
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-              />
-            </View>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Synopsis / Arc</Text>
-              <TextInput
-                value={newChapterSynopsis}
-                onChangeText={setNewChapterSynopsis}
-                placeholder="Brief description of what occurs in this chapter..."
-                placeholderTextColor="#71717a"
-                multiline
-                numberOfLines={3}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
-              />
-            </View>
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
+            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
+              {editingChapterId ? "Edit Chapter Details" : "Create New Chapter"}
+            </Text>
+            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 10 }}>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Title *</Text>
+                <TextInput
+                  value={chapterTitleInput}
+                  onChangeText={setChapterTitleInput}
+                  placeholder="e.g. Chapter 1: The Gathering Storm"
+                  placeholderTextColor="#71717a"
+                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                />
+              </View>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Chapter Synopsis / Arc</Text>
+                <TextInput
+                  value={chapterSynopsisInput}
+                  onChangeText={setChapterSynopsisInput}
+                  placeholder="Brief description of what occurs in this chapter..."
+                  placeholderTextColor="#71717a"
+                  multiline
+                  numberOfLines={3}
+                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
+                />
+              </View>
+            </ScrollView>
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsChapterModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+              <TouchableOpacity onPress={() => setIsChapterModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
                 <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleCreateChapter} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Create Chapter</Text>
+              <TouchableOpacity onPress={handleSaveChapter} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>
+                  {editingChapterId ? "Save Changes" : "Create Chapter"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Create Scene Modal */}
+      {/* Create / Edit Scene Modal */}
       <Modal visible={isSceneModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Create New Scene</Text>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Title *</Text>
-              <TextInput
-                value={newSceneTitle}
-                onChangeText={setNewSceneTitle}
-                placeholder="e.g. Confrontation at Dawn"
-                placeholderTextColor="#71717a"
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-              />
-            </View>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Target Word Count</Text>
-              <TextInput
-                value={newSceneTargetWords}
-                onChangeText={setNewSceneTargetWords}
-                keyboardType="numeric"
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
-              />
-            </View>
-            <View style={{ gap: 4 }}>
-              <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Synopsis / Objective</Text>
-              <TextInput
-                value={newSceneSynopsis}
-                onChangeText={setNewSceneSynopsis}
-                placeholder="What happens in this scene? Key plot beats..."
-                placeholderTextColor="#71717a"
-                multiline
-                numberOfLines={3}
-                style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
-              />
-            </View>
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, maxHeight: "90%", gap: 12 }}>
+            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>
+              {editingSceneId ? "Edit Scene Details" : "Create New Scene"}
+            </Text>
+            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 10 }}>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Title *</Text>
+                <TextInput
+                  value={sceneTitleInput}
+                  onChangeText={setSceneTitleInput}
+                  placeholder="e.g. Confrontation at Dawn"
+                  placeholderTextColor="#71717a"
+                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                />
+              </View>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Target Word Count</Text>
+                <TextInput
+                  value={sceneTargetWordsInput}
+                  onChangeText={setSceneTargetWordsInput}
+                  keyboardType="numeric"
+                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14 }}
+                />
+              </View>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Status</Text>
+                <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                  {(["DRAFT", "IN_PROGRESS", "REVISED", "COMPLETED"] as SceneStatus[]).map((st) => (
+                    <TouchableOpacity
+                      key={st}
+                      onPress={() => setSceneStatusInput(st)}
+                      style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                        backgroundColor: sceneStatusInput === st ? "rgba(124, 58, 237, 0.25)" : "#18181b",
+                        borderColor: sceneStatusInput === st ? "#7c3aed" : "#27272a",
+                        borderWidth: 1,
+                      }}
+                    >
+                      <Text style={{ color: sceneStatusInput === st ? "#7c3aed" : "#a1a1aa", fontSize: 11, fontWeight: "bold" }}>
+                        {st}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "600" }}>Scene Synopsis / Objective</Text>
+                <TextInput
+                  value={sceneSynopsisInput}
+                  onChangeText={setSceneSynopsisInput}
+                  placeholder="What happens in this scene? Key plot beats..."
+                  placeholderTextColor="#71717a"
+                  multiline
+                  numberOfLines={3}
+                  style={{ backgroundColor: "#09090b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 10, color: "#fafafa", fontSize: 14, minHeight: 60 }}
+                />
+              </View>
+            </ScrollView>
             <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
-              <TouchableOpacity onPress={() => setIsSceneModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+              <TouchableOpacity onPress={() => setIsSceneModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
                 <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleCreateScene} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Create Scene</Text>
+              <TouchableOpacity onPress={handleSaveScene} style={{ backgroundColor: "#7c3aed", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>
+                  {editingSceneId ? "Save Changes" : "Create Scene"}
+                </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Chapter Confirmation Modal */}
+      <Modal visible={!!chapterToDelete} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, gap: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Trash2 size={18} color="#ef4444" />
+              <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Chapter</Text>
+            </View>
+            <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
+              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{chapterToDelete?.title}</Text>?
+            </Text>
+            {chapterToDelete && chapterToDelete.sceneCount > 0 && (
+              <View style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", borderColor: "rgba(239, 68, 68, 0.3)", borderWidth: 1, borderRadius: 8, padding: 10 }}>
+                <Text style={{ color: "#ef4444", fontSize: 12 }}>
+                  ⚠️ This chapter contains {chapterToDelete.sceneCount} scene{chapterToDelete.sceneCount === 1 ? "" : "s"}. All scenes and prose inside will be permanently removed.
+                </Text>
+              </View>
+            )}
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+              <TouchableOpacity onPress={() => setChapterToDelete(null)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeleteChapter} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Delete Chapter</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Scene Confirmation Modal */}
+      <Modal visible={!!sceneToDelete} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 450, gap: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Trash2 size={18} color="#ef4444" />
+              <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Scene</Text>
+            </View>
+            <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
+              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{sceneToDelete?.title}</Text>? All prose content in this scene will be deleted.
+            </Text>
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+              <TouchableOpacity onPress={() => setSceneToDelete(null)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeleteScene} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "bold" }}>Delete Scene</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Quick Status Picker Modal */}
+      <Modal visible={isStatusPickerOpen} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View style={{ backgroundColor: "#121215", borderColor: "#27272a", borderWidth: 1, borderRadius: 14, padding: 18, width: "100%", maxWidth: 350, gap: 12 }}>
+            <Text style={{ color: "#fafafa", fontSize: 16, fontWeight: "bold" }}>Set Scene Status</Text>
+            <View style={{ gap: 8 }}>
+              {(["DRAFT", "IN_PROGRESS", "REVISED", "COMPLETED"] as SceneStatus[]).map((st) => {
+                const isSelected = activeScene?.status === st;
+                return (
+                  <TouchableOpacity
+                    key={st}
+                    onPress={() => handleStatusChange(st)}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      backgroundColor: isSelected ? "rgba(124, 58, 237, 0.2)" : "#18181b",
+                      borderColor: isSelected ? "#7c3aed" : "#27272a",
+                      borderWidth: 1,
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
+                    <Text style={{ color: isSelected ? "#7c3aed" : "#fafafa", fontSize: 13, fontWeight: "bold" }}>
+                      {st}
+                    </Text>
+                    {isSelected && <CheckCircle2 size={16} color="#7c3aed" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <TouchableOpacity
+              onPress={() => setIsStatusPickerOpen(false)}
+              style={{ backgroundColor: "#27272a", paddingVertical: 10, borderRadius: 8, alignItems: "center", marginTop: 4, minHeight: 40, justifyContent: "center" }}
+            >
+              <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

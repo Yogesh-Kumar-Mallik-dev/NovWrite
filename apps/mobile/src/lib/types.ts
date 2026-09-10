@@ -57,6 +57,14 @@ export type BlueprintFieldType =
   | "ARRAY_REF"
   | "FORMULA";
 
+export interface EnumOptionDef {
+  label: string;
+  value: string;
+  name?: string;
+  power?: number;
+  numericValue?: number;
+}
+
 export interface DynamicFieldDef {
   id: string;
   name: string;
@@ -65,8 +73,10 @@ export interface DynamicFieldDef {
   fieldType: BlueprintFieldType;
   description?: string;
   required?: boolean;
+  isRequired?: boolean;
   defaultValue?: any;
-  options?: string[];
+  options?: (string | EnumOptionDef)[];
+  optionPowers?: Record<string, number>;
   targetBlueprintId?: string;
   min?: number;
   max?: number;
@@ -74,6 +84,7 @@ export interface DynamicFieldDef {
   unit?: string;
   formulaExpression?: string;
   formulaDependencies?: string[];
+  orderIndex?: number;
 }
 
 export interface BlueprintDef {

@@ -39,7 +39,12 @@ export default function TabLayout() {
   const [genreInput, setGenreInput] = useState("");
   const [descInput, setDescInput] = useState("");
 
+  const [isDeleteAcknowledged, setIsDeleteAcknowledged] = useState(false);
+  const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
+
   const activeProject = mobileStore.getActiveProject();
+  const isDeleteTitleMatched = activeProject ? deleteConfirmTitle.trim() === activeProject.name : false;
+  const isDeleteReady = isDeleteAcknowledged && isDeleteTitleMatched;
 
   function openCreate() {
     setNameInput("");
@@ -54,6 +59,12 @@ export default function TabLayout() {
     setGenreInput(activeProject.genre || "");
     setDescInput(activeProject.description || "");
     setIsEditModalOpen(true);
+  }
+
+  function openDelete() {
+    setIsDeleteAcknowledged(false);
+    setDeleteConfirmTitle("");
+    setIsDeleteModalOpen(true);
   }
 
   function handleCreate() {
@@ -78,10 +89,12 @@ export default function TabLayout() {
   }
 
   function handleDelete() {
-    if (!activeProject) return;
+    if (!activeProject || !isDeleteReady) return;
     mobileStore.deleteProject(activeProject.id);
     setIsDeleteModalOpen(false);
     setIsSwitcherOpen(false);
+    setIsDeleteAcknowledged(false);
+    setDeleteConfirmTitle("");
   }
 
   return (
@@ -400,20 +413,137 @@ export default function TabLayout() {
         </View>
       </Modal>
 
-      {/* Delete Project Modal */}
+      {/* Delete Project Modal (3-Step Irreversible Deletion Standard) */}
       <Modal visible={isDeleteModalOpen} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)", justifyContent: "center", padding: 16 }}>
-          <View style={{ backgroundColor: "#121215", borderColor: "rgba(239, 68, 68, 0.4)", borderWidth: 1, borderRadius: 14, padding: 18, gap: 12 }}>
-            <Text style={{ color: "#ef4444", fontSize: 16, fontWeight: "bold" }}>Delete Project</Text>
-            <Text style={{ color: "#fafafa", fontSize: 13, lineHeight: 18 }}>
-              Are you sure you want to delete <Text style={{ fontWeight: "bold" }}>{activeProject?.name}</Text>? All chapters, scenes, and associated entities will be removed.
-            </Text>
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
-              <TouchableOpacity onPress={() => setIsDeleteModalOpen(false)} style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 }}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.8)", justifyContent: "center", alignItems: "center", padding: 16 }}>
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "rgba(239, 68, 68, 0.4)",
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 18,
+              width: "100%",
+              maxWidth: 450,
+              maxHeight: "90%",
+              gap: 12,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Trash2 size={20} color="#ef4444" />
+              <Text style={{ color: "#ef4444", fontSize: 17, fontWeight: "bold" }}>Delete Novel Project</Text>
+            </View>
+
+            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 12 }}>
+              {/* Step 1: Scope & Impact Assessment */}
+              <View style={{ backgroundColor: "#18181b", borderColor: "#27272a", borderWidth: 1, borderRadius: 8, padding: 12, gap: 6 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                  Step 1: Scope & Impact Assessment
+                </Text>
+                <Text style={{ color: "#a1a1aa", fontSize: 12, lineHeight: 16 }}>
+                  Permanently destroys <Text style={{ color: "#fafafa", fontWeight: "bold" }}>{activeProject?.name}</Text> along with:
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.chapters.length} Chapters</Text>
+                  </View>
+                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.scenes.length} Scenes</Text>
+                  </View>
+                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.entities.length} Entities</Text>
+                  </View>
+                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.blueprints.length} Blueprints</Text>
+                  </View>
+                  <View style={{ backgroundColor: "#27272a", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                    <Text style={{ color: "#a1a1aa", fontSize: 11 }}>{state.timelineEvents.length} Timeline Events</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Step 2: Irreversibility Acknowledgment */}
+              <TouchableOpacity
+                onPress={() => setIsDeleteAcknowledged(!isDeleteAcknowledged)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  backgroundColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.1)" : "#18181b",
+                  borderColor: isDeleteAcknowledged ? "rgba(239, 68, 68, 0.4)" : "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                }}
+              >
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 4,
+                    borderWidth: 1.5,
+                    borderColor: isDeleteAcknowledged ? "#ef4444" : "#71717a",
+                    backgroundColor: isDeleteAcknowledged ? "#ef4444" : "transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 1,
+                  }}
+                >
+                  {isDeleteAcknowledged && <CheckCircle2 size={14} color="#ffffff" />}
+                </View>
+                <Text style={{ color: "#fafafa", fontSize: 12, flex: 1, lineHeight: 16 }}>
+                  <Text style={{ fontWeight: "bold" }}>Step 2: </Text>I acknowledge that this action cannot be undone and permanently destroys all prose and world lore.
+                </Text>
+              </TouchableOpacity>
+
+              {/* Step 3: Exact Title Verification */}
+              <View style={{ gap: 4 }}>
+                <Text style={{ color: "#fafafa", fontSize: 12, fontWeight: "bold" }}>
+                  Step 3: Type project title to verify
+                </Text>
+                <Text style={{ color: "#71717a", fontSize: 11 }}>
+                  Type <Text style={{ color: "#fafafa", fontFamily: "monospace" }}>{activeProject?.name}</Text> below:
+                </Text>
+                <TextInput
+                  value={deleteConfirmTitle}
+                  onChangeText={setDeleteConfirmTitle}
+                  placeholder={activeProject?.name || "Project title"}
+                  placeholderTextColor="#71717a"
+                  style={{
+                    backgroundColor: "#09090b",
+                    borderColor: isDeleteTitleMatched ? "#22c55e" : "#27272a",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    padding: 10,
+                    color: "#fafafa",
+                    fontSize: 13,
+                  }}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+              <TouchableOpacity
+                onPress={() => setIsDeleteModalOpen(false)}
+                style={{ backgroundColor: "#27272a", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minHeight: 44, justifyContent: "center" }}
+              >
                 <Text style={{ color: "#fafafa", fontSize: 13, fontWeight: "600" }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDelete} style={{ backgroundColor: "#ef4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
-                <Text style={{ color: "#ffffff", fontSize: 13, fontWeight: "600" }}>Delete Permanently</Text>
+              <TouchableOpacity
+                onPress={handleDelete}
+                disabled={!isDeleteReady}
+                style={{
+                  backgroundColor: isDeleteReady ? "#ef4444" : "rgba(239, 68, 68, 0.3)",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  minHeight: 44,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: isDeleteReady ? "#ffffff" : "#a1a1aa", fontSize: 13, fontWeight: "bold" }}>
+                  Delete Project Forever
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

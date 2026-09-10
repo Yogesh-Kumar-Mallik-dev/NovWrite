@@ -257,6 +257,14 @@ export class MobileStore {
   }
 
   deleteProject(id: string) {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      try {
+        localStorage.removeItem(`novwrite_prose_v1_${id}`);
+        localStorage.removeItem(`novwrite_world_state_${id}`);
+      } catch (e) {
+        console.warn("[MobileStore] Failed to remove scoped project data:", e);
+      }
+    }
     this.state.projects = this.state.projects.filter((p) => p.id !== id);
     if (this.state.activeProjectId === id) {
       this.setActiveProject(this.state.projects[0]?.id || null);
@@ -540,20 +548,70 @@ export class MobileStore {
     const bp = this.getBlueprint(entity.blueprintId);
     if (!bp) return {};
 
-    const formulaFields = bp.fields.filter((f) => f.fieldType === "FORMULA" && f.formulaExpression);
-    const results: Record<string, number> = {};
+    const computed: Record<string, number> = {};
+    const context: Record<string, any> = { ...entity.properties };
 
-    for (const f of formulaFields) {
-      if (!f.formulaExpression) continue;
-      const res = evaluateFormula(f.formulaExpression, entity.properties);
-      if (res.success && typeof res.value === "number") {
-        results[f.name] = res.value;
-        if (f.key) {
-          results[f.key] = res.value;
+    // Inject enum power ratings and structured objects into formula context
+    for (const field of bp.fields) {
+      if (
+        (field.fieldType === "ENUM" || field.fieldType === "VALUE_TYPE") &&
+        field.options
+      ) {
+        const val = entity.properties[field.key || field.name] ?? entity.properties[field.name];
+        if (val !== undefined && val !== null) {
+          const matched = field.options.find((o: any) =>
+            typeof o === "string"
+              ? o === val
+              : o && (o.value === val || o.label === val)
+          );
+          let numVal = 0;
+          if (matched && typeof matched === "object") {
+            numVal = (matched as any).numericValue ?? (matched as any).power ?? 0;
+          } else if (field.optionPowers && typeof field.optionPowers[val] === "number") {
+            numVal = field.optionPowers[val];
+          }
+
+          const optObj = {
+            label: matched && typeof matched === "object" ? (matched as any).label : val,
+            value: matched && typeof matched === "object" ? (matched as any).value : val,
+            name: matched && typeof matched === "object" ? ((matched as any).name || (matched as any).label) : val,
+            numericValue: numVal,
+            power: numVal,
+          };
+
+          context[field.name] = optObj;
+          if (field.key) context[field.key] = optObj;
+          context[`${field.name}_power`] = numVal;
+          if (field.key) context[`${field.key}_power`] = numVal;
+        }
+      } else if (field.fieldType === "ARRAY" || field.fieldType === "ARRAY_REF") {
+        const arr = entity.properties[field.key || field.name] ?? entity.properties[field.name];
+        if (Array.isArray(arr)) {
+          context[field.name] = arr;
+          if (field.key) context[field.key] = arr;
+          context[`${field.name}_count`] = arr.length;
+          if (field.key) context[`${field.key}_count`] = arr.length;
         }
       }
     }
-    return results;
+
+    const formulaFields = bp.fields.filter((f) => f.fieldType === "FORMULA" && f.formulaExpression);
+
+    for (const f of formulaFields) {
+      if (!f.formulaExpression) continue;
+      const res = evaluateFormula(f.formulaExpression, context);
+      if (res.success && typeof res.value === "number") {
+        computed[f.name] = res.value;
+        if (f.key) {
+          computed[f.key] = res.value;
+        }
+        context[f.name] = res.value;
+        if (f.key) {
+          context[f.key] = res.value;
+        }
+      }
+    }
+    return computed;
   }
 
   evaluateEntityFormulas(entityId: string): Record<string, number> {
