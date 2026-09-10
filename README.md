@@ -3,6 +3,12 @@
   <h1>NovWrite</h1>
   <p><strong>A continuity-first novel creation platform with a user-defined story universe engine.</strong></p>
   <p><em>You define the rules of your universe. NovWrite remembers them.</em></p>
+  <p>
+    <a href="docs/ONBOARDING.md"><strong>📖 Developer Onboarding Guide</strong></a> •
+    <a href="docs/recommended_commands.md"><strong>⚡ Recommended Commands</strong></a> •
+    <a href="docs/API_GUIDE.md"><strong>🔌 API Guide</strong></a> •
+    <a href="CONTRIBUTING.md"><strong>🤝 Contributing</strong></a>
+  </p>
 </div>
 
 ---
@@ -22,6 +28,8 @@
 ---
 
 ## 1. 1-Click Quickstart (Recommended & First Choice)
+
+> 💡 _For full workstation setup, prerequisites, and developer workflows, visit the **[Developer Onboarding Guide](docs/ONBOARDING.md)**._
 
 Our 1-click scripts are the **official, fastest, and recommended** way to set up and run NovWrite:
 
