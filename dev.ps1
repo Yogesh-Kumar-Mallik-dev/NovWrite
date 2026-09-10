@@ -12,7 +12,10 @@ param(
     [switch]$Clear,
     [switch]$WebOnly,
     [switch]$MobileOnly,
-    [switch]$DesktopOnly
+    [switch]$DesktopOnly,
+    [switch]$ApiOnly,
+    [switch]$NoDesktop,
+    [switch]$NoMobile
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,19 +26,35 @@ Set-Location $rootDir
 $startMobile = $true
 $startDesktop = $true
 $startWeb = $true
+$startApi = $true
 
 if ($WebOnly) {
     $startMobile = $false
     $startDesktop = $false
     $startWeb = $true
+    $startApi = $true
 } elseif ($MobileOnly) {
     $startMobile = $true
     $startDesktop = $false
     $startWeb = $false
+    $startApi = $true
 } elseif ($DesktopOnly) {
     $startMobile = $false
     $startDesktop = $true
     $startWeb = $true
+    $startApi = $true
+} elseif ($ApiOnly) {
+    $startMobile = $false
+    $startDesktop = $false
+    $startWeb = $false
+    $startApi = $true
+}
+
+if ($NoDesktop) {
+    $startDesktop = $false
+}
+if ($NoMobile) {
+    $startMobile = $false
 }
 
 $apiPort = if ($env:PORT) { $env:PORT } else { "8080" }
@@ -43,6 +62,20 @@ $webPort = "5173"
 $mobilePort = if ($env:EXPO_PORT) { $env:EXPO_PORT } else { "8081" }
 $apiHost = "127.0.0.1"
 $webHost = "127.0.0.1"
+
+# Check Rust/Cargo toolchain for Desktop if requested
+if ($startDesktop) {
+    if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
+        if ($DesktopOnly) {
+            Write-Error "[!] Error: Rust/Cargo is required to run Tauri Desktop in -DesktopOnly mode. Please install Rust from https://rustup.rs."
+            exit 1
+        } else {
+            Write-Host "[WARN] Rust/Cargo toolchain not detected in PATH. Tauri Desktop client will be skipped." -ForegroundColor Yellow
+            Write-Host "[INFO] Install Rust from https://rustup.rs to enable the native desktop client." -ForegroundColor DarkGray
+            $startDesktop = $false
+        }
+    }
+}
 
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  [*] Starting NovWrite Development Environment" -ForegroundColor Cyan
@@ -92,7 +125,9 @@ function Free-Port($port, $name) {
 }
 
 Free-Port -port $apiPort -name "Go API Server"
-Free-Port -port $webPort -name "SvelteKit Web Client"
+if ($startWeb) {
+    Free-Port -port $webPort -name "SvelteKit Web Client"
+}
 if ($startMobile) {
     Free-Port -port $mobilePort -name "Expo Metro Bundler"
 }
@@ -264,7 +299,9 @@ Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "  [*] NovWrite Development Environment is LIVE" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  -> Web Workbench:   http://${webHost}:${webPort}"
+if ($startWeb) {
+    Write-Host "  -> Web Workbench:   http://${webHost}:${webPort}"
+}
 Write-Host "  -> API Backend:     http://${apiHost}:${apiPort}"
 Write-Host "  -> Health Probe:    http://${apiHost}:${apiPort}/healthz"
 if ($startMobile) {
@@ -280,11 +317,11 @@ Write-Host ""
 # Graceful cleanup on exit
 try {
     while ($true) {
-        if ($apiProcess.HasExited) {
+        if ($apiProcess -and $apiProcess.HasExited) {
             Write-Host "[!] Go API server stopped unexpectedly." -ForegroundColor Yellow
             break
         }
-        if ($webProcess.HasExited) {
+        if ($webProcess -and $webProcess.HasExited) {
             Write-Host "[!] SvelteKit Web server stopped unexpectedly." -ForegroundColor Yellow
             break
         }
@@ -293,8 +330,13 @@ try {
             break
         }
         if ($desktopProcess -and $desktopProcess.HasExited) {
-            Write-Host "[!] Tauri Desktop Client stopped unexpectedly." -ForegroundColor Yellow
-            break
+            if ($DesktopOnly) {
+                Write-Host "[*] Tauri Desktop Client closed." -ForegroundColor Cyan
+                break
+            } else {
+                Write-Host "[*] Tauri Desktop Client closed. Keeping Web and API servers active." -ForegroundColor Cyan
+                $desktopProcess = $null
+            }
         }
         Start-Sleep -Seconds 1
     }
@@ -314,10 +356,13 @@ try {
         Stop-Process -Id $apiProcess.Id -Force -ErrorAction SilentlyContinue
     }
     Free-Port -port $apiPort -name "Go API Server"
-    Free-Port -port $webPort -name "SvelteKit Web Client"
+    if ($startWeb) {
+        Free-Port -port $webPort -name "SvelteKit Web Client"
+    }
     if ($startMobile) {
         Free-Port -port $mobilePort -name "Expo Metro Bundler"
     }
     Write-Host "[OK] All NovWrite development servers stopped cleanly." -ForegroundColor Green
+    Write-Host "========================================================" -ForegroundColor Cyan
 }
 

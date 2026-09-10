@@ -121,11 +121,34 @@ timeline
                : envi.sh / envi.ps1 1-Click Dependency, Env, Docker, Prisma & Build Provisioning
                : uenvi.sh / uenvi.ps1 1-Click Server Termination, Container Shutdown & Artifact Purge
                : Fallback DATABASE_URL in prisma.config.ts for Zero-Configuration Setup
+    2026-09-10 : Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision)
+               : Window Label 'main', Native Window Decorations & IPv4 devUrl (127.0.0.1:5173)
+               : Rust/Cargo Pre-Flight Detection in dev.sh and dev.ps1
+               : Resilient Supervisor Loop Preventing Session Teardown on Desktop Window Close
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.8] — 2026-09-10
+
+**Scope:** Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision  
+**Target Documents:** [`apps/desktop/src-tauri/tauri.conf.json`](file:///home/yogesh/Projects/NovWrite/apps/desktop/src-tauri/tauri.conf.json), [`dev.sh`](file:///home/yogesh/Projects/NovWrite/dev.sh), [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **Tauri 2 Cross-Platform Window Configuration (`tauri.conf.json`):**
+  - Added explicit `"label": "main"` mapping to align with default security capability configuration (`capabilities/default.json`).
+  - Enabled native window decorations (`"decorations": true`) to guarantee standard titlebars, drag bars, minimize/maximize/close controls across Windows, macOS, and standard Linux desktop environments (GNOME, KDE, XFCE, Omarchy/Arch).
+  - Updated loopback devUrl to `"http://127.0.0.1:5173"` to avoid IPv6 `::1` DNS resolution delays.
+- **Rust/Cargo Pre-Flight Validation (`dev.sh` / `dev.ps1`):**
+  - Added pre-flight check for `cargo` binary before attempting desktop compilation. If Rust is not installed, logs an informative notice and skips desktop launch without failing the Go API, SvelteKit Web, or Expo Mobile services.
+- **Resilient Supervisor Lifecycle Management (`dev.sh` / `dev.ps1`):**
+  - Hardened supervisor monitoring loop so that closing the native desktop window does not kill the active Go backend API or SvelteKit Web workbench unless explicitly run in `--desktop-only` / `-DesktopOnly` mode.
+  - Added `--api-only`, `--no-desktop`, and `--no-mobile` flags across both Unix Bash and PowerShell development launchers.
+
+---
 
 ### [Version 2.10.7] — 2026-09-10
 

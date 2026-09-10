@@ -22,6 +22,7 @@ START_MOBILE=1
 START_DESKTOP=1
 START_WEB=1
 START_API=1
+IS_DESKTOP_ONLY=0
 EXPO_HOST_FLAG="--host lan"
 EXPO_CLEAR_FLAG=""
 
@@ -31,6 +32,7 @@ for arg in "$@"; do
       START_MOBILE=1
       START_DESKTOP=1
       START_WEB=1
+      START_API=1
       ;;
     --tunnel|-t)
       EXPO_HOST_FLAG="--tunnel"
@@ -43,16 +45,32 @@ for arg in "$@"; do
       START_MOBILE=1
       START_DESKTOP=0
       START_WEB=0
+      START_API=1
       ;;
     --desktop-only|-d)
       START_MOBILE=0
       START_DESKTOP=1
       START_WEB=1
+      START_API=1
+      IS_DESKTOP_ONLY=1
       ;;
     --web-only|-w)
       START_MOBILE=0
       START_DESKTOP=0
       START_WEB=1
+      START_API=1
+      ;;
+    --api-only)
+      START_MOBILE=0
+      START_DESKTOP=0
+      START_WEB=0
+      START_API=1
+      ;;
+    --no-desktop)
+      START_DESKTOP=0
+      ;;
+    --no-mobile)
+      START_MOBILE=0
       ;;
     --help|-h)
       echo "NovWrite Universal Development Server Launcher"
@@ -67,6 +85,9 @@ for arg in "$@"; do
       echo "  --web-only, -w      Launch Go API and SvelteKit Web only"
       echo "  --desktop-only, -d  Launch Go API, SvelteKit Web, and Tauri Desktop"
       echo "  --mobile-only, -m   Launch Go API and Mobile Expo only"
+      echo "  --api-only          Launch Go API only"
+      echo "  --no-desktop        Exclude Tauri Desktop from default launch"
+      echo "  --no-mobile         Exclude Expo Mobile from default launch"
       echo "  --help, -h          Display this help menu"
       exit 0
       ;;
@@ -95,6 +116,21 @@ for tool in go pnpm node curl; do
     exit 1
   fi
 done
+
+# Check Rust/Cargo toolchain for Desktop if requested
+if [ "$START_DESKTOP" -eq 1 ]; then
+  if ! command -v cargo >/dev/null 2>&1; then
+    if [ "$IS_DESKTOP_ONLY" -eq 1 ]; then
+      echo "❌ Error: Rust/Cargo is required to run Tauri Desktop in --desktop-only mode."
+      echo "ℹ️  Please install Rust from https://rustup.rs."
+      exit 1
+    else
+      echo "⚠️  Rust/Cargo toolchain not detected in PATH. Tauri Desktop client will be skipped."
+      echo "ℹ️  Install Rust from https://rustup.rs to enable the native desktop client."
+      START_DESKTOP=0
+    fi
+  fi
+fi
 
 # Cross-platform port clearing function (Linux / macOS / Windows Git Bash)
 free_port() {
@@ -135,7 +171,9 @@ free_port() {
 }
 
 free_port "$API_PORT" "Go API Server"
-free_port "$WEB_PORT" "SvelteKit Web Client"
+if [ "$START_WEB" -eq 1 ]; then
+  free_port "$WEB_PORT" "SvelteKit Web Client"
+fi
 if [ "$START_MOBILE" -eq 1 ]; then
   free_port "$MOBILE_PORT" "Expo Metro Bundler"
 fi
@@ -290,30 +328,32 @@ fi
 # ------------------------------------------------------------------------------
 # STEP 3: Vite Web Workbench (SvelteKit 2 + Vite)
 # ------------------------------------------------------------------------------
-echo "🌐 Starting SvelteKit Vite Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
-(
-  cd "$ROOT_DIR/apps/web"
-  exec pnpm exec vite dev --host "$WEB_HOST" --port "$WEB_PORT"
-) &
-WEB_PID=$!
+if [ "$START_WEB" -eq 1 ]; then
+  echo "🌐 Starting SvelteKit Vite Web Workbench on http://${WEB_HOST}:${WEB_PORT}..."
+  (
+    cd "$ROOT_DIR/apps/web"
+    exec pnpm exec vite dev --host "$WEB_HOST" --port "$WEB_PORT"
+  ) &
+  WEB_PID=$!
 
-# Probe Web Server until accepting connections
-echo "⏳ Waiting for SvelteKit Web Workbench to initialize..."
-web_ready=0
-for i in $(seq 1 30 2>/dev/null || echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30); do
-  if curl -s -I "http://${WEB_HOST}:${WEB_PORT}" >/dev/null 2>&1; then
-    web_ready=1
-    break
-  fi
-  if ! kill -0 "$WEB_PID" 2>/dev/null; then
-    echo "❌ Error: SvelteKit Web Workbench failed to start or crashed unexpectedly."
-    exit 1
-  fi
-  sleep 0.3
-done
+  # Probe Web Server until accepting connections
+  echo "⏳ Waiting for SvelteKit Web Workbench to initialize..."
+  web_ready=0
+  for i in $(seq 1 30 2>/dev/null || echo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30); do
+    if curl -s -I "http://${WEB_HOST}:${WEB_PORT}" >/dev/null 2>&1; then
+      web_ready=1
+      break
+    fi
+    if ! kill -0 "$WEB_PID" 2>/dev/null; then
+      echo "❌ Error: SvelteKit Web Workbench failed to start or crashed unexpectedly."
+      exit 1
+    fi
+    sleep 0.3
+  done
 
-if [ "$web_ready" -eq 1 ]; then
-  echo "✅ SvelteKit Web Workbench is live! (PID: $WEB_PID)"
+  if [ "$web_ready" -eq 1 ]; then
+    echo "✅ SvelteKit Web Workbench is live! (PID: $WEB_PID)"
+  fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -333,7 +373,9 @@ echo ""
 echo "========================================================"
 echo "  🌟 NovWrite Development Environment is LIVE"
 echo "========================================================"
-echo "  🔗 Web Workbench:   http://${WEB_HOST}:${WEB_PORT}"
+if [ "$START_WEB" -eq 1 ]; then
+  echo "  🔗 Web Workbench:   http://${WEB_HOST}:${WEB_PORT}"
+fi
 echo "  🔗 API Backend:     http://${API_HOST}:${API_PORT}"
 echo "  🔗 Health Probe:    http://${API_HOST}:${API_PORT}/healthz"
 if [ "$START_MOBILE" -eq 1 ]; then
@@ -348,12 +390,12 @@ echo ""
 
 # Supervisor loop: monitors running processes
 while true; do
-  if ! kill -0 "$API_PID" 2>/dev/null; then
+  if [ "$START_API" -eq 1 ] && [ -n "$API_PID" ] && ! kill -0 "$API_PID" 2>/dev/null; then
     echo "⚠️  Go API server (PID: $API_PID) stopped unexpectedly."
     cleanup
     break
   fi
-  if ! kill -0 "$WEB_PID" 2>/dev/null; then
+  if [ "$START_WEB" -eq 1 ] && [ -n "$WEB_PID" ] && ! kill -0 "$WEB_PID" 2>/dev/null; then
     echo "⚠️  SvelteKit Web server (PID: $WEB_PID) stopped unexpectedly."
     cleanup
     break
@@ -364,9 +406,15 @@ while true; do
     break
   fi
   if [ "$START_DESKTOP" -eq 1 ] && [ -n "$DESKTOP_PID" ] && ! kill -0 "$DESKTOP_PID" 2>/dev/null; then
-    echo "⚠️  Tauri Desktop Client (PID: $DESKTOP_PID) stopped unexpectedly."
-    cleanup
-    break
+    if [ "$IS_DESKTOP_ONLY" -eq 1 ]; then
+      echo "ℹ️  Tauri Desktop Client (PID: $DESKTOP_PID) closed."
+      cleanup
+      break
+    else
+      echo "ℹ️  Tauri Desktop Client (PID: $DESKTOP_PID) closed. Keeping Web and API servers active."
+      START_DESKTOP=0
+      DESKTOP_PID=""
+    fi
   fi
   sleep 1 &
   wait $! 2>/dev/null || true

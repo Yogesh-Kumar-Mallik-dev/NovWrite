@@ -2,14 +2,17 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 6-phase test verification (`./test.sh`), strict single-change isolation.
-- **Architectural Baseline:** Version 2.10.7 (1-Click Environment Setup & Clean Teardown Utilities).
+- **Architectural Baseline:** Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision).
 - **Recent Accomplishments:**
-  - **1-Click Environment Setup Utilities (`envi.sh`, `envi.ps1`, `enci.ps1`)**:
-    - Created universal 6-phase bootstrap utility to verify toolchains, initialize `.env`, install node/go dependencies, launch PostgreSQL/Redis containers, generate Prisma clients, and compile bridge/data-service contracts.
-  - **1-Click Environment Teardown & Reset Utilities (`uenvi.sh`, `uenvi.ps1`, `uenci.sh`, `uenci.ps1`)**:
-    - Created clean teardown utility to terminate running dev server processes, stop Docker containers (with optional `-v` volume removal), and purge log/build artifacts (with optional `-All` deep clean).
-  - **Prisma 8 Fallback Connection Configuration (`apps/data-service/prisma.config.ts`)**:
-    - Embedded default development connection URL fallback for seamless client generation without manual environment exports.
+  - **Tauri 2 Cross-Platform Window Standards (`apps/desktop/src-tauri/tauri.conf.json`)**:
+    - Added explicit `"label": "main"` matching capability permissions in `capabilities/default.json`.
+    - Enabled native window decorations (`"decorations": true`) for seamless window controls across Windows, macOS, and Linux.
+    - Updated devUrl to `"http://127.0.0.1:5173"` to prevent IPv6 DNS delay issues.
+  - **Rust/Cargo Pre-Flight Detection (`dev.sh`, `dev.ps1`)**:
+    - Added automatic detection of Rust/Cargo toolchain; gracefully skips desktop launch with an informative notice if Rust is not installed.
+  - **Resilient Supervisor Lifecycle Management (`dev.sh`, `dev.ps1`)**:
+    - Closing the Tauri desktop window during development no longer tears down active Go API or SvelteKit Web servers unless run with `--desktop-only` / `-DesktopOnly`.
+    - Verified all PowerShell scripts remain 100% pure ASCII with 0 non-ASCII bytes.
   - **Codebase Health Verification & Formatting**:
     - Formatted repository using `pnpm format`.
     - Verified `./check.sh` passes with 0 errors and 0 warnings.

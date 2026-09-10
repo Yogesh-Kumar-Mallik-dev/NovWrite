@@ -5,13 +5,14 @@
   "identifier": "com.novwrite.studio",
   "build": {
     "beforeDevCommand": "pnpm --filter @novwrite/web dev",
-    "devUrl": "http://localhost:5173",
+    "devUrl": "http://127.0.0.1:5173",
     "beforeBuildCommand": "pnpm --filter @novwrite/web build",
     "frontendDist": "../web/build"
   },
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "NovWrite",
         "width": 1280,
         "height": 800,
@@ -19,7 +20,7 @@
         "minHeight": 500,
         "resizable": true,
         "fullscreen": false,
-        "decorations": false,
+        "decorations": true,
         "center": true
       }
     ],
