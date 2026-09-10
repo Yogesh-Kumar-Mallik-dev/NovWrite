@@ -4,6 +4,20 @@ Welcome to the **NovWrite** engineering codebase. This guide outlines workstatio
 
 ---
 
+> [!IMPORTANT]
+> **Dependency Installation & Update Workflow (First-Time Clone vs Repo Updates)**:
+>
+> - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
+>   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
+>   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\deps.ps1`
+> - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
+>   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
+>   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\deps.ps1 -Update`
+
+---
+
 ## 1. 5-Minute 1-Click Quickstart (Recommended & First Choice)
 
 Our 1-click scripts are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
@@ -37,18 +51,6 @@ cd NovWrite
 # 3. 1-Click Launch Development Stack
 .\dev.ps1
 ```
-
-> [!IMPORTANT]
-> **Dependency Installation & Update Workflow (First-Time Clone vs Repo Updates)**:
->
-> - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
->   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
->   - **Windows PowerShell**: `.\deps.ps1`
-> - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
->   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps.ps1 -Update`
 
 ---
 

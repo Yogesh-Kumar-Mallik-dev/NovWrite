@@ -1,9 +1,23 @@
-# NovWrite
+<div align="center">
+  <img src="./logo.png" alt="NovWrite Logo" width="120" height="120" />
+  <h1>NovWrite</h1>
+  <p><strong>A continuity-first novel creation platform with a user-defined story universe engine.</strong></p>
+  <p><em>You define the rules of your universe. NovWrite remembers them.</em></p>
+</div>
 
-> **A continuity-first novel creation platform with a user-defined story universe engine.**  
-> _You define the rules of your universe. NovWrite remembers them._
+---
 
-**Repository:** [https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite](https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite)
+> [!IMPORTANT]
+> **Dependency Installation & Update Workflow (First-Time Clone vs Repo Updates)**:
+>
+> - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
+>   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
+>   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\deps.ps1`
+> - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
+>   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
+>   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\deps.ps1 -Update`
 
 ---
 
@@ -38,18 +52,6 @@ cd NovWrite
 # 3. 1-Click Launch Full Dev Environment
 .\dev.ps1
 ```
-
-> [!IMPORTANT]
-> **Dependency Installation & Update Workflow (First-Time Clone vs Repo Updates)**:
->
-> - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
->   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
->   - **Windows PowerShell**: `.\deps.ps1`
-> - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
->   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps.ps1 -Update`
 
 ---
 
