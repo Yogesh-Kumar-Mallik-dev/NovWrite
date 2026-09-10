@@ -4,9 +4,11 @@
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), strict `<type>(<domain>): <expression>` commit message structure, 6-phase test verification (`./test.sh`), strict single-change isolation.
 - **Architectural Baseline:** Version 2.10.9 (1-Click Dependency Installation & Update Utilities).
 - **Recent Accomplishments & Enforcement Checkpoints:**
+  - **Onboarding & Dependency Installation Ergonomics (`docs/ONBOARDING.md`)**:
+    - Restructured Onboarding Guide so the 1-click bootstrap (`./envi.sh` / `.\envi.ps1`, `./deps.sh` / `.\deps.ps1`, `./dev.sh` / `.\dev.ps1`) and top-level lifecycle command matrix are the prominent, primary path.
+    - Demoted manual multi-step sequences into an optional "Under the Hood" reference section for debugging.
   - **Commit Structure Strict Enforcement**:
-    - Acknowledged format failure on commit `8b7f6ce` (omitted `(<domain>)` scope).
-    - Re-asserted zero-tolerance rule: Commit messages must strictly adhere to `<type>(<domain>): <expression>` (e.g., `docs(architecture): ...`, `feat(scripts): ...`, `fix(desktop): ...`) before pushing.
+    - Strict `<type>(<domain>): <expression>` commit format applied with GPG signature (`git commit -S`) and verified before remote push.
   - **1-Click Dependency Manager (`deps.sh`, `deps.ps1`)**:
     - Fast, non-blocking dependency manager executing toolchains, pnpm packages, Go modules, Prisma 8 client generation, and internal contract builds in under 5 seconds.
     - Added `--update` / `-Update` and `--clean` / `-Clean` flags, with optional `--rust` / `-Rust` Cargo verification.
@@ -19,4 +21,4 @@
     - Verified `./check.sh` passes with 0 errors and 0 warnings.
     - Verified `./test.sh` passes all 6 test phases cleanly with 0 errors and 0 warnings.
 - **Next Steps:**
-  - Strictly enforce `<type>(<domain>): <expression>` commit format with GPG signatures (`git commit -S`) on every single change without exception.
+  - Maintain strict single-change isolation and `<type>(<domain>): <expression>` signed commit discipline on all tasks.
