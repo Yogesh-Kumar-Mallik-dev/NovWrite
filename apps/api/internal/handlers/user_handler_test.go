@@ -78,8 +78,25 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 	store := NewInMemoryUserStore()
 	handler := NewUserHandler(store, "test-secret-key-32b")
 
+	targetUser := &User{
+		ID:            "test-user-1",
+		Email:         "author@test.internal",
+		Username:      "author_test",
+		Role:          httputil.RoleUser,
+		AccountStatus: "ACTIVE",
+	}
+	superUser := &User{
+		ID:            "test-super-1",
+		Email:         "super@test.internal",
+		Username:      "super_test",
+		Role:          httputil.RoleSuperAdmin,
+		AccountStatus: "ACTIVE",
+	}
+	_ = store.Create(targetUser)
+	_ = store.Create(superUser)
+
 	// 1. Non-superadmin cannot self-assign ADMIN role during registration
-	regAdminPayload := `{"email":"sneaky_admin@novwrite.dev","username":"sneaky","role":"ADMIN"}`
+	regAdminPayload := `{"email":"sneaky_admin@test.internal","username":"sneaky","role":"ADMIN"}`
 	reqRegAdmin := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString(regAdminPayload))
 	recRegAdmin := httptest.NewRecorder()
 
@@ -90,13 +107,13 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 
 	// 2. SuperAdmin can promote standard user to ADMIN
 	promotePayload := `{"role":"ADMIN","reason":"Promoted to community manager"}`
-	reqPromote := httptest.NewRequest(http.MethodPut, "/api/v1/admin/users/a1111111-1111-1111-1111-111111111111/role", bytes.NewBufferString(promotePayload))
+	reqPromote := httptest.NewRequest(http.MethodPut, "/api/v1/admin/users/test-user-1/role", bytes.NewBufferString(promotePayload))
 
 	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("userId", "a1111111-1111-1111-1111-111111111111")
+	rctx.URLParams.Add("userId", "test-user-1")
 	ctx := context.WithValue(reqPromote.Context(), chi.RouteCtxKey, rctx)
 	ctx = httputil.SetUserInContext(ctx, &httputil.UserClaims{
-		UserID: "a9999999-9999-9999-9999-999999999999",
+		UserID: "test-super-1",
 		Role:   httputil.RoleSuperAdmin,
 	})
 
@@ -108,7 +125,7 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 	}
 
 	// Verify updated user
-	updatedUser, err := store.GetByID("a1111111-1111-1111-1111-111111111111")
+	updatedUser, err := store.GetByID("test-user-1")
 	if err != nil || updatedUser.Role != httputil.RoleAdmin {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected user role ADMIN, got %s", updatedUser.Role)
 	}
@@ -118,8 +135,25 @@ func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
 	store := NewInMemoryUserStore()
 	handler := NewUserHandler(store, "test-secret-key-32b")
 
+	standardUser := &User{
+		ID:            "test-user-1",
+		Email:         "standard@test.internal",
+		Username:      "standard_test",
+		Role:          httputil.RoleUser,
+		AccountStatus: "ACTIVE",
+	}
+	superUser := &User{
+		ID:            "test-super-1",
+		Email:         "super@test.internal",
+		Username:      "super_test",
+		Role:          httputil.RoleSuperAdmin,
+		AccountStatus: "ACTIVE",
+	}
+	_ = store.Create(standardUser)
+	_ = store.Create(superUser)
+
 	// 1. Prohibit registering SUPER_ADMIN via HTTP API
-	regSuperPayload := `{"email":"imposter_super@novwrite.dev","username":"imposter","role":"SUPER_ADMIN"}`
+	regSuperPayload := `{"email":"imposter_super@test.internal","username":"imposter","role":"SUPER_ADMIN"}`
 	reqRegSuper := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString(regSuperPayload))
 	recRegSuper := httptest.NewRecorder()
 
@@ -131,7 +165,7 @@ func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
 	// 2. Direct store reject creating a second SUPER_ADMIN
 	errCreate := store.Create(&User{
 		ID:       "imposter-super-id",
-		Email:    "imposter2@novwrite.dev",
+		Email:    "imposter2@test.internal",
 		Username: "imposter2",
 		Role:     httputil.RoleSuperAdmin,
 	})
@@ -140,13 +174,13 @@ func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
 	}
 
 	// 3. Reject promoting another user to SUPER_ADMIN
-	errPromote := store.UpdateRole("a1111111-1111-1111-1111-111111111111", httputil.RoleSuperAdmin)
+	errPromote := store.UpdateRole("test-user-1", httputil.RoleSuperAdmin)
 	if errPromote == nil {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected error promoting second user to SUPER_ADMIN, got nil")
 	}
 
 	// 4. Reject deleting the designated Singleton Super Admin
-	errDelete := store.Delete("a9999999-9999-9999-9999-999999999999")
+	errDelete := store.Delete("test-super-1")
 	if errDelete == nil {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected error deleting singleton Super Admin, got nil")
 	}
@@ -156,10 +190,19 @@ func TestUserHandler_SuperAdminDashboard(t *testing.T) {
 	store := NewInMemoryUserStore()
 	handler := NewUserHandler(store, "test-secret-key-32b")
 
+	superUser := &User{
+		ID:            "test-super-1",
+		Email:         "super@test.internal",
+		Username:      "super_test",
+		Role:          httputil.RoleSuperAdmin,
+		AccountStatus: "ACTIVE",
+	}
+	_ = store.Create(superUser)
+
 	// 1. Super Admin access to dashboard -> 200 OK
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/superadmin/dashboard", nil)
 	ctx := httputil.SetUserInContext(req.Context(), &httputil.UserClaims{
-		UserID: "a9999999-9999-9999-9999-999999999999",
+		UserID: "test-super-1",
 		Role:   httputil.RoleSuperAdmin,
 	})
 	rec := httptest.NewRecorder()
@@ -253,8 +296,25 @@ func TestUserHandler_SuperAdminLogin(t *testing.T) {
 	store := NewInMemoryUserStore()
 	handler := NewUserHandler(store, "test-secret-key-32b")
 
+	standardUser := &User{
+		ID:            "test-user-1",
+		Email:         "author@test.internal",
+		Username:      "standard_author",
+		Role:          httputil.RoleUser,
+		AccountStatus: "ACTIVE",
+	}
+	superUser := &User{
+		ID:            "test-super-1",
+		Email:         "superadmin@test.internal",
+		Username:      "root_superadmin",
+		Role:          httputil.RoleSuperAdmin,
+		AccountStatus: "ACTIVE",
+	}
+	_ = store.Create(standardUser)
+	_ = store.Create(superUser)
+
 	// 1. Valid Super Admin username login
-	loginSuperPayload := `{"emailOrUsername":"novwrite_ops","password":"any_password"}`
+	loginSuperPayload := `{"emailOrUsername":"root_superadmin","password":"any_password"}`
 	reqValid := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginSuperPayload))
 	recValid := httptest.NewRecorder()
 
@@ -273,7 +333,7 @@ func TestUserHandler_SuperAdminLogin(t *testing.T) {
 	}
 
 	// 2. Valid Super Admin email login
-	loginEmailPayload := `{"emailOrUsername":"sysadmin@novwrite.dev","password":"any_password"}`
+	loginEmailPayload := `{"emailOrUsername":"superadmin@test.internal","password":"any_password"}`
 	reqEmail := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginEmailPayload))
 	recEmail := httptest.NewRecorder()
 
@@ -283,7 +343,7 @@ func TestUserHandler_SuperAdminLogin(t *testing.T) {
 	}
 
 	// 3. Standard USER attempting Super Admin login -> 403 Forbidden
-	loginUserPayload := `{"emailOrUsername":"lead_author@novwrite.dev","password":"any_password"}`
+	loginUserPayload := `{"emailOrUsername":"author@test.internal","password":"any_password"}`
 	reqUser := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginUserPayload))
 	recUser := httptest.NewRecorder()
 
@@ -293,7 +353,7 @@ func TestUserHandler_SuperAdminLogin(t *testing.T) {
 	}
 
 	// 4. Non-existent user -> 401 Unauthorized
-	loginNonExistent := `{"emailOrUsername":"ghost_user@novwrite.dev","password":"any_password"}`
+	loginNonExistent := `{"emailOrUsername":"ghost_user@test.internal","password":"any_password"}`
 	reqNonExistent := httptest.NewRequest(http.MethodPost, "/api/v1/superadmin/login", bytes.NewBufferString(loginNonExistent))
 	recNonExistent := httptest.NewRecorder()
 

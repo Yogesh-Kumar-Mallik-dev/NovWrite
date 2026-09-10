@@ -35,6 +35,13 @@ func main() {
 		handleToken(store, jwtSecret)
 	case "list-users":
 		handleListUsers(store)
+	case "bootstrap-superadmin", "init-superadmin":
+		if len(os.Args) < 4 {
+			fmt.Println("❌ Error: Missing email or username.")
+			fmt.Println("Usage: go run ./apps/api/cmd/admin-cli bootstrap-superadmin <email> <username>")
+			os.Exit(1)
+		}
+		handleBootstrapSuperAdmin(store, os.Args[2], os.Args[3])
 	case "promote":
 		if len(os.Args) < 3 {
 			fmt.Println("❌ Error: Missing user identifier (email or username).")
@@ -63,12 +70,13 @@ func printUsage() {
 	fmt.Println("  Exclusive backend control plane for the Singleton Super Admin")
 	fmt.Println("================================================================")
 	fmt.Println("Commands:")
-	fmt.Println("  status                     Inspect Singleton Super Admin & platform telemetry")
-	fmt.Println("  token                      Generate a root JWT token for the Super Admin Dashboard")
-	fmt.Println("  list-users                 List all registered users, admins, and roles")
-	fmt.Println("  promote <email/username>   Promote a standard USER to ADMIN")
-	fmt.Println("  demote <email/username>    Demote an ADMIN to standard USER")
-	fmt.Println("  help                       Display this help menu")
+	fmt.Println("  status                          Inspect Singleton Super Admin & platform telemetry")
+	fmt.Println("  token                           Generate a root JWT token for the Super Admin Dashboard")
+	fmt.Println("  list-users                      List all registered users, admins, and roles")
+	fmt.Println("  bootstrap-superadmin <email> <username>  Initialize root Singleton Super Admin")
+	fmt.Println("  promote <email/username>        Promote a standard USER to ADMIN")
+	fmt.Println("  demote <email/username>         Demote an ADMIN to standard USER")
+	fmt.Println("  help                            Display this help menu")
 	fmt.Println("================================================================")
 }
 
@@ -196,4 +204,33 @@ func handleDemote(store handlers.UserStore, identifier string) {
 	}
 
 	fmt.Printf("✅ Successfully demoted user '%s' (%s) to role 'USER'.\n", user.Username, user.Email)
+}
+
+func handleBootstrapSuperAdmin(store handlers.UserStore, email, username string) {
+	now := time.Now().UTC()
+	superAdmin := &handlers.User{
+		ID:              fmt.Sprintf("sa-%d", now.UnixNano()),
+		Email:           strings.TrimSpace(email),
+		Username:        strings.TrimSpace(username),
+		Role:            httputil.RoleSuperAdmin,
+		IsPlatformAdmin: true,
+		MFAEnabled:      true,
+		AccountStatus:   "ACTIVE",
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
+	if err := store.Create(superAdmin); err != nil {
+		fmt.Printf("❌ Failed to initialize Singleton Super Admin: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("================================================================")
+	fmt.Println("  👑 SINGLETON SUPER ADMIN INITIALIZED SUCCESSFULLY")
+	fmt.Println("================================================================")
+	fmt.Printf("  • ID:       %s\n", superAdmin.ID)
+	fmt.Printf("  • Email:    %s\n", superAdmin.Email)
+	fmt.Printf("  • Username: %s\n", superAdmin.Username)
+	fmt.Printf("  • Role:     %s\n", superAdmin.Role)
+	fmt.Println("================================================================")
 }

@@ -141,11 +141,36 @@ timeline
                : Redis Cache Manager with 60s Distributed Scene Leases & Active Project Context Caching
                : Mobile Screen Decomposition (10 Modular World & Prose Subcomponents)
                : REST Scene Lease Collaboration Endpoints & Lease Conflict Guards
+    2026-09-11 : Version 2.12.1 (Hardcoded .dev Seed Purge & Clean Slate Initialization)
+               : Complete Elimination of Pre-Seeded .dev User & Project Mock Accounts
+               : Removal of Legacy devSeeder.ts Engine from @novwrite/data-service
+               : Backend Super Admin CLI Bootstrap Command (bootstrap-superadmin)
+               : Zero-State Form Defaults and Unpolluted Runtime State Stores
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.12.1] — 2026-09-11
+
+**Scope:** Elimination of Hardcoded .dev Seed Data, Clean Slate Stores & Super Admin Bootstrap CLI  
+**Target Documents:** [`apps/api/internal/handlers/user_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/user_handler.go), [`apps/api/internal/handlers/user_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/user_handler_test.go), [`apps/api/cmd/admin-cli/main.go`](file:///home/yogesh/Projects/NovWrite/apps/api/cmd/admin-cli/main.go), [`apps/data-service/src/index.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/src/index.ts), [`apps/web/src/routes/superadmin/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/superadmin/+page.svelte), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added & Refactored
+
+- **Complete Removal of Hardcoded Seed Data & Clean Slate Initialization:**
+  - **Go Backend User Store (`apps/api/internal/handlers/user_handler.go`):** Updated `NewInMemoryUserStore()` to initialize with an empty users map (`users: make(map[string]*User)`), removing pre-seeded `lead_author@novwrite.dev`, `co_author@novwrite.dev`, `admin@novwrite.dev`, and `sysadmin@novwrite.dev` accounts.
+  - **Dynamic Test Fixture Setup (`apps/api/internal/handlers/user_handler_test.go`):** Refactored all user handler test suites to dynamically provision isolated in-memory test fixtures instead of relying on legacy pre-seeded accounts.
+  - **Purge of Legacy Data Seeder (`apps/data-service`):** Deleted `apps/data-service/src/seed/devSeeder.ts` and `apps/data-service/src/__tests__/seeder.test.ts`, and cleanly removed its export from `apps/data-service/src/index.ts`.
+  - **Super Admin Frontend Clean-Up (`apps/web/src/routes/superadmin/+page.svelte`):** Initialized login state variables with clean empty strings, removed hardcoded mock user metrics from fallback dashboard states, and sanitized input placeholders.
+- **Backend Super Admin Server CLI Bootstrap (`apps/api/cmd/admin-cli`):**
+  - Added `bootstrap-superadmin <email> <username>` command allowing host operators to provision the initial Singleton Super Admin on a clean system dynamically from the server terminal.
+  - Updated `docs/recommended_commands.md` and CLI usage documentation with copy-pasteable bootstrap instructions.
+- **Verification & Parity:**
+  - 100% test pass rate across all 6 verification phases (80+ unit and component tests, 0 errors, 0 warnings, zero data races).
+
+---
 
 ### [Version 2.12] — 2026-09-11
 

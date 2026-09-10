@@ -87,67 +87,11 @@ type InMemoryUserStore struct {
 	users map[string]*User
 }
 
-// NewInMemoryUserStore initializes and seeds the user store with standard, admin, and exactly ONE super admin.
+// NewInMemoryUserStore initializes an empty thread-safe user store with clean slate state.
 func NewInMemoryUserStore() *InMemoryUserStore {
-	store := &InMemoryUserStore{
+	return &InMemoryUserStore{
 		users: make(map[string]*User),
 	}
-
-	now := time.Now().UTC()
-
-	// 1. Standard Author User
-	store.users["a1111111-1111-1111-1111-111111111111"] = &User{
-		ID:              "a1111111-1111-1111-1111-111111111111",
-		Email:           "lead_author@novwrite.dev",
-		Username:        "eldrin_creator",
-		Role:            httputil.RoleUser,
-		IsPlatformAdmin: false,
-		MFAEnabled:      false,
-		AccountStatus:   "ACTIVE",
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-
-	// 2. Co-Author User
-	store.users["a2222222-2222-2222-2222-222222222222"] = &User{
-		ID:              "a2222222-2222-2222-2222-222222222222",
-		Email:           "co_author@novwrite.dev",
-		Username:        "lyra_scribe",
-		Role:            httputil.RoleUser,
-		IsPlatformAdmin: false,
-		MFAEnabled:      false,
-		AccountStatus:   "ACTIVE",
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-
-	// 3. Platform Admin
-	store.users["a8888888-8888-8888-8888-888888888888"] = &User{
-		ID:              "a8888888-8888-8888-8888-888888888888",
-		Email:           "admin@novwrite.dev",
-		Username:        "novwrite_admin",
-		Role:            httputil.RoleAdmin,
-		IsPlatformAdmin: true,
-		MFAEnabled:      true,
-		AccountStatus:   "ACTIVE",
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-
-	// 4. Singleton Super Admin (The ONLY super admin permitted in the entire platform)
-	store.users["a9999999-9999-9999-9999-999999999999"] = &User{
-		ID:              "a9999999-9999-9999-9999-999999999999",
-		Email:           "sysadmin@novwrite.dev",
-		Username:        "novwrite_ops",
-		Role:            httputil.RoleSuperAdmin,
-		IsPlatformAdmin: true,
-		MFAEnabled:      true,
-		AccountStatus:   "ACTIVE",
-		CreatedAt:       now,
-		UpdatedAt:       now,
-	}
-
-	return store
 }
 
 func (s *InMemoryUserStore) GetByID(id string) (*User, error) {
@@ -240,7 +184,7 @@ func (s *InMemoryUserStore) GetDashboardMetrics() (*SuperAdminDashboardResponse,
 			RateLimitRPM:        300,
 			PayloadLimitBytes:   10 << 20,
 			SingletonSuperAdmin: superAdminCount == 1,
-			AdminAuditLogsCount: 4,
+			AdminAuditLogsCount: 0,
 		},
 	}
 

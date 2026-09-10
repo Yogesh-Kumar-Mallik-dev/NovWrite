@@ -75,7 +75,7 @@
   let tokenCopied = $state(false);
 
   // Login form state
-  let emailOrUsername = $state("novwrite_ops");
+  let emailOrUsername = $state("");
   let password = $state("");
   let manualToken = $state("");
   let showManualTokenInput = $state(false);
@@ -90,29 +90,20 @@
       systemPlatform: "linux",
     },
     userMetrics: {
-      totalUsers: 4,
-      standardUsers: 2,
-      adminUsers: 1,
-      superAdminUsers: 1,
-      activeUsers: 4,
+      totalUsers: 0,
+      standardUsers: 0,
+      adminUsers: 0,
+      superAdminUsers: 0,
+      activeUsers: 0,
       suspendedUsers: 0,
     },
-    singletonSuperAdmin: {
-      id: "a9999999-9999-9999-9999-999999999999",
-      email: "sysadmin@novwrite.dev",
-      username: "novwrite_ops",
-      role: "SUPER_ADMIN",
-      isPlatformAdmin: true,
-      mfaEnabled: true,
-      accountStatus: "ACTIVE",
-      createdAt: new Date().toISOString(),
-    },
+    singletonSuperAdmin: null,
     securityStatus: {
       rateLimiterActive: true,
       rateLimitRpm: 300,
       payloadLimitBytes: 10485760,
-      singletonSuperAdmin: true,
-      adminAuditLogsCount: 4,
+      singletonSuperAdmin: false,
+      adminAuditLogsCount: 0,
     },
   };
 
@@ -162,13 +153,7 @@
         }
       }
     } catch {
-      // Local development mock fallback authentication for testing
-      if (emailOrUsername.trim() === "novwrite_ops" || emailOrUsername.trim() === "sysadmin@novwrite.dev") {
-        isAuthenticated = true;
-        dashboard = fallbackDashboard;
-      } else {
-        authError = "Could not connect to API server. Ensure backend is running.";
-      }
+      authError = "Could not connect to API server. Ensure backend is running.";
     } finally {
       isAuthenticating = false;
     }
@@ -181,8 +166,6 @@
       const headers: Record<string, string> = {};
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
-      } else {
-        headers["X-User-ID"] = "a9999999-9999-9999-9999-999999999999";
       }
 
       const res = await fetch("http://localhost:8080/api/v1/superadmin/dashboard", { headers });
@@ -319,7 +302,7 @@
                   id="sa-username"
                   type="text"
                   bind:value={emailOrUsername}
-                  placeholder="sysadmin@novwrite.dev or novwrite_ops"
+                  placeholder="Enter Super Admin username or email"
                   required
                   class="w-full h-10 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 />

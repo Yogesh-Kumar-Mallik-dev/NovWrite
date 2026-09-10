@@ -167,6 +167,9 @@ The Singleton Super Admin is managed exclusively on the backend server host via 
 # 👑 Inspect Singleton Super Admin status, user counts, and platform telemetry
 cd apps/api && go run ./cmd/admin-cli status
 
+# 👑 Initialize root Singleton Super Admin (Clean Slate Bootstrap)
+cd apps/api && go run ./cmd/admin-cli bootstrap-superadmin sysadmin@novwrite.dev novwrite_ops
+
 # 🔑 Generate root authentication token for the Super Admin Dashboard (/superadmin)
 cd apps/api && go run ./cmd/admin-cli token
 
