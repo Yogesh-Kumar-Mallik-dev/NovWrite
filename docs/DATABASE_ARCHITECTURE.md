@@ -489,9 +489,9 @@ In accordance with **Prisma 8** specifications, the database connection URL is c
 ### 6.1. Dedicated Configuration Document (`apps/data-service/prisma.config.ts`)
 
 ```typescript
-import { definePrismaConfig } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
-export default definePrismaConfig({
+export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
     url:

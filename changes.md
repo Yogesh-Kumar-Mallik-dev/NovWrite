@@ -119,7 +119,7 @@ timeline
 
 - **Prisma 8 Decoupled Datasource Configuration (`apps/data-service`):**
   - Updated [`apps/data-service/prisma/schema.prisma`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma/schema.prisma) removing the legacy embedded `url` attribute from the `datasource db` block to maintain a pure entity data contract.
-  - Created the dedicated Prisma configuration document [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts) leveraging `definePrismaConfig` from `prisma/config` with runtime environment fallbacks.
+  - Created the dedicated Prisma configuration document [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts) leveraging `defineConfig` from `prisma/config` with runtime environment fallbacks.
   - Documented Decision 24 in [`docs/design_decisions.md`](file:///home/yogesh/Projects/NovWrite/docs/design_decisions.md) and Section 6 in [`docs/DATABASE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/DATABASE_ARCHITECTURE.md).
 
 ---

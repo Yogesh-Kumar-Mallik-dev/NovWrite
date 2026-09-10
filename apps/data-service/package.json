@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@novwrite/bridge": "workspace:*",
-    "@prisma/client": "^7.10.0"
+    "@prisma/client": "8.1.0-dev.6"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
-    "prisma": "8.0.0-rc.13",
+    "prisma": "8.1.0-dev.6",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }
