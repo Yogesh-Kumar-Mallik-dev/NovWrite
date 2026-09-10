@@ -4,20 +4,18 @@
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), strict `<type>(<domain>): <expression>` commit message structure, 6-phase test verification (`./test.sh`), strict single-change isolation.
 - **Architectural Baseline:** Version 2.10.9 (1-Click Dependency Installation & Update Utilities).
 - **Recent Accomplishments & Enforcement Checkpoints:**
-  - **Onboarding & Dependency Installation Ergonomics (`docs/ONBOARDING.md`)**:
-    - Restructured Onboarding Guide so the 1-click bootstrap (`./envi.sh` / `.\envi.ps1`, `./deps.sh` / `.\deps.ps1`, `./dev.sh` / `.\dev.ps1`) and top-level lifecycle command matrix are the prominent, primary path.
-    - Demoted manual multi-step sequences into an optional "Under the Hood" reference section for debugging.
+  - **1-Click Scripts as Obvious First Choice (`README.md`, `docs/ONBOARDING.md`)**:
+    - Placed 1-click bootstrap (`./envi.sh` / `.\envi.ps1`, `./deps.sh` / `.\deps.ps1`, `./dev.sh` / `.\dev.ps1`) as the prominent, obvious, and recommended first choice in both `README.md` and `docs/ONBOARDING.md`.
+    - Placed manual step-by-step setup below 1-click scripts with explicit notes that manual setup is an alternative for debugging / CI and not the ideal way.
   - **Commit Structure Strict Enforcement**:
     - Strict `<type>(<domain>): <expression>` commit format applied with GPG signature (`git commit -S`) and verified before remote push.
   - **1-Click Dependency Manager (`deps.sh`, `deps.ps1`)**:
     - Fast, non-blocking dependency manager executing toolchains, pnpm packages, Go modules, Prisma 8 client generation, and internal contract builds in under 5 seconds.
     - Added `--update` / `-Update` and `--clean` / `-Clean` flags, with optional `--rust` / `-Rust` Cargo verification.
-    - Injected automatic `DATABASE_URL` fallback ensuring Prisma client generation succeeds in fresh shells.
   - **OS & Desktop Environment Harmony Engine (`apps/desktop/src-tauri/src/lib.rs`)**:
-    - Automatic runtime environment detection: Omarchy Linux & tiling compositors (Hyprland, Sway, i3, bspwm, River) run with frameless `set_decorations(false)` without titlebar or min/max/close buttons.
-    - Windows & macOS & floating Linux DEs (GNOME, KDE Plasma, XFCE) automatically preserve native decorations and window controls.
+    - Automatic runtime environment detection: Omarchy Linux & tiling compositors run frameless `set_decorations(false)`.
+    - Windows, macOS & floating Linux DEs automatically preserve native decorations and window controls.
   - **Documentation & Test Parity**:
-    - All docs synchronized (`README.md`, `CONTRIBUTING.md`, `docs/ARCHITECTURE.md`, `docs/BACKEND_ARCHITECTURE.md`, `docs/FRONTEND_ARCHITECTURE.md`, `docs/ONBOARDING.md`, `docs/design_decisions.md`).
     - Verified `./check.sh` passes with 0 errors and 0 warnings.
     - Verified `./test.sh` passes all 6 test phases cleanly with 0 errors and 0 warnings.
 - **Next Steps:**

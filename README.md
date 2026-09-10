@@ -14,18 +14,23 @@
 NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**, and **Protocol Buffers (`protoc`)**.
 
 - **Linux (Ubuntu / Debian):**
+
   ```bash
   sudo apt-get update && sudo apt-get install -y curl wget git build-essential make protobuf-compiler
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs
   corepack enable && corepack prepare pnpm@latest --activate
   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
   ```
+
 - **macOS (Homebrew):**
+
   ```bash
   brew install go node@22 pnpm protobuf bufbuild/buf/buf protoc-gen-go protoc-gen-go-grpc git make
   brew install --cask docker
   ```
+
 - **Windows (Winget in PowerShell as Admin):**
+
   ```powershell
   winget install --id Git.Git -e; winget install --id GoLang.Go -e; winget install --id OpenJS.NodeJS.LTS -e; winget install --id pnpm.pnpm -e; winget install --id Google.Protobuf -e; winget install --id BufBuild.Buf -e; winget install --id Docker.DockerDesktop -e
   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
@@ -33,7 +38,9 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 
 > 📖 For full setup guides (including Fedora, Arch Linux, WSL2, and direct downloads), see the **[Developer Onboarding Guide](docs/ONBOARDING.md)**.
 
-### 1.2. 1-Click Monorepo Launch
+### 1.2. 1-Click Monorepo Launch (Recommended & First Choice)
+
+Our 1-click scripts are the **official, fastest, and recommended** way to set up and run NovWrite:
 
 #### Linux / macOS / Windows (Git Bash / WSL)
 
@@ -42,25 +49,59 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# 2. 1-Click Workspace Environment Setup (Dependencies, .env, DB, Redis, Prisma, Builds)
+# 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
 ./envi.sh
 
-# 3. Launch 1-Click Full Dev Environment (Postgres, Redis, API, Web, Mobile, Desktop)
+# 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
 ./dev.sh
 ```
 
-#### Windows (PowerShell / Windows Terminal)
+> [!TIP]
+> To quickly install or update dependencies in under 5 seconds without restarting containers, run `./deps.sh` (or `pnpm deps`).
+
+#### Windows (PowerShell as Administrator / Windows Terminal)
 
 ```powershell
 # 1. Clone repository
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# 2. 1-Click Workspace Environment Setup
+# 2. 1-Click Environment Setup
 .\envi.ps1
 
-# 3. Launch 1-Click Full Dev Environment
+# 3. 1-Click Launch Full Dev Environment
 .\dev.ps1
+```
+
+> [!TIP]
+> On Windows PowerShell, run `.\deps.ps1` for fast 1-click dependency resolution.
+
+### 1.3. Manual Step-by-Step Installation (Alternative / Not Recommended)
+
+> [!NOTE]
+> The 1-click scripts above are the preferred and supported way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
+
+```bash
+# 1. Clone & prepare environment
+git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
+cd NovWrite
+cp .env.example .env
+
+# 2. Install workspace dependencies & Go modules
+pnpm install
+cd apps/api && go mod download && cd ../..
+
+# 3. Start local PostgreSQL & Redis
+docker compose up -d postgres redis
+
+# 4. Initialize database schema & generate clients
+pnpm --filter @novwrite/data-service db:push
+pnpm --filter @novwrite/data-service db:generate
+pnpm --filter @novwrite/bridge build
+
+# 5. Start development servers
+# Terminal 1: cd apps/api && go run ./cmd/server
+# Terminal 2: pnpm --filter @novwrite/web dev
 ```
 
 ---

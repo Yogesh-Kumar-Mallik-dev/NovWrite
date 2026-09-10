@@ -231,9 +231,9 @@ echo "========================================"
 
 ---
 
-## 4. 1-Click Workspace Bootstrap & Quickstart
+## 4. 1-Click Workspace Bootstrap & Quickstart (Recommended & First Choice)
 
-Once your system toolchains are verified, initialize your complete NovWrite development workspace with a single command:
+Our 1-click scripts are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace with a single command:
 
 ### 4.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -341,9 +341,10 @@ NovWrite provides dedicated, cross-platform 1-click lifecycle scripts eliminatin
 
 ---
 
-## 6. Under the Hood: Manual Step-by-Step Reference
+## 6. Manual Step-by-Step Installation (Alternative / Not Recommended)
 
-For advanced developers debugging specific services or CI/CD pipelines, the 1-click scripts automate the following underlying steps:
+> [!NOTE]
+> The 1-click scripts above are the official and recommended way to initialize and manage NovWrite. Manual step-by-step setup is provided below as an alternative for debugging individual components, custom container topologies, or specialized CI/CD pipelines:
 
 ### 6.1. Environment Configuration
 
