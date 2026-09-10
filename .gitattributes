@@ -1,0 +1,13 @@
+# Auto-detect text files and perform LF normalization
+* text=auto eol=lf
+
+# GitHub Linguist Overrides: Classify Svelte 5 Runes reactive modules as Svelte
+*.svelte.ts linguist-language=Svelte
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.webp binary
+*.docx binary
