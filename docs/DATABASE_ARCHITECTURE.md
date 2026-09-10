@@ -489,14 +489,12 @@ In accordance with **Prisma 8** specifications, the database connection URL is c
 ### 6.1. Dedicated Configuration Document (`apps/data-service/prisma.config.ts`)
 
 ```typescript
-import { defineConfig } from "prisma/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url:
-      process.env.DATABASE_URL ||
-      "postgresql://novwrite:novwrite_dev@localhost:5433/novwrite_db?sslmode=disable",
+    url: env("DATABASE_URL"),
   },
 });
 ```
