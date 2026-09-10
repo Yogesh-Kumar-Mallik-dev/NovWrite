@@ -71,6 +71,12 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 # 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
 ./test.sh            # or: run repo test
 
+# ⚙️ 1-Click Environment Setup (installs dependencies, prepares .env, starts DB/Redis, runs Prisma & builds)
+./envi.sh            # or: pnpm envi
+
+# 🛑 1-Click Environment Teardown & Reset (terminates dev servers, shuts down Docker, purges logs & build dist)
+./uenvi.sh           # or: pnpm uenvi (add -v for volume wipe, -a for deep clean)
+
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
 ./flush_db.sh        # or: run repo flush
 ```
@@ -98,6 +104,12 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 
 # 🧪 1-Click 6-Phase Test Runner
 .\test.ps1
+
+# ⚙️ 1-Click Environment Setup
+.\envi.ps1
+
+# 🛑 1-Click Environment Teardown & Reset
+.\uenvi.ps1
 
 # 🧹 Complete Database & Cache Reset
 .\flush_db.ps1

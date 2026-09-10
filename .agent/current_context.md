@@ -2,14 +2,14 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 6-phase test verification (`./test.sh`), strict single-change isolation.
-- **Architectural Baseline:** Version 2.10.6 (Windows Process Redirection, QR Script Stdio & Monotonic ID Hardening).
+- **Architectural Baseline:** Version 2.10.7 (1-Click Environment Setup & Clean Teardown Utilities).
 - **Recent Accomplishments:**
-  - **Windows PowerShell 5.1 & Process Redirection Fixes (`dev.ps1`, `scripts/show-mobile-qr.mjs`, `flush_db.ps1`)**:
-    - Resolved `Start-Process` exception in `dev.ps1` by separating stdout/stderr paths (`expo.log`/`expo-error.log`, `desktop.log`/`desktop-error.log`).
-    - Replaced `2>/dev/null` shell redirections in `show-mobile-qr.mjs` with pure Node.js stdio options, eliminating Windows `cmd.exe` path errors.
-    - Added error exit code checking in `flush_db.ps1` when PostgreSQL service is offline.
-  - **Go Backend High-Frequency Monotonic ID Uniqueness (`apps/api`)**:
-    - Integrated atomic sequence counters in `GenerateEditID`, `GenerateRevisionID`, and entity/blueprint/timeline stores, guaranteeing 100% unique IDs across fast test loops on Windows with 15ms clock resolution.
+  - **1-Click Environment Setup Utilities (`envi.sh`, `envi.ps1`, `enci.ps1`)**:
+    - Created universal 6-phase bootstrap utility to verify toolchains, initialize `.env`, install node/go dependencies, launch PostgreSQL/Redis containers, generate Prisma clients, and compile bridge/data-service contracts.
+  - **1-Click Environment Teardown & Reset Utilities (`uenvi.sh`, `uenvi.ps1`, `uenci.sh`, `uenci.ps1`)**:
+    - Created clean teardown utility to terminate running dev server processes, stop Docker containers (with optional `-v` volume removal), and purge log/build artifacts (with optional `-All` deep clean).
+  - **Prisma 8 Fallback Connection Configuration (`apps/data-service/prisma.config.ts`)**:
+    - Embedded default development connection URL fallback for seamless client generation without manual environment exports.
   - **Codebase Health Verification & Formatting**:
     - Formatted repository using `pnpm format`.
     - Verified `./check.sh` passes with 0 errors and 0 warnings.

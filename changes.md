@@ -117,11 +117,33 @@ timeline
                : Separate Out/Err Logs in Start-Process to Fix Windows PowerShell Restriction
                : Pure Node.js Stdio in show-mobile-qr.mjs Eliminating Path Not Found Errors
                : Atomic Monotonic Sequence Counters in Go Backend ID Generators
+    2026-09-10 : Version 2.10.7 (1-Click Environment Setup & Clean Teardown Utilities)
+               : envi.sh / envi.ps1 1-Click Dependency, Env, Docker, Prisma & Build Provisioning
+               : uenvi.sh / uenvi.ps1 1-Click Server Termination, Container Shutdown & Artifact Purge
+               : Fallback DATABASE_URL in prisma.config.ts for Zero-Configuration Setup
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.7] — 2026-09-10
+
+**Scope:** 1-Click Environment Setup (`envi.sh`, `envi.ps1`) & Clean Teardown Utilities (`uenvi.sh`, `uenvi.ps1`)  
+**Target Documents:** [`envi.sh`](file:///home/yogesh/Projects/NovWrite/envi.sh), [`envi.ps1`](file:///home/yogesh/Projects/NovWrite/envi.ps1), [`uenvi.sh`](file:///home/yogesh/Projects/NovWrite/uenvi.sh), [`uenvi.ps1`](file:///home/yogesh/Projects/NovWrite/uenvi.ps1), [`enci.ps1`](file:///home/yogesh/Projects/NovWrite/enci.ps1), [`uenci.sh`](file:///home/yogesh/Projects/NovWrite/uenci.sh), [`uenci.ps1`](file:///home/yogesh/Projects/NovWrite/uenci.ps1), [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **1-Click Environment Setup (`envi.sh` / `envi.ps1`):**
+  - Automates 6-phase environment bootstrap: pre-flight toolchain check (`node`, `pnpm`, `go`, `git`), `.env` creation, monorepo dependency installation (`pnpm install`, `go mod download`), Docker infrastructure boot (`postgres`, `redis`), Prisma client generation & database schema push, and contract builds.
+- **1-Click Environment Teardown & Reset (`uenvi.sh` / `uenvi.ps1`):**
+  - Automates server process termination (ports 8080, 5173, 8081), Docker container shutdown (`docker compose down`, with `-v` volume removal option), and artifact purge (`logs/`, `bin/`, `apps/api/bin/`, `.svelte-kit/`, `dist/`, and optional `-All` `node_modules` cleanup).
+- **Fallback Database Connection URL (`prisma.config.ts`):**
+  - Added sensible default fallback connection string in Prisma 8 configuration document, ensuring `prisma generate` and builds run seamlessly without manual environment variable exports.
+- **Pure ASCII & PowerShell 5.1 Parity:**
+  - Guaranteed 100% pure ASCII for all `.ps1` scripts with zero Unicode encoding errors.
+
+---
 
 ### [Version 2.10.6] — 2026-09-10
 

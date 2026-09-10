@@ -316,9 +316,17 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 # (Runs svelte-check and tsc across all workspace packages with 0 warnings/errors tolerance)
 ./check.sh
 
-# 🧪 1-Click 5-Phase Monorepo Test Runner
-# (Executes bridge tests -> data-service tests -> Go backend tests -> web tests -> typecheck)
+# 🧪 1-Click 6-Phase Monorepo Test Runner
+# (Executes bridge tests -> data-service tests -> Go backend tests -> web tests -> mobile tests -> typecheck)
 ./test.sh
+
+# ⚙️ 1-Click Environment Setup Utility
+# (Installs dependencies, creates .env, boots Docker infra, generates Prisma & compiles contracts)
+./envi.sh
+
+# 🛑 1-Click Environment Teardown & Reset
+# (Stops running dev servers, shuts down Docker containers, purges logs & build outputs)
+./uenvi.sh
 
 # 🧹 Clean Slate Database & Redis Reset Utility
 # (Flushes Redis 7.2 keys via FLUSHALL and resets PostgreSQL tables to 0 records)
@@ -337,8 +345,14 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 # 🔍 1-Click Monorepo Typecheck & Diagnostics
 .\check.ps1
 
-# 🧪 1-Click 5-Phase Monorepo Test Runner
+# 🧪 1-Click 6-Phase Monorepo Test Runner
 .\test.ps1
+
+# ⚙️ 1-Click Environment Setup Utility
+.\envi.ps1
+
+# 🛑 1-Click Environment Teardown & Reset
+.\uenvi.ps1
 
 # 🧹 Clean Slate Database & Redis Reset Utility
 .\flush_db.ps1

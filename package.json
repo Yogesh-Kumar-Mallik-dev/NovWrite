@@ -23,6 +23,8 @@
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "envi": "./envi.sh",
+    "uenvi": "./uenvi.sh",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   },

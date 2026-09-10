@@ -42,11 +42,10 @@ NovWrite requires **Go 1.23+**, **Node.js 22 LTS & pnpm**, **Docker & Compose**,
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# 2. Install workspace dependencies & setup environment
-pnpm install
-cp .env.example .env
+# 2. 1-Click Workspace Environment Setup (Dependencies, .env, DB, Redis, Prisma, Builds)
+./envi.sh
 
-# 3. Launch 1-Click Full Dev Environment (Postgres, Redis, API, Data Service, Web)
+# 3. Launch 1-Click Full Dev Environment (Postgres, Redis, API, Web, Mobile, Desktop)
 ./dev.sh
 ```
 
@@ -57,9 +56,8 @@ cp .env.example .env
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# 2. Install workspace dependencies & setup environment
-pnpm install
-Copy-Item .env.example .env
+# 2. 1-Click Workspace Environment Setup
+.\envi.ps1
 
 # 3. Launch 1-Click Full Dev Environment
 .\dev.ps1
