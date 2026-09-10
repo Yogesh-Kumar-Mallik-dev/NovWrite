@@ -127,11 +127,32 @@ timeline
                : Native Window Controls for Windows, macOS & Floating Linux DEs
                : Rust/Cargo Pre-Flight Detection in dev.sh and dev.ps1
                : Resilient Supervisor Loop Preventing Session Teardown on Desktop Window Close
+    2026-09-10 : Version 2.10.9 (1-Click Dependency Installation & Update Utilities)
+               : deps.sh / deps.ps1 for Fast Monorepo Dependency Management (pnpm, Go, Prisma 8, Contracts)
+               : Non-Blocking Default Execution (<5s) with Optional -Rust Flag for Cargo Crates
+               : Automatic DATABASE_URL Fallback for Isolated Prisma Client Generation
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.9] — 2026-09-10
+
+**Scope:** 1-Click Dependency Installation & Update Utilities (`deps.sh`, `deps.ps1`)  
+**Target Documents:** [`deps.sh`](file:///home/yogesh/Projects/NovWrite/deps.sh), [`deps.ps1`](file:///home/yogesh/Projects/NovWrite/deps.ps1), [`package.json`](file:///home/yogesh/Projects/NovWrite/package.json), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **1-Click Fast Dependency Manager (`deps.sh` / `deps.ps1`):**
+  - Automates 4 core dependency phases: toolchain validation (`node`, `pnpm`, `go`, `git`), Node.js / pnpm workspace package installation, Go API module downloads (`go mod download && go mod tidy`), Prisma 8 client generation, and internal TypeScript contract compilation (`@novwrite/bridge` and `@novwrite/data-service`).
+  - Supports `--update` / `-u` / `-Update` flag to upgrade packages and modules to latest allowed semver versions.
+  - Supports `--clean` / `-c` / `-Clean` flag to prune store caches before installing.
+  - Supports `--rust` / `-r` / `-Rust` flag to optionally verify or update Tauri Cargo desktop crates without blocking standard quick installations.
+  - Embedded default `DATABASE_URL` fallback ensuring Prisma 8 client generation succeeds in fresh terminal environments.
+  - Added `"deps"` script shortcut to [`package.json`](file:///home/yogesh/Projects/NovWrite/package.json).
+
+---
 
 ### [Version 2.10.8] — 2026-09-10
 

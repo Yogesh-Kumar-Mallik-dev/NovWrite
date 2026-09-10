@@ -71,6 +71,9 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 # 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
 ./test.sh            # or: run repo test
 
+# 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma client, internal builds)
+./deps.sh            # or: pnpm deps (add --update to update packages, --clean for fresh cache)
+
 # ⚙️ 1-Click Environment Setup (installs dependencies, prepares .env, starts DB/Redis, runs Prisma & builds)
 ./envi.sh            # or: pnpm envi
 
@@ -91,10 +94,10 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 .\dev.ps1 -All
 
 # 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
-.\dev.ps1 -Mobile
+.\dev.ps1 -MobileOnly
 
 # 🖥️ Launch API + Web + Tauri Desktop Client
-.\dev.ps1 -Desktop
+.\dev.ps1 -DesktopOnly
 
 # 🏗️ 1-Click Monorepo Build
 .\build.ps1
@@ -104,6 +107,9 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 
 # 🧪 1-Click 6-Phase Test Runner
 .\test.ps1
+
+# 📦 1-Click Dependency Installation & Update
+.\deps.ps1
 
 # ⚙️ 1-Click Environment Setup
 .\envi.ps1

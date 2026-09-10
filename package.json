@@ -25,6 +25,7 @@
     "format:check": "prettier --check .",
     "envi": "./envi.sh",
     "uenvi": "./uenvi.sh",
+    "deps": "./deps.sh",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   },
