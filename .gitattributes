@@ -4,6 +4,20 @@
 # GitHub Linguist Overrides: Classify Svelte 5 Runes reactive modules as Svelte
 *.svelte.ts linguist-language=Svelte
 
+# Exclude all test suites, test runners, mocks, and test engines from language statistics
+**/__tests__/** linguist-documentation=true
+*.test.ts linguist-documentation=true
+*.test.js linguist-documentation=true
+*.test.d.ts linguist-documentation=true
+*_test.go linguist-documentation=true
+apps/data-service/src/seed/** linguist-documentation=true
+packages/bridge/src/mock.ts linguist-documentation=true
+
+# Exclude documentation and architectural specifications from language statistics
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+*.docx linguist-documentation=true
+
 # Binary assets
 *.png binary
 *.jpg binary
