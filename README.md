@@ -25,9 +25,6 @@ cd NovWrite
 ./dev.sh
 ```
 
-> [!TIP]
-> To quickly install or update dependencies in under 5 seconds without restarting containers, run `./deps.sh` (or `pnpm deps`).
-
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
 
 ```powershell
@@ -42,8 +39,17 @@ cd NovWrite
 .\dev.ps1
 ```
 
-> [!TIP]
-> On Windows PowerShell, run `.\deps.ps1` for fast 1-click dependency resolution.
+> [!IMPORTANT]
+> **Dependency Installation & Update Workflow (First-Time Clone vs Repo Updates)**:
+>
+> - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
+>   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
+>   - **Linux / macOS / WSL**: `./deps.sh` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\deps.ps1`
+> - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
+>   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
+>   - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\deps.ps1 -Update`
 
 ---
 

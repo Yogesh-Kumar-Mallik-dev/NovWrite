@@ -71,8 +71,11 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 # 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
 ./test.sh            # or: run repo test
 
-# 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma client, internal builds)
-./deps.sh            # or: pnpm deps (add --update to update packages, --clean for fresh cache)
+# 📦 1-Click Dependency Installation & Update
+# - First-time clone: ./deps.sh (installs pnpm, Go, Prisma 8, bridge in < 5s)
+# - Updating repo:    ./deps.sh --update (updates all packages after git pull)
+# - Clean cache:      ./deps.sh --clean
+./deps.sh            # or: pnpm deps
 
 # ⚙️ 1-Click Environment Setup (installs dependencies, prepares .env, starts DB/Redis, runs Prisma & builds)
 ./envi.sh            # or: pnpm envi
@@ -109,6 +112,9 @@ All scripts are universally portable across **Linux**, **macOS (Darwin)**, and *
 .\test.ps1
 
 # 📦 1-Click Dependency Installation & Update
+# - First-time clone: .\deps.ps1
+# - Updating repo:    .\deps.ps1 -Update
+# - Clean cache:      .\deps.ps1 -Clean
 .\deps.ps1
 
 # ⚙️ 1-Click Environment Setup

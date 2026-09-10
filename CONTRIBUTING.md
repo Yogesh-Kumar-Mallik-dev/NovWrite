@@ -32,7 +32,7 @@ For detailed OS-specific installation instructions (Ubuntu, Debian, Fedora, macO
 
 ## 3. Local Development Workflows
 
-### 3.1. Clone & Bootstrap
+### 3.1. Clone & 1-Click Dependency Installation
 
 ```bash
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
@@ -41,11 +41,17 @@ cd NovWrite
 # Copy environment variables configuration
 cp .env.example .env
 
-# 1-Click install & build all dependencies (pnpm, Go, Prisma 8, contracts)
+# 📦 First-Time Clone: Install & build all dependencies (pnpm, Go, Prisma 8, bridge)
 ./deps.sh
 # Or on Windows PowerShell:
 # .\deps.ps1
 ```
+
+> [!IMPORTANT]
+> **Updating Dependencies as per Repo**: Whenever you pull latest commits or switch git branches, run the exact same command in **update mode**:
+>
+> - **Linux / macOS / WSL**: `./deps.sh --update` (or `pnpm deps --update`)
+> - **Windows PowerShell**: `.\deps.ps1 -Update`
 
 ### 3.2. 1-Click Development Server
 
