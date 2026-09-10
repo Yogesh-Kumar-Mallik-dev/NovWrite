@@ -1,10 +1,11 @@
 /**
  * @file projectStore.svelte.ts
- * @description Svelte 5 Runes reactive store for Creative Novel Projects.
+ * @description Svelte 5 Runes reactive store for Creative Novel Projects with optimistic backend synchronization.
  * Block Standard: BLOCK_PROJECT_STORE_RUNE_001
  */
 
 import { toastStore } from "./toastStore.svelte";
+import { apiClient } from "../api/apiClient";
 
 export interface ProjectItem {
   id: string;
@@ -28,11 +29,13 @@ export class ProjectStateStore {
   projects = $state<ProjectItem[]>([]);
   activeProjectId = $state<string | null>(null);
   isLoaded = $state<boolean>(false);
+  isSyncing = $state<boolean>(false);
   isCreateDialogOpen = $state<boolean>(false);
   isEditDialogOpen = $state<boolean>(false);
   editingProjectId = $state<string | null>(null);
   isDeleteDialogOpen = $state<boolean>(false);
   deletingProjectId = $state<string | null>(null);
+  private unsubscribeSSE: (() => void) | null = null;
 
   // Pure derived getter for currently active project
   activeProject = $derived.by(() => {
@@ -56,6 +59,10 @@ export class ProjectStateStore {
 
   constructor() {
     this.loadFromStorage();
+    if (typeof window !== "undefined") {
+      this.syncWithBackend();
+      this.initSSEListener();
+    }
   }
 
   loadFromStorage(): void {
@@ -108,6 +115,92 @@ export class ProjectStateStore {
     }
   }
 
+  /**
+   * Hydrates projects from Go API backend (:8080) and reconciles with local storage.
+   */
+  async syncWithBackend(): Promise<void> {
+    if (typeof window === "undefined") return;
+    this.isSyncing = true;
+    try {
+      const resp = await apiClient.listProjects({ pageSize: 100 });
+      if (resp && resp.data) {
+        // Merge backend projects into local projects
+        const backendMap = new Map<string, ProjectItem>();
+        for (const bp of resp.data) {
+          backendMap.set(bp.id, {
+            id: bp.id,
+            name: bp.name,
+            description: bp.description || "",
+            genre: bp.genre || "General Fiction",
+            createdAt: bp.createdAt || new Date().toISOString(),
+            updatedAt: bp.updatedAt || new Date().toISOString(),
+          });
+        }
+
+        // Combine unique local-only and backend projects
+        const merged: ProjectItem[] = [];
+        const seenIds = new Set<string>();
+
+        // Add backend items first
+        for (const bp of backendMap.values()) {
+          merged.push(bp);
+          seenIds.add(bp.id);
+        }
+
+        // Add local-only items
+        for (const lp of this.projects) {
+          if (!seenIds.has(lp.id)) {
+            merged.push(lp);
+            seenIds.add(lp.id);
+          }
+        }
+
+        this.projects = merged;
+        if (!this.activeProjectId && this.projects.length > 0) {
+          this.activeProjectId = this.projects[0].id;
+        }
+        this.saveToStorage();
+      }
+    } catch {
+      // Backend unreachable or offline mode; cleanly use local cache
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  private initSSEListener(): void {
+    if (this.unsubscribeSSE) {
+      this.unsubscribeSSE();
+    }
+    this.unsubscribeSSE = apiClient.subscribeEvents(undefined, (evt) => {
+      if (evt.event === "PROJECT_CREATED" && evt.payload) {
+        const p = evt.payload as ProjectItem;
+        if (!this.projects.some((item) => item.id === p.id)) {
+          this.projects = [p, ...this.projects];
+          this.saveToStorage();
+        }
+      } else if (evt.event === "PROJECT_UPDATED" && evt.payload) {
+        const p = evt.payload as ProjectItem;
+        const idx = this.projects.findIndex((item) => item.id === p.id);
+        if (idx !== -1) {
+          this.projects[idx] = { ...this.projects[idx], ...p };
+          this.saveToStorage();
+        }
+      } else if (evt.event === "PROJECT_DELETED" && evt.payload) {
+        const p = evt.payload as { id: string };
+        const idx = this.projects.findIndex((item) => item.id === p.id);
+        if (idx !== -1) {
+          this.projects.splice(idx, 1);
+          if (this.activeProjectId === p.id) {
+            this.activeProjectId =
+              this.projects.length > 0 ? this.projects[0].id : null;
+          }
+          this.saveToStorage();
+        }
+      }
+    });
+  }
+
   createProject(params: CreateProjectParams): ProjectItem {
     const name = params.name.trim();
     if (!name) {
@@ -123,9 +216,34 @@ export class ProjectStateStore {
       updatedAt: new Date().toISOString(),
     };
 
+    // Optimistic Local State Update
     this.projects = [newProject, ...this.projects];
     this.activeProjectId = newProject.id;
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    apiClient
+      .createProject({
+        name: newProject.name,
+        description: newProject.description,
+        genre: newProject.genre,
+      })
+      .then((res) => {
+        if (res && res.data && res.data.id) {
+          // Reconcile ID from backend if needed
+          const idx = this.projects.findIndex((p) => p.id === newProject.id);
+          if (idx !== -1) {
+            this.projects[idx] = { ...this.projects[idx], id: res.data.id };
+            if (this.activeProjectId === newProject.id) {
+              this.activeProjectId = res.data.id;
+            }
+            this.saveToStorage();
+          }
+        }
+      })
+      .catch(() => {
+        // Retain optimistic local copy if offline
+      });
 
     toastStore.success(`Project "${newProject.name}" created successfully.`);
     return newProject;
@@ -162,6 +280,18 @@ export class ProjectStateStore {
       updatedAt: new Date().toISOString(),
     };
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    apiClient
+      .updateProject(projectId, {
+        name: trimmedName,
+        description: updates.description,
+        genre: updates.genre,
+      })
+      .catch(() => {
+        // Retain optimistic local copy if offline
+      });
+
     toastStore.success("Project settings updated.");
     return true;
   }
@@ -176,6 +306,12 @@ export class ProjectStateStore {
         this.projects.length > 0 ? this.projects[0].id : null;
     }
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    apiClient.deleteProject(projectId).catch(() => {
+      // Retain optimistic local deletion if offline
+    });
+
     toastStore.info(`Project "${deleted.name}" removed.`);
     return true;
   }
@@ -216,6 +352,10 @@ export class ProjectStateStore {
     this.isEditDialogOpen = false;
     this.isCreateDialogOpen = false;
     this.isDeleteDialogOpen = false;
+    if (this.unsubscribeSSE) {
+      this.unsubscribeSSE();
+      this.unsubscribeSSE = null;
+    }
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       localStorage.removeItem(PROJECTS_STORAGE_KEY);
       localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);

@@ -14,6 +14,7 @@
   import Breadcrumb from '$lib/components/ui/breadcrumb.svelte';
   import Select from '$lib/components/ui/select.svelte';
   import { projectStore } from '$lib/stores/projectStore.svelte';
+  import { worldStore } from '$lib/stores/worldStore.svelte';
 
   let { children } = $props();
 
@@ -45,6 +46,14 @@
       goto(newHref);
     }
   }
+
+  // Reactively reinitialize worldStore when active project changes
+  $effect(() => {
+    const activeId = projectStore.activeProjectId;
+    if (activeId !== worldStore.currentProjectId) {
+      worldStore.setProject(activeId);
+    }
+  });
 </script>
 
 <div class="flex-1 flex flex-col bg-background text-foreground transition-colors min-w-0">

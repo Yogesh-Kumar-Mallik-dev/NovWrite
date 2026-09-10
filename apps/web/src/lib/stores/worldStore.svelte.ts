@@ -1,6 +1,6 @@
 /**
  * @file worldStore.svelte.ts
- * @description Svelte 5 Runes reactive store for World Studio Blueprints, Dynamic Fields, Formulas, and Entities.
+ * @description Svelte 5 Runes reactive store for World Studio Blueprints, Dynamic Fields, Formulas, and Entities with optimistic backend synchronization.
  * Block Standard: BLOCK_WORLD_STORE_RUNE_002
  */
 
@@ -8,6 +8,8 @@ import {
   evaluateFormula,
   extractFormulaVariables,
 } from "../engine/formulaEngine";
+import { apiClient } from "../api/apiClient";
+import { projectStore } from "./projectStore.svelte";
 
 export type BlueprintClass = "FIRST_CLASS" | "SECOND_CLASS";
 
@@ -253,6 +255,8 @@ export class WorldStateStore {
   revisions = $state<Record<string, EntityRevision[]>>({});
   eventEditTrees = $state<Record<string, EditTree<TimelineEventItem>>>({});
   entityEditTrees = $state<Record<string, EditTree<EntityItem>>>({});
+  isSyncing = $state<boolean>(false);
+  private unsubscribeSSE: (() => void) | null = null;
 
   constructor() {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
@@ -263,6 +267,11 @@ export class WorldStateStore {
     }
     this.loadFromStorage();
     this.recomputeAllEntityFormulas();
+
+    if (typeof window !== "undefined" && this.currentProjectId) {
+      this.syncWithBackend(this.currentProjectId);
+      this.initSSEListener(this.currentProjectId);
+    }
   }
 
   getStorageKey(): string {
@@ -278,8 +287,18 @@ export class WorldStateStore {
     this.currentProjectId = projectId;
     this.loadFromStorage();
     this.recomputeAllEntityFormulas();
+
     if (projectId) {
       this.saveToStorage();
+      if (typeof window !== "undefined") {
+        this.syncWithBackend(projectId);
+        this.initSSEListener(projectId);
+      }
+    } else {
+      if (this.unsubscribeSSE) {
+        this.unsubscribeSSE();
+        this.unsubscribeSSE = null;
+      }
     }
   }
 
@@ -363,6 +382,255 @@ export class WorldStateStore {
     }
   }
 
+  /**
+   * Reconciles blueprints, entities, timeline events, rules, and audit violations with the canonical Go backend.
+   */
+  async syncWithBackend(projectId?: string): Promise<void> {
+    const targetProject =
+      projectId || this.currentProjectId || projectStore.activeProjectId;
+    if (!targetProject || typeof window === "undefined") return;
+
+    this.isSyncing = true;
+    try {
+      const [bpRes, entRes, tlRes, ruleRes, auditRes] =
+        await Promise.allSettled([
+          apiClient.listBlueprints(targetProject, { pageSize: 100 }),
+          apiClient.listEntities(targetProject, { pageSize: 100 }),
+          apiClient.listTimelineEvents(targetProject, { pageSize: 100 }),
+          apiClient.listRules(targetProject, { pageSize: 100 }),
+          apiClient.getAudit(targetProject, { pageSize: 100 }),
+        ]);
+
+      if (bpRes.status === "fulfilled" && bpRes.value && bpRes.value.data) {
+        const backendBps: BlueprintDef[] = bpRes.value.data.map((b: any) => ({
+          id: b.id,
+          name: b.name,
+          blueprintClass: b.blueprintClass || "FIRST_CLASS",
+          category: b.category || "General",
+          description: b.description || "",
+          fields: b.fields || [],
+          isSystemDefault: b.isSystemDefault,
+        }));
+        const backendIds = new Set(backendBps.map((b) => b.id));
+        const localOnly = this.blueprints.filter((b) => !backendIds.has(b.id));
+        this.blueprints = [...backendBps, ...localOnly];
+      }
+
+      if (entRes.status === "fulfilled" && entRes.value && entRes.value.data) {
+        const backendEnts: EntityItem[] = entRes.value.data.map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          blueprintId: e.blueprintId,
+          blueprintName: e.blueprintName || "",
+          category: e.category || "General",
+          description: e.description || "",
+          properties: e.properties || {},
+          computedFormulas: e.computedFormulas || {},
+          lastMutatedSeqNumber: e.lastMutatedSeqNumber ?? 0,
+        }));
+        const backendEntIds = new Set(backendEnts.map((e) => e.id));
+        const localOnlyEnts = this.entities.filter(
+          (e) => !backendEntIds.has(e.id),
+        );
+        this.entities = [...backendEnts, ...localOnlyEnts];
+      }
+
+      if (tlRes.status === "fulfilled" && tlRes.value && tlRes.value.data) {
+        const backendTls: TimelineEventItem[] = tlRes.value.data.map(
+          (ev: any) => ({
+            id: ev.id,
+            narrativeSequenceNumber: ev.narrativeSequenceNumber ?? 0,
+            chronologicalOrder: ev.chronologicalOrder ?? 0,
+            title: ev.title,
+            description: ev.description || "",
+            anchorChapterTitle: ev.anchorChapterTitle,
+            anchorSceneTitle: ev.anchorSceneTitle,
+            anchorSceneId: ev.anchorSceneId,
+            effects: (ev.effects || []).map((eff: any) => ({
+              id: eff.id,
+              targetEntityId: eff.targetEntity || eff.targetEntityId,
+              entityName: eff.entityName,
+              propertyKey: eff.propertyKey,
+              operation: eff.operation || "SET",
+              value: eff.value,
+            })),
+            createdAt: ev.createdAt || new Date().toISOString(),
+          }),
+        );
+        const backendTlIds = new Set(backendTls.map((t) => t.id));
+        const localOnlyTls = this.timelineEvents.filter(
+          (t) => !backendTlIds.has(t.id),
+        );
+        this.timelineEvents = [...backendTls, ...localOnlyTls];
+      }
+
+      if (
+        ruleRes.status === "fulfilled" &&
+        ruleRes.value &&
+        ruleRes.value.data
+      ) {
+        const backendRules: InvariantRuleItem[] = ruleRes.value.data.map(
+          (r: any) => ({
+            id: r.id,
+            name: r.name,
+            severity: r.severity || "BLOCKING_ERROR",
+            type: r.type || "STATE_GUARD",
+            targetBlueprintId: r.targetBlueprintId,
+            targetBlueprintName: r.targetBlueprintName,
+            targetCategory: r.targetCategory,
+            predicateExpression: r.predicateExpression || "",
+            predicateSummary: r.predicateSummary || "",
+            description: r.description || "",
+            enabled: r.enabled ?? true,
+            suggestedResolution: r.suggestedResolution,
+          }),
+        );
+        const backendRuleIds = new Set(backendRules.map((r) => r.id));
+        const localOnlyRules = this.rules.filter(
+          (r) => !backendRuleIds.has(r.id),
+        );
+        this.rules = [...backendRules, ...localOnlyRules];
+      }
+
+      if (
+        auditRes.status === "fulfilled" &&
+        auditRes.value &&
+        auditRes.value.data
+      ) {
+        const backendAudit: ContinuityViolationItem[] = auditRes.value.data.map(
+          (v: any) => ({
+            id: v.id,
+            code: v.code || "INVARIANT_STATE_ILLEGAL_ACTION",
+            ruleId: v.ruleId,
+            ruleName: v.ruleName || "Invariant Guard",
+            severity: v.severity || "BLOCKING_ERROR",
+            sceneId: v.sceneId || "",
+            sceneTitle: v.sceneTitle || "",
+            sequenceNumber: v.sequenceNumber ?? 0,
+            entityId: v.entityId || "",
+            entityName: v.entityName || "",
+            property: v.property || "",
+            expectedValue: v.expectedValue || "",
+            calculatedValue: v.calculatedValue || "",
+            historicalCausalEventId: v.historicalCausalEventId,
+            historicalCausalEventTitle: v.historicalCausalEventTitle,
+            historicalCausalSequence: v.historicalCausalSequence,
+            message: v.message || "",
+            rfc7807Uri:
+              v.rfc7807Uri || "https://novwrite.io/errors/continuity-audit",
+            suggestedResolution: v.suggestedResolution || "",
+            overridden: v.overridden ?? false,
+            overrideJustification: v.overrideJustification,
+            overriddenBy: v.overriddenBy,
+            overriddenAt: v.overriddenAt,
+          }),
+        );
+        this.violations = backendAudit;
+      }
+
+      this.recomputeAllEntityFormulas();
+      this.saveToStorage();
+    } catch {
+      // Backend offline or error; seamlessly continue with local cache
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  private initSSEListener(projectId: string): void {
+    if (this.unsubscribeSSE) {
+      this.unsubscribeSSE();
+      this.unsubscribeSSE = null;
+    }
+
+    this.unsubscribeSSE = apiClient.subscribeEvents(projectId, (evt) => {
+      if (evt.event === "BLUEPRINT_CREATED" && evt.payload) {
+        const bp = evt.payload as BlueprintDef;
+        if (!this.blueprints.some((b) => b.id === bp.id)) {
+          this.blueprints.push(bp);
+          this.recomputeAllEntityFormulas();
+          this.saveToStorage();
+        }
+      } else if (evt.event === "BLUEPRINT_UPDATED" && evt.payload) {
+        const bp = evt.payload as BlueprintDef;
+        const idx = this.blueprints.findIndex((b) => b.id === bp.id);
+        if (idx !== -1) {
+          this.blueprints[idx] = { ...this.blueprints[idx], ...bp };
+          this.recomputeAllEntityFormulas();
+          this.saveToStorage();
+        }
+      } else if (evt.event === "BLUEPRINT_DELETED" && evt.payload) {
+        const payload = evt.payload as { id: string };
+        this.blueprints = this.blueprints.filter((b) => b.id !== payload.id);
+        this.recomputeAllEntityFormulas();
+        this.saveToStorage();
+      } else if (evt.event === "ENTITY_CREATED" && evt.payload) {
+        const ent = evt.payload as EntityItem;
+        if (!this.entities.some((e) => e.id === ent.id)) {
+          this.entities.push(ent);
+          this.recomputeAllEntityFormulas();
+          this.saveToStorage();
+        }
+      } else if (
+        (evt.event === "ENTITY_UPDATED" || evt.event === "ENTITY_MUTATED") &&
+        evt.payload
+      ) {
+        const ent = evt.payload as EntityItem;
+        const idx = this.entities.findIndex((e) => e.id === ent.id);
+        if (idx !== -1) {
+          this.entities[idx] = { ...this.entities[idx], ...ent };
+          this.recomputeAllEntityFormulas();
+          this.saveToStorage();
+        }
+      } else if (evt.event === "ENTITY_DELETED" && evt.payload) {
+        const payload = evt.payload as { id: string };
+        this.entities = this.entities.filter((e) => e.id !== payload.id);
+        delete this.revisions[payload.id];
+        delete this.entityEditTrees[payload.id];
+        this.recomputeAllEntityFormulas();
+        this.saveToStorage();
+      } else if (evt.event === "TIMELINE_CHANGED" && evt.payload) {
+        const ev = evt.payload as TimelineEventItem;
+        const idx = this.timelineEvents.findIndex((e) => e.id === ev.id);
+        if (idx !== -1) {
+          this.timelineEvents[idx] = { ...this.timelineEvents[idx], ...ev };
+        } else {
+          this.timelineEvents.push(ev);
+        }
+        this.recomputeAllEntityFormulas();
+        this.saveToStorage();
+      } else if (evt.event === "RULE_CREATED" && evt.payload) {
+        const r = evt.payload as InvariantRuleItem;
+        if (!this.rules.some((item) => item.id === r.id)) {
+          this.rules.push(r);
+          this.saveToStorage();
+        }
+      } else if (evt.event === "RULE_UPDATED" && evt.payload) {
+        const r = evt.payload as InvariantRuleItem;
+        const idx = this.rules.findIndex((item) => item.id === r.id);
+        if (idx !== -1) {
+          this.rules[idx] = { ...this.rules[idx], ...r };
+          this.saveToStorage();
+        }
+      } else if (evt.event === "RULE_DELETED" && evt.payload) {
+        const payload = evt.payload as { id: string };
+        this.rules = this.rules.filter((r) => r.id !== payload.id);
+        this.saveToStorage();
+      } else if (evt.event === "AUDIT_OVERRIDDEN" && evt.payload) {
+        const viol = evt.payload as ContinuityViolationItem;
+        const idx = this.violations.findIndex((v) => v.id === viol.id);
+        if (idx !== -1) {
+          this.violations[idx] = {
+            ...this.violations[idx],
+            ...viol,
+            overridden: true,
+          };
+          this.saveToStorage();
+        }
+      }
+    });
+  }
+
   deleteProjectData(projectId: string): void {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       localStorage.removeItem(`novwrite_world_state_${projectId}`);
@@ -381,6 +649,10 @@ export class WorldStateStore {
     this.revisions = {};
     this.eventEditTrees = {};
     this.entityEditTrees = {};
+    if (this.unsubscribeSSE) {
+      this.unsubscribeSSE();
+      this.unsubscribeSSE = null;
+    }
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       const key = this.getStorageKey();
       if (key) {
@@ -413,6 +685,8 @@ export class WorldStateStore {
   }
 
   addBlueprint(data: Omit<BlueprintDef, "id">): BlueprintDef {
+    const targetProject =
+      this.currentProjectId || projectStore.activeProjectId || "default";
     const newBlueprint: BlueprintDef = {
       ...data,
       id: `bp-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
@@ -420,6 +694,38 @@ export class WorldStateStore {
     };
     this.blueprints.push(newBlueprint);
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .createBlueprint(targetProject, {
+          name: newBlueprint.name,
+          blueprintClass: newBlueprint.blueprintClass,
+          category: newBlueprint.category,
+          description: newBlueprint.description,
+          fields: newBlueprint.fields,
+        })
+        .then((res) => {
+          if (
+            res &&
+            res.data &&
+            res.data.id &&
+            res.data.id !== newBlueprint.id
+          ) {
+            const idx = this.blueprints.findIndex(
+              (b) => b.id === newBlueprint.id,
+            );
+            if (idx !== -1) {
+              this.blueprints[idx] = {
+                ...this.blueprints[idx],
+                id: res.data.id,
+              };
+              this.saveToStorage();
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
     return newBlueprint;
   }
 
@@ -430,6 +736,7 @@ export class WorldStateStore {
     if (!id) return undefined;
     const idx = this.blueprints.findIndex((b) => b.id === id);
     if (idx === -1) return undefined;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
 
     this.blueprints[idx] = {
       ...this.blueprints[idx],
@@ -439,6 +746,13 @@ export class WorldStateStore {
 
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .updateBlueprint(targetProject, id, this.blueprints[idx])
+        .catch(() => {});
+    }
+
     return this.blueprints[idx];
   }
 
@@ -446,9 +760,16 @@ export class WorldStateStore {
     if (!id) return false;
     const idx = this.blueprints.findIndex((b) => b.id === id);
     if (idx === -1) return false;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.blueprints.splice(idx, 1);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient.deleteBlueprint(targetProject, id).catch(() => {});
+    }
+
     return true;
   }
 
@@ -471,6 +792,12 @@ export class WorldStateStore {
     bp.fields.push(newField);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return newField;
   }
 
@@ -492,6 +819,12 @@ export class WorldStateStore {
 
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return bp.fields[fIdx];
   }
 
@@ -505,6 +838,12 @@ export class WorldStateStore {
     bp.fields.splice(fIdx, 1);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return true;
   }
 
@@ -533,6 +872,12 @@ export class WorldStateStore {
     field.options.push(option);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return true;
   }
 
@@ -556,6 +901,12 @@ export class WorldStateStore {
     field.options[optionIndex] = updatedOption;
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return true;
   }
 
@@ -578,6 +929,12 @@ export class WorldStateStore {
     field.options.splice(optionIndex, 1);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient.updateBlueprint(targetProject, blueprintId, bp).catch(() => {});
+    }
+
     return true;
   }
 
@@ -594,6 +951,8 @@ export class WorldStateStore {
     data: Omit<EntityItem, "id" | "lastMutatedSeqNumber" | "computedFormulas">,
   ): EntityItem {
     const bp = this.getBlueprint(data.blueprintId);
+    const targetProject =
+      this.currentProjectId || projectStore.activeProjectId || "default";
     const newEntity: EntityItem = {
       ...data,
       id: `ent-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 8)}`,
@@ -613,6 +972,39 @@ export class WorldStateStore {
     );
 
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .createEntity(targetProject, {
+          name: newEntity.name,
+          blueprintId: newEntity.blueprintId,
+          blueprintName: newEntity.blueprintName,
+          category: newEntity.category,
+          description: newEntity.description,
+          properties: newEntity.properties,
+        })
+        .then((res) => {
+          if (res && res.data && res.data.id && res.data.id !== newEntity.id) {
+            const oldId = newEntity.id;
+            const newId = res.data.id;
+            const idx = this.entities.findIndex((e) => e.id === oldId);
+            if (idx !== -1) {
+              this.entities[idx] = { ...this.entities[idx], id: newId };
+            }
+            if (this.revisions[oldId]) {
+              this.revisions[newId] = this.revisions[oldId];
+              delete this.revisions[oldId];
+            }
+            if (this.entityEditTrees[oldId]) {
+              this.entityEditTrees[newId] = this.entityEditTrees[oldId];
+              delete this.entityEditTrees[oldId];
+            }
+            this.saveToStorage();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newEntity;
   }
 
@@ -625,10 +1017,7 @@ export class WorldStateStore {
     if (!id) return undefined;
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return undefined;
-
-    const previousSnapshot: EntityItem = JSON.parse(
-      JSON.stringify(this.entities[idx]),
-    );
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
 
     this.entities[idx] = {
       ...this.entities[idx],
@@ -651,6 +1040,18 @@ export class WorldStateStore {
     );
 
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .updateEntity(targetProject, id, {
+          name: updates.name,
+          category: updates.category,
+          description: updates.description,
+          properties: updates.properties,
+        })
+        .catch(() => {});
+    }
+
     return this.entities[idx];
   }
 
@@ -658,9 +1059,17 @@ export class WorldStateStore {
     if (!id) return false;
     const idx = this.entities.findIndex((e) => e.id === id);
     if (idx === -1) return false;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.entities.splice(idx, 1);
     delete this.revisions[id];
+    delete this.entityEditTrees[id];
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient.deleteEntity(targetProject, id).catch(() => {});
+    }
+
     return true;
   }
 
@@ -795,6 +1204,19 @@ export class WorldStateStore {
       this.entities[idx] = restored;
       this.recomputeAllEntityFormulas();
       this.saveToStorage();
+
+      const targetProject =
+        this.currentProjectId || projectStore.activeProjectId;
+      if (targetProject && targetProject !== "default") {
+        apiClient
+          .updateEntity(targetProject, entityId, {
+            name: restored.name,
+            category: restored.category,
+            description: restored.description,
+            properties: restored.properties,
+          })
+          .catch(() => {});
+      }
     }
 
     return { restoredEntity: restored, revision: rev };
@@ -1055,6 +1477,8 @@ export class WorldStateStore {
   addTimelineEvent(
     eventData: Omit<TimelineEventItem, "id">,
   ): TimelineEventItem {
+    const targetProject =
+      this.currentProjectId || projectStore.activeProjectId || "default";
     const newEvent: TimelineEventItem = {
       ...eventData,
       id: `ev-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
@@ -1064,6 +1488,43 @@ export class WorldStateStore {
     this.getEventEditTree(newEvent.id);
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .createTimelineEvent(targetProject, {
+          narrativeSequenceNumber: newEvent.narrativeSequenceNumber,
+          chronologicalOrder: newEvent.chronologicalOrder,
+          title: newEvent.title,
+          description: newEvent.description,
+          anchorSceneId: newEvent.anchorSceneId,
+          effects: newEvent.effects.map((eff) => ({
+            targetEntity: eff.targetEntityId,
+            propertyKey: eff.propertyKey,
+            operation: eff.operation,
+            value: eff.value,
+          })),
+        })
+        .then((res) => {
+          if (res && res.data && res.data.id && res.data.id !== newEvent.id) {
+            const oldId = newEvent.id;
+            const newId = res.data.id;
+            const idx = this.timelineEvents.findIndex((e) => e.id === oldId);
+            if (idx !== -1) {
+              this.timelineEvents[idx] = {
+                ...this.timelineEvents[idx],
+                id: newId,
+              };
+            }
+            if (this.eventEditTrees[oldId]) {
+              this.eventEditTrees[newId] = this.eventEditTrees[oldId];
+              delete this.eventEditTrees[oldId];
+            }
+            this.saveToStorage();
+          }
+        })
+        .catch(() => {});
+    }
+
     return newEvent;
   }
 
@@ -1073,6 +1534,8 @@ export class WorldStateStore {
   ): TimelineEventItem | undefined {
     const idx = this.timelineEvents.findIndex((e) => e.id === id);
     if (idx === -1) return undefined;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.timelineEvents[idx] = {
       ...this.timelineEvents[idx],
       ...updates,
@@ -1085,16 +1548,43 @@ export class WorldStateStore {
     );
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .updateTimelineEvent(targetProject, id, {
+          narrativeSequenceNumber:
+            this.timelineEvents[idx].narrativeSequenceNumber,
+          chronologicalOrder: this.timelineEvents[idx].chronologicalOrder,
+          title: this.timelineEvents[idx].title,
+          description: this.timelineEvents[idx].description,
+          anchorSceneId: this.timelineEvents[idx].anchorSceneId,
+          effects: this.timelineEvents[idx].effects.map((eff) => ({
+            targetEntity: eff.targetEntityId,
+            propertyKey: eff.propertyKey,
+            operation: eff.operation,
+            value: eff.value,
+          })),
+        })
+        .catch(() => {});
+    }
+
     return this.timelineEvents[idx];
   }
 
   deleteTimelineEvent(id: string): boolean {
     const idx = this.timelineEvents.findIndex((e) => e.id === id);
     if (idx === -1) return false;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.timelineEvents.splice(idx, 1);
     delete this.eventEditTrees[id];
     this.recomputeAllEntityFormulas();
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient.deleteTimelineEvent(targetProject, id).catch(() => {});
+    }
+
     return true;
   }
 
@@ -1408,12 +1898,42 @@ export class WorldStateStore {
   }
 
   addRule(ruleData: Omit<InvariantRuleItem, "id">): InvariantRuleItem {
+    const targetProject =
+      this.currentProjectId || projectStore.activeProjectId || "default";
     const newRule: InvariantRuleItem = {
       ...ruleData,
       id: `rule-${Date.now().toString(16)}-${Math.random().toString(16).substring(2, 6)}`,
     };
     this.rules.push(newRule);
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .createRule(targetProject, {
+          name: newRule.name,
+          severity: newRule.severity,
+          type: newRule.type,
+          targetBlueprintId: newRule.targetBlueprintId,
+          targetBlueprintName: newRule.targetBlueprintName,
+          targetCategory: newRule.targetCategory,
+          predicateExpression: newRule.predicateExpression,
+          predicateSummary: newRule.predicateSummary,
+          description: newRule.description,
+          enabled: newRule.enabled,
+          suggestedResolution: newRule.suggestedResolution,
+        })
+        .then((res) => {
+          if (res && res.data && res.data.id && res.data.id !== newRule.id) {
+            const idx = this.rules.findIndex((r) => r.id === newRule.id);
+            if (idx !== -1) {
+              this.rules[idx] = { ...this.rules[idx], id: res.data.id };
+              this.saveToStorage();
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
     return newRule;
   }
 
@@ -1423,11 +1943,32 @@ export class WorldStateStore {
   ): InvariantRuleItem | undefined {
     const idx = this.rules.findIndex((r) => r.id === id);
     if (idx === -1) return undefined;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.rules[idx] = {
       ...this.rules[idx],
       ...updates,
     };
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .updateRule(targetProject, id, {
+          name: updates.name,
+          severity: updates.severity,
+          type: updates.type,
+          targetBlueprintId: updates.targetBlueprintId,
+          targetBlueprintName: updates.targetBlueprintName,
+          targetCategory: updates.targetCategory,
+          predicateExpression: updates.predicateExpression,
+          predicateSummary: updates.predicateSummary,
+          description: updates.description,
+          enabled: updates.enabled,
+          suggestedResolution: updates.suggestedResolution,
+        })
+        .catch(() => {});
+    }
+
     return this.rules[idx];
   }
 
@@ -1436,14 +1977,29 @@ export class WorldStateStore {
     if (!r) return false;
     r.enabled = !r.enabled;
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .updateRule(targetProject, id, { enabled: r.enabled })
+        .catch(() => {});
+    }
+
     return true;
   }
 
   deleteRule(id: string): boolean {
     const idx = this.rules.findIndex((r) => r.id === id);
     if (idx === -1) return false;
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+
     this.rules.splice(idx, 1);
     this.saveToStorage();
+
+    if (targetProject && targetProject !== "default") {
+      apiClient.deleteRule(targetProject, id).catch(() => {});
+    }
+
     return true;
   }
 
@@ -1471,6 +2027,14 @@ export class WorldStateStore {
     viol.overriddenBy = authorName;
     viol.overriddenAt = new Date().toISOString();
     this.saveToStorage();
+
+    const targetProject = this.currentProjectId || projectStore.activeProjectId;
+    if (targetProject && targetProject !== "default") {
+      apiClient
+        .overrideViolation(targetProject, id, justification.trim(), authorName)
+        .catch(() => {});
+    }
+
     return true;
   }
 

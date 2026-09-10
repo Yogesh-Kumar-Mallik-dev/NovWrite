@@ -1,11 +1,12 @@
 /**
  * @file proseStore.svelte.ts
- * @description Svelte 5 Runes reactive store for Prose Studio manuscripts, chapters, and scenes.
+ * @description Svelte 5 Runes reactive store for Prose Studio manuscripts, chapters, and scenes with optimistic backend synchronization.
  * Block Standard: BLOCK_PROSE_STORE_RUNE_001
  */
 
 import { toastStore } from "./toastStore.svelte";
 import { projectStore } from "./projectStore.svelte";
+import { apiClient } from "../api/apiClient";
 
 export type SceneStatus = "DRAFT" | "IN_PROGRESS" | "REVISED" | "COMPLETED";
 
@@ -63,9 +64,11 @@ export class ProseStateStore {
   activeSceneId = $state<string | null>(null);
   activeChapterId = $state<string | null>(null);
   isLoaded = $state<boolean>(false);
+  isSyncing = $state<boolean>(false);
   dailyWordGoal = $state<number>(1000);
   todayWordsWritten = $state<number>(0);
   private currentLoadedProjectId: string | null = null;
+  private unsubscribeSSE: (() => void) | null = null;
 
   // Pure derived getters
   activeScene = $derived.by(() => {
@@ -119,6 +122,10 @@ export class ProseStateStore {
       this.activeChapterId = null;
       this.isLoaded = true;
       this.currentLoadedProjectId = null;
+      if (this.unsubscribeSSE) {
+        this.unsubscribeSSE();
+        this.unsubscribeSSE = null;
+      }
       return;
     }
 
@@ -128,6 +135,11 @@ export class ProseStateStore {
 
     this.currentLoadedProjectId = currentProjectId;
     this.loadFromStorage(currentProjectId);
+
+    if (typeof window !== "undefined") {
+      this.syncWithBackend(currentProjectId);
+      this.initSSEListener(currentProjectId);
+    }
   }
 
   loadFromStorage(projectId: string): void {
@@ -178,7 +190,8 @@ export class ProseStateStore {
   }
 
   saveToStorage(): void {
-    const projectId = projectStore.activeProjectId;
+    const projectId =
+      this.currentLoadedProjectId || projectStore.activeProjectId;
     if (
       !projectId ||
       typeof window === "undefined" ||
@@ -201,6 +214,155 @@ export class ProseStateStore {
     }
   }
 
+  /**
+   * Reconciles local chapters and scenes with the canonical Go backend.
+   */
+  async syncWithBackend(projectId?: string): Promise<void> {
+    const targetProject =
+      projectId || this.currentLoadedProjectId || projectStore.activeProjectId;
+    if (!targetProject || typeof window === "undefined") return;
+
+    this.isSyncing = true;
+    try {
+      const [chapRes, sceneRes] = await Promise.allSettled([
+        apiClient.listChapters(targetProject, { pageSize: 100 }),
+        apiClient.listScenes(targetProject, undefined, { pageSize: 100 }),
+      ]);
+
+      if (
+        chapRes.status === "fulfilled" &&
+        chapRes.value &&
+        chapRes.value.data
+      ) {
+        const backendChaps: ChapterItem[] = chapRes.value.data.map(
+          (c: any) => ({
+            id: c.id,
+            projectId: c.projectId || targetProject,
+            title: c.title,
+            orderIndex: c.orderIndex ?? 0,
+            synopsis: c.synopsis || "",
+            createdAt: c.createdAt || new Date().toISOString(),
+            updatedAt: c.updatedAt || new Date().toISOString(),
+          }),
+        );
+
+        // Merge: keep local chapters not yet on backend, update existing
+        const backendIds = new Set(backendChaps.map((c) => c.id));
+        const localOnly = this.chapters.filter(
+          (c) => !backendIds.has(c.id) && c.projectId === targetProject,
+        );
+        this.chapters = [...backendChaps, ...localOnly].sort(
+          (a, b) => a.orderIndex - b.orderIndex,
+        );
+      }
+
+      if (
+        sceneRes.status === "fulfilled" &&
+        sceneRes.value &&
+        sceneRes.value.data
+      ) {
+        const backendScenes: SceneItem[] = sceneRes.value.data.map(
+          (s: any) => ({
+            id: s.id,
+            chapterId: s.chapterId,
+            projectId: s.projectId || targetProject,
+            title: s.title,
+            orderIndex: s.orderIndex ?? 0,
+            proseContent: s.proseContent || "",
+            wordCount: s.wordCount ?? countWords(s.proseContent || ""),
+            status: s.status || "DRAFT",
+            povCharacterId: s.povCharacterId,
+            timelineSequenceNumber: s.timelineSequenceNumber,
+            targetWordCount: s.targetWordCount || 1500,
+            synopsis: s.synopsis || "",
+            createdAt: s.createdAt || new Date().toISOString(),
+            updatedAt: s.updatedAt || new Date().toISOString(),
+          }),
+        );
+
+        const backendSceneIds = new Set(backendScenes.map((s) => s.id));
+        const localOnlyScenes = this.scenes.filter(
+          (s) => !backendSceneIds.has(s.id) && s.projectId === targetProject,
+        );
+        this.scenes = [...backendScenes, ...localOnlyScenes].sort(
+          (a, b) => a.orderIndex - b.orderIndex,
+        );
+      }
+
+      if (!this.activeSceneId && this.scenes.length > 0) {
+        this.activeSceneId = this.scenes[0].id;
+      }
+      if (!this.activeChapterId && this.chapters.length > 0) {
+        this.activeChapterId = this.chapters[0].id;
+      }
+
+      this.saveToStorage();
+    } catch {
+      // Backend offline or error; seamlessly continue with local state
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  private initSSEListener(projectId: string): void {
+    if (this.unsubscribeSSE) {
+      this.unsubscribeSSE();
+      this.unsubscribeSSE = null;
+    }
+
+    this.unsubscribeSSE = apiClient.subscribeEvents(projectId, (evt) => {
+      if (evt.event === "CHAPTER_CREATED" && evt.payload) {
+        const c = evt.payload as ChapterItem;
+        if (!this.chapters.some((item) => item.id === c.id)) {
+          this.chapters = [...this.chapters, c].sort(
+            (a, b) => a.orderIndex - b.orderIndex,
+          );
+          this.saveToStorage();
+        }
+      } else if (evt.event === "CHAPTER_UPDATED" && evt.payload) {
+        const c = evt.payload as ChapterItem;
+        const idx = this.chapters.findIndex((item) => item.id === c.id);
+        if (idx !== -1) {
+          this.chapters[idx] = { ...this.chapters[idx], ...c };
+          this.saveToStorage();
+        }
+      } else if (evt.event === "CHAPTER_DELETED" && evt.payload) {
+        const payload = evt.payload as { id: string };
+        this.chapters = this.chapters.filter((c) => c.id !== payload.id);
+        this.scenes = this.scenes.filter((s) => s.chapterId !== payload.id);
+        if (this.activeChapterId === payload.id) {
+          this.activeChapterId = this.chapters[0]?.id || null;
+        }
+        if (this.activeScene?.chapterId === payload.id) {
+          this.activeSceneId = this.scenes[0]?.id || null;
+        }
+        this.saveToStorage();
+      } else if (evt.event === "SCENE_CREATED" && evt.payload) {
+        const s = evt.payload as SceneItem;
+        if (!this.scenes.some((item) => item.id === s.id)) {
+          this.scenes = [...this.scenes, s].sort(
+            (a, b) => a.orderIndex - b.orderIndex,
+          );
+          this.saveToStorage();
+        }
+      } else if (evt.event === "SCENE_UPDATED" && evt.payload) {
+        const s = evt.payload as SceneItem;
+        const idx = this.scenes.findIndex((item) => item.id === s.id);
+        if (idx !== -1) {
+          this.scenes[idx] = { ...this.scenes[idx], ...s };
+          this.saveToStorage();
+        }
+      } else if (evt.event === "SCENE_DELETED" && evt.payload) {
+        const payload = evt.payload as { id: string };
+        this.scenes = this.scenes.filter((s) => s.id !== payload.id);
+        if (this.activeSceneId === payload.id) {
+          this.activeSceneId = this.scenes[0]?.id || null;
+        }
+        this.saveToStorage();
+      }
+    });
+  }
+
   getScenesForChapter(chapterId: string): SceneItem[] {
     return this.scenes
       .filter((s) => s.chapterId === chapterId)
@@ -208,7 +370,8 @@ export class ProseStateStore {
   }
 
   createChapter(params: CreateChapterParams): ChapterItem {
-    const projectId = projectStore.activeProjectId || "default";
+    const projectId =
+      this.currentLoadedProjectId || projectStore.activeProjectId || "default";
     const newChapter: ChapterItem = {
       id: `chap-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       projectId,
@@ -222,11 +385,46 @@ export class ProseStateStore {
     this.chapters = [...this.chapters, newChapter];
     this.activeChapterId = newChapter.id;
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient
+        .createChapter(projectId, {
+          title: newChapter.title,
+          synopsis: newChapter.synopsis,
+          orderIndex: newChapter.orderIndex,
+        })
+        .then((res) => {
+          if (res && res.data && res.data.id && res.data.id !== newChapter.id) {
+            const oldId = newChapter.id;
+            const newId = res.data.id;
+            const idx = this.chapters.findIndex((c) => c.id === oldId);
+            if (idx !== -1) {
+              this.chapters[idx] = { ...this.chapters[idx], id: newId };
+            }
+            if (this.activeChapterId === oldId) {
+              this.activeChapterId = newId;
+            }
+            this.scenes = this.scenes.map((s) =>
+              s.chapterId === oldId ? { ...s, chapterId: newId } : s,
+            );
+            this.saveToStorage();
+          }
+        })
+        .catch(() => {});
+    }
+
     toastStore.success(`Chapter "${newChapter.title}" created.`);
     return newChapter;
   }
 
   updateChapter(id: string, updates: Partial<ChapterItem>): void {
+    const target = this.chapters.find((c) => c.id === id);
+    const projectId =
+      target?.projectId ||
+      this.currentLoadedProjectId ||
+      projectStore.activeProjectId;
+
     this.chapters = this.chapters.map((c) => {
       if (c.id === id) {
         return {
@@ -238,11 +436,26 @@ export class ProseStateStore {
       return c;
     });
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient
+        .updateChapter(projectId, id, {
+          title: updates.title,
+          synopsis: updates.synopsis,
+          orderIndex: updates.orderIndex,
+        })
+        .catch(() => {});
+    }
   }
 
   deleteChapter(id: string): void {
     const chapter = this.chapters.find((c) => c.id === id);
     const chapterTitle = chapter?.title || "Chapter";
+    const projectId =
+      chapter?.projectId ||
+      this.currentLoadedProjectId ||
+      projectStore.activeProjectId;
 
     this.chapters = this.chapters.filter((c) => c.id !== id);
     this.scenes = this.scenes.filter((s) => s.chapterId !== id);
@@ -255,11 +468,18 @@ export class ProseStateStore {
     }
 
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient.deleteChapter(projectId, id).catch(() => {});
+    }
+
     toastStore.success(`Deleted "${chapterTitle}" and its associated scenes.`);
   }
 
   createScene(params: CreateSceneParams): SceneItem {
-    const projectId = projectStore.activeProjectId || "default";
+    const projectId =
+      this.currentLoadedProjectId || projectStore.activeProjectId || "default";
     const existingChapterScenes = this.getScenesForChapter(params.chapterId);
     const newScene: SceneItem = {
       id: `scene-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -281,11 +501,47 @@ export class ProseStateStore {
     this.scenes = [...this.scenes, newScene];
     this.activeSceneId = newScene.id;
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient
+        .createScene(projectId, {
+          chapterId: newScene.chapterId,
+          title: newScene.title,
+          synopsis: newScene.synopsis,
+          targetWordCount: newScene.targetWordCount,
+          povCharacterId: newScene.povCharacterId,
+          timelineSequenceNumber: newScene.timelineSequenceNumber,
+          orderIndex: newScene.orderIndex,
+        })
+        .then((res) => {
+          if (res && res.data && res.data.id && res.data.id !== newScene.id) {
+            const oldId = newScene.id;
+            const newId = res.data.id;
+            const idx = this.scenes.findIndex((s) => s.id === oldId);
+            if (idx !== -1) {
+              this.scenes[idx] = { ...this.scenes[idx], id: newId };
+            }
+            if (this.activeSceneId === oldId) {
+              this.activeSceneId = newId;
+            }
+            this.saveToStorage();
+          }
+        })
+        .catch(() => {});
+    }
+
     toastStore.success(`Scene "${newScene.title}" created.`);
     return newScene;
   }
 
   updateScene(id: string, updates: Partial<SceneItem>): void {
+    const target = this.scenes.find((s) => s.id === id);
+    const projectId =
+      target?.projectId ||
+      this.currentLoadedProjectId ||
+      projectStore.activeProjectId;
+
     this.scenes = this.scenes.map((s) => {
       if (s.id === id) {
         const nextContent =
@@ -306,10 +562,29 @@ export class ProseStateStore {
       return s;
     });
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient
+        .updateScene(projectId, id, {
+          ...updates,
+          wordCount:
+            updates.proseContent !== undefined
+              ? countWords(updates.proseContent)
+              : undefined,
+        })
+        .catch(() => {});
+    }
   }
 
   updateSceneContent(id: string, content: string): void {
+    const target = this.scenes.find((s) => s.id === id);
+    const projectId =
+      target?.projectId ||
+      this.currentLoadedProjectId ||
+      projectStore.activeProjectId;
     const words = countWords(content);
+
     this.scenes = this.scenes.map((s) => {
       if (s.id === id) {
         const diff = Math.max(0, words - s.wordCount);
@@ -324,11 +599,25 @@ export class ProseStateStore {
       return s;
     });
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient
+        .updateScene(projectId, id, {
+          proseContent: content,
+          wordCount: words,
+        })
+        .catch(() => {});
+    }
   }
 
   deleteScene(id: string): void {
     const scene = this.scenes.find((s) => s.id === id);
     const sceneTitle = scene?.title || "Scene";
+    const projectId =
+      scene?.projectId ||
+      this.currentLoadedProjectId ||
+      projectStore.activeProjectId;
 
     this.scenes = this.scenes.filter((s) => s.id !== id);
     if (this.activeSceneId === id) {
@@ -336,6 +625,12 @@ export class ProseStateStore {
     }
 
     this.saveToStorage();
+
+    // Asynchronous Backend Write-Behind
+    if (projectId && projectId !== "default") {
+      apiClient.deleteScene(projectId, id).catch(() => {});
+    }
+
     toastStore.success(`Deleted scene "${sceneTitle}".`);
   }
 
