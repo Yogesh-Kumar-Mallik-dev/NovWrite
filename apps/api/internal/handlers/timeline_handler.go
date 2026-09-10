@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
@@ -72,6 +73,8 @@ func (s *InMemoryTimelineStore) GetEvent(projectID, eventID string) (*world.Time
 	return &ev, true
 }
 
+var timelineSeq uint64
+
 func (s *InMemoryTimelineStore) AddEvent(projectID string, event world.TimelineEvent) world.TimelineEvent {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -84,7 +87,7 @@ func (s *InMemoryTimelineStore) AddEvent(projectID string, event world.TimelineE
 	}
 
 	if event.ID == "" {
-		event.ID = fmt.Sprintf("ev_%d", time.Now().UnixNano())
+		event.ID = fmt.Sprintf("ev_%d_%d", time.Now().UnixNano(), atomic.AddUint64(&timelineSeq, 1))
 	}
 	if event.CreatedAt.IsZero() {
 		event.CreatedAt = time.Now().UTC()

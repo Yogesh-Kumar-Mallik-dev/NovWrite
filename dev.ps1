@@ -122,7 +122,8 @@ if ($startMobile) {
     if ($Clear) { $expoArgs += "--clear" }
 
     $expoLog = Join-Path $logsDir "expo.log"
-    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -RedirectStandardOutput $expoLog -RedirectStandardError $expoLog -PassThru
+    $expoErrLog = Join-Path $logsDir "expo-error.log"
+    $mobileProcess = Start-Process -FilePath "pnpm" -ArgumentList $expoArgs -WorkingDirectory (Join-Path $rootDir "apps/mobile") -RedirectStandardOutput $expoLog -RedirectStandardError $expoErrLog -PassThru
     
     # Probe Metro until accepting Expo Go connections
     Write-Host "[*] Waiting for Expo Mobile Metro Bundler to become ready..." -ForegroundColor DarkGray
@@ -225,7 +226,8 @@ if ($startWeb) {
 if ($startDesktop) {
     Write-Host "[*] Starting Tauri 2 Native Desktop Client (logs -> logs/desktop.log)..." -ForegroundColor Blue
     $desktopLog = Join-Path $logsDir "desktop.log"
-    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -RedirectStandardOutput $desktopLog -RedirectStandardError $desktopLog -PassThru
+    $desktopErrLog = Join-Path $logsDir "desktop-error.log"
+    $desktopProcess = Start-Process -FilePath "pnpm" -ArgumentList "exec", "tauri", "dev", "--no-dev-server" -WorkingDirectory (Join-Path $rootDir "apps/desktop") -RedirectStandardOutput $desktopLog -RedirectStandardError $desktopErrLog -PassThru
 }
 
 Write-Host ""

@@ -113,11 +113,33 @@ timeline
     2026-09-10 : Version 2.10.5 (Windows PowerShell 5.1 Unicode ANSI Sanitization & Zero Parser Errors)
                : Complete Elimination of Multi-Byte Unicode Emojis from .ps1 Scripts
                : Zero-Fault Parsing Guarantee for Windows-1252 ANSI Default Code Page
+    2026-09-10 : Version 2.10.6 (Windows Process Redirection, QR Script Stdio & Monotonic ID Hardening)
+               : Separate Out/Err Logs in Start-Process to Fix Windows PowerShell Restriction
+               : Pure Node.js Stdio in show-mobile-qr.mjs Eliminating Path Not Found Errors
+               : Atomic Monotonic Sequence Counters in Go Backend ID Generators
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.10.6] — 2026-09-10
+
+**Scope:** Windows Process Redirection, QR Script Stdio & Go Monotonic ID Hardening  
+**Target Documents:** [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`flush_db.ps1`](file:///home/yogesh/Projects/NovWrite/flush_db.ps1), [`scripts/show-mobile-qr.mjs`](file:///home/yogesh/Projects/NovWrite/scripts/show-mobile-qr.mjs), [`apps/api/internal/world/revision_engine.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/world/revision_engine.go), [`apps/api/internal/handlers/entity_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/entity_handler.go), [`apps/api/internal/handlers/blueprint_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/blueprint_handler.go), [`apps/api/internal/handlers/timeline_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/timeline_handler.go), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+
+#### Added & Refactored
+
+- **Windows PowerShell `Start-Process` Redirection Fix (`dev.ps1`):**
+  - Resolved `InvalidOperationException: "This command cannot be run because RedirectStandardOutput and RedirectStandardError are same"` by specifying distinct log files (`expo.log` / `expo-error.log`, `desktop.log` / `desktop-error.log`).
+- **Cross-Platform Stdio in QR Generator (`scripts/show-mobile-qr.mjs`):**
+  - Replaced shell `2>/dev/null` redirections with native Node.js `stdio: ['pipe', 'pipe', 'ignore']` and `stdio: 'ignore'`, eliminating `"The system cannot find the path specified."` on Windows `cmd.exe`.
+- **Monotonic Atomic Counters in Go ID Generators (`apps/api`):**
+  - Added atomic uint64 sequences to `GenerateEditID`, `GenerateRevisionID`, entity `Save`, blueprint `Save`, and timeline `AddEvent` to prevent ID collisions on Windows high-speed loops with coarse 15ms timer resolution.
+- **Database Flush Error Trapping (`flush_db.ps1`):**
+  - Added explicit `$LASTEXITCODE` check after Prisma schema push to alert when PostgreSQL container is not running.
+
+---
 
 ### [Version 2.10.5] — 2026-09-10
 

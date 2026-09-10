@@ -81,6 +81,11 @@ $pgDb = if ($env:POSTGRES_DB) { $env:POSTGRES_DB } else { "novwrite_db" }
 $env:DATABASE_URL = "postgresql://${pgUser}:${pgPass}@localhost:${pgPort}/${pgDb}?schema=public"
 
 pnpm --filter @novwrite/data-service exec prisma db push --force-reset --accept-data-loss
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "[!] Error: Failed to reset PostgreSQL schema. Ensure PostgreSQL is running on port $pgPort (e.g. via 'docker compose up -d postgres redis')." -ForegroundColor Red
+    exit $LASTEXITCODE
+}
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Green

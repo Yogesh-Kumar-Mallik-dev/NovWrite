@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"sync/atomic"
 	"time"
 )
 
@@ -263,14 +264,21 @@ type TimelineEventWithTree struct {
 	EditTree EditTree      `json:"editTree"`
 }
 
-// GenerateRevisionID generates a unique revision ID.
+var (
+	editNodeSeq uint64
+	revSeq      uint64
+)
+
+// GenerateRevisionID generates a unique revision ID guaranteed monotonic across any OS timer resolution.
 func GenerateRevisionID() string {
-	return fmt.Sprintf("rev-%x-%d", time.Now().UnixNano(), time.Now().Unix()%1000)
+	seq := atomic.AddUint64(&revSeq, 1)
+	return fmt.Sprintf("rev-%x-%d", time.Now().UnixNano(), seq)
 }
 
-// GenerateEditID generates a unique edit node ID.
+// GenerateEditID generates a unique edit node ID guaranteed monotonic across any OS timer resolution.
 func GenerateEditID() string {
-	return fmt.Sprintf("ed-%x-%d", time.Now().UnixNano(), time.Now().Unix()%1000)
+	seq := atomic.AddUint64(&editNodeSeq, 1)
+	return fmt.Sprintf("ed-%x-%d", time.Now().UnixNano(), seq)
 }
 
 // NewEditTree creates an edit tree initialized with a root edit node (ED0).

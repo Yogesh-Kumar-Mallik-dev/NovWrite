@@ -42,14 +42,15 @@ export function getLocalIP() {
 
 function checkAdbReverse(port) {
   try {
-    const devicesOutput = execSync("adb devices 2>/dev/null", {
+    const devicesOutput = execSync("adb devices", {
       encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
     });
     const lines = devicesOutput.trim().split("\n").slice(1);
     const hasDevice = lines.some((l) => l.includes("\tdevice"));
     if (hasDevice) {
-      execSync(`adb reverse tcp:${port} tcp:${port} 2>/dev/null`);
-      execSync(`adb reverse tcp:8080 tcp:8080 2>/dev/null`);
+      execSync(`adb reverse tcp:${port} tcp:${port}`, { stdio: "ignore" });
+      execSync(`adb reverse tcp:8080 tcp:8080`, { stdio: "ignore" });
       return true;
     }
   } catch {
@@ -61,8 +62,9 @@ function checkAdbReverse(port) {
 function checkLinuxFirewall() {
   if (process.platform !== "linux") return null;
   try {
-    const status = execSync("systemctl is-active ufw 2>/dev/null", {
+    const status = execSync("systemctl is-active ufw", {
       encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
     }).trim();
     if (status === "active") {
       return "ufw";

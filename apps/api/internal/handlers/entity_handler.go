@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
@@ -81,6 +82,8 @@ func (s *InMemoryEntityStore) Get(projectID, id string) (*world.EntityItem, bool
 	return &ent, true
 }
 
+var entitySeq uint64
+
 func (s *InMemoryEntityStore) Save(projectID string, entity world.EntityItem) world.EntityItem {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -89,7 +92,7 @@ func (s *InMemoryEntityStore) Save(projectID string, entity world.EntityItem) wo
 		s.entities[projectID] = make(map[string]world.EntityItem)
 	}
 	if entity.ID == "" {
-		entity.ID = fmt.Sprintf("ent_%d", time.Now().UnixNano())
+		entity.ID = fmt.Sprintf("ent_%d_%d", time.Now().UnixNano(), atomic.AddUint64(&entitySeq, 1))
 	}
 	s.entities[projectID][entity.ID] = entity
 	return entity

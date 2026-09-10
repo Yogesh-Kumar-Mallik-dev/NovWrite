@@ -2,13 +2,14 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 6-phase test verification (`./test.sh`), strict single-change isolation.
-- **Architectural Baseline:** Version 2.10.5 (Windows PowerShell 5.1 Unicode ANSI Sanitization & Zero Parser Errors).
+- **Architectural Baseline:** Version 2.10.6 (Windows Process Redirection, QR Script Stdio & Monotonic ID Hardening).
 - **Recent Accomplishments:**
-  - **PowerShell Unicode ANSI Sanitization across All `.ps1` Scripts (`dev.ps1`, `test.ps1`, `build.ps1`, `check.ps1`, `flush_db.ps1`)**:
-    - Eliminated all multi-byte Unicode emojis in favor of 100% pure ASCII indicator tokens (`[*]`, `[OK]`, `[!]`, `[WARN]`, `->`, `==`), preventing parser errors on legacy Windows-1252 code pages in Windows PowerShell 5.1.
-    - Replaced PowerShell 7-only `-Environment` with native parent session environment setting (`$env:EXPO_PORT`, `$env:PORT`, `$env:ENVIRONMENT`), ensuring 100% compatibility across both PowerShell 5.1 and modern PowerShell Core (`pwsh`).
-    - Enhanced `Free-Port` helper with deduplicated PID tracking across `Get-NetTCPConnection` and `netstat` fallback queries.
-    - Verified 100% cross-platform parity between Unix `.sh` and Windows `.ps1` core scripts.
+  - **Windows PowerShell 5.1 & Process Redirection Fixes (`dev.ps1`, `scripts/show-mobile-qr.mjs`, `flush_db.ps1`)**:
+    - Resolved `Start-Process` exception in `dev.ps1` by separating stdout/stderr paths (`expo.log`/`expo-error.log`, `desktop.log`/`desktop-error.log`).
+    - Replaced `2>/dev/null` shell redirections in `show-mobile-qr.mjs` with pure Node.js stdio options, eliminating Windows `cmd.exe` path errors.
+    - Added error exit code checking in `flush_db.ps1` when PostgreSQL service is offline.
+  - **Go Backend High-Frequency Monotonic ID Uniqueness (`apps/api`)**:
+    - Integrated atomic sequence counters in `GenerateEditID`, `GenerateRevisionID`, and entity/blueprint/timeline stores, guaranteeing 100% unique IDs across fast test loops on Windows with 15ms clock resolution.
   - **Codebase Health Verification & Formatting**:
     - Formatted repository using `pnpm format`.
     - Verified `./check.sh` passes with 0 errors and 0 warnings.

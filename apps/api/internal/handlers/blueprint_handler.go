@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
@@ -68,6 +69,8 @@ func (s *InMemoryBlueprintStore) Get(projectID, id string) (*world.BlueprintDef,
 	return &bp, true
 }
 
+var blueprintSeq uint64
+
 func (s *InMemoryBlueprintStore) Save(projectID string, bp world.BlueprintDef) world.BlueprintDef {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -76,7 +79,7 @@ func (s *InMemoryBlueprintStore) Save(projectID string, bp world.BlueprintDef) w
 		s.blueprints[projectID] = make(map[string]world.BlueprintDef)
 	}
 	if bp.ID == "" {
-		bp.ID = fmt.Sprintf("bp_%d", time.Now().UnixNano())
+		bp.ID = fmt.Sprintf("bp_%d_%d", time.Now().UnixNano(), atomic.AddUint64(&blueprintSeq, 1))
 	}
 	bp.ProjectID = projectID
 	s.blueprints[projectID][bp.ID] = bp
