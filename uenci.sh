@@ -2,4 +2,4 @@
 set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT_DIR/uenvi.sh" "$@"
+exec "$ROOT_DIR/scripts/uenvi.sh" "$@"

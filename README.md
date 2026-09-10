@@ -216,7 +216,7 @@ flowchart TB
 ## 4. Documentation Index
 
 - **Academic & Formal Specifications:**
-  - **[NovWrite B.Tech Capstone Project Report (`Novwrite.docx`)](Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
+  - **[NovWrite B.Tech Capstone Project Report (`docs/Novwrite.docx`)](docs/Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
   - **[Documentation & Specification Changelog (`changes.md`)](changes.md)** — Chronological timeline of specification and report revisions.
 - **Core Architecture Specifications:**
   - [Frontend Architecture Specification](docs/FRONTEND_ARCHITECTURE.md)
@@ -233,7 +233,7 @@ flowchart TB
   - [Developer Onboarding & Multi-OS Setup Guide](docs/ONBOARDING.md)
   - [Recommended Development Commands Cheat Sheet](docs/recommended_commands.md)
   - [API & Integration Guide](docs/API_GUIDE.md)
-  - [Monorepo Architecture Specification](NOVWRITE_ARCHITECTURE.md)
+  - [Monorepo Architecture Specification](docs/NOVWRITE_ARCHITECTURE.md)
   - [Agent Instructions & Rules](.agent/agents.md)
   - [Design Decisions Log](docs/design_decisions.md)
 

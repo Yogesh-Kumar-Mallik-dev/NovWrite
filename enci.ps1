@@ -1,16 +1,7 @@
 <#
 .SYNOPSIS
-    NovWrite Environment Setup Utility (PowerShell / Windows / macOS / Linux)
-.DESCRIPTION
-    Sets up toolchain, environment files, dependencies, database containers,
-    Prisma client, and shared package builds.
+    NovWrite Environment Setup Utility Entrypoint Forwarder
 #>
-
-param(
-    [switch]$SkipDocker,
-    [switch]$NoDb,
-    [switch]$Reinstall,
-    [switch]$Help
-)
-
-& (Join-Path $PSScriptRoot "envi.ps1") @PSBoundParameters
+$ErrorActionPreference = "Stop"
+$targetScript = Join-Path $PSScriptRoot "scripts\envi.ps1"
+& $targetScript @args
