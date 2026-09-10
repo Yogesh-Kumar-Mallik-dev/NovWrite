@@ -38,11 +38,13 @@ For detailed OS-specific installation instructions (Ubuntu, Debian, Fedora, macO
 git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
-# Install all monorepo workspace dependencies
-pnpm install
-
 # Copy environment variables configuration
 cp .env.example .env
+
+# 1-Click install & build all dependencies (pnpm, Go, Prisma 8, contracts)
+./deps.sh
+# Or on Windows PowerShell:
+# .\deps.ps1
 ```
 
 ### 3.2. 1-Click Development Server
@@ -118,7 +120,7 @@ git commit -S -m "..."
 
 ## 6. Testing & Quality Assurance Pipeline
 
-Before submitting a Pull Request, you must run the project diagnostics and 5-phase test runner. Both must pass with **0 errors and 0 warnings**.
+Before submitting a Pull Request, you must run the project diagnostics and 6-phase test runner. Both must pass with **0 errors and 0 warnings**.
 
 ### 6.1. Diagnostic Typecheck (`./check.sh` / `.\check.ps1`)
 
@@ -165,7 +167,7 @@ When opening a Pull Request, ensure:
 - [ ] Branch is rebased onto the latest target branch (`world`, `novel`, or `main`).
 - [ ] Commits are GPG signed (`git commit -S`).
 - [ ] `./check.sh` passes with **0 errors and 0 warnings**.
-- [ ] `./test.sh` passes all 5 test phases.
+- [ ] `./test.sh` passes all 6 test phases.
 - [ ] Documentation in `docs/` is updated to reflect any API, schema, or UI changes.
 - [ ] `changes.md` records the release changes.
 - [ ] PR description includes the exact rationale, components touched, and verification output.

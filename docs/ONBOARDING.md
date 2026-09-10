@@ -320,6 +320,10 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 # (Executes bridge tests -> data-service tests -> Go backend tests -> web tests -> mobile tests -> typecheck)
 ./test.sh
 
+# 📦 1-Click Dependency Installation & Update
+# (Installs/updates pnpm workspace packages, Go modules, Prisma client, and contracts)
+./deps.sh
+
 # ⚙️ 1-Click Environment Setup Utility
 # (Installs dependencies, creates .env, boots Docker infra, generates Prisma & compiles contracts)
 ./envi.sh
@@ -347,6 +351,9 @@ NovWrite provides dedicated top-level lifecycle scripts with universal cross-pla
 
 # 🧪 1-Click 6-Phase Monorepo Test Runner
 .\test.ps1
+
+# 📦 1-Click Dependency Installation & Update
+.\deps.ps1
 
 # ⚙️ 1-Click Environment Setup Utility
 .\envi.ps1
@@ -399,7 +406,7 @@ Access the applications in your browser:
 
 ## 8. Development Workflow & Engineering Rules
 
-All contributors and AI agents must strictly follow the repository standards defined in [`.agent/agents.md`](file:///home/yogesh/Projects/NovWrite/.agent/agents.md):
+All contributors and AI agents must strictly follow the repository standards defined in [`.agent/agents.md`](../.agent/agents.md):
 
 1. **Strict Single-Change Policy**: Make strictly one atomic change per task (one feature, one refactor, or one fix).
 2. **Commit Standard**: Follow `<type>(<domain>): <expression>` (e.g. `feat(universe): add formula parser for combat powers`).

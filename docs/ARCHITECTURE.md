@@ -203,12 +203,13 @@ Every major domain is partitioned into a dedicated 3-tier route structure:
 
 ---
 
-## 5. 5-Phase Monorepo Test Architecture
+## 5. 6-Phase Monorepo Test Architecture
 
-NovWrite enforces a strict 5-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)):
+NovWrite enforces a strict 6-phase test runner ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) / [`.\test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1)):
 
-1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, and error normalizers (12 unit tests).
-2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, AST formula engine, and state fold engine (40 unit tests).
-3. **Phase 3 (`apps/api`):** Go backend unit and integration test suite.
-4. **Phase 4 (`@novwrite/web`):** Vitest frontend component and store tests (`PipeTreeVisualizer`, `worldStore`, `formulaEngine`).
-5. **Phase 5 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, differential state patchers, and error normalizers (13 unit tests).
+2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, micro-revision compaction, and AST formula engine with cycle detection (41 unit tests).
+3. **Phase 3 (`apps/api`):** Go backend unit, formula engine cycle detection, and HTTP integration test suite.
+4. **Phase 4 (`@novwrite/web`):** Frontend component, store, table configuration, and mathjs AST formula evaluation tests (29 unit tests).
+5. **Phase 5 (`@novwrite/mobile`):** Mobile client stores, entity creation, timeline fold engine, and telemetry suite (11 unit tests).
+6. **Phase 6 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh) / [`.\check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1) with 0 errors and 0 warnings tolerance.

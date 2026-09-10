@@ -220,3 +220,27 @@ This document records the core design principles, trade-offs, and technical deci
 - **Context:** Coupling connection strings and environment evaluation directly inside `schema.prisma` mixes transport/infrastructure configuration with pure domain data modeling. In modern Prisma 8 architecture, data modeling is strictly separated from runtime datasource orchestration.
 - **Decision:** Remove the `url` property from the `datasource db` block in [`apps/data-service/prisma/schema.prisma`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma/schema.prisma) and establish a dedicated configuration document [`apps/data-service/prisma.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/data-service/prisma.config.ts) utilizing `defineConfig` from `prisma/config` with safe local environment fallbacks.
 - **Consequences:** Keeps the Prisma schema purely focused on entities, blueprints, and relational graphs, while isolating infrastructure connection strings into standard, type-safe TypeScript configuration.
+
+---
+
+## Decision 25: Dynamic Desktop OS & Window Manager Harmony
+
+- **Context:** Desktop environments have fundamentally different windowing paradigms. Minimalist tiling window managers and specialized Linux distributions (such as Omarchy, Hyprland, Sway, i3, bspwm, River) expect applications to run frameless without redundant window titlebars, minimize, maximize, or close buttons. Conversely, desktop operating systems like Microsoft Windows, macOS, and floating Linux desktop environments (GNOME, KDE Plasma, XFCE, Cinnamon) require standard native titlebars and control buttons for window manipulation.
+- **Decision:**
+  1. Implement runtime desktop environment inspection in the Tauri 2 core setup hook (`apps/desktop/src-tauri/src/lib.rs`).
+  2. Automatically disable window decorations (`decorations: false`) when running on Omarchy or under tiling window managers (`XDG_CURRENT_DESKTOP`, `DESKTOP_SESSION`, `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`, `I3SOCK`).
+  3. Retain standard native decorations (`decorations: true`) on Windows, macOS, and standard floating Linux desktop environments.
+  4. Provide explicit author override capability via environment variable `NOVWRITE_DECORATIONS=1` (force enable) or `NOVWRITE_DECORATIONS=0` (force frameless).
+- **Consequences:** Ensures NovWrite looks and behaves natively in harmony with every author's desktop environment without manual configuration.
+
+---
+
+## Decision 26: Dedicated 1-Click Dependency Management Utility (`deps.sh` / `deps.ps1`)
+
+- **Context:** Monorepos spanning multiple languages (Node.js/pnpm, Go modules, Rust/Cargo crates, Prisma ORM engines) often suffer from slow onboarding and fragmented installation commands (`pnpm install`, `go mod download`, `prisma generate`, `pnpm --filter @novwrite/bridge build`). Unrestricted `cargo fetch` commands without target filtering can take over 10 minutes to download cross-platform binaries.
+- **Decision:**
+  1. Provide unified 1-click lifecycle scripts [`deps.sh`](file:///home/yogesh/Projects/NovWrite/deps.sh) and [`deps.ps1`](file:///home/yogesh/Projects/NovWrite/deps.ps1) (and `pnpm deps` in `package.json`).
+  2. Execute fast default dependency resolution in under 5 seconds by installing pnpm packages, downloading Go modules, generating Prisma 8 client, and building internal contract packages.
+  3. Keep Rust/Cargo verification optional via `--rust` / `-Rust` flag to prevent unnecessary network overhead.
+  4. Provide `--update` (for upgrading dependencies) and `--clean` (for node_modules / cache reset) flags across both POSIX Bash and Windows PowerShell.
+- **Consequences:** Provides lightning-fast, reproducible dependency management and eliminates developer onboarding bottlenecks across all platforms.

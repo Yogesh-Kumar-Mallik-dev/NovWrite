@@ -107,7 +107,7 @@ cd NovWrite
   - Single-icon purple theme toggle (`#7c3aed`) rendering exactly one icon at a time matching both light and dark themes.
 - **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking & Evidence-Based Continuity Warnings**: At any scene, reconstructs exact world state and flags prose contradictions citing historical causal events.
-- **Universal Cross-Platform Tooling & 5-Phase Test Runner**: 1-click dev server (`./dev.sh` / `.\dev.ps1`), build (`./build.sh` / `.\build.ps1`), typecheck (`./check.sh` / `.\check.ps1`), unified 5-phase test runner (`./test.sh` / `.\test.ps1`), and database flusher (`./flush_db.sh` / `.\flush_db.ps1`) supporting Linux, macOS, and Windows.
+- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: 1-click dev server (`./dev.sh` / `.\dev.ps1`), dependency manager (`./deps.sh` / `.\deps.ps1`), environment setup (`./envi.sh` / `.\envi.ps1`), teardown (`./uenvi.sh` / `.\uenvi.ps1`), build (`./build.sh` / `.\build.ps1`), typecheck (`./check.sh` / `.\check.ps1`), unified 6-phase test runner (`./test.sh` / `.\test.ps1`), and database flusher (`./flush_db.sh` / `.\flush_db.ps1`) supporting Linux, macOS, and Windows.
 
 ---
 
@@ -159,8 +159,8 @@ flowchart TB
 ## 4. Documentation Index
 
 - **Academic & Formal Specifications:**
-  - **[NovWrite B.Tech Capstone Project Report (`Novwrite.docx`)](file:///home/yogesh/Projects/NovWrite/Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
-  - **[Documentation & Specification Changelog (`changes.md`)](file:///home/yogesh/Projects/NovWrite/changes.md)** — Chronological timeline of specification and report revisions.
+  - **[NovWrite B.Tech Capstone Project Report (`Novwrite.docx`)](Novwrite.docx)** — Comprehensive up-to-date professional project report and system architecture document for submission.
+  - **[Documentation & Specification Changelog (`changes.md`)](changes.md)** — Chronological timeline of specification and report revisions.
 - **Core Architecture Specifications:**
   - [Frontend Architecture Specification](docs/FRONTEND_ARCHITECTURE.md)
   - [Database Architecture Specification](docs/DATABASE_ARCHITECTURE.md)

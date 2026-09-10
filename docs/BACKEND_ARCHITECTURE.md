@@ -1,6 +1,6 @@
 # Backend Architecture Specification
 
-**Status:** Locked Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 5-Phase Monorepo Test Runner)  
+**Status:** Locked Baseline (Version 2.10.9 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Project Deletion, UPDATE Pipe & Hanging EDIT Trees DAG, REST API Standards, Zero-Trust Parity, AST Formula Engine & 6-Phase Monorepo Test Runner)  
 **Primary Application Engine:** Go 1.23+ (`apps/api/`)  
 **Data Access Service:** TypeScript Node.js 22+ with Prisma ORM (`apps/data-service/`)  
 **Inter-Service Transport:** gRPC over HTTP/2 (`proto/data/v1/`) & `@novwrite/bridge`  
@@ -511,23 +511,25 @@ cd apps/api && go run ./cmd/admin-cli demote <email_or_username>
 
 ---
 
-## 11. 5-Phase Monorepo Test Architecture & Regression Pipeline
+## 11. 6-Phase Monorepo Test Architecture & Regression Pipeline
 
-NovWrite enforces a mandatory 5-phase test and verification pipeline ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh)) executing across the entire monorepo:
+NovWrite enforces a mandatory 6-phase test and verification pipeline ([`./test.sh`](file:///home/yogesh/Projects/NovWrite/test.sh) / [`.\test.ps1`](file:///home/yogesh/Projects/NovWrite/test.ps1)) executing across the entire monorepo:
 
-| Phase       | Target Subsystem / Package | Test Type & Scope                                                | Verification Command                        |
-| :---------- | :------------------------- | :--------------------------------------------------------------- | :------------------------------------------ |
-| **Phase 1** | `@novwrite/bridge`         | 13 Unit Tests: RPC contracts, Zod schemas, error normalizers     | `pnpm --filter @novwrite/bridge test`       |
-| **Phase 2** | `@novwrite/data-service`   | 41 Unit Tests: Schema validation, AST formulas, DAG cycle checks | `pnpm --filter @novwrite/data-service test` |
-| **Phase 3** | `apps/api` (Go Backend)    | Go Handler Suite: chi routes, RBAC guards, rate limiter, auth    | `go test ./...`                             |
-| **Phase 4** | `@novwrite/web` (Frontend) | 25 Unit Tests: mathjs formulas, project engine, table configs    | `pnpm --filter @novwrite/web test`          |
-| **Phase 5** | SvelteKit & TS Monorepo    | Monorepo Diagnostics: `svelte-check` and `tsc --noEmit`          | `./check.sh`                                |
+| Phase       | Target Subsystem / Package  | Test Type & Scope                                                | Verification Command                        |
+| :---------- | :-------------------------- | :--------------------------------------------------------------- | :------------------------------------------ |
+| **Phase 1** | `@novwrite/bridge`          | 13 Unit Tests: RPC contracts, Zod schemas, error normalizers     | `pnpm --filter @novwrite/bridge test`       |
+| **Phase 2** | `@novwrite/data-service`    | 41 Unit Tests: Schema validation, AST formulas, DAG cycle checks | `pnpm --filter @novwrite/data-service test` |
+| **Phase 3** | `apps/api` (Go Backend)     | Go Handler Suite: chi routes, RBAC guards, rate limiter, auth    | `go test ./...`                             |
+| **Phase 4** | `@novwrite/web` (Frontend)  | 29 Unit Tests: mathjs formulas, project engine, table configs    | `pnpm --filter @novwrite/web test`          |
+| **Phase 5** | `@novwrite/mobile` (Mobile) | 11 Unit Tests: Client stores, entity creation, timeline fold     | `pnpm --filter @novwrite/mobile test`       |
+| **Phase 6** | SvelteKit & TS Monorepo     | Monorepo Diagnostics: `svelte-check` and `tsc --noEmit`          | `./check.sh` / `.\check.ps1`                |
 
 1. **Phase 1 (`@novwrite/bridge`):** Verifies typed RPC contracts, Zod schemas, error normalizers, and mock adapters.
 2. **Phase 2 (`@novwrite/data-service`):** Verifies schema validation, property normalization, AST formula engine, and timeline state fold engine.
 3. **Phase 3 (`apps/api`):** Executes Go unit and integration tests across domain packages (`shared`, `middleware`, `universe`, `timeline`, `continuity`).
 4. **Phase 4 (`@novwrite/web`):** Executes Vitest component, utility, and project store tests (`worldStore`, `projectEngine`, `formulaEngine`, `PipeTreeVisualizer`, `JsonEditor`).
-5. **Phase 5 (Diagnostic Typecheck):** Runs `svelte-check` and `tsc --noEmit` across all workspace packages via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh).
+5. **Phase 5 (`@novwrite/mobile`):** Executes React Native mobile client store, timeline fold, entity mutation, and telemetry tests.
+6. **Phase 6 (Diagnostic Typecheck):** Runs `svelte-check` and `tsc --noEmit` across all workspace packages via [`./check.sh`](file:///home/yogesh/Projects/NovWrite/check.sh) / [`.\check.ps1`](file:///home/yogesh/Projects/NovWrite/check.ps1).
 
 ---
 

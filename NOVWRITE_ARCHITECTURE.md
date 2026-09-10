@@ -1,6 +1,6 @@
 # NovWrite Platform Architecture
 
-**Status:** Technical Specification Baseline (Version 2.8 - Creative Novel Multi-Project Isolation, Freeform Genre Input, 3-Step Irreversible Project Deletion, Zero Redundant Close Buttons, Svelte 5 Native Bidirectional Transitions & 5-Phase Monorepo Test Suite)  
+**Status:** Technical Specification Baseline (Version 2.10.9 - Creative Novel Multi-Project Isolation, Dynamic Desktop Window Harmony, 1-Click Dependency Management, Freeform Genre Input, 3-Step Irreversible Project Deletion, Zero Redundant Close Buttons, Svelte 5 Native Bidirectional Transitions & 6-Phase Monorepo Test Suite)  
 **Scope:** Monorepo design, service boundaries, data persistence, continuity verification engine, blueprint architecture, REST standards, and deployment.
 
 ---

@@ -647,3 +647,27 @@ The dedicated Mobile Client is powered by **React Native 0.76+**, **Expo SDK 52+
   - **Prose Studio (`app/(tabs)/novel.tsx`):** Distraction-free canvas with horizontal/vertical scene selectors and live word counters.
   - **Entities Registry (`app/(tabs)/world.tsx`):** Dedicated touch entity cards with archetype badges and property inspectors.
   - **Blueprints & Schemas (`app/(tabs)/schemas.tsx`):** 1st & 2nd class archetype viewer with dynamic fields and validation lists.
+
+---
+
+## 25. Tauri 2 Native Desktop Client & OS/WM Harmony Engine (`apps/desktop`)
+
+NovWrite Desktop is built on **Tauri 2** in Rust, packaging the SvelteKit 2 web workbench into an ultra-lightweight native desktop application with dynamic platform-native layout harmony:
+
+### 25.1. Dynamic OS and Window Manager Harmony
+
+The desktop client implements an intelligent runtime environment detection engine (`apps/desktop/src-tauri/src/lib.rs`) that adapts window decorations and chrome to the host operating system and window manager:
+
+| Operating System / Desktop Environment                                                       | Window Chrome & Titlebar Behavior                                                                                                                                                                                   | Detection Mechanism                                                                                      |
+| :------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------- |
+| **Omarchy Linux & Tiling Compositors**<br>_(Hyprland, Sway, i3, bspwm, River, Awesome, DWM)_ | **Frameless / Zero Titlebar (`set_decorations(false)`)**<br>Eliminates redundant window titlebars, maximize/minimize/close buttons, and borders to harmonize with tiling compositor layouts and keyboard shortcuts. | `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`, `I3SOCK`, `OMARCHY`, `XDG_CURRENT_DESKTOP`, `DESKTOP_SESSION` |
+| **Windows**                                                                                  | **Native Windows Frame (`set_decorations(true)`)**<br>Standard titlebar with minimize, maximize/restore, and close buttons on the top right, window snapping, and system shadows.                                   | `#[cfg(target_os = "windows")]`                                                                          |
+| **macOS**                                                                                    | **Native macOS Frame (`set_decorations(true)`)**<br>Standard traffic light controls on the top left with rounded macOS window styling.                                                                              | `#[cfg(target_os = "macos")]`                                                                            |
+| **Floating Linux Desktop Environments**<br>_(GNOME, KDE Plasma, XFCE, Cinnamon, MATE)_       | **Native Window Decorations (`set_decorations(true)`)**<br>Standard window frame provided by the desktop environment window manager.                                                                                | Floating `XDG_CURRENT_DESKTOP` fallback                                                                  |
+| **Manual User Override**                                                                     | Custom user layout preference override.                                                                                                                                                                             | `NOVWRITE_DECORATIONS=1` (force decorations) or `NOVWRITE_DECORATIONS=0` (force frameless)               |
+
+### 25.2. Monorepo Desktop Lifecycle Orchestration
+
+- **Direct Loopback Connection**: `tauri.conf.json` connects directly to `http://127.0.0.1:5173` without duplicate `beforeDevCommand` subprocesses, eliminating port collisions and hanging on Windows.
+- **Cargo Pre-Flight Detection & Auto-Path**: `dev.sh` and `dev.ps1` detect if Rust/Cargo is installed, auto-inject `~/.cargo/bin` / `%USERPROFILE%\.cargo\bin` to `PATH`, and gracefully skip desktop launch with informative instructions if Rust is absent.
+- **Resilient Supervision**: Closing the Tauri desktop window during multi-client development does not terminate the Go API or SvelteKit Web server processes.
