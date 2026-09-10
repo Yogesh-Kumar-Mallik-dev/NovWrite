@@ -136,11 +136,41 @@ timeline
                : Go Backend REST Handlers (Novel Chapters/Scenes, Rules & SSE Realtime Event Hub)
                : Web & Desktop Svelte 5 Runes Optimistic Hydration (projectStore, proseStore, worldStore)
                : Mobile Expo React Native Backend Synchronization (MobileStore & MobileApiClient)
+    2026-09-11 : Version 2.12 (4-Tier Separation of Concerns, Redis Distributed Scene Leases & Mobile Modularization)
+               : 4-Tier Separation of Concerns Matrix (Frontend, Go API, Redis 7.2, Postgres 18 + Prisma 8)
+               : Redis Cache Manager with 60s Distributed Scene Leases & Active Project Context Caching
+               : Mobile Screen Decomposition (10 Modular World & Prose Subcomponents)
+               : REST Scene Lease Collaboration Endpoints & Lease Conflict Guards
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.12] — 2026-09-11
+
+**Scope:** 4-Tier Separation of Concerns, Redis Distributed Scene Leases & Mobile UI Decomposition  
+**Target Documents:** [`apps/api/internal/cache/redis_client.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/cache/redis_client.go), [`apps/api/internal/handlers/novel_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/novel_handler.go), [`apps/api/internal/handlers/project_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/project_handler.go), [`packages/bridge/src/client/apiClient.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/client/apiClient.ts), [`packages/bridge/src/contracts.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/contracts.ts), [`packages/bridge/src/types.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/types.ts), [`apps/mobile/app/(tabs)/world.tsx`](<file:///home/yogesh/Projects/NovWrite/apps/mobile/app/(tabs)/world.tsx>), [`apps/mobile/app/(tabs)/novel.tsx`](<file:///home/yogesh/Projects/NovWrite/apps/mobile/app/(tabs)/novel.tsx>), [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/FRONTEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/FRONTEND_ARCHITECTURE.md), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md)
+
+#### Added & Refactored
+
+- **4-Tier Separation of Concerns Architecture:**
+  - **Tier 1 (Frontend):** SvelteKit / React Native / Tauri. Pure view rendering, user interactions, optimistic UI, and Zod boundary validation via `@novwrite/bridge`. Prohibited from calculating business formulas and state folding.
+  - **Tier 2 (Backend):** Go API Gateway (:8080). Canonical brain. Evaluates AST formulas, detects DAG cycles, folds timeline deltas, executes continuity audits, and broadcasts realtime SSE events.
+  - **Tier 3 (Cache):** Redis 7.2. Hot active project working sets (`novwrite:context:project:{id}`), 60-second distributed collaborative scene leases (`novwrite:lease:scene:{id}`), and invalidation pub/sub channels.
+  - **Tier 4 (Database):** PostgreSQL 18 + Prisma 8 + `pgvector`. Durable ACID persistence, append-only timeline event delta logs, and HNSW cosine vector search.
+- **Go Backend Redis Cache Manager (`apps/api/internal/cache`):**
+  - Created [`redis_client.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/cache/redis_client.go) supporting atomic `AcquireSceneLease`, `RenewSceneLease`, `ReleaseSceneLease`, and `GetSceneLease` with fallback to `MemoryCacheManager` when Redis is in standalone mode or unit testing.
+  - Added unit test suite `redis_client_test.go` verifying lease expiration, renewal Lua logic, and active project context storage.
+- **REST Distributed Scene Lease Endpoints (`apps/api`):**
+  - Added `/api/v1/projects/{projectId}/scenes/{sceneId}/lease` query, acquisition (`/lease/acquire`), renewal (`/lease/renew`), and release (`/lease/release`) endpoints.
+  - Enforced collaborative edit protection in `UpdateScene`: prevents concurrent prose overwrites when a scene is locked by another author (`409 Conflict`).
+- **Mobile Screen Decomposition (`apps/mobile`):**
+  - Decomposed 1,000+ line monolithic `world.tsx` and `novel.tsx` screens into 10 modular subcomponents in `apps/mobile/src/components/world/` (`WorldHeader`, `WorldSearchBar`, `WorldSegmentBar`, `WorldBlueprintsList`, `WorldEntitiesList`, `WorldTimelineList`) and `apps/mobile/src/components/novel/` (`ProseHeader`, `ProseChaptersList`, `ProseScenesList`, `ProseEditorModal`).
+- **Unified 6-Phase Test Runner Verification:**
+  - 100% pass across all 6 verification phases (81+ tests, 0 errors, 0 warnings).
+
+---
 
 ### [Version 2.11] — 2026-09-10
 
