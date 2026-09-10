@@ -2,11 +2,14 @@
 
 - **Active Branch:** `world` (synchronized with `main` and `novel`).
 - **Execution Constraints:** Mandatory GPG signed commits (`git commit -S`), 6-phase test verification (`./test.sh`), strict single-change isolation.
-- **Architectural Baseline:** Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision).
+- **Architectural Baseline:** Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & OS/WM Harmony Engine).
 - **Recent Accomplishments:**
+  - **OS & Desktop Environment Harmony Engine (`apps/desktop/src-tauri/src/lib.rs`)**:
+    - Automatic runtime environment detection: Omarchy Linux & tiling compositors (Hyprland, Sway, i3, bspwm, River, etc.) run with frameless `set_decorations(false)` without titlebar or min/max/close buttons.
+    - Windows & macOS & floating Linux DEs (GNOME, KDE Plasma, XFCE) automatically preserve native decorations and window controls.
+    - User override support via `NOVWRITE_DECORATIONS=1|0`.
   - **Tauri 2 Cross-Platform Window Standards (`apps/desktop/src-tauri/tauri.conf.json`)**:
     - Added explicit `"label": "main"` matching capability permissions in `capabilities/default.json`.
-    - Enabled native window decorations (`"decorations": true`) for seamless window controls across Windows, macOS, and Linux.
     - Updated devUrl to `"http://127.0.0.1:5173"` to prevent IPv6 DNS delay issues.
   - **Rust/Cargo Pre-Flight Detection (`dev.sh`, `dev.ps1`)**:
     - Added automatic detection of Rust/Cargo toolchain; gracefully skips desktop launch with an informative notice if Rust is not installed.

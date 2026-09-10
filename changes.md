@@ -121,8 +121,10 @@ timeline
                : envi.sh / envi.ps1 1-Click Dependency, Env, Docker, Prisma & Build Provisioning
                : uenvi.sh / uenvi.ps1 1-Click Server Termination, Container Shutdown & Artifact Purge
                : Fallback DATABASE_URL in prisma.config.ts for Zero-Configuration Setup
-    2026-09-10 : Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision)
-               : Window Label 'main', Native Window Decorations & IPv4 devUrl (127.0.0.1:5173)
+    2026-09-10 : Version 2.10.8 (Tauri 2 Cross-Platform Window Standards & OS/WM Harmony Engine)
+               : Runtime Desktop Environment & Window Manager Detection (Omarchy, Hyprland, Sway, i3 vs GNOME, KDE, Windows, macOS)
+               : Zero-Titlebar Frameless Layout for Omarchy Linux & Tiling WMs
+               : Native Window Controls for Windows, macOS & Floating Linux DEs
                : Rust/Cargo Pre-Flight Detection in dev.sh and dev.ps1
                : Resilient Supervisor Loop Preventing Session Teardown on Desktop Window Close
 ```
@@ -133,14 +135,19 @@ timeline
 
 ### [Version 2.10.8] — 2026-09-10
 
-**Scope:** Tauri 2 Cross-Platform Window Standards & Resilient Desktop Dev Supervision  
-**Target Documents:** [`apps/desktop/src-tauri/tauri.conf.json`](file:///home/yogesh/Projects/NovWrite/apps/desktop/src-tauri/tauri.conf.json), [`dev.sh`](file:///home/yogesh/Projects/NovWrite/dev.sh), [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
+**Scope:** Tauri 2 Cross-Platform Window Standards & OS/WM Harmony Engine  
+**Target Documents:** [`apps/desktop/src-tauri/src/lib.rs`](file:///home/yogesh/Projects/NovWrite/apps/desktop/src-tauri/src/lib.rs), [`apps/desktop/src-tauri/tauri.conf.json`](file:///home/yogesh/Projects/NovWrite/apps/desktop/src-tauri/tauri.conf.json), [`dev.sh`](file:///home/yogesh/Projects/NovWrite/dev.sh), [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1), [`changes.md`](file:///home/yogesh/Projects/NovWrite/changes.md), [`.agent/current_context.md`](file:///home/yogesh/Projects/NovWrite/.agent/current_context.md)
 
 #### Added & Refactored
 
+- **OS & Desktop Environment Harmony Engine (`apps/desktop/src-tauri/src/lib.rs`):**
+  - **Omarchy Linux & Tiling Compositors (Hyprland, Sway, i3, bspwm, River, Awesome, DWM, etc.):** Automatically detects Omarchy and tiling window manager signatures via `HYPRLAND_INSTANCE_SIGNATURE`, `SWAYSOCK`, `I3SOCK`, `OMARCHY`, `XDG_CURRENT_DESKTOP`, and `DESKTOP_SESSION`. Sets `window.set_decorations(false)` to preserve the frameless, zero-titlebar layout without redundant minimize/maximize/close buttons.
+  - **Windows:** Automatically enables native titlebar, window snapping, and standard minimize/maximize/close controls on the top-right (`window.set_decorations(true)`).
+  - **macOS:** Automatically enables native top-left traffic lights and macOS styling (`window.set_decorations(true)`).
+  - **Floating Linux Desktop Environments (GNOME, KDE Plasma, XFCE, Cinnamon, MATE):** Automatically preserves standard window manager decorations.
+  - **Custom User Override:** Respects `NOVWRITE_DECORATIONS=1` or `NOVWRITE_DECORATIONS=0` environment variables across all platforms.
 - **Tauri 2 Cross-Platform Window Configuration (`tauri.conf.json`):**
   - Added explicit `"label": "main"` mapping to align with default security capability configuration (`capabilities/default.json`).
-  - Enabled native window decorations (`"decorations": true`) to guarantee standard titlebars, drag bars, minimize/maximize/close controls across Windows, macOS, and standard Linux desktop environments (GNOME, KDE, XFCE, Omarchy/Arch).
   - Updated loopback devUrl to `"http://127.0.0.1:5173"` to avoid IPv6 `::1` DNS resolution delays.
 - **Rust/Cargo Pre-Flight Validation (`dev.sh` / `dev.ps1`):**
   - Added pre-flight check for `cargo` binary before attempting desktop compilation. If Rust is not installed, logs an informative notice and skips desktop launch without failing the Go API, SvelteKit Web, or Expo Mobile services.
