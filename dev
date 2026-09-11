@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# NovWrite Development Server Alias (./dev -> ./run.sh dev)
+# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
+# Usage: ./dev [options]
+# ==============================================================================
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$ROOT_DIR/run.sh" dev "$@"

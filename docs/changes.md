@@ -172,6 +172,7 @@ timeline
   - Migrated core lifecycle script implementations into `scripts/` (`build.sh`, `build.ps1`, `check.sh`, `check.ps1`, `deps.sh`, `deps.ps1`, `dev.sh`, `dev.ps1`, `envi.sh`, `envi.ps1`, `flush_db.sh`, `flush_db.ps1`, `test.sh`, `test.ps1`, `uenvi.sh`, `uenvi.ps1`, `show-mobile-qr.mjs`).
   - Completely purged all 20 scattered individual script files from the repository root.
   - Implemented a **single, robust root entrypoint** ([`run.sh`](file:///home/yogesh/Projects/NovWrite/run.sh) for Bash and [`run.ps1`](file:///home/yogesh/Projects/NovWrite/run.ps1) for PowerShell) orchestrating all subcommands (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`, `help`) with seamless argument and flag forwarding.
+  - Added repository-wide shorthand aliases ([`dev`](file:///home/yogesh/Projects/NovWrite/dev) and [`dev.ps1`](file:///home/yogesh/Projects/NovWrite/dev.ps1)) ensuring `./dev` executes `./run.sh dev` transparently.
   - Updated `package.json` scripts (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `mobile:qr`) to invoke `./run.sh <command>`.
 - **Verification:**
   - 100% verification across all 6 test phases via `./run.sh check` and `./run.sh test` runners.
