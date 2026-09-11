@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import Checkbox from "$lib/components/ui/checkbox.svelte";
   import { authStore } from "$lib/stores/projectStore.svelte";
   import {
     LogIn,
@@ -141,10 +142,8 @@
         <!-- Remember Me Checkbox -->
         <div class="flex items-center justify-between pt-1">
           <label class="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground select-none">
-            <input
-              type="checkbox"
+            <Checkbox
               bind:checked={rememberMe}
-              class="rounded border-input text-primary focus:ring-primary/20"
             />
             <span>Remember this device</span>
           </label>

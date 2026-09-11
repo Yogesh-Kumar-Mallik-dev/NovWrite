@@ -62,6 +62,21 @@ func (rw *responseTimeWriter) Write(b []byte) (int, error) {
 	return rw.ResponseWriter.Write(b)
 }
 
+// Flush ensures SSE streams and chunked HTTP flushes pass through transparently.
+func (rw *responseTimeWriter) Flush() {
+	if !rw.wroteHeader {
+		rw.WriteHeader(http.StatusOK)
+	}
+	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+// Unwrap returns the underlying ResponseWriter for standard library and router unwrapping.
+func (rw *responseTimeWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 // MaxBytesMiddleware limits the maximum readable size of incoming request bodies to protect against payload DoS.
 func MaxBytesMiddleware(maxBytes int64) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

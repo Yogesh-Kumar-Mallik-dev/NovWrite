@@ -63,6 +63,27 @@ func TestMiddleware_ResponseTime_HeaderSet(t *testing.T) {
 	}
 }
 
+func TestMiddleware_ResponseTime_FlusherSupport(t *testing.T) {
+	var flushed bool
+	handler := ResponseTimeMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			t.Fatalf("BLOCK_TEST_HTTP_MIDDLEWARE_001: expected ResponseWriter to implement http.Flusher")
+		}
+		flusher.Flush()
+		flushed = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/stream", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if !flushed {
+		t.Fatalf("BLOCK_TEST_HTTP_MIDDLEWARE_001: expected Flush to be called successfully")
+	}
+}
+
 func TestMiddleware_SecurityHeaders(t *testing.T) {
 	handler := SecurityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

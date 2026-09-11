@@ -159,11 +159,36 @@ timeline
                : Complete Elimination of Simulated Heatmap Activity on Clean Slate
                : Reactive Writing Milestone Progress Bar & Derived Goals
                : Bridge Mock Export Encapsulation & Internal Test Fixture Isolation
+    2026-09-11 : Version 2.13.2 (Bits UI Checkbox Standard, SSE Flusher Streaming & Vite Workspace Allow)
+               : Standardized Bits UI & Svelte 5 Checkbox Component (<Checkbox />)
+               : Go API ResponseTime Middleware http.Flusher & Unwrap Streaming Support
+               : Vite searchForWorkspaceRoot Configuration Eliminating File Serving Warnings
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.13.2] — 2026-09-11
+
+**Scope:** Bits UI Checkbox Component Standard, Go SSE Streaming Fix & Vite Workspace Root Configuration  
+**Target Documents:** [`apps/web/src/lib/components/ui/checkbox/`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/checkbox/), [`apps/web/src/lib/components/ui/checkbox.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/checkbox.svelte), [`apps/web/src/lib/components/ui/delete-project-dialog.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/delete-project-dialog.svelte), [`apps/web/src/routes/login/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/login/+page.svelte), [`apps/api/internal/httputil/middleware.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/httputil/middleware.go), [`apps/api/internal/httputil/middleware_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/httputil/middleware_test.go), [`apps/web/vite.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/vite.config.ts), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+
+#### Added & Enhanced
+
+- **Bits UI & Svelte 5 Runes Checkbox Component (`apps/web/src/lib/components/ui/checkbox/`):**
+  - Created standardized, accessible Checkbox component conforming to modern shadcn-svelte / Bits UI 2 specifications.
+  - Implemented bindable `checked`, `indeterminate`, and `ref` props with centered check and minus SVG indicators.
+  - Replaced native `<input type="checkbox">` elements across [`DeleteProjectDialog`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/delete-project-dialog.svelte) and the [`Login`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/login/+page.svelte) page.
+- **Go API Server-Sent Events (SSE) Streaming Fix (`apps/api`):**
+  - Implemented `Flush()` and `Unwrap()` on [`responseTimeWriter`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/httputil/middleware.go) to ensure SSE connections via `GET /api/v1/events/stream` and `GET /api/v1/projects/{projectId}/events/stream` can flush events through the middleware chain without throwing HTTP 500 errors.
+  - Added unit test `TestMiddleware_ResponseTime_FlusherSupport` in [`middleware_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/httputil/middleware_test.go).
+- **Vite Workspace Root File Serving Configuration (`apps/web`):**
+  - Configured `server.fs.allow: [searchForWorkspaceRoot(process.cwd())]` in [`vite.config.ts`](file:///home/yogesh/Projects/NovWrite/apps/web/vite.config.ts) to eliminate Vite out-of-allow-list warnings in monorepo development.
+- **Verification:**
+  - Monorepo check (`./script.sh check`) and 6-phase test suite (`./script.sh test`) passed with 0 errors and 0 warnings.
+
+---
 
 ### [Version 2.13.1] — 2026-09-11
 

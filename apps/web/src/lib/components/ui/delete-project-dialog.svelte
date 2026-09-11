@@ -2,6 +2,7 @@
   import { fade, scale } from "svelte/transition";
   import Button from "$lib/components/ui/button.svelte";
   import Card from "$lib/components/ui/card.svelte";
+  import Checkbox from "$lib/components/ui/checkbox.svelte";
   import { projectStore } from "$lib/stores/projectStore.svelte";
   import { worldStore } from "$lib/stores/worldStore.svelte";
   import {
@@ -256,10 +257,9 @@
 
               <!-- Explicit Checkbox Acknowledgment -->
               <label class="flex items-start gap-3 p-3.5 rounded-lg border border-border bg-card hover:bg-muted/40 cursor-pointer transition-colors select-none">
-                <input
-                  type="checkbox"
+                <Checkbox
                   bind:checked={acknowledged}
-                  class="mt-0.5 h-4 w-4 rounded border-border text-destructive focus:ring-destructive cursor-pointer shrink-0"
+                  class="mt-0.5 shrink-0"
                 />
                 <div class="space-y-0.5">
                   <span class="font-semibold text-foreground text-xs block">

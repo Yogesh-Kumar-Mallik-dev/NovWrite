@@ -12,4 +12,5 @@ export { default as EmptyState } from "./empty-state.svelte";
 export { default as Toaster } from "./toaster.svelte";
 export { default as JsonEditor } from "./json-editor/json-editor.svelte";
 export { default as Pagination } from "./pagination.svelte";
+export { default as Checkbox, default as CheckboxRoot } from "./checkbox/checkbox.svelte";
 export * from "./radio-group";
