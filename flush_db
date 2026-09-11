@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# NovWrite Flush DB Alias (./flush_db -> ./run.sh flush_db)
+# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
+# Usage: ./flush_db [options]
+# ==============================================================================
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$ROOT_DIR/run.sh" flush_db "$@"

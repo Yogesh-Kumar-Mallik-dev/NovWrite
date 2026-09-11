@@ -18,12 +18,12 @@
 >
 > - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
 >   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./run.sh deps` (or `pnpm deps`)
->   - **Windows PowerShell**: `.\run.ps1 deps`
+>   - **Linux / macOS / WSL**: `./deps` (or `./run.sh deps` / `pnpm deps`)
+>   - **Windows PowerShell**: `.\deps` (or `.\run.ps1 deps`)
 > - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
 >   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./run.sh deps --update` (or `pnpm deps --update`)
->   - **Windows PowerShell**: `.\run.ps1 deps -Update`
+>   - **Linux / macOS / WSL**: `./deps --update` (or `./run.sh deps --update` / `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\deps -Update` (or `.\run.ps1 deps -Update`)
 
 ---
 
@@ -31,7 +31,7 @@
 
 > 💡 _For full workstation setup, prerequisites, and developer workflows, visit the **[Developer Onboarding Guide](docs/ONBOARDING.md)**._
 
-Our unified runner is the **official, fastest, and recommended** way to set up and run NovWrite:
+Our unified runner and direct root aliases are the **official, fastest, and recommended** way to set up and run NovWrite:
 
 ### 1.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -41,10 +41,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
-./run.sh envi
+./envi        # or: ./run.sh envi
 
 # 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
-./run.sh dev
+./dev         # or: ./run.sh dev
 ```
 
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
@@ -55,10 +55,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup
-.\run.ps1 envi
+.\envi        # or: .\run.ps1 envi
 
 # 3. 1-Click Launch Full Dev Environment
-.\run.ps1 dev
+.\dev         # or: .\run.ps1 dev
 ```
 
 ---
@@ -164,7 +164,7 @@ pnpm --filter @novwrite/bridge build
   - Single-icon purple theme toggle (`#7c3aed`) rendering exactly one icon at a time matching both light and dark themes.
 - **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking & Evidence-Based Continuity Warnings**: At any scene, reconstructs exact world state and flags prose contradictions citing historical causal events.
-- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: Unified entrypoint CLI (`./run.sh` / `.\run.ps1`) orchestrating dev server (`dev`), dependency manager (`deps`), environment setup (`envi`), teardown (`uenvi`), build (`build`), typecheck (`check`), unified 6-phase test runner (`test`), and database flusher (`flush-db`) supporting Linux, macOS, and Windows.
+- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: Unified entrypoint CLI (`./run.sh` / `.\run.ps1`) and direct shorthand root aliases (`./dev`, `./build`, `./check`, `./test`, `./deps`, `./envi`, `./uenvi`, `./flush_db`, `./qr`) orchestrating dev server, dependency manager, environment setup, teardown, build, typecheck, unified 6-phase test runner, and database flusher supporting Linux, macOS, and Windows.
 
 ---
 

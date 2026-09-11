@@ -42,89 +42,95 @@ go version && node -v && pnpm -v && docker --version && protoc --version && buf 
 
 ---
 
-## 2. Top-Level Monorepo Orchestration Scripts
+## 2. Top-Level Monorepo Orchestration Scripts & Aliases
 
-All lifecycle commands are run via the single unified entrypoint (`./run.sh` on Linux/macOS/WSL or `.\run.ps1` on Windows PowerShell).
+All lifecycle commands can be executed either via the unified entrypoint (`./run.sh <cmd>` on Linux/macOS/WSL or `.\run.ps1 <cmd>` on Windows PowerShell) or directly via repository-wide shorthand aliases (`./<cmd>` or `.\<cmd>`).
 
 ### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
 
 ```bash
 # 🚀 1-Click Development Server (API + Web)
-./run.sh dev             # or: pnpm dev
+./dev                    # or: ./run.sh dev (or: pnpm dev)
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
 # Renders Expo QR code upfront and streams Web/Tauri logs cleanly without terminal hijacking
-./run.sh dev --all       # or: ./run.sh dev -a
+./dev --all              # or: ./dev -a (or: ./run.sh dev --all)
 
 # 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
-./run.sh dev --mobile    # or: ./run.sh dev -m
+./dev --mobile           # or: ./dev -m (or: ./run.sh dev --mobile)
 
 # 🖥️ Launch API + Web + Tauri Desktop Client
-./run.sh dev --desktop   # or: ./run.sh dev -d
+./dev --desktop          # or: ./dev -d (or: ./run.sh dev --desktop)
 
 # 🏗️ 1-Click Monorepo Build (bridge contracts, data-service dist, Go api binary, web bundle)
-./run.sh build           # or: pnpm build
+./build                  # or: ./run.sh build (or: pnpm build)
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck (verifies all TS and Svelte diagnostics across packages)
-./run.sh check           # or: pnpm check
+./check                  # or: ./run.sh check (or: pnpm check)
 
 # 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
-./run.sh test            # or: pnpm test
+./test                   # or: ./run.sh test (or: pnpm test)
 
 # 📦 1-Click Dependency Installation & Update
-# - First-time clone: ./run.sh deps (installs pnpm, Go, Prisma 8, bridge in < 5s)
-# - Updating repo:    ./run.sh deps --update (updates all packages after git pull)
-# - Clean cache:      ./run.sh deps --clean
-./run.sh deps            # or: pnpm deps
+# - First-time clone: ./deps (installs pnpm, Go, Prisma 8, bridge in < 5s)
+# - Updating repo:    ./deps --update (updates all packages after git pull)
+# - Clean cache:      ./deps --clean
+./deps                   # or: ./run.sh deps (or: pnpm deps)
 
 # ⚙️ 1-Click Environment Setup (installs dependencies, prepares .env, starts DB/Redis, runs Prisma & builds)
-./run.sh envi            # or: pnpm envi
+./envi                   # or: ./run.sh envi (or: pnpm envi)
 
 # 🛑 1-Click Environment Teardown & Reset (terminates dev servers, shuts down Docker, purges logs & build dist)
-./run.sh uenvi           # or: pnpm uenvi (add -v for volume wipe, -a for deep clean)
+./uenvi                  # or: ./run.sh uenvi (add -v for volume wipe, -a for deep clean)
 
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
-./run.sh flush-db        # or: pnpm flush-db
+./flush_db               # or: ./flush-db (or: ./run.sh flush-db)
+
+# 📱 Render Expo Mobile QR Code
+./qr                     # or: ./run.sh qr (or: pnpm mobile:qr)
 ```
 
 ### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
 
 ```powershell
 # 🚀 1-Click Development Server (API + Web)
-.\run.ps1 dev
+.\dev                    # or: .\run.ps1 dev
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
-.\run.ps1 dev -All
+.\dev -All               # or: .\run.ps1 dev -All
 
 # 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
-.\run.ps1 dev -MobileOnly
+.\dev -MobileOnly        # or: .\run.ps1 dev -MobileOnly
 
 # 🖥️ Launch API + Web + Tauri Desktop Client
-.\run.ps1 dev -DesktopOnly
+.\dev -DesktopOnly       # or: .\run.ps1 dev -DesktopOnly
 
 # 🏗️ 1-Click Monorepo Build
-.\run.ps1 build
+.\build                  # or: .\run.ps1 build
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck
-.\run.ps1 check
+.\check                  # or: .\run.ps1 check
 
 # 🧪 1-Click 6-Phase Test Runner
-.\run.ps1 test
+.\test                   # or: .\run.ps1 test
 
 # 📦 1-Click Dependency Installation & Update
-# - First-time clone: .\run.ps1 deps
-# - Updating repo:    .\run.ps1 deps -Update
-# - Clean cache:      .\run.ps1 deps -Clean
-.\run.ps1 deps
+# - First-time clone: .\deps
+# - Updating repo:    .\deps -Update
+# - Clean cache:      .\deps -Clean
+.\deps                   # or: .\run.ps1 deps
 
 # ⚙️ 1-Click Environment Setup
-.\run.ps1 envi
+.\envi                   # or: .\run.ps1 envi
 
 # 🛑 1-Click Environment Teardown & Reset
-.\run.ps1 uenvi
+.\uenvi                  # or: .\run.ps1 uenvi
 
 # 🧹 Complete Database & Cache Reset
-.\run.ps1 flush-db
+.\flush_db               # or: .\run.ps1 flush-db
+
+# 📱 Render Expo Mobile QR Code
+.\qr                     # or: .\run.ps1 qr
 ```
 
 ---

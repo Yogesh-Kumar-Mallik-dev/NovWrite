@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# NovWrite Dependencies Alias (./deps -> ./run.sh deps)
+# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
+# Usage: ./deps [options]
+# ==============================================================================
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$ROOT_DIR/run.sh" deps "$@"
