@@ -212,13 +212,7 @@ export class ProseStateStore {
             updatedAt: c.updatedAt || new Date().toISOString(),
           }),
         );
-
-        // Merge: keep local chapters not yet on backend, update existing
-        const backendIds = new Set(backendChaps.map((c) => c.id));
-        const localOnly = this.chapters.filter(
-          (c) => !backendIds.has(c.id) && c.projectId === targetProject,
-        );
-        this.chapters = [...backendChaps, ...localOnly].sort(
+        this.chapters = backendChaps.sort(
           (a, b) => a.orderIndex - b.orderIndex,
         );
       }
@@ -246,21 +240,21 @@ export class ProseStateStore {
             updatedAt: s.updatedAt || new Date().toISOString(),
           }),
         );
-
-        const backendSceneIds = new Set(backendScenes.map((s) => s.id));
-        const localOnlyScenes = this.scenes.filter(
-          (s) => !backendSceneIds.has(s.id) && s.projectId === targetProject,
-        );
-        this.scenes = [...backendScenes, ...localOnlyScenes].sort(
+        this.scenes = backendScenes.sort(
           (a, b) => a.orderIndex - b.orderIndex,
         );
       }
 
       if (!this.activeSceneId && this.scenes.length > 0) {
         this.activeSceneId = this.scenes[0].id;
+      } else if (this.activeSceneId && !this.scenes.some((s) => s.id === this.activeSceneId)) {
+        this.activeSceneId = this.scenes.length > 0 ? this.scenes[0].id : null;
       }
+
       if (!this.activeChapterId && this.chapters.length > 0) {
         this.activeChapterId = this.chapters[0].id;
+      } else if (this.activeChapterId && !this.chapters.some((c) => c.id === this.activeChapterId)) {
+        this.activeChapterId = this.chapters.length > 0 ? this.chapters[0].id : null;
       }
 
       this.saveToStorage();

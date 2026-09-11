@@ -117,39 +117,19 @@ export class ProjectStateStore {
     try {
       const resp = await apiClient.listProjects({ pageSize: 100 });
       if (resp && resp.data) {
-        // Merge backend projects into local projects
-        const backendMap = new Map<string, ProjectItem>();
-        for (const bp of resp.data) {
-          backendMap.set(bp.id, {
-            id: bp.id,
-            name: bp.name,
-            description: bp.description || "",
-            genre: bp.genre || "General Fiction",
-            createdAt: bp.createdAt || new Date().toISOString(),
-            updatedAt: bp.updatedAt || new Date().toISOString(),
-          });
-        }
+        const backendProjects: ProjectItem[] = resp.data.map((bp) => ({
+          id: bp.id,
+          name: bp.name,
+          description: bp.description || "",
+          genre: bp.genre || "General Fiction",
+          createdAt: bp.createdAt || new Date().toISOString(),
+          updatedAt: bp.updatedAt || new Date().toISOString(),
+        }));
 
-        // Combine unique local-only and backend projects
-        const merged: ProjectItem[] = [];
-        const seenIds = new Set<string>();
-
-        // Add backend items first
-        for (const bp of backendMap.values()) {
-          merged.push(bp);
-          seenIds.add(bp.id);
-        }
-
-        // Add local-only items
-        for (const lp of this.projects) {
-          if (!seenIds.has(lp.id)) {
-            merged.push(lp);
-            seenIds.add(lp.id);
-          }
-        }
-
-        this.projects = merged;
-        if (!this.activeProjectId && this.projects.length > 0) {
+        this.projects = backendProjects;
+        if (this.activeProjectId && !this.projects.some((p) => p.id === this.activeProjectId)) {
+          this.activeProjectId = this.projects.length > 0 ? this.projects[0].id : null;
+        } else if (!this.activeProjectId && this.projects.length > 0) {
           this.activeProjectId = this.projects[0].id;
         }
         this.saveToStorage();
@@ -299,6 +279,14 @@ export class ProjectStateStore {
     if (this.activeProjectId === projectId) {
       this.activeProjectId =
         this.projects.length > 0 ? this.projects[0].id : null;
+    }
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      try {
+        localStorage.removeItem(`novwrite_prose_v1_${projectId}`);
+        localStorage.removeItem(`novwrite_world_state_${projectId}`);
+      } catch (e) {
+        console.warn("[ProjectStore] Failed to remove scoped project data:", e);
+      }
     }
     this.saveToStorage();
 
@@ -458,6 +446,7 @@ export class AuthStore {
         this.token = resp.data.token;
         apiClient.setAuthToken(this.token);
         this.saveToStorage();
+        await projectStore.syncWithBackend();
         toastStore.success(`Welcome back, ${resp.data.user.username}!`);
         return true;
       }
@@ -479,6 +468,7 @@ export class AuthStore {
         this.token = resp.data.token;
         apiClient.setAuthToken(this.token);
         this.saveToStorage();
+        await projectStore.syncWithBackend();
         toastStore.success(`Account created! Welcome, ${resp.data.user.username}.`);
         return true;
       }
@@ -500,6 +490,7 @@ export class AuthStore {
         this.token = resp.data.token;
         apiClient.setAuthToken(this.token);
         this.saveToStorage();
+        await projectStore.syncWithBackend();
         toastStore.success("Super Admin console unlocked.");
         return true;
       }
@@ -522,6 +513,7 @@ export class AuthStore {
       this.token = null;
       apiClient.setAuthToken(null);
       this.saveToStorage();
+      projectStore.clearAllProjects();
       toastStore.info("You have been signed out.");
     }
   }

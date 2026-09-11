@@ -231,9 +231,7 @@ export class WorldStateStore {
           fields: b.fields || [],
           isSystemDefault: b.isSystemDefault,
         }));
-        const backendIds = new Set(backendBps.map((b) => b.id));
-        const localOnly = this.blueprints.filter((b) => !backendIds.has(b.id));
-        this.blueprints = [...backendBps, ...localOnly];
+        this.blueprints = backendBps;
       }
 
       if (entRes.status === "fulfilled" && entRes.value && entRes.value.data) {
@@ -248,11 +246,7 @@ export class WorldStateStore {
           computedFormulas: e.computedFormulas || {},
           lastMutatedSeqNumber: e.lastMutatedSeqNumber ?? 0,
         }));
-        const backendEntIds = new Set(backendEnts.map((e) => e.id));
-        const localOnlyEnts = this.entities.filter(
-          (e) => !backendEntIds.has(e.id),
-        );
-        this.entities = [...backendEnts, ...localOnlyEnts];
+        this.entities = backendEnts;
       }
 
       if (tlRes.status === "fulfilled" && tlRes.value && tlRes.value.data) {
@@ -277,11 +271,7 @@ export class WorldStateStore {
             createdAt: ev.createdAt || new Date().toISOString(),
           }),
         );
-        const backendTlIds = new Set(backendTls.map((t) => t.id));
-        const localOnlyTls = this.timelineEvents.filter(
-          (t) => !backendTlIds.has(t.id),
-        );
-        this.timelineEvents = [...backendTls, ...localOnlyTls];
+        this.timelineEvents = backendTls;
       }
 
       if (
@@ -305,11 +295,7 @@ export class WorldStateStore {
             suggestedResolution: r.suggestedResolution,
           }),
         );
-        const backendRuleIds = new Set(backendRules.map((r) => r.id));
-        const localOnlyRules = this.rules.filter(
-          (r) => !backendRuleIds.has(r.id),
-        );
-        this.rules = [...backendRules, ...localOnlyRules];
+        this.rules = backendRules;
       }
 
       if (

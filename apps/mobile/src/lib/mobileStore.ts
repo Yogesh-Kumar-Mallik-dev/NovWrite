@@ -279,9 +279,12 @@ export class MobileStore {
           createdAt: p.createdAt || new Date().toISOString(),
           updatedAt: p.updatedAt || new Date().toISOString(),
         }));
-        const bIds = new Set(backendProjects.map((p) => p.id));
-        const localOnly = this.state.projects.filter((p) => !bIds.has(p.id));
-        this.state.projects = [...backendProjects, ...localOnly];
+        this.state.projects = backendProjects;
+        if (this.state.activeProjectId && !this.state.projects.some((p) => p.id === this.state.activeProjectId)) {
+          this.state.activeProjectId = this.state.projects.length > 0 ? this.state.projects[0].id : null;
+        } else if (!this.state.activeProjectId && this.state.projects.length > 0) {
+          this.state.activeProjectId = this.state.projects[0].id;
+        }
       }
 
       if (targetProject) {
@@ -312,11 +315,7 @@ export class MobileStore {
               updatedAt: c.updatedAt || new Date().toISOString(),
             }),
           );
-          const cIds = new Set(backendChaps.map((c) => c.id));
-          const localOnlyChaps = this.state.chapters.filter(
-            (c) => !cIds.has(c.id),
-          );
-          this.state.chapters = [...backendChaps, ...localOnlyChaps].sort(
+          this.state.chapters = backendChaps.sort(
             (a, b) => a.orderIndex - b.orderIndex,
           );
         }
@@ -340,11 +339,7 @@ export class MobileStore {
               updatedAt: s.updatedAt || new Date().toISOString(),
             }),
           );
-          const sIds = new Set(backendScenes.map((s) => s.id));
-          const localOnlyScenes = this.state.scenes.filter(
-            (s) => !sIds.has(s.id),
-          );
-          this.state.scenes = [...backendScenes, ...localOnlyScenes].sort(
+          this.state.scenes = backendScenes.sort(
             (a, b) => a.orderIndex - b.orderIndex,
           );
         }
@@ -359,11 +354,7 @@ export class MobileStore {
             fields: b.fields || [],
             isSystemDefault: b.isSystemDefault,
           }));
-          const bpIds = new Set(backendBps.map((b) => b.id));
-          const localOnlyBps = this.state.blueprints.filter(
-            (b) => !bpIds.has(b.id),
-          );
-          this.state.blueprints = [...backendBps, ...localOnlyBps];
+          this.state.blueprints = backendBps;
         }
 
         if (entRes.status === "fulfilled" && entRes.value?.data) {
@@ -378,11 +369,7 @@ export class MobileStore {
             computedFormulas: e.computedFormulas || {},
             lastMutatedSeqNumber: e.lastMutatedSeqNumber ?? 0,
           }));
-          const entIds = new Set(backendEnts.map((e) => e.id));
-          const localOnlyEnts = this.state.entities.filter(
-            (e) => !entIds.has(e.id),
-          );
-          this.state.entities = [...backendEnts, ...localOnlyEnts];
+          this.state.entities = backendEnts;
         }
 
         if (tlRes.status === "fulfilled" && tlRes.value?.data) {
@@ -406,11 +393,7 @@ export class MobileStore {
               createdAt: ev.createdAt || new Date().toISOString(),
             }),
           );
-          const tlIds = new Set(backendTls.map((t) => t.id));
-          const localOnlyTls = this.state.timelineEvents.filter(
-            (t) => !tlIds.has(t.id),
-          );
-          this.state.timelineEvents = [...backendTls, ...localOnlyTls];
+          this.state.timelineEvents = backendTls;
         }
 
         if (ruleRes.status === "fulfilled" && ruleRes.value?.data) {
@@ -430,11 +413,7 @@ export class MobileStore {
               suggestedResolution: r.suggestedResolution,
             }),
           );
-          const rIds = new Set(backendRules.map((r) => r.id));
-          const localOnlyRules = this.state.rules.filter(
-            (r) => !rIds.has(r.id),
-          );
-          this.state.rules = [...backendRules, ...localOnlyRules];
+          this.state.rules = backendRules;
         }
 
         if (auditRes.status === "fulfilled" && auditRes.value?.data) {
@@ -1620,6 +1599,25 @@ export class MobileStore {
       this.state.user = null;
       this.state.token = null;
       mobileApiClient.setAuthToken(null);
+      this.state.projects = [];
+      this.state.activeProjectId = null;
+      this.state.chapters = [];
+      this.state.scenes = [];
+      this.state.activeSceneId = null;
+      this.state.activeChapterId = null;
+      this.state.blueprints = [];
+      this.state.entities = [];
+      this.state.timelineEvents = [];
+      this.state.rules = [];
+      this.state.violations = [];
+      if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+        try {
+          localStorage.removeItem("novwrite_auth_user_v1");
+          localStorage.removeItem("novwrite_auth_token_v1");
+          localStorage.removeItem("novwrite_projects_v1");
+          localStorage.removeItem("novwrite_active_project_id_v1");
+        } catch {}
+      }
       this.notify();
     }
   }
