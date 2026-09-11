@@ -126,6 +126,29 @@ NovWrite provides a unified root CLI (`./script.sh` / `.\script.ps1`) orchestrat
 .\script.ps1 qr
 ```
 
+### 2.3. Optional Zsh / Bash Shell Aliases (`~/.zshrc` or `~/.bashrc`)
+
+If you prefer running short commands directly without typing `./script.sh` each time, you can append the following aliases to your `~/.zshrc` (or `~/.bashrc`):
+
+```zsh
+# --- NovWrite Shorthand Lifecycle Aliases ---
+alias dev='./script.sh dev'
+alias build='./script.sh build'
+alias check='./script.sh check'
+alias test='./script.sh test'
+alias deps='./script.sh deps'
+alias envi='./script.sh envi'
+alias uenvi='./script.sh uenvi'
+alias flush-db='./script.sh flush-db'
+alias qr='./script.sh qr'
+```
+
+To apply immediately in your current Zsh session:
+
+```zsh
+source ~/.zshrc
+```
+
 ---
 
 ## 3. System Prerequisites & Toolchain Verification
