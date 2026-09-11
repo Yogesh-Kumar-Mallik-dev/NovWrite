@@ -126,64 +126,6 @@ NovWrite provides a unified root CLI (`./script.sh` / `.\script.ps1`) orchestrat
 .\script.ps1 qr
 ```
 
-### 2.3. Optional Shell Helper Function: `run` (`~/.zshrc` / `~/.bashrc` / `$PROFILE`)
-
-Instead of multiple loose aliases polluting your global shell namespace, you can define a single `run` function in your shell configuration. It dynamically detects the NovWrite repository root and forwards any subcommand (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`) to `script.sh` (or `script.ps1`) from anywhere in the monorepo:
-
-#### Zsh / Bash (`~/.zshrc` or `~/.bashrc`)
-
-```zsh
-# NovWrite Monorepo Runner Function
-run() {
-  local repo_root
-  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
-  if [ -n "$repo_root" ] && [ -f "$repo_root/script.sh" ]; then
-    "$repo_root/script.sh" "$@"
-  elif [ -f "./script.sh" ]; then
-    ./script.sh "$@"
-  else
-    echo "❌ Not inside a NovWrite repository workspace (script.sh not found)." >&2
-    return 1
-  fi
-}
-```
-
-Apply immediately in Zsh:
-
-```zsh
-source ~/.zshrc
-```
-
-#### Windows PowerShell (`$PROFILE`)
-
-```powershell
-function run {
-    $repoRoot = git rev-parse --show-toplevel 2>$null
-    if ($repoRoot -and (Test-Path (Join-Path $repoRoot "script.ps1"))) {
-        & (Join-Path $repoRoot "script.ps1") @args
-    } elseif (Test-Path ".\script.ps1") {
-        & ".\script.ps1" @args
-    } else {
-        Write-Error "Not inside a NovWrite repository workspace (script.ps1 not found)."
-    }
-}
-```
-
-#### Monorepo Commands with `run`
-
-```bash
-run dev                  # Launch dev stack (Go API + SvelteKit Web)
-run dev --all            # Launch all clients (Web + Expo Mobile + Tauri Desktop)
-run build                # Production build across all monorepo packages
-run check                # Typecheck & diagnostics across monorepo (0 errors tolerance)
-run test                 # Execute full 6-phase test suite
-run deps                 # Install/update monorepo dependencies
-run envi                 # Cold bootstrap local infrastructure (Docker DB, Redis, Prisma)
-run uenvi                # Teardown dev containers and environment
-run flush-db             # Clean-slate reset of PostgreSQL & Redis
-run qr                   # Render Expo mobile QR code in terminal
-```
-
 ---
 
 ## 3. System Prerequisites & Toolchain Verification
@@ -272,7 +214,7 @@ curl -sSL \
 chmod +x "${BIN}/buf"
 ```
 
-### 2.2. Linux (Fedora / RHEL / CentOS Stream)
+### 4.2. Linux (Fedora / RHEL / CentOS Stream)
 
 ```bash
 # Update package repositories and base tools
@@ -306,7 +248,7 @@ curl -sSL \
 chmod +x "${BIN}/buf"
 ```
 
-### 2.3. Linux (Arch Linux / Manjaro)
+### 4.3. Linux (Arch Linux / Manjaro)
 
 ```bash
 # Update and install dependencies via pacman
@@ -332,7 +274,7 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 sudo pacman -S --noconfirm buf
 ```
 
-### 2.4. macOS (Homebrew)
+### 4.4. macOS (Homebrew)
 
 Ensure [Homebrew](https://brew.sh) is installed on your Mac:
 
@@ -360,7 +302,7 @@ echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### 2.5. Windows (Native & Winget / Chocolatey / Scoop)
+### 4.5. Windows (Native & Winget / Chocolatey / Scoop)
 
 We recommend using **Windows Package Manager (`winget`)** or **WSL2 (Ubuntu)** for the best developer experience.
 
