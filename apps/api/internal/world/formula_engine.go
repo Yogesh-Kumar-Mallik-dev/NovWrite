@@ -288,7 +288,8 @@ func (p *formulaParser) parseLogicalOr() (float64, error) {
 		return 0, err
 	}
 
-	for p.currentToken().typ == tokOp && (p.currentToken().val == "||" || strings.EqualFold(p.currentToken().val, "or")) {
+	for (p.currentToken().typ == tokOp && p.currentToken().val == "||") ||
+		(p.currentToken().typ == tokIdent && strings.EqualFold(p.currentToken().val, "or")) {
 		p.consume()
 		right, err := p.parseLogicalAnd()
 		if err != nil {
@@ -310,7 +311,8 @@ func (p *formulaParser) parseLogicalAnd() (float64, error) {
 		return 0, err
 	}
 
-	for p.currentToken().typ == tokOp && (p.currentToken().val == "&&" || strings.EqualFold(p.currentToken().val, "and")) {
+	for (p.currentToken().typ == tokOp && p.currentToken().val == "&&") ||
+		(p.currentToken().typ == tokIdent && strings.EqualFold(p.currentToken().val, "and")) {
 		p.consume()
 		right, err := p.parseComparison()
 		if err != nil {
@@ -458,7 +460,8 @@ func (p *formulaParser) parseExponent() (float64, error) {
 }
 
 func (p *formulaParser) parseUnary() (float64, error) {
-	if p.currentToken().typ == tokOp && (p.currentToken().val == "-" || p.currentToken().val == "+" || p.currentToken().val == "!") {
+	if (p.currentToken().typ == tokOp && (p.currentToken().val == "-" || p.currentToken().val == "+" || p.currentToken().val == "!")) ||
+		(p.currentToken().typ == tokIdent && strings.EqualFold(p.currentToken().val, "not")) {
 		op := p.consume().val
 		val, err := p.parseUnary()
 		if err != nil {
@@ -467,7 +470,7 @@ func (p *formulaParser) parseUnary() (float64, error) {
 		if op == "-" {
 			return -val, nil
 		}
-		if op == "!" {
+		if op == "!" || strings.EqualFold(op, "not") {
 			if val == 0 {
 				return 1.0, nil
 			}
@@ -663,6 +666,37 @@ func executeBuiltinFunction(funcName string, args []float64) (float64, error) {
 			return args[1], nil
 		}
 		return args[2], nil
+
+	case "and":
+		if len(args) == 0 {
+			return 0, fmt.Errorf("and requires at least 1 argument")
+		}
+		for _, a := range args {
+			if a == 0 {
+				return 0, nil
+			}
+		}
+		return 1, nil
+
+	case "or":
+		if len(args) == 0 {
+			return 0, fmt.Errorf("or requires at least 1 argument")
+		}
+		for _, a := range args {
+			if a != 0 {
+				return 1, nil
+			}
+		}
+		return 0, nil
+
+	case "not":
+		if len(args) != 1 {
+			return 0, fmt.Errorf("not requires 1 argument")
+		}
+		if args[0] == 0 {
+			return 1, nil
+		}
+		return 0, nil
 
 	default:
 		return 0, fmt.Errorf("unknown formula function '%s'", funcName)

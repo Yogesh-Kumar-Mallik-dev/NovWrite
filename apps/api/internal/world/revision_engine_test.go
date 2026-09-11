@@ -225,5 +225,62 @@ func TestRevisionEngine_EditTreeBranchingAndCheckout(t *testing.T) {
 	if !found || activeNode.ID != ed5.ID {
 		t.Fatalf("expected active node to be ED5")
 	}
+
+	// 6. Checkout invalid non-existent node ID should fail
+	_, errInvalidCheckout := CheckoutEditHead(&tree, "non-existent-id")
+	if errInvalidCheckout == nil {
+		t.Errorf("expected error when checking out non-existent node ID, got nil")
+	}
+}
+
+func TestRevisionEngine_CompactMicroRevisions_And_IDGeneration(t *testing.T) {
+	// 1. GenerateRevisionID
+	revID := GenerateRevisionID()
+	if revID == "" {
+		t.Fatalf("expected non-empty revision ID")
+	}
+
+	// 2. Linear chain of TYPO_FIX nodes for compaction
+	// Tree: Root (Baseline) -> Node1 (TypoFix) -> Node2 (Baseline)
+	initialSnap := map[string]interface{}{"name": "Eldrin"}
+	tree := NewEditTree(initialSnap, "Root", "Init", RevTypeBaselineEdit)
+
+	snap1 := map[string]interface{}{"name": "Eldrin 1"}
+	node1, err1 := AddEditNode(&tree, snap1, "Node1", "Typo fix", RevTypeTypoFix, nil)
+	if err1 != nil {
+		t.Fatalf("failed adding node1: %v", err1)
+	}
+
+	snap2 := map[string]interface{}{"name": "Eldrin 2"}
+	node2, err2 := AddEditNode(&tree, snap2, "Node2", "Baseline edit", RevTypeBaselineEdit, nil)
+	if err2 != nil {
+		t.Fatalf("failed adding node2: %v", err2)
+	}
+
+	// Node1 has 1 child (Node2), is TypoFix, and is not active head (Node2 is active head)
+	if len(tree.Nodes) != 3 {
+		t.Fatalf("expected 3 nodes before compaction, got %d", len(tree.Nodes))
+	}
+
+	compacted := CompactMicroRevisions(&tree)
+	if compacted != 1 {
+		t.Errorf("expected 1 compacted micro-revision, got %d", compacted)
+	}
+
+	// After compaction: Node1 should be removed, Root directly connected to Node2
+	if len(tree.Nodes) != 2 {
+		t.Fatalf("expected 2 nodes after compaction, got %d", len(tree.Nodes))
+	}
+	if _, exists := tree.Nodes[node1.ID]; exists {
+		t.Errorf("expected node1 to be removed from tree after compaction")
+	}
+	rootNode := tree.Nodes[tree.RootID]
+	if len(rootNode.ChildrenIDs) != 1 || rootNode.ChildrenIDs[0] != node2.ID {
+		t.Errorf("expected root child to be node2 (%s), got %v", node2.ID, rootNode.ChildrenIDs)
+	}
+	node2Final := tree.Nodes[node2.ID]
+	if node2Final.ParentID == nil || *node2Final.ParentID != tree.RootID {
+		t.Errorf("expected node2 parent to be root (%s), got %v", tree.RootID, node2Final.ParentID)
+	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -143,14 +144,17 @@ func ApplyEffect(state map[string]interface{}, effect EventEffect) (map[string]i
 		result[effect.PropertyKey] = filtered
 
 	case OpTransfer:
-		curNum := toFloat64(result[effect.PropertyKey])
 		transferMap, ok := effect.Value.(map[string]interface{})
 		if ok {
+			curNum := toFloat64(result[effect.PropertyKey])
 			if amt, okAmt := tryToFloat64(transferMap["amount"]); okAmt {
 				result[effect.PropertyKey] = curNum - amt
 			}
 		} else if num, okNum := tryToFloat64(effect.Value); okNum {
+			curNum := toFloat64(result[effect.PropertyKey])
 			result[effect.PropertyKey] = curNum - num
+		} else {
+			result[effect.PropertyKey] = effect.Value
 		}
 
 	default:
@@ -226,10 +230,21 @@ func tryToFloat64(v interface{}) (float64, bool) {
 		return float64(n), true
 	case int64:
 		return float64(n), true
+	case uint:
+		return float64(n), true
+	case uint32:
+		return float64(n), true
+	case uint64:
+		return float64(n), true
 	case float32:
 		return float64(n), true
 	case float64:
 		return n, true
+	case string:
+		if f, err := strconv.ParseFloat(strings.TrimSpace(n), 64); err == nil {
+			return f, true
+		}
+		return 0, false
 	default:
 		return 0, false
 	}

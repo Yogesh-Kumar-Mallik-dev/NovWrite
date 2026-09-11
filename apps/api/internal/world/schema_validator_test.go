@@ -265,6 +265,135 @@ func TestValidateAndSanitizeEntity_CalculatesFormulasOnBackend(t *testing.T) {
 	}
 }
 
+func TestValidateSingleProperty_AllRemainingTypes(t *testing.T) {
+	// 1. String with length constraints
+	minLen := 3
+	maxLen := 20
+	strDef := DynamicPropertyDef{
+		Name:         "bio",
+		PropertyType: TypeString,
+		Validation:   PropertyValidationRules{MinLength: &minLen, MaxLength: &maxLen, Required: true},
+	}
+	coercedStr, err := ValidateSingleProperty(strDef, "A cultivator")
+	if err != nil || coercedStr != "A cultivator" {
+		t.Errorf("expected valid string, got %v (err: %v)", coercedStr, err)
+	}
+	_, errMinLen := ValidateSingleProperty(strDef, "ab")
+	if errMinLen == nil || errMinLen.Code != "STRING_MIN_LENGTH" {
+		t.Errorf("expected STRING_MIN_LENGTH error, got %v", errMinLen)
+	}
+	_, errMaxLen := ValidateSingleProperty(strDef, "A very very very very long text exceeding twenty chars")
+	if errMaxLen == nil || errMaxLen.Code != "STRING_MAX_LENGTH" {
+		t.Errorf("expected STRING_MAX_LENGTH error, got %v", errMaxLen)
+	}
+
+	// 2. Boolean conversions
+	boolDef := DynamicPropertyDef{Name: "is_immortal", PropertyType: TypeBoolean}
+	coercedBool1, _ := ValidateSingleProperty(boolDef, true)
+	coercedBool2, _ := ValidateSingleProperty(boolDef, "true")
+	coercedBool3, _ := ValidateSingleProperty(boolDef, "1")
+	coercedBool4, _ := ValidateSingleProperty(boolDef, false)
+	coercedBool5, _ := ValidateSingleProperty(boolDef, "false")
+	coercedBool6, _ := ValidateSingleProperty(boolDef, "0")
+	if coercedBool1 != true || coercedBool2 != true || coercedBool3 != true ||
+		coercedBool4 != false || coercedBool5 != false || coercedBool6 != false {
+		t.Errorf("expected bool conversions [true, true, true, false, false, false], got [%v, %v, %v, %v, %v, %v]",
+			coercedBool1, coercedBool2, coercedBool3, coercedBool4, coercedBool5, coercedBool6)
+	}
+	_, errBool := ValidateSingleProperty(boolDef, 12345)
+	if errBool == nil || errBool.Code != "TYPE_MISMATCH_BOOLEAN" {
+		t.Errorf("expected TYPE_MISMATCH_BOOLEAN error, got %v", errBool)
+	}
+
+	// 3. Array & ArrayString
+	arrDef := DynamicPropertyDef{Name: "titles", PropertyType: TypeArray}
+	coercedArr1, err1 := ValidateSingleProperty(arrDef, []interface{}{"Grandmaster", "Sage"})
+	if err1 != nil || len(coercedArr1.([]string)) != 2 {
+		t.Errorf("expected array of 2 elements, got %v (err: %v)", coercedArr1, err1)
+	}
+	coercedArr2, _ := ValidateSingleProperty(arrDef, "Grandmaster, Sage, Elder")
+	if len(coercedArr2.([]string)) != 3 {
+		t.Errorf("expected 3 items from comma-separated string, got %v", coercedArr2)
+	}
+
+	// 4. ArrayRef & BlueprintRefArray
+	refDef := DynamicPropertyDef{Name: "allies", PropertyType: TypeArrayRef}
+	coercedRef, err := ValidateSingleProperty(refDef, []interface{}{"bp-cultivator-01", "ent-lyra-02"})
+	if err != nil || len(coercedRef.([]string)) != 2 {
+		t.Errorf("expected array ref of 2 items, got %v (err: %v)", coercedRef, err)
+	}
+
+	// 5. LadderTier & ValueType
+	tierDef := DynamicPropertyDef{
+		Name:         "ladder_rank",
+		PropertyType: TypeLadderTier,
+		Options: []EnumOption{
+			{Label: "Bronze", Value: "bronze"},
+			{Label: "Silver", Value: "silver"},
+			{Label: "Gold", Value: "gold"},
+		},
+	}
+	coercedTier, errTier := ValidateSingleProperty(tierDef, "Gold")
+	if errTier != nil || coercedTier != "Gold" {
+		t.Errorf("expected valid tier Gold, got %v (err: %v)", coercedTier, errTier)
+	}
+}
+
+func TestSchemaValidator_UpcastLegacyProperties_And_EntityItem(t *testing.T) {
+	// 1. Upcast legacy properties
+	currentFields := []DynamicFieldDef{
+		{Name: "name", FieldType: TypeString},
+		{Name: "attack", FieldType: TypeNumber},
+	}
+	oldProps := map[string]interface{}{
+		"name":            "Eldrin",
+		"attack":          500.0,
+		"obsolete_spell":  "Fireball",
+		"deprecated_rank": 3,
+	}
+
+	upcasted := UpcastLegacyProperties(oldProps, currentFields)
+	if upcasted["name"] != "Eldrin" || upcasted["attack"] != 500.0 {
+		t.Errorf("expected active fields preserved, got %v", upcasted)
+	}
+	if _, exists := upcasted["obsolete_spell"]; exists {
+		t.Errorf("expected obsolete_spell removed from top level")
+	}
+	legacyMap, ok := upcasted["_legacy_properties"].(map[string]interface{})
+	if !ok || legacyMap["obsolete_spell"] != "Fireball" || legacyMap["deprecated_rank"] != 3 {
+		t.Errorf("expected obsolete properties preserved in _legacy_properties, got %v", legacyMap)
+	}
+
+	// 2. ValidateAndSanitizeEntityItem
+	bp := BlueprintDef{
+		Name: "Character",
+		Fields: []DynamicFieldDef{
+			{Name: "strength", FieldType: TypeNumber},
+			{Name: "multiplier", FieldType: TypeNumber},
+			{Name: "power", FieldType: TypeFormula, FormulaExpression: "strength * multiplier"},
+		},
+	}
+	ent := EntityItem{
+		ID:          "ent-1",
+		Name:        "  Eldrin  ",
+		BlueprintID: "bp-1",
+		Properties: map[string]interface{}{
+			"strength":   100.0,
+			"multiplier": 3.0,
+		},
+	}
+	sanitized, errs := ValidateAndSanitizeEntityItem(bp, ent)
+	if len(errs) > 0 {
+		t.Fatalf("unexpected validation errors: %v", errs)
+	}
+	if sanitized.Name != "Eldrin" {
+		t.Errorf("expected trimmed name 'Eldrin', got '%s'", sanitized.Name)
+	}
+	if sanitized.ComputedFormulas["power"] != 300.0 {
+		t.Errorf("expected computed formula power 300, got %v", sanitized.ComputedFormulas["power"])
+	}
+}
+
 func floatPtr(v float64) *float64 {
 	return &v
 }

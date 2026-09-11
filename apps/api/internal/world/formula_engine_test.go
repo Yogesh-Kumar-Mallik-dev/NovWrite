@@ -171,5 +171,113 @@ func TestFormulaEngine_DAGCycleDetection(t *testing.T) {
 	if err4 != nil || cycle4 != nil {
 		t.Errorf("expected no cycle for valid acyclic DAG, got err=%v cycle=%v", err4, cycle4)
 	}
+
+	// 5. DetectFormulaDependencyCycle helper
+	cyclePath, err5 := DetectFormulaDependencyCycle("technique", "power - 10", map[string]string{
+		"power":    "modifier * 1.5",
+		"modifier": "technique + 50",
+	})
+	if err5 == nil || len(cyclePath) != 4 {
+		t.Errorf("expected DetectFormulaDependencyCycle to detect cycle, got len=%d, err=%v", len(cyclePath), err5)
+	}
+}
+
+func TestFormulaEngine_ComprehensiveBuiltins_And_Operators(t *testing.T) {
+	// 1. Math functions (ABS, ROUND, FLOOR, CEIL, MOD)
+	mathTests := []struct {
+		expr     string
+		expected float64
+	}{
+		{"ABS(-42)", 42.0},
+		{"ABS(42)", 42.0},
+		{"FLOOR(3.7)", 3.0},
+		{"CEIL(3.2)", 4.0},
+		{"ROUND(3.5)", 4.0},
+		{"ROUND(3.4)", 3.0},
+		{"MOD(10, 3)", 1.0},
+		{"MOD(14, 5)", 4.0},
+		{"POW(2, 3)", 8.0},
+		{"SQRT(144)", 12.0},
+		{"MIN(50, 20, 80, 10)", 10.0},
+		{"MAX(50, 20, 80, 10)", 80.0},
+	}
+
+	for _, tt := range mathTests {
+		val, err := EvaluateFormula(tt.expr, nil)
+		if err != nil {
+			t.Fatalf("failed evaluating '%s': %v", tt.expr, err)
+		}
+		if math.Abs(val-tt.expected) > 1e-9 {
+			t.Errorf("expr '%s': expected %v, got %v", tt.expr, tt.expected, val)
+		}
+	}
+
+	// 2. Logical functions and Infix operators
+	logicTests := []struct {
+		expr     string
+		expected float64
+	}{
+		{"AND(1, 1, 1)", 1.0},
+		{"AND(1, 0, 1)", 0.0},
+		{"OR(0, 0, 1)", 1.0},
+		{"OR(0, 0, 0)", 0.0},
+		{"NOT(0)", 1.0},
+		{"NOT(1)", 0.0},
+		{"1 == 1", 1.0},
+		{"1 == 2", 0.0},
+		{"1 != 2", 1.0},
+		{"1 != 1", 0.0},
+		{"5 > 3", 1.0},
+		{"3 > 5", 0.0},
+		{"3 < 5", 1.0},
+		{"5 < 3", 0.0},
+		{"5 >= 5", 1.0},
+		{"4 >= 5", 0.0},
+		{"5 <= 5", 1.0},
+		{"6 <= 5", 0.0},
+		{"(5 > 3) && (2 < 4)", 1.0},
+		{"(5 < 3) || (2 < 4)", 1.0},
+		{"! (5 < 3)", 1.0},
+		{"(5 > 3) and (2 < 4)", 1.0},
+		{"(5 < 3) or (2 < 4)", 1.0},
+		{"2 ^ 3", 8.0},
+		{"2 ^ 0", 1.0},
+		{"10 % 3", 1.0},
+	}
+
+	for _, tt := range logicTests {
+		val, err := EvaluateFormula(tt.expr, nil)
+		if err != nil {
+			t.Fatalf("failed evaluating logic '%s': %v", tt.expr, err)
+		}
+		if math.Abs(val-tt.expected) > 1e-9 {
+			t.Errorf("expr '%s': expected %v, got %v", tt.expr, tt.expected, val)
+		}
+	}
+
+	// 3. Error cases
+	errorTests := []string{
+		"SQRT(-25)",
+		"MOD(10, 0)",
+		"10 / 0",
+		"UNKNOWN_FUNC(10)",
+		"CLAMP(10, 20)",
+		"IF(1, 2)",
+		"FLOOR()",
+		"CEIL(1, 2)",
+		"ROUND(1, 2)",
+		"ABS(1, 2)",
+		"POW(2)",
+		"NOT()",
+		"((10 + 5)",
+		"10 + +",
+	}
+
+	for _, expr := range errorTests {
+		_, err := EvaluateFormula(expr, nil)
+		if err == nil {
+			t.Errorf("expected error for invalid expression '%s', got nil", expr)
+		}
+	}
 }
 
