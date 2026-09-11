@@ -20,6 +20,10 @@
     LogOut,
     LogIn,
     Shield,
+    Folder,
+    Settings,
+    KeyRound,
+    UserPlus,
   } from "lucide-svelte";
   import { page } from "$app/state";
   import { authStore } from "$lib/stores/projectStore.svelte";
@@ -161,46 +165,99 @@
             {#if userMenuOpen}
               <div
                 transition:fade={{ duration: 120 }}
-                class="absolute right-0 mt-1.5 w-48 rounded-xl border border-border bg-card shadow-xl py-1.5 z-50 text-xs"
+                class="absolute right-0 mt-1.5 w-56 rounded-xl border border-border bg-card shadow-2xl py-1.5 z-50 text-xs"
               >
-                <div class="px-3 py-2 border-b border-border/60">
-                  <div class="font-semibold text-foreground truncate">{authStore.username}</div>
+                <div class="px-3.5 py-2.5 border-b border-border/60">
+                  <div class="font-bold text-foreground truncate">{authStore.username}</div>
                   <div class="text-[11px] text-muted-foreground truncate">{authStore.email || "author@novwrite.dev"}</div>
-                  <div class="mt-1 text-[10px] uppercase font-bold text-primary">{authStore.role || "USER"}</div>
+                  <div class="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary uppercase">
+                    {authStore.role || "USER"}
+                  </div>
+                </div>
+
+                <div class="py-1">
+                  <a
+                    href="/account"
+                    onclick={() => (userMenuOpen = false)}
+                    class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-foreground transition-colors"
+                  >
+                    <User class="w-3.5 h-3.5 text-primary" />
+                    <span>Your Profile & Dashboard</span>
+                  </a>
+
+                  <a
+                    href="/account?tab=projects"
+                    onclick={() => (userMenuOpen = false)}
+                    class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-foreground transition-colors"
+                  >
+                    <Folder class="w-3.5 h-3.5 text-primary" />
+                    <span>Your Projects</span>
+                  </a>
+
+                  <a
+                    href="/account?tab=security"
+                    onclick={() => (userMenuOpen = false)}
+                    class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-foreground transition-colors"
+                  >
+                    <KeyRound class="w-3.5 h-3.5 text-primary" />
+                    <span>Security & Password</span>
+                  </a>
+
+                  <a
+                    href="/account?tab=settings"
+                    onclick={() => (userMenuOpen = false)}
+                    class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-foreground transition-colors"
+                  >
+                    <Settings class="w-3.5 h-3.5 text-primary" />
+                    <span>Settings</span>
+                  </a>
                 </div>
 
                 {#if authStore.isSuperAdmin}
-                  <a
-                    href="/superadmin"
-                    onclick={() => (userMenuOpen = false)}
-                    class="flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground transition-colors"
-                  >
-                    <Shield class="w-3.5 h-3.5 text-purple-500" />
-                    <span>Super Admin Console</span>
-                  </a>
+                  <div class="border-t border-border/60 py-1">
+                    <a
+                      href="/superadmin"
+                      onclick={() => (userMenuOpen = false)}
+                      class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium transition-colors"
+                    >
+                      <Shield class="w-3.5 h-3.5" />
+                      <span>Super Admin Console</span>
+                    </a>
+                  </div>
                 {/if}
 
-                <button
-                  type="button"
-                  onclick={() => {
-                    userMenuOpen = false;
-                    authStore.logout();
-                  }}
-                  class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors"
-                >
-                  <LogOut class="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
-                </button>
+                <div class="border-t border-border/60 pt-1">
+                  <button
+                    type="button"
+                    onclick={() => {
+                      userMenuOpen = false;
+                      authStore.logout();
+                    }}
+                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-left hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                  >
+                    <LogOut class="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
             {/if}
           {:else}
-            <a
-              href="/superadmin"
-              class="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border border-border bg-card/80 hover:bg-muted text-xs font-medium transition-colors"
-            >
-              <LogIn class="w-3.5 h-3.5 text-primary" />
-              <span class="hidden sm:inline">Sign In</span>
-            </a>
+            <div class="flex items-center gap-2">
+              <a
+                href="/login"
+                class="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border border-border bg-card/80 hover:bg-muted text-xs font-medium transition-colors"
+              >
+                <LogIn class="w-3.5 h-3.5 text-primary" />
+                <span>Sign In</span>
+              </a>
+              <a
+                href="/register"
+                class="hidden sm:inline-flex items-center gap-1.5 h-8 sm:h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-2xs"
+              >
+                <UserPlus class="w-3.5 h-3.5" />
+                <span>Sign Up</span>
+              </a>
+            </div>
           {/if}
         </div>
       </div>
@@ -343,42 +400,77 @@
               </div>
             {/if}
             <!-- User Account / Auth Mobile Section -->
-            <div class="space-y-1.5 pt-2 border-t border-border">
+            <div class="space-y-2 pt-2 border-t border-border">
               <span class="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 px-1 block">
                 Account & Identity
               </span>
               {#if authStore.isAuthenticated}
-                <div class="p-2.5 rounded-lg border border-border bg-card/60 space-y-2">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                <div class="p-3 rounded-lg border border-border bg-card/60 space-y-2.5">
+                  <a
+                    href="/account"
+                    onclick={() => (mobileDrawerOpen = false)}
+                    class="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
+                  >
+                    <div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shrink-0">
                       {authStore.username.charAt(0).toUpperCase()}
                     </div>
-                    <div class="min-w-0">
-                      <div class="font-semibold text-xs text-foreground truncate">{authStore.username}</div>
+                    <div class="min-w-0 flex-1">
+                      <div class="font-bold text-xs text-foreground truncate">{authStore.username}</div>
                       <div class="text-[10px] text-muted-foreground truncate">{authStore.email || "author@novwrite.dev"}</div>
                     </div>
+                    <ChevronRight class="w-4 h-4 text-muted-foreground shrink-0" />
+                  </a>
+
+                  <div class="grid grid-cols-2 gap-1.5 pt-1 border-t border-border/60 text-xs">
+                    <a
+                      href="/account?tab=projects"
+                      onclick={() => (mobileDrawerOpen = false)}
+                      class="flex items-center gap-1.5 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Folder class="w-3.5 h-3.5 text-primary" />
+                      <span>Projects</span>
+                    </a>
+                    <a
+                      href="/account?tab=security"
+                      onclick={() => (mobileDrawerOpen = false)}
+                      class="flex items-center gap-1.5 p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <KeyRound class="w-3.5 h-3.5 text-primary" />
+                      <span>Security</span>
+                    </a>
                   </div>
+
                   <button
                     type="button"
                     onclick={() => {
                       mobileDrawerOpen = false;
                       authStore.logout();
                     }}
-                    class="w-full h-8 flex items-center justify-center gap-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium transition-colors"
+                    class="w-full h-8 flex items-center justify-center gap-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold transition-colors cursor-pointer"
                   >
                     <LogOut class="w-3.5 h-3.5" />
                     <span>Sign Out</span>
                   </button>
                 </div>
               {:else}
-                <a
-                  href="/superadmin"
-                  onclick={() => (mobileDrawerOpen = false)}
-                  class="flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition-opacity hover:opacity-90"
-                >
-                  <LogIn class="w-4 h-4" />
-                  <span>Sign In to NovWrite</span>
-                </a>
+                <div class="space-y-2">
+                  <a
+                    href="/login"
+                    onclick={() => (mobileDrawerOpen = false)}
+                    class="flex items-center justify-center gap-2 h-9 px-3 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition-colors"
+                  >
+                    <LogIn class="w-4 h-4 text-primary" />
+                    <span>Sign In</span>
+                  </a>
+                  <a
+                    href="/register"
+                    onclick={() => (mobileDrawerOpen = false)}
+                    class="flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-opacity shadow-2xs"
+                  >
+                    <UserPlus class="w-4 h-4" />
+                    <span>Create Free Account</span>
+                  </a>
+                </div>
               {/if}
             </div>
           </div>
