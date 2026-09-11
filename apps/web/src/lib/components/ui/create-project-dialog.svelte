@@ -159,7 +159,7 @@
           </div>
 
           <!-- Dialog Sticky Footer Actions (Safe Area Docked) -->
-          <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
+          <div class="sticky bottom-0 bg-card pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
             <Button
               type="button"
               variant="outline"

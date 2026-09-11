@@ -176,7 +176,7 @@
     </div>
 
     <!-- Collapsible Continuum Diagnostic Trace Card with generous padding -->
-    <Card class="w-full text-left bg-card/60 backdrop-blur border-border/80 shadow-xs font-mono text-xs overflow-hidden mt-4">
+    <Card class="w-full text-left bg-card border-border/80 shadow-xs font-mono text-xs overflow-hidden mt-4">
       <button
         type="button"
         onclick={() => (isDetailsOpen = !isDetailsOpen)}

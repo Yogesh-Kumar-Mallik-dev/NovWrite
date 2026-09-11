@@ -81,7 +81,7 @@
   {#if !isErrorPage}
     <!-- Main Navigation Bar -->
     <nav
-      class="h-14 bg-card/85 backdrop-blur border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors gap-2.5 sm:gap-4 min-w-0 sticky top-0 z-30"
+      class="h-14 bg-card border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-colors gap-2.5 sm:gap-4 min-w-0 sticky top-0 z-30"
     >
       <!-- Left: Mobile Hamburger OR Desktop Brand + Links -->
       <div class="flex items-center gap-2 sm:gap-6 md:gap-8 min-w-0">

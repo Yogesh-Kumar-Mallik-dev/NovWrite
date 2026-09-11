@@ -91,7 +91,7 @@
     </div>
 
     <!-- Continuum Diagnostics Card with generous padding -->
-    <Card class="w-full text-left p-4 sm:p-5 md:p-6 bg-card/60 backdrop-blur border-border/80 shadow-xs font-mono text-xs space-y-3.5 mt-4">
+    <Card class="w-full text-left p-4 sm:p-5 md:p-6 bg-card border-border/80 shadow-xs font-mono text-xs space-y-3.5 mt-4">
       <div class="flex items-center justify-between text-muted-foreground border-b border-border/60 pb-3 flex-wrap gap-2">
         <div class="flex items-center gap-2">
           <FileQuestion class="w-4 h-4 text-primary" />

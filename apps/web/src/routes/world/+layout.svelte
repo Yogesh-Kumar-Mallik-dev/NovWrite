@@ -58,7 +58,7 @@
 
 <div class="flex-1 flex flex-col bg-background text-foreground transition-colors min-w-0">
   <!-- World Studio Sub-Header with Breadcrumb & Navigation -->
-  <div class="border-b border-border bg-card/70 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 backdrop-blur min-w-0">
+  <div class="border-b border-border bg-card px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 min-w-0">
     <!-- Desktop Sub-Header (≥ 768px / md): Single balanced row -->
     <div class="hidden md:flex items-center justify-between gap-4 min-w-0">
       <Breadcrumb
@@ -119,7 +119,7 @@
   </div>
 
   <!-- Workbench Main Content Container -->
-  <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 overflow-y-auto min-h-0">
+  <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 min-w-0">
     {#if projectStore.isLoaded && !projectStore.activeProject}
       <div class="w-full max-w-lg mx-auto my-6 sm:my-10 p-6 sm:p-8 rounded-xl border border-dashed border-border bg-card/60 text-center space-y-4 shadow-xs">
         <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">

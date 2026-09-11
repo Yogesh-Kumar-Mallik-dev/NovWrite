@@ -50,7 +50,7 @@
 
 <div class="flex-1 flex flex-col bg-background text-foreground transition-colors min-w-0">
   <!-- Prose Studio Sub-Header with Breadcrumb & Navigation -->
-  <div class="border-b border-border bg-card/70 px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 backdrop-blur min-w-0">
+  <div class="border-b border-border bg-card px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 min-w-0">
     <!-- Desktop Sub-Header (≥ 768px / md): Single balanced row -->
     <div class="hidden md:flex items-center justify-between gap-4 min-w-0">
       <Breadcrumb

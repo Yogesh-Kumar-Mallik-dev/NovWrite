@@ -181,7 +181,7 @@
 
 <div class="flex-1 bg-background text-foreground transition-colors min-w-0">
   <!-- Top Account Hero / Profile Header -->
-  <div class="border-b border-border bg-card/60 backdrop-blur">
+  <div class="border-b border-border bg-card">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <!-- User Identity Block -->

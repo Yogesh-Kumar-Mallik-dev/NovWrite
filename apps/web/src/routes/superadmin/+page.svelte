@@ -218,7 +218,7 @@
 
 <div class="min-h-screen bg-background text-foreground flex flex-col">
   <!-- Top Navigation Header -->
-  <header class="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-30">
+  <header class="border-b border-border bg-card sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 text-purple-600 dark:text-purple-400">
@@ -272,7 +272,7 @@
     {#if !isAuthenticated}
       <!-- Super Admin Login Gate Screen -->
       <div class="max-w-md mx-auto py-12" in:fade={{ duration: 180 }}>
-        <div class="rounded-2xl border border-border bg-card/80 shadow-xl overflow-hidden backdrop-blur-md">
+        <div class="rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
           <!-- Banner Header -->
           <div class="p-6 border-b border-border bg-muted/30 text-center space-y-2">
             <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto text-purple-600 dark:text-purple-400">

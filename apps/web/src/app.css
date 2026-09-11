@@ -90,8 +90,15 @@ input[type="number"] {
 }
 
 /* ==========================================================================
-   Global Scrollbar Suppression (Retains 100% Native Scrolling Everywhere)
+   Global Scrollbar & Overscroll Suppression (Eliminates Desktop Scroll Jitter)
    ========================================================================== */
+html,
+body {
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 html,
 body,
 * {
@@ -104,6 +111,13 @@ body,
   display: none !important; /* WebKit/Blink (Chrome, Safari, Edge, Electron, Tauri) */
   width: 0 !important;
   height: 0 !important;
+}
+
+/* Isolate sticky headers into hardware-accelerated GPU planes to eliminate repaint tearing */
+.sticky {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* ==========================================================================

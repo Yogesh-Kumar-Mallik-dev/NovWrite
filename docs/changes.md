@@ -167,15 +167,39 @@ timeline
                : ValidateProjectQueryAccess Returning 200 OK Empty Data Arrays on Clean Slate
                : Universal Collection Endpoints Standardization (Blueprints, Entities, Timeline, Prose, Rules)
                : 403 Forbidden Scoping & 404 Mutation Protection Preserved
+    2026-09-12 : Version 2.13.4 (Desktop Scrolling Flicker Elimination & GPU Composite Isolation)
+               : Solid bg-card Headers Eliminating Repaint Lag & Backdrop Blur Composite Tearing
+               : Viewport overscroll-behavior-y Suppression & Hardware GPU translateZ Layer Isolation
+               : Single-Level Viewport Scroll Unification in World Studio Layout
 ```
 
 ---
 
 ## Release Details
 
+### [Version 2.13.4] — 2026-09-12
+
+**Scope:** Desktop Rapid Scroll Flicker Elimination, GPU Hardware Compositing & Layout Scroll Unification  
+**Target Documents:** [`apps/web/src/app.css`](file:///home/yogesh/Projects/NovWrite/apps/web/src/app.css), [`apps/web/src/routes/+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/+layout.svelte), [`apps/web/src/routes/novel/+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/novel/+layout.svelte), [`apps/web/src/routes/world/+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/world/+layout.svelte), [`apps/web/src/routes/account/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/account/+page.svelte), [`apps/web/src/routes/novel/editor/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/novel/editor/+page.svelte), [`apps/web/src/routes/superadmin/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/superadmin/+page.svelte), [`apps/web/src/lib/components/ui/create-project-dialog.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/create-project-dialog.svelte), [`apps/web/src/lib/components/ui/edit-project-dialog.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/edit-project-dialog.svelte), [`apps/web/src/lib/components/ui/delete-project-dialog.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/lib/components/ui/delete-project-dialog.svelte), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+
+#### Added & Enhanced
+
+- **Solid Header Backgrounds & Elimination of Backdrop Blur Tearing:**
+  - Replaced semi-transparent `backdrop-blur` headers with solid `bg-card` across root navigation bar ([`+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/+layout.svelte)), Prose Studio sub-header ([`novel/+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/novel/+layout.svelte)), World Studio sub-header ([`world/+layout.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/world/+layout.svelte)), Account hero ([`account/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/account/+page.svelte)), and Editor utility strip ([`novel/editor/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/novel/editor/+page.svelte)).
+  - Completely resolved GPU framebuffer re-rasterization bottlenecks and white/black frame flashes during rapid up and down scrolling on desktop viewports and Tauri WebViews.
+
+- **GPU Layer Promotion & Overscroll Protection (`app.css`):**
+  - Added `overscroll-behavior-y: none` to `html, body` preventing trackpad bounce jitter from detaching sticky headers at upper and lower boundaries.
+  - Added `.sticky { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0); }` to isolate sticky elements into dedicated hardware-accelerated GPU compositing planes.
+
+- **Single-Level Viewport Scroll Unification:**
+  - Removed conflicting nested `overflow-y-auto min-h-0` from World Studio layout (`world/+layout.svelte`), ensuring standard, unified window-level scrolling across all studio workbenches.
+
+---
+
 ### [Version 2.13.3] — 2026-09-11
 
-**Scope:** REST API Best Practices, Collection Query 200 OK Empty Semantics & Universal Endpoint Alignment  
+**Scope:** REST API Best Practices, Collection Query 200 OK Semantics & Universal Endpoint Alignment  
 **Target Documents:** [`apps/api/internal/handlers/project_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/project_handler.go), [`apps/api/internal/handlers/blueprint_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/blueprint_handler.go), [`apps/api/internal/handlers/blueprint_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/blueprint_handler_test.go), [`apps/api/internal/handlers/entity_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/entity_handler.go), [`apps/api/internal/handlers/entity_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/entity_handler_test.go), [`apps/api/internal/handlers/timeline_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/timeline_handler.go), [`apps/api/internal/handlers/timeline_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/timeline_handler_test.go), [`apps/api/internal/handlers/novel_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/novel_handler.go), [`apps/api/internal/handlers/rule_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/rule_handler.go), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
 
 #### Added & Enhanced

@@ -218,7 +218,7 @@
             </div>
 
             <!-- Step 1 Footer -->
-            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
+            <div class="sticky bottom-0 bg-card pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -273,7 +273,7 @@
             </div>
 
             <!-- Step 2 Footer -->
-            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+            <div class="sticky bottom-0 bg-card pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -343,7 +343,7 @@
             </div>
 
             <!-- Step 3 Footer -->
-            <div class="sticky bottom-0 bg-card/95 backdrop-blur-md pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
+            <div class="sticky bottom-0 bg-card pt-3 mt-2 border-t border-border/80 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"

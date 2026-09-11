@@ -107,7 +107,7 @@
 
 <div class="flex-1 flex flex-col h-[calc(100dvh-3.5rem)] overflow-hidden bg-background text-foreground min-w-0">
   <!-- Top Editor Utility Strip -->
-  <div class="h-11 border-b border-border bg-card/80 px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 backdrop-blur z-10 text-xs">
+  <div class="h-11 border-b border-border bg-card px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 z-10 text-xs">
     <!-- Left: Drawer Toggle & Scene Info -->
     <div class="flex items-center gap-2 min-w-0">
       <button
