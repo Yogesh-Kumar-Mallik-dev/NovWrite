@@ -155,11 +155,33 @@ timeline
                : Session Token Family Rotation & Instant Reuse Breach Revocation
                : SvelteKit 2 Svelte 5 Runes AuthStore & React Native Account/Security Modals
                : Constant-Time Bcrypt Hashing, Multi-Tenant Project Scoping & Contract Parity
+    2026-09-11 : Version 2.13.1 (Clean-Slate Activity Heatmap & Bridge Mock Encapsulation)
+               : Complete Elimination of Simulated Heatmap Activity on Clean Slate
+               : Reactive Writing Milestone Progress Bar & Derived Goals
+               : Bridge Mock Export Encapsulation & Internal Test Fixture Isolation
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.13.1] — 2026-09-11
+
+**Scope:** Clean-Slate Activity Heatmap Sanitization & Bridge Mock Export Encapsulation  
+**Target Documents:** [`apps/web/src/routes/account/+page.svelte`](file:///home/yogesh/Projects/NovWrite/apps/web/src/routes/account/+page.svelte), [`packages/bridge/src/index.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/index.ts), [`packages/bridge/src/__tests__/bridge.test.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/__tests__/bridge.test.ts), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+
+#### Added & Enhanced
+
+- **Clean-Slate Account Activity Heatmap (`apps/web/src/routes/account/+page.svelte`):**
+  - Removed pseudo-random simulated tile levels (`activeSeed > 8 ? (activeSeed % 5) + 1 : 0`), ensuring fresh accounts display clean zero-activity tiles until real writing sessions occur.
+  - Replaced hardcoded `100%` progress bar with reactive derived writing milestone calculations (`todayWordsWritten`, `dailyGoal`, `goalProgressPercent`).
+- **Bridge Mock Export Encapsulation (`packages/bridge`):**
+  - Removed `export * from "./mock.js"` from package root bundle in [`packages/bridge/src/index.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/index.ts) to prevent unintentional mock object leakage into production consumers.
+  - Refactored [`bridge.test.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/__tests__/bridge.test.ts) to import mock fixtures directly from `../mock.js`.
+- **Verification:**
+  - 100% test pass rate with 0 errors and 0 warnings across all 4 packages (`./script.sh check` and `./script.sh test`).
+
+---
 
 ### [Version 2.13] — 2026-09-11
 

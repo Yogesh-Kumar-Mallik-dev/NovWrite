@@ -11,6 +11,8 @@ import {
   DEMO_PROJECT_ID,
   ELDRIN_ENTITY_ID,
   MALAKOR_ENTITY_ID,
+} from "../mock.js";
+import {
   validateSceneGroundingRequest,
   validateContinuityAuditRequest,
   validateEntityMentionQuery,

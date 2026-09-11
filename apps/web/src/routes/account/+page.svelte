@@ -112,6 +112,11 @@
   const totalScenesCount = $derived(proseStore.totalScenesCount);
   const totalEntitiesCount = $derived(worldStore.entities.length);
   const totalBlueprintsCount = $derived(worldStore.blueprints.length);
+  const todayWordsWritten = $derived(proseStore.todayWordsWritten);
+  const dailyGoal = $derived(proseStore.dailyWordGoal || 1000);
+  const goalProgressPercent = $derived(
+    dailyGoal > 0 ? Math.min(100, Math.round((todayWordsWritten / dailyGoal) * 100)) : 0
+  );
 
   async function handleChangePassword(e: SubmitEvent) {
     e.preventDefault();
@@ -162,12 +167,10 @@
     goto("/world");
   }
 
-  // 52-week activity simulation (clean deterministic pattern matching word telemetry)
+  // 52-week activity grid reflecting genuine clean slate or authoring sessions
   const activityWeeks = Array.from({ length: 52 }, (_, wIdx) => {
     return Array.from({ length: 7 }, (_, dIdx) => {
-      const activeSeed = (wIdx * 7 + dIdx + (totalWordsWritten > 0 ? 3 : 0)) % 13;
-      const count = activeSeed > 8 ? (activeSeed % 5) + 1 : 0;
-      return { day: dIdx, level: count };
+      return { day: dIdx, level: 0 };
     });
   });
 </script>
@@ -614,10 +617,10 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between text-xs">
               <span class="text-muted-foreground">Today's Writing Milestone</span>
-              <span class="font-bold text-foreground">{totalWordsWritten.toLocaleString()} / 1,000 words (100%)</span>
+              <span class="font-bold text-foreground">{todayWordsWritten.toLocaleString()} / {dailyGoal.toLocaleString()} words ({goalProgressPercent}%)</span>
             </div>
             <div class="w-full h-3 rounded-full bg-muted overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-primary to-purple-600 rounded-full transition-all duration-500" style="width: 100%"></div>
+              <div class="h-full bg-gradient-to-r from-primary to-purple-600 rounded-full transition-all duration-500" style="width: {goalProgressPercent}%"></div>
             </div>
           </div>
         </div>
