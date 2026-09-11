@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./logo.png" alt="NovWrite Logo" width="120" height="120" />
+  <img src="./apps/web/static/logo.png" alt="NovWrite Logo" width="120" height="120" />
   <h1>NovWrite</h1>
   <p><strong>A continuity-first novel creation platform with a user-defined story universe engine.</strong></p>
   <p><em>You define the rules of your universe. NovWrite remembers them.</em></p>
