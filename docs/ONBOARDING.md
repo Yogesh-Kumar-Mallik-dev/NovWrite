@@ -126,27 +126,62 @@ NovWrite provides a unified root CLI (`./script.sh` / `.\script.ps1`) orchestrat
 .\script.ps1 qr
 ```
 
-### 2.3. Optional Zsh / Bash Shell Aliases (`~/.zshrc` or `~/.bashrc`)
+### 2.3. Optional Shell Helper Function: `run` (`~/.zshrc` / `~/.bashrc` / `$PROFILE`)
 
-If you prefer running short commands directly without typing `./script.sh` each time, you can append the following aliases to your `~/.zshrc` (or `~/.bashrc`):
+Instead of multiple loose aliases polluting your global shell namespace, you can define a single `run` function in your shell configuration. It dynamically detects the NovWrite repository root and forwards any subcommand (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`) to `script.sh` (or `script.ps1`) from anywhere in the monorepo:
+
+#### Zsh / Bash (`~/.zshrc` or `~/.bashrc`)
 
 ```zsh
-# --- NovWrite Shorthand Lifecycle Aliases ---
-alias dev='./script.sh dev'
-alias build='./script.sh build'
-alias check='./script.sh check'
-alias test='./script.sh test'
-alias deps='./script.sh deps'
-alias envi='./script.sh envi'
-alias uenvi='./script.sh uenvi'
-alias flush-db='./script.sh flush-db'
-alias qr='./script.sh qr'
+# NovWrite Monorepo Runner Function
+run() {
+  local repo_root
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+  if [ -n "$repo_root" ] && [ -f "$repo_root/script.sh" ]; then
+    "$repo_root/script.sh" "$@"
+  elif [ -f "./script.sh" ]; then
+    ./script.sh "$@"
+  else
+    echo "❌ Not inside a NovWrite repository workspace (script.sh not found)." >&2
+    return 1
+  fi
+}
 ```
 
-To apply immediately in your current Zsh session:
+Apply immediately in Zsh:
 
 ```zsh
 source ~/.zshrc
+```
+
+#### Windows PowerShell (`$PROFILE`)
+
+```powershell
+function run {
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($repoRoot -and (Test-Path (Join-Path $repoRoot "script.ps1"))) {
+        & (Join-Path $repoRoot "script.ps1") @args
+    } elseif (Test-Path ".\script.ps1") {
+        & ".\script.ps1" @args
+    } else {
+        Write-Error "Not inside a NovWrite repository workspace (script.ps1 not found)."
+    }
+}
+```
+
+#### Monorepo Commands with `run`
+
+```bash
+run dev                  # Launch dev stack (Go API + SvelteKit Web)
+run dev --all            # Launch all clients (Web + Expo Mobile + Tauri Desktop)
+run build                # Production build across all monorepo packages
+run check                # Typecheck & diagnostics across monorepo (0 errors tolerance)
+run test                 # Execute full 6-phase test suite
+run deps                 # Install/update monorepo dependencies
+run envi                 # Cold bootstrap local infrastructure (Docker DB, Redis, Prisma)
+run uenvi                # Teardown dev containers and environment
+run flush-db             # Clean-slate reset of PostgreSQL & Redis
+run qr                   # Render Expo mobile QR code in terminal
 ```
 
 ---
