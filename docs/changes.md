@@ -159,13 +159,13 @@ timeline
 ### [Version 2.12.2] — 2026-09-11
 
 **Scope:** Single Unified Root Entrypoint, Root Script Purge & Documentation Relocation to `docs/`  
-**Target Documents:** [`script.sh`](file:///home/yogesh/Projects/NovWrite/script.sh), [`script.ps1`](file:///home/yogesh/Projects/NovWrite/script.ps1), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`CONTRIBUTING.md`](file:///home/yogesh/Projects/NovWrite/CONTRIBUTING.md), [`docs/DOCUMENTATION_STANDARDS.md`](file:///home/yogesh/Projects/NovWrite/docs/DOCUMENTATION_STANDARDS.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`docs/NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/NOVWRITE_ARCHITECTURE.md), [`docs/Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/docs/Novwrite.docx), [`docs/One View by AKTU SDC Team.pdf`](<file:///home/yogesh/Projects/NovWrite/docs/One View by AKTU SDC Team.pdf>), [`scripts/`](file:///home/yogesh/Projects/NovWrite/scripts/), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+**Target Documents:** [`script.sh`](file:///home/yogesh/Projects/NovWrite/script.sh), [`script.ps1`](file:///home/yogesh/Projects/NovWrite/script.ps1), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`CONTRIBUTING.md`](file:///home/yogesh/Projects/NovWrite/CONTRIBUTING.md), [`docs/DOCUMENTATION_STANDARDS.md`](file:///home/yogesh/Projects/NovWrite/docs/DOCUMENTATION_STANDARDS.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`docs/NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/NOVWRITE_ARCHITECTURE.md), [`docs/Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/docs/Novwrite.docx), [`scripts/`](file:///home/yogesh/Projects/NovWrite/scripts/), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
 
 #### Added & Refactored
 
 - **Documentation Clean-Up at Root:**
   - Relocated `NOVWRITE_ARCHITECTURE.md` into `docs/NOVWRITE_ARCHITECTURE.md`.
-  - Relocated `Novwrite.docx` and `One View by AKTU SDC Team.pdf` into `docs/`.
+  - Relocated `Novwrite.docx` into `docs/`.
   - Relocated `changes.md` into `docs/changes.md`.
   - Updated documentation index and links across `README.md`, `CONTRIBUTING.md`, `docs/DOCUMENTATION_STANDARDS.md`, `docs/ONBOARDING.md`, and `docs/recommended_commands.md`.
 - **Dedicated `scripts/` Core Directory & Single Unified Root Entrypoint:**
