@@ -125,7 +125,7 @@ func NewBlueprintHandler(store BlueprintStore, projectStore ...ProjectStore) *Bl
 // List handles GET /api/v1/projects/{projectId}/blueprints
 func (h *BlueprintHandler) List(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 

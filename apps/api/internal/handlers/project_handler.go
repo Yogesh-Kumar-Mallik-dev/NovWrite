@@ -156,6 +156,56 @@ func ValidateProjectAccess(w http.ResponseWriter, r *http.Request, projectStore 
 	return proj, true
 }
 
+// ValidateProjectQueryAccess verifies that project access is permitted for read queries and collection lists.
+// If the project ID is empty, it returns 400 Bad Request.
+// If the project is not found in the store (e.g. clean slate), it returns (nil, true) so the list endpoint can safely return an empty 200 OK result.
+// If the project exists and the caller is unauthorized, it returns 403 Forbidden.
+func ValidateProjectQueryAccess(w http.ResponseWriter, r *http.Request, projectStore ProjectStore, projectID string) (*Project, bool) {
+	if projectID == "" {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/missing-project-id",
+			Title:  "Missing Active Project",
+			Status: http.StatusBadRequest,
+			Detail: "An active Project ID is a hard architectural prerequisite for all novel and world operations.",
+			Code:   "MISSING_PROJECT_ID",
+		})
+		return nil, false
+	}
+
+	if projectStore == nil {
+		return &Project{ID: projectID}, true
+	}
+
+	proj, found := projectStore.Get(projectID)
+	if !found {
+		// Project not yet created or clean-slate; allowed for collection queries to return empty collections cleanly with 200 OK
+		return nil, true
+	}
+
+	// Verify User Ownership if Claims or X-User-ID is supplied
+	var userID string
+	var isSuperAdmin bool
+	if claims, ok := httputil.GetUserFromContext(r.Context()); ok && claims != nil {
+		userID = claims.UserID
+		isSuperAdmin = claims.IsSuperAdmin()
+	} else if devUserID := r.Header.Get("X-User-ID"); devUserID != "" {
+		userID = strings.TrimSpace(devUserID)
+	}
+
+	if !isSuperAdmin && userID != "" && proj.OwnerID != "" && proj.OwnerID != userID {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/forbidden-project-access",
+			Title:  "Forbidden Project Access",
+			Status: http.StatusForbidden,
+			Detail: fmt.Sprintf("Authenticated user '%s' does not have ownership or access rights to Project '%s'.", userID, projectID),
+			Code:   "FORBIDDEN_PROJECT_ACCESS",
+		})
+		return nil, false
+	}
+
+	return proj, true
+}
+
 // ProjectHandler handles REST operations for Project collections and items.
 type ProjectHandler struct {
 	store ProjectStore

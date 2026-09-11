@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
@@ -337,17 +338,25 @@ func TestEntityHandler_ProjectIsolation_And_Security(t *testing.T) {
 	handler := NewEntityHandler(entStore, bpStore, projectStore, tlStore)
 	router := setupEntityRouter(handler)
 
-	// CASE 1: Non-existent Project returns 404 PROJECT_NOT_FOUND
+	// CASE 1: Non-existent/clean Project query returns 200 OK with empty data
 	reqMissingProj := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-nonexistent/entities", nil)
 	recMissingProj := httptest.NewRecorder()
 	router.ServeHTTP(recMissingProj, reqMissingProj)
-	if recMissingProj.Code != http.StatusNotFound {
-		t.Fatalf("expected HTTP 404 for non-existent project, got %d", recMissingProj.Code)
+	if recMissingProj.Code != http.StatusOK {
+		t.Fatalf("expected HTTP 200 for clean project query, got %d", recMissingProj.Code)
 	}
-	var probMissing httputil.ProblemDetail
-	json.Unmarshal(recMissingProj.Body.Bytes(), &probMissing)
-	if probMissing.Code != "PROJECT_NOT_FOUND" {
-		t.Fatalf("expected code PROJECT_NOT_FOUND, got %s", probMissing.Code)
+	var respMissing httputil.PaginatedResponse
+	json.Unmarshal(recMissingProj.Body.Bytes(), &respMissing)
+	if respMissing.Pagination.TotalCount != 0 {
+		t.Fatalf("expected 0 entities for nonexistent project, got %d", respMissing.Pagination.TotalCount)
+	}
+
+	// Non-existent project POST returns 404 PROJECT_NOT_FOUND
+	reqCreateMissing := httptest.NewRequest(http.MethodPost, "/api/v1/projects/proj-nonexistent/entities", strings.NewReader(`{"name":"Test","blueprintId":"`+bpA.ID+`"}`))
+	recCreateMissing := httptest.NewRecorder()
+	router.ServeHTTP(recCreateMissing, reqCreateMissing)
+	if recCreateMissing.Code != http.StatusNotFound {
+		t.Fatalf("expected HTTP 404 for entity creation in non-existent project, got %d", recCreateMissing.Code)
 	}
 
 	// CASE 2: Project A entity does NOT appear in Project B

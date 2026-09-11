@@ -193,7 +193,7 @@ func (h *TimelineHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	if projectID == "" {
 		projectID = r.URL.Query().Get("projectId")
 	}
-	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 
@@ -344,7 +344,7 @@ func (h *TimelineHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 // Returns the full UPDATE horizontal pipe with all events, their hanging Edit Trees, and active EDIT heads.
 func (h *TimelineHandler) GetPipe(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 
@@ -509,7 +509,7 @@ func (h *TimelineHandler) CheckoutEventEdit(w http.ResponseWriter, r *http.Reque
 // GetState handles GET /api/v1/projects/{projectId}/timeline/state?seq=100
 func (h *TimelineHandler) GetState(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 

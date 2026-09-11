@@ -163,11 +163,31 @@ timeline
                : Standardized Bits UI & Svelte 5 Checkbox Component (<Checkbox />)
                : Go API ResponseTime Middleware http.Flusher & Unwrap Streaming Support
                : Vite searchForWorkspaceRoot Configuration Eliminating File Serving Warnings
+    2026-09-11 : Version 2.13.3 (Collection Query Empty 200 OK Semantics & REST Standard Alignment)
+               : ValidateProjectQueryAccess Returning 200 OK Empty Data Arrays on Clean Slate
+               : Universal Collection Endpoints Standardization (Blueprints, Entities, Timeline, Prose, Rules)
+               : 403 Forbidden Scoping & 404 Mutation Protection Preserved
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.13.3] — 2026-09-11
+
+**Scope:** REST API Best Practices, Collection Query 200 OK Empty Semantics & Universal Endpoint Alignment  
+**Target Documents:** [`apps/api/internal/handlers/project_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/project_handler.go), [`apps/api/internal/handlers/blueprint_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/blueprint_handler.go), [`apps/api/internal/handlers/blueprint_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/blueprint_handler_test.go), [`apps/api/internal/handlers/entity_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/entity_handler.go), [`apps/api/internal/handlers/entity_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/entity_handler_test.go), [`apps/api/internal/handlers/timeline_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/timeline_handler.go), [`apps/api/internal/handlers/timeline_handler_test.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/timeline_handler_test.go), [`apps/api/internal/handlers/novel_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/novel_handler.go), [`apps/api/internal/handlers/rule_handler.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/rule_handler.go), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+
+#### Added & Enhanced
+
+- **Collection Query Empty 200 OK Semantics (`ValidateProjectQueryAccess`):**
+  - Standardized all REST collection query endpoints (`GET /projects/{id}/blueprints`, `GET /projects/{id}/entities`, `GET /projects/{id}/timeline/events`, `GET /projects/{id}/timeline/pipe`, `GET /projects/{id}/timeline/state`, `GET /projects/{id}/chapters`, `GET /projects/{id}/scenes`, `GET /projects/{id}/rules`, `GET /projects/{id}/audit`) to return HTTP `200 OK` with standard empty pagination envelopes (`{"data": [], "pagination": ...}`) when queried against fresh/empty projects instead of returning 404 errors.
+  - Preserved strict `403 Forbidden` (`FORBIDDEN_PROJECT_ACCESS`) multi-tenant security verification when authenticated users attempt to access projects belonging to other authors.
+  - Preserved strict `404 Not Found` (`PROJECT_NOT_FOUND`) on mutating actions (`POST`, `PUT`, `DELETE`) and single item lookup endpoints (`GET /{id}`) if the target project or resource does not exist.
+- **Verification:**
+  - Full 6-phase test suite passed with 100% success rate across all Go API packages and frontend engine tests (`./script.sh check` and `./script.sh test`).
+
+---
 
 ### [Version 2.13.2] — 2026-09-11
 

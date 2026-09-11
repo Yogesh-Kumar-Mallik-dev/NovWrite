@@ -163,12 +163,17 @@ func TestBlueprintHandler_ProjectIsolation_And_Security(t *testing.T) {
 	handler := NewBlueprintHandler(bpStore, projectStore)
 	router := setupBlueprintRouter(handler)
 
-	// Non-existent project returns 404
+	// Non-existent/clean project returns 200 OK with empty list
 	reqMissing := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-none/blueprints", nil)
 	recMissing := httptest.NewRecorder()
 	router.ServeHTTP(recMissing, reqMissing)
-	if recMissing.Code != http.StatusNotFound {
-		t.Fatalf("expected 404 for non-existent project, got %d", recMissing.Code)
+	if recMissing.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for clean project collection query, got %d", recMissing.Code)
+	}
+	var respMissing httputil.PaginatedResponse
+	json.Unmarshal(recMissing.Body.Bytes(), &respMissing)
+	if respMissing.Pagination.TotalCount != 0 {
+		t.Fatalf("expected 0 blueprints for missing project, got %d", respMissing.Pagination.TotalCount)
 	}
 
 	// Project isolation: proj-2 has 0 blueprints

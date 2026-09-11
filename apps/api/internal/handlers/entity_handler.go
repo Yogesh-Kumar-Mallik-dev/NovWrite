@@ -224,7 +224,7 @@ func (h *EntityHandler) List(w http.ResponseWriter, r *http.Request) {
 	if projectID == "" {
 		projectID = r.URL.Query().Get("projectId")
 	}
-	if _, ok := ValidateProjectAccess(w, r, h.projectStore, projectID); !ok {
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 

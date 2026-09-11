@@ -226,12 +226,17 @@ func TestTimelineHandler_ProjectIsolation_And_Security(t *testing.T) {
 		r.Get("/events/{eventId}", handler.GetEvent)
 	})
 
-	// Non-existent project returns 404
+	// Non-existent/clean project returns 200 OK with empty events list
 	reqMissing := httptest.NewRequest(http.MethodGet, "/api/v1/projects/proj-none/timeline/events", nil)
 	recMissing := httptest.NewRecorder()
 	r.ServeHTTP(recMissing, reqMissing)
-	if recMissing.Code != http.StatusNotFound {
-		t.Fatalf("expected 404 for non-existent project, got %d", recMissing.Code)
+	if recMissing.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for clean project events query, got %d", recMissing.Code)
+	}
+	var respMissing httputil.PaginatedResponse
+	json.Unmarshal(recMissing.Body.Bytes(), &respMissing)
+	if respMissing.Pagination.TotalCount != 0 {
+		t.Fatalf("expected 0 events for non-existent project, got %d", respMissing.Pagination.TotalCount)
 	}
 
 	// Project isolation: proj-2 has 0 events

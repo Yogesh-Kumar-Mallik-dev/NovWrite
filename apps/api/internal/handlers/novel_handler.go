@@ -273,14 +273,7 @@ func NewNovelHandler(chapterStore ChapterStore, sceneStore SceneStore, projectSt
 // ListChapters returns paginated chapters for a project.
 func (h *NovelHandler) ListChapters(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
-	if projectID == "" {
-		httputil.RespondProblem(w, r, httputil.ProblemDetail{
-			Type:   "https://novwrite.com/errors/missing-parameter",
-			Title:  "Missing Project ID",
-			Status: http.StatusBadRequest,
-			Detail: "Project ID is required in route URL.",
-			Code:   "MISSING_PROJECT_ID",
-		})
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
 		return
 	}
 
@@ -460,6 +453,9 @@ func (h *NovelHandler) DeleteChapter(w http.ResponseWriter, r *http.Request) {
 // ListScenes returns paginated scenes for a project or specific chapter.
 func (h *NovelHandler) ListScenes(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
+		return
+	}
 	chapterID := r.URL.Query().Get("chapterId")
 
 	params := httputil.ParsePaginationParams(r)

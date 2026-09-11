@@ -177,6 +177,9 @@ func NewRuleHandler(
 // List returns paginated invariant rules for a project.
 func (h *RuleHandler) List(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
+		return
+	}
 	rules := h.ruleStore.List(projectID)
 	params := httputil.ParsePaginationParams(r)
 
@@ -378,6 +381,9 @@ func (h *RuleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // Audit performs a continuity audit across scenes and timeline events for a project.
 func (h *RuleHandler) Audit(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectId")
+	if _, ok := ValidateProjectQueryAccess(w, r, h.projectStore, projectID); !ok {
+		return
+	}
 	params := httputil.ParsePaginationParams(r)
 
 	h.violationsMu.RLock()
