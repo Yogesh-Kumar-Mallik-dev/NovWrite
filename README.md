@@ -18,12 +18,12 @@
 >
 > - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
 >   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps` (or `./run.sh deps` / `pnpm deps`)
->   - **Windows PowerShell**: `.\deps` (or `.\run.ps1 deps`)
+>   - **Linux / macOS / WSL**: `./script.sh deps` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\script.ps1 deps`
 > - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
 >   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps --update` (or `./run.sh deps --update` / `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps -Update` (or `.\run.ps1 deps -Update`)
+>   - **Linux / macOS / WSL**: `./script.sh deps --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\script.ps1 deps -Update`
 
 ---
 
@@ -31,7 +31,7 @@
 
 > 💡 _For full workstation setup, prerequisites, and developer workflows, visit the **[Developer Onboarding Guide](docs/ONBOARDING.md)**._
 
-Our unified runner and direct root aliases are the **official, fastest, and recommended** way to set up and run NovWrite:
+Our unified single root entrypoint (`./script.sh` / `.\script.ps1`) is the **official, fastest, and recommended** way to set up and run NovWrite:
 
 ### 1.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -41,10 +41,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup (Installs all dependencies, prepares .env, starts DB/Redis, runs Prisma & builds contracts)
-./envi        # or: ./run.sh envi
+./script.sh envi
 
 # 3. 1-Click Launch Full Dev Environment (Postgres, Redis, API :8080, Web :5173)
-./dev         # or: ./run.sh dev
+./script.sh dev
 ```
 
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
@@ -55,10 +55,10 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Environment Setup
-.\envi        # or: .\run.ps1 envi
+.\script.ps1 envi
 
 # 3. 1-Click Launch Full Dev Environment
-.\dev         # or: .\run.ps1 dev
+.\script.ps1 dev
 ```
 
 ---
@@ -95,7 +95,7 @@ cd NovWrite
 ### 2.2. Manual Step-by-Step Installation (Without 1-Click Scripts)
 
 > [!NOTE]
-> The single root entrypoint (`./run.sh` / `.\run.ps1`) is the official and recommended way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
+> The single root entrypoint (`./script.sh` / `.\script.ps1`) is the official and recommended way to work with NovWrite. If your workflow requires manual setup without scripts, run the commands below:
 
 ```bash
 # 1. Clone & prepare environment
@@ -129,7 +129,7 @@ pnpm --filter @novwrite/bridge build
   - Dynamic Project Switcher with instant switching, freeform genre text input (e.g. `Xianxia / Cultivation`, `Sci-Fi`), pure **Clean Slate** universe creation (zero starter archetypes or dummy entity bloat), and zero-state "No Active Project Selected" guidance cards.
   - Project Settings & Edit modal (`EditProjectDialog`) with title, genre, and synopsis modification.
   - **3-Step Irreversible Project Deletion** (`DeleteProjectDialog`): Sequential confirmation sequence assessing affected asset scope, requiring an irreversibility acknowledgment checkbox, and exact project title verification before deletion.
-  - Complete database & Redis reset lifecycle (`./run.sh flush-db` / `.\run.ps1 flush-db`) for testing fresh user onboarding.
+  - Complete database & Redis reset lifecycle (`./script.sh flush-db` / `.\script.ps1 flush-db`) for testing fresh user onboarding.
 - **Zero Redundant Close Buttons Standard**:
   - Clean, distraction-free modal dialogs, drawers, and toasts with zero redundant top-right cross `(X)` buttons.
   - Consistent dismissal across all viewports via backdrop click, keyboard `Escape`, and explicit bottom action buttons (`[Cancel]`, `[Close]`).
@@ -164,7 +164,7 @@ pnpm --filter @novwrite/bridge build
   - Single-icon purple theme toggle (`#7c3aed`) rendering exactly one icon at a time matching both light and dark themes.
 - **Dedicated Page-Based Routing Architecture**: Deep-linkable 3-tier route architecture for every domain (List `/`, Create `/create`, Update/Inspect `/[id]`) adhering to the modern Zero-Badge UI standard, clean slate dynamic fields, 100% Bits UI Select dropdowns, and automatic post-save redirection.
 - **Canonical State Tracking & Evidence-Based Continuity Warnings**: At any scene, reconstructs exact world state and flags prose contradictions citing historical causal events.
-- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: Unified entrypoint CLI (`./run.sh` / `.\run.ps1`) and direct shorthand root aliases (`./dev`, `./build`, `./check`, `./test`, `./deps`, `./envi`, `./uenvi`, `./flush_db`, `./qr`) orchestrating dev server, dependency manager, environment setup, teardown, build, typecheck, unified 6-phase test runner, and database flusher supporting Linux, macOS, and Windows.
+- **Universal Cross-Platform Tooling & 6-Phase Test Runner**: Unified entrypoint CLI (`./script.sh` / `.\script.ps1`) orchestrating dev server (`dev`), dependency manager (`deps`), environment setup (`envi`), teardown (`uenvi`), build (`build`), typecheck (`check`), unified 6-phase test runner (`test`), and database flusher (`flush-db`) supporting Linux, macOS, and Windows.
 
 ---
 

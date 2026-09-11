@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# ==============================================================================
-# NovWrite Check Alias (./check -> ./run.sh check)
-# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
-# Usage: ./check [options]
-# ==============================================================================
-
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT_DIR/run.sh" check "$@"

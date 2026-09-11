@@ -2,9 +2,9 @@
 set -e
 
 # ==============================================================================
-# NovWrite Unified Monorepo CLI & Script Orchestrator
+# NovWrite Unified Script Orchestrator & Entrypoint
 # Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
-# Usage: ./run.sh <command> [options]
+# Usage: ./script.sh <command> [options]
 # ==============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,9 +12,9 @@ SCRIPTS_DIR="$ROOT_DIR/scripts"
 
 command_help() {
   echo "=================================================================="
-  echo "  ⚡ NovWrite Unified Monorepo CLI"
+  echo "  ⚡ NovWrite Unified Script Orchestrator"
   echo "=================================================================="
-  echo "Usage: ./run.sh <command> [options]"
+  echo "Usage: ./script.sh <command> [options]"
   echo ""
   echo "Core Commands:"
   echo "  dev           Launch dev servers (Go API, Web, Mobile, Desktop)"
@@ -29,12 +29,12 @@ command_help() {
   echo "  help          Display this help menu"
   echo ""
   echo "Examples:"
-  echo "  ./run.sh dev                 # Launch all services"
-  echo "  ./run.sh dev --mobile        # Launch mobile only"
-  echo "  ./run.sh test                # Run 6-phase test suite"
-  echo "  ./run.sh check               # Typecheck all packages"
-  echo "  ./run.sh deps --update       # Update monorepo dependencies"
-  echo "  ./run.sh envi                # Full environment setup"
+  echo "  ./script.sh dev                 # Launch all services"
+  echo "  ./script.sh dev --mobile        # Launch mobile only"
+  echo "  ./script.sh test                # Run 6-phase test suite"
+  echo "  ./script.sh check               # Typecheck all packages"
+  echo "  ./script.sh deps --update       # Update monorepo dependencies"
+  echo "  ./script.sh envi                # Full environment setup"
   echo "=================================================================="
 }
 
@@ -67,7 +67,7 @@ case "$CMD" in
     exec "$SCRIPTS_DIR/flush_db.sh" "$@"
     ;;
   qr|mobile:qr)
-    node "$SCRIPTS_DIR/show-mobile-qr.mjs"
+    node "$SCRIPTS_DIR/show-mobile-qr.mjs" "$@"
     ;;
   help|--help|-h)
     command_help
@@ -80,7 +80,7 @@ case "$CMD" in
       exec "$SCRIPTS_DIR/$CMD" "$@"
     else
       echo "❌ Unknown command '$CMD'."
-      echo "Run './run.sh help' for available commands."
+      echo "Run './script.sh help' for available commands."
       exit 1
     fi
     ;;

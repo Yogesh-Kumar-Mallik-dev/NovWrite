@@ -28,10 +28,8 @@ NovWrite Repository
 ├── README.md                      # Primary entry point: Value proposition, visual architecture, quickstart, features
 ├── CONTRIBUTING.md                # Contributor workflows: Branching, PRs, conventional signed commits, 6-phase testing
 ├── SECURITY.md                    # Vulnerability disclosure policy, response SLAs, defense-in-depth model
-├── LICENSE                        # Explicit legal licensing terms
-├── run.sh                         # Single unified Bash entrypoint for all monorepo lifecycle commands
-├── run.ps1                        # Single unified PowerShell entrypoint for Windows lifecycle commands
-├── dev, build, check, test, ...   # Direct shorthand executable root aliases (dev, build, check, test, deps, envi, uenvi, flush_db, qr)
+├── script.sh                      # Single unified Bash entrypoint for all monorepo lifecycle commands
+├── script.ps1                     # Single unified PowerShell entrypoint for Windows lifecycle commands
 ├── scripts/                       # Centralized core script implementations (dev, build, check, test, deps, envi, uenvi, flush)
 └── docs/
     ├── DOCUMENTATION_STANDARDS.md # [THIS FILE] Authoritative doc quality & anti-pattern rules
@@ -226,16 +224,16 @@ mindmap
 
 ## 5. Summary Comparison: Bad AI vs. Good Engineering Documentation
 
-| Dimension          | ❌ Bad AI Documentation Anti-Pattern        | ✅ Good Engineering Standard                                           |
-| :----------------- | :------------------------------------------ | :--------------------------------------------------------------------- |
-| **Commands**       | Hallucinated flags, unverified syntax       | 100% verified, runnable scripts (`./dev` / `./run.sh dev`, `./test` / `./run.sh test`) |
-| **Code Snippets**  | Ellipses, `// TODO`, generic stubs          | Complete, typed, working examples with domain models                  |
-| **Tone**           | Fluffy buzzwords, exaggerated marketing     | Precise, concise, active voice technical facts                        |
-| **Error Handling** | Omitted; happy path only                    | RFC 7807 problem details, error codes, recovery steps                 |
-| **File Paths**     | Fake paths (`/path/to/...`), moved files    | Exact workspace-relative and clickable markdown paths                 |
-| **Depth**          | Over-explains basics, glosses over math/DAG | Proportional depth on AST formulas, fold engines, leases              |
-| **Platforms**      | Linux-only or Mac-only assumptions          | Cross-platform parity (Linux, macOS, Windows PowerShell via `run.ps1` and `*.ps1` aliases)|
-| **Parity**         | Desynchronized from actual backend routes   | 100% code-doc synchronization in the same commit                      |
+| Dimension          | ❌ Bad AI Documentation Anti-Pattern        | ✅ Good Engineering Standard                                                              |
+| :----------------- | :------------------------------------------ | :---------------------------------------------------------------------------------------- |
+| **Commands**       | Hallucinated flags, unverified syntax       | 100% verified, runnable scripts (`./script.sh dev`, `./script.sh test`)                   |
+| **Code Snippets**  | Ellipses, `// TODO`, generic stubs          | Complete, typed, working examples with domain models                                      |
+| **Tone**           | Fluffy buzzwords, exaggerated marketing     | Precise, concise, active voice technical facts                                            |
+| **Error Handling** | Omitted; happy path only                    | RFC 7807 problem details, error codes, recovery steps                                     |
+| **File Paths**     | Fake paths (`/path/to/...`), moved files    | Exact workspace-relative and clickable markdown paths                                     |
+| **Depth**          | Over-explains basics, glosses over math/DAG | Proportional depth on AST formulas, fold engines, leases                                  |
+| **Platforms**      | Linux-only or Mac-only assumptions          | Cross-platform parity (Linux, macOS, Windows PowerShell via `script.sh` and `script.ps1`) |
+| **Parity**         | Desynchronized from actual backend routes   | 100% code-doc synchronization in the same commit                                          |
 
 ---
 
@@ -243,11 +241,11 @@ mindmap
 
 Before committing any documentation changes, verify:
 
-- [ ] **Run Diagnostics:** `./check` (or `./run.sh check`) passes with 0 errors and 0 warnings.
-- [ ] **Run Test Suites:** `./test` (or `./run.sh test`) passes all 6 phases.
+- [ ] **Run Diagnostics:** `./script.sh check` (or `pnpm check`) passes with 0 errors and 0 warnings.
+- [ ] **Run Test Suites:** `./script.sh test` (or `pnpm test`) passes all 6 phases.
 - [ ] **Check Routes:** All documented API paths match routes in `apps/api/cmd/server/main.go`.
 - [ ] **Check Schemas:** All documented database models match `apps/data-service/prisma/schema.prisma`.
-- [ ] **Verify Commands:** All CLI commands and flags are runnable as documented via `./<cmd>`, `.\<cmd>`, `./run.sh`, and `.\run.ps1`.
+- [ ] **Verify Commands:** All CLI commands and flags are runnable as documented via `./script.sh` and `.\script.ps1`.
 - [ ] **No Placeholders:** Zero `// TODO` or `...` stubs in tutorial/sample blocks.
 - [ ] **No Dead Links:** All relative links and anchors point to existing targets.
 - [ ] **Signed Commit:** Commit is signed with GPG (`git commit -S`).

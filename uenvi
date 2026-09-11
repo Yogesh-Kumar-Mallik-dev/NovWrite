@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# ==============================================================================
-# NovWrite Environment Teardown Alias (./uenvi -> ./run.sh uenvi)
-# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
-# Usage: ./uenvi [options]
-# ==============================================================================
-
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT_DIR/run.sh" uenvi "$@"

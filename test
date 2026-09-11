@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# ==============================================================================
-# NovWrite Test Alias (./test -> ./run.sh test)
-# Platform Support: Linux, macOS (Darwin), Windows (Git Bash / MSYS2 / WSL)
-# Usage: ./test [options]
-# ==============================================================================
-
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT_DIR/run.sh" test "$@"

@@ -33,5 +33,5 @@ Do NOT:
 1. **5-Minute Quickstart:** Fast, copy-pasteable bootstrap commands with explicit version numbers (Go 1.23+, Node 22 LTS, pnpm 9+, PostgreSQL 18 with pgvector, Redis 7.2+).
 2. **Cross-Platform Parity:** Document Unix (`.sh`) and Windows (`.ps1`) commands equally.
 3. **Atomic Synchronization:** Update documentation in the exact same commit as code changes.
-4. **Diagnostic & Test Verification:** Before committing documentation, `./run.sh check` and `./run.sh test` must pass with 0 errors and 0 warnings.
+4. **Diagnostic & Test Verification:** Before committing documentation, `./script.sh check` and `./script.sh test` must pass with 0 errors and 0 warnings.
 5. **GPG Signed Commits:** All documentation commits must be GPG signed (`git commit -S`).

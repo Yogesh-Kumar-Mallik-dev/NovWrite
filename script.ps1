@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-    NovWrite Unified Monorepo CLI & Script Orchestrator (PowerShell)
+    NovWrite Unified Script Orchestrator (PowerShell)
 .DESCRIPTION
     Single root entrypoint for launching dev servers, tests, builds,
     environment setups, and database resets.
 .EXAMPLE
-    .\run.ps1 dev
-    .\run.ps1 test
-    .\run.ps1 build
+    .\script.ps1 dev
+    .\script.ps1 test
+    .\script.ps1 build
 #>
 
 param(
@@ -23,9 +23,9 @@ $scriptsDir = Join-Path $rootDir "scripts"
 
 function Show-Help {
     Write-Host "==================================================================" -ForegroundColor Cyan
-    Write-Host "  [*] NovWrite Unified Monorepo CLI (PowerShell)" -ForegroundColor Cyan
+    Write-Host "  [*] NovWrite Unified Script Orchestrator (PowerShell)" -ForegroundColor Cyan
     Write-Host "==================================================================" -ForegroundColor Cyan
-    Write-Host "Usage: .\run.ps1 <command> [options]`n"
+    Write-Host "Usage: .\script.ps1 <command> [options]`n"
     Write-Host "Core Commands:"
     Write-Host "  dev           Launch dev servers (Go API, Web, Mobile, Desktop)"
     Write-Host "  build         Build production artifacts across all packages"
@@ -38,10 +38,10 @@ function Show-Help {
     Write-Host "  qr            Render Expo terminal QR code for mobile testing"
     Write-Host "  help          Display this help menu`n"
     Write-Host "Examples:"
-    Write-Host "  .\run.ps1 dev                # Launch all services"
-    Write-Host "  .\run.ps1 dev -MobileOnly    # Launch mobile only"
-    Write-Host "  .\run.ps1 test               # Run 6-phase test suite"
-    Write-Host "  .\run.ps1 check              # Typecheck all packages"
+    Write-Host "  .\script.ps1 dev                # Launch all services"
+    Write-Host "  .\script.ps1 dev -MobileOnly    # Launch mobile only"
+    Write-Host "  .\script.ps1 test               # Run 6-phase test suite"
+    Write-Host "  .\script.ps1 check              # Typecheck all packages"
     Write-Host "==================================================================" -ForegroundColor Cyan
 }
 
@@ -71,7 +71,7 @@ switch ($Command.ToLower()) {
         & (Join-Path $scriptsDir "flush_db.ps1") @ScriptArgs
     }
     { $_ -in "qr", "mobile:qr" } {
-        node (Join-Path $scriptsDir "show-mobile-qr.mjs")
+        node (Join-Path $scriptsDir "show-mobile-qr.mjs") @ScriptArgs
     }
     { $_ -in "help", "--help", "-h" } {
         Show-Help
@@ -82,7 +82,7 @@ switch ($Command.ToLower()) {
             & $targetScript @ScriptArgs
         } else {
             Write-Host "[!] Unknown command '$Command'." -ForegroundColor Red
-            Write-Host "Run '.\run.ps1 help' for available commands."
+            Write-Host "Run '.\script.ps1 help' for available commands."
             exit 1
         }
     }

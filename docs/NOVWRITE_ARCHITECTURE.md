@@ -191,14 +191,14 @@ flowchart TB
 
 ## 7. 6-Phase Monorepo Test Architecture
 
-NovWrite enforces a strict 6-phase test runner ([`./run.sh test`](file:///home/yogesh/Projects/NovWrite/run.sh) / [`.\run.ps1 test`](file:///home/yogesh/Projects/NovWrite/run.ps1)):
+NovWrite enforces a strict 6-phase test runner ([`./script.sh test`](file:///home/yogesh/Projects/NovWrite/script.sh) / [`.\script.ps1 test`](file:///home/yogesh/Projects/NovWrite/script.ps1)):
 
 1. **Phase 1 (`@novwrite/bridge`):** RPC contracts, Zod schemas, differential state patchers, and error normalizers.
 2. **Phase 2 (`@novwrite/data-service`):** Schema validation, property normalization, micro-revision compaction, and AST formula engine with cycle detection (41 unit tests).
 3. **Phase 3 (`apps/api`):** Go backend unit, formula engine cycle detection, and HTTP integration test suite.
 4. **Phase 4 (`@novwrite/web`):** Frontend component, store, table configuration, and mathjs AST formula evaluation tests (29 unit tests).
 5. **Phase 5 (`@novwrite/mobile`):** Mobile client stores, entity creation, timeline fold engine, and telemetry suite (11 unit tests).
-6. **Phase 6 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./run.sh check`](file:///home/yogesh/Projects/NovWrite/run.sh) / [`.\run.ps1 check`](file:///home/yogesh/Projects/NovWrite/run.ps1) with 0 errors and 0 warnings tolerance.
+6. **Phase 6 (Diagnostic Typecheck):** Monorepo SvelteKit and TypeScript type diagnostics via [`./script.sh check`](file:///home/yogesh/Projects/NovWrite/script.sh) / [`.\script.ps1 check`](file:///home/yogesh/Projects/NovWrite/script.ps1) with 0 errors and 0 warnings tolerance.
 
 ---
 

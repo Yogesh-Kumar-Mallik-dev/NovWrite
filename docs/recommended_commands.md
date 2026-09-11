@@ -42,95 +42,95 @@ go version && node -v && pnpm -v && docker --version && protoc --version && buf 
 
 ---
 
-## 2. Top-Level Monorepo Orchestration Scripts & Aliases
+## 2. Top-Level Monorepo Orchestration Scripts
 
-All lifecycle commands can be executed either via the unified entrypoint (`./run.sh <cmd>` on Linux/macOS/WSL or `.\run.ps1 <cmd>` on Windows PowerShell) or directly via repository-wide shorthand aliases (`./<cmd>` or `.\<cmd>`).
+All lifecycle commands are executed via the single unified entrypoint (`./script.sh <cmd>` on Linux/macOS/WSL or `.\script.ps1 <cmd>` on Windows PowerShell), orchestrating all tasks from `scripts/` while keeping the root clean.
 
 ### 2.1. Bash / Zsh (Linux, macOS, Windows Git Bash / WSL)
 
 ```bash
 # 🚀 1-Click Development Server (API + Web)
-./dev                    # or: ./run.sh dev (or: pnpm dev)
+./script.sh dev                    # or: pnpm dev
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
 # Renders Expo QR code upfront and streams Web/Tauri logs cleanly without terminal hijacking
-./dev --all              # or: ./dev -a (or: ./run.sh dev --all)
+./script.sh dev --all              # or: ./script.sh dev -a
 
 # 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
-./dev --mobile           # or: ./dev -m (or: ./run.sh dev --mobile)
+./script.sh dev --mobile           # or: ./script.sh dev -m
 
 # 🖥️ Launch API + Web + Tauri Desktop Client
-./dev --desktop          # or: ./dev -d (or: ./run.sh dev --desktop)
+./script.sh dev --desktop          # or: ./script.sh dev -d
 
 # 🏗️ 1-Click Monorepo Build (bridge contracts, data-service dist, Go api binary, web bundle)
-./build                  # or: ./run.sh build (or: pnpm build)
+./script.sh build                  # or: pnpm build
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck (verifies all TS and Svelte diagnostics across packages)
-./check                  # or: ./run.sh check (or: pnpm check)
+./script.sh check                  # or: pnpm check
 
 # 🧪 1-Click 6-Phase Test Runner (bridge -> data-service -> Go backend -> web tests -> mobile tests -> typecheck)
-./test                   # or: ./run.sh test (or: pnpm test)
+./script.sh test                   # or: pnpm test
 
 # 📦 1-Click Dependency Installation & Update
-# - First-time clone: ./deps (installs pnpm, Go, Prisma 8, bridge in < 5s)
-# - Updating repo:    ./deps --update (updates all packages after git pull)
-# - Clean cache:      ./deps --clean
-./deps                   # or: ./run.sh deps (or: pnpm deps)
+# - First-time clone: ./script.sh deps (installs pnpm, Go, Prisma 8, bridge in < 5s)
+# - Updating repo:    ./script.sh deps --update (updates all packages after git pull)
+# - Clean cache:      ./script.sh deps --clean
+./script.sh deps                   # or: pnpm deps
 
 # ⚙️ 1-Click Environment Setup (installs dependencies, prepares .env, starts DB/Redis, runs Prisma & builds)
-./envi                   # or: ./run.sh envi (or: pnpm envi)
+./script.sh envi                   # or: pnpm envi
 
 # 🛑 1-Click Environment Teardown & Reset (terminates dev servers, shuts down Docker, purges logs & build dist)
-./uenvi                  # or: ./run.sh uenvi (add -v for volume wipe, -a for deep clean)
+./script.sh uenvi                  # add -v for volume wipe, -a for deep clean
 
 # 🧹 Complete Database & Cache Reset (flushes PostgreSQL tables & Redis keys for fresh onboarding testing)
-./flush_db               # or: ./flush-db (or: ./run.sh flush-db)
+./script.sh flush-db
 
 # 📱 Render Expo Mobile QR Code
-./qr                     # or: ./run.sh qr (or: pnpm mobile:qr)
+./script.sh qr                     # or: pnpm mobile:qr
 ```
 
 ### 2.2. PowerShell (Windows / Windows Terminal / pwsh)
 
 ```powershell
 # 🚀 1-Click Development Server (API + Web)
-.\dev                    # or: .\run.ps1 dev
+.\script.ps1 dev
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
-.\dev -All               # or: .\run.ps1 dev -All
+.\script.ps1 dev -All
 
 # 📱 Launch API + Web + Mobile Expo Studio (with upfront QR code)
-.\dev -MobileOnly        # or: .\run.ps1 dev -MobileOnly
+.\script.ps1 dev -MobileOnly
 
 # 🖥️ Launch API + Web + Tauri Desktop Client
-.\dev -DesktopOnly       # or: .\run.ps1 dev -DesktopOnly
+.\script.ps1 dev -DesktopOnly
 
 # 🏗️ 1-Click Monorepo Build
-.\build                  # or: .\run.ps1 build
+.\script.ps1 build
 
 # 🔍 1-Click Monorepo Diagnostics & Typecheck
-.\check                  # or: .\run.ps1 check
+.\script.ps1 check
 
 # 🧪 1-Click 6-Phase Test Runner
-.\test                   # or: .\run.ps1 test
+.\script.ps1 test
 
 # 📦 1-Click Dependency Installation & Update
-# - First-time clone: .\deps
-# - Updating repo:    .\deps -Update
-# - Clean cache:      .\deps -Clean
-.\deps                   # or: .\run.ps1 deps
+# - First-time clone: .\script.ps1 deps
+# - Updating repo:    .\script.ps1 deps -Update
+# - Clean cache:      .\script.ps1 deps -Clean
+.\script.ps1 deps
 
 # ⚙️ 1-Click Environment Setup
-.\envi                   # or: .\run.ps1 envi
+.\script.ps1 envi
 
 # 🛑 1-Click Environment Teardown & Reset
-.\uenvi                  # or: .\run.ps1 uenvi
+.\script.ps1 uenvi
 
 # 🧹 Complete Database & Cache Reset
-.\flush_db               # or: .\run.ps1 flush-db
+.\script.ps1 flush-db
 
 # 📱 Render Expo Mobile QR Code
-.\qr                     # or: .\run.ps1 qr
+.\script.ps1 qr
 ```
 
 ---
@@ -213,7 +213,7 @@ pnpm --filter @novwrite/data-service db:studio
 
 ```bash
 # 1-Click 6-Phase Monorepo Test Runner
-./run.sh test
+./script.sh test
 
 # Phase 1: Run @novwrite/bridge contract tests
 pnpm --filter @novwrite/bridge test
@@ -231,7 +231,7 @@ pnpm --filter @novwrite/web test
 pnpm --filter @novwrite/mobile test
 
 # Phase 6: Check SvelteKit frontend & monorepo diagnostics
-./run.sh check
+./script.sh check
 ```
 
 ---

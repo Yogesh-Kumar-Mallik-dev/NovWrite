@@ -9,18 +9,18 @@ Welcome to the **NovWrite** engineering codebase. This guide outlines workstatio
 >
 > - 📦 **First-Time Clone (Initial Setup — Mandatory)**:
 >   Running the dependency installation command is **required** when you first clone the repository. It orchestrates pnpm workspace packages, Go modules, Prisma 8 client generation, and bridge contracts in under 5 seconds:
->   - **Linux / macOS / WSL**: `./deps` (or `./run.sh deps` / `pnpm deps`)
->   - **Windows PowerShell**: `.\deps` (or `.\run.ps1 deps`)
+>   - **Linux / macOS / WSL**: `./script.sh deps` (or `pnpm deps`)
+>   - **Windows PowerShell**: `.\script.ps1 deps`
 > - 🔄 **Updating Dependencies as per Repo (After `git pull`)**:
 >   Whenever you pull latest commits or when dependencies update across branches, use the **exact same command in update mode**:
->   - **Linux / macOS / WSL**: `./deps --update` (or `./run.sh deps --update` / `pnpm deps --update`)
->   - **Windows PowerShell**: `.\deps -Update` (or `.\run.ps1 deps -Update`)
+>   - **Linux / macOS / WSL**: `./script.sh deps --update` (or `pnpm deps --update`)
+>   - **Windows PowerShell**: `.\script.ps1 deps -Update`
 
 ---
 
 ## 1. 5-Minute 1-Click Quickstart (Recommended & First Choice)
 
-Our single root entrypoint (`./run.sh` / `.\run.ps1`) and direct shorthand aliases are the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
+Our unified single root entrypoint (`./script.sh` / `.\script.ps1`) is the **official, fastest, and recommended first choice** to bootstrap your NovWrite development workspace in under 5 minutes:
 
 ### 1.1. Linux / macOS / Windows (Git Bash / WSL)
 
@@ -31,11 +31,11 @@ cd NovWrite
 
 # 2. 1-Click Full Environment Setup
 # (Creates .env, starts Postgres & Redis containers, installs all dependencies, generates Prisma 8 & builds bridge contracts)
-./envi        # or: ./run.sh envi
+./script.sh envi
 
 # 3. 1-Click Launch Development Stack
 # (Boots Go API Backend on :8080 and SvelteKit Web on :5173)
-./dev         # or: ./run.sh dev
+./script.sh dev
 ```
 
 ### 1.2. Windows (PowerShell as Administrator / Windows Terminal)
@@ -46,84 +46,84 @@ git clone https://github.com/Yogesh-Kumar-Mallik-dev/NovWrite.git
 cd NovWrite
 
 # 2. 1-Click Full Environment Setup
-.\envi        # or: .\run.ps1 envi
+.\script.ps1 envi
 
 # 3. 1-Click Launch Development Stack
-.\dev         # or: .\run.ps1 dev
+.\script.ps1 dev
 ```
 
 ---
 
-## 2. Unified Monorepo Lifecycle Commands & Aliases
+## 2. Unified Monorepo Lifecycle Commands
 
-NovWrite provides a unified root CLI (`./run.sh` / `.\run.ps1`) and direct root shorthand aliases (`./<cmd>` / `.\<cmd>`) eliminating tedious manual commands:
+NovWrite provides a unified root CLI (`./script.sh` / `.\script.ps1`) orchestrating all tasks from `scripts/` while keeping the root clean:
 
 ### 2.1. Linux, macOS, and Windows (Git Bash / WSL)
 
 ```bash
 # 🚀 1-Click Development Environment (API :8080 + Web :5173)
-./dev                    # or: ./run.sh dev
+./script.sh dev
 
 # 🌐📱🖥️ Launch All 3 Clients (API + Web + Expo Mobile + Tauri Desktop)
-./dev --all              # or: ./run.sh dev --all
+./script.sh dev --all
 
 # 📦 1-Click Dependency Installation & Update (pnpm, Go modules, Prisma 8, bridge)
-./deps                   # or: ./run.sh deps
+./script.sh deps
 
 # ⚙️ 1-Click Environment Setup Utility (Full cold bootstrap)
-./envi                   # or: ./run.sh envi
+./script.sh envi
 
 # 🛑 1-Click Environment Teardown & Reset (Stops servers, shuts down containers, purges logs)
-./uenvi                  # or: ./run.sh uenvi
+./script.sh uenvi
 
 # 🧪 1-Click 6-Phase Monorepo Test Runner
-./test                   # or: ./run.sh test
+./script.sh test
 
 # 🔍 1-Click Monorepo Typecheck & Diagnostics (0 warnings/errors tolerance)
-./check                  # or: ./run.sh check
+./script.sh check
 
 # 🏗️ 1-Click Monorepo Production Build
-./build                  # or: ./run.sh build
+./script.sh build
 
 # 🧹 Clean Slate Database & Redis Reset Utility
-./flush_db               # or: ./flush-db (or: ./run.sh flush-db)
+./script.sh flush-db
 
 # 📱 Render Expo Mobile QR Code
-./qr                     # or: ./run.sh qr
+./script.sh qr
 ```
 
 ### 2.2. Windows (PowerShell / Windows Terminal / pwsh)
 
 ```powershell
 # 🚀 1-Click Development Environment
-.\dev                    # or: .\run.ps1 dev
+.\script.ps1 dev
 
 # 🌐📱🖥️ Launch All 3 Clients
-.\dev -All               # or: .\run.ps1 dev -All
+.\script.ps1 dev -All
 
 # 📦 1-Click Dependency Installation & Update
-.\deps                   # or: .\run.ps1 deps
+.\script.ps1 deps
 
 # ⚙️ 1-Click Environment Setup Utility
-.\envi                   # or: .\run.ps1 envi
+.\script.ps1 envi
 
 # 🛑 1-Click Environment Teardown & Reset
-.\uenvi                  # or: .\run.ps1 uenvi
+.\script.ps1 uenvi
 
 # 🧪 1-Click 6-Phase Monorepo Test Runner
-.\test                   # or: .\run.ps1 test
+.\script.ps1 test
 
 # 🔍 1-Click Monorepo Typecheck & Diagnostics
-.\check                  # or: .\run.ps1 check
+.\script.ps1 check
 
 # 🏗️ 1-Click Monorepo Production Build
-.\build                  # or: .\run.ps1 build
+.\script.ps1 build
 
 # 🧹 Clean Slate Database & Redis Reset Utility
-.\flush_db               # or: .\run.ps1 flush-db
+.\script.ps1 flush-db
 
 # 📱 Render Expo Mobile QR Code
-.\qr                     # or: .\run.ps1 qr
+.\script.ps1 qr
 ```
 
 ---

@@ -146,10 +146,10 @@ timeline
                : Removal of Legacy devSeeder.ts Engine from @novwrite/data-service
                : Backend Super Admin CLI Bootstrap Command (bootstrap-superadmin)
                : Zero-State Form Defaults and Unpolluted Runtime State Stores
-    2026-09-11 : Version 2.12.2 (Single Root Entrypoint run.sh/ps1, Root Script Purge & Documentation Relocation)
+    2026-09-11 : Version 2.12.2 (Single Root Entrypoint script.sh/ps1, Root Script Purge & Documentation Relocation)
                : Relocation of Monorepo Architecture, Academic Reports & changes.md to docs/
                : Dedicated scripts/ Directory Housing Universal Core Implementations
-               : Single Unified Root Entrypoint (run.sh / run.ps1) and Elimination of Root Wrapper Clutter
+               : Single Unified Root Entrypoint (script.sh / script.ps1) and Elimination of Root Wrapper Clutter
 ```
 
 ---
@@ -159,7 +159,7 @@ timeline
 ### [Version 2.12.2] — 2026-09-11
 
 **Scope:** Single Unified Root Entrypoint, Root Script Purge & Documentation Relocation to `docs/`  
-**Target Documents:** [`run.sh`](file:///home/yogesh/Projects/NovWrite/run.sh), [`run.ps1`](file:///home/yogesh/Projects/NovWrite/run.ps1), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`CONTRIBUTING.md`](file:///home/yogesh/Projects/NovWrite/CONTRIBUTING.md), [`docs/DOCUMENTATION_STANDARDS.md`](file:///home/yogesh/Projects/NovWrite/docs/DOCUMENTATION_STANDARDS.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`docs/NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/NOVWRITE_ARCHITECTURE.md), [`docs/Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/docs/Novwrite.docx), [`docs/One View by AKTU SDC Team.pdf`](<file:///home/yogesh/Projects/NovWrite/docs/One View by AKTU SDC Team.pdf>), [`scripts/`](file:///home/yogesh/Projects/NovWrite/scripts/), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+**Target Documents:** [`script.sh`](file:///home/yogesh/Projects/NovWrite/script.sh), [`script.ps1`](file:///home/yogesh/Projects/NovWrite/script.ps1), [`README.md`](file:///home/yogesh/Projects/NovWrite/README.md), [`CONTRIBUTING.md`](file:///home/yogesh/Projects/NovWrite/CONTRIBUTING.md), [`docs/DOCUMENTATION_STANDARDS.md`](file:///home/yogesh/Projects/NovWrite/docs/DOCUMENTATION_STANDARDS.md), [`docs/recommended_commands.md`](file:///home/yogesh/Projects/NovWrite/docs/recommended_commands.md), [`docs/ONBOARDING.md`](file:///home/yogesh/Projects/NovWrite/docs/ONBOARDING.md), [`docs/NOVWRITE_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/NOVWRITE_ARCHITECTURE.md), [`docs/Novwrite.docx`](file:///home/yogesh/Projects/NovWrite/docs/Novwrite.docx), [`docs/One View by AKTU SDC Team.pdf`](<file:///home/yogesh/Projects/NovWrite/docs/One View by AKTU SDC Team.pdf>), [`scripts/`](file:///home/yogesh/Projects/NovWrite/scripts/), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
 
 #### Added & Refactored
 
@@ -170,12 +170,11 @@ timeline
   - Updated documentation index and links across `README.md`, `CONTRIBUTING.md`, `docs/DOCUMENTATION_STANDARDS.md`, `docs/ONBOARDING.md`, and `docs/recommended_commands.md`.
 - **Dedicated `scripts/` Core Directory & Single Unified Root Entrypoint:**
   - Migrated core lifecycle script implementations into `scripts/` (`build.sh`, `build.ps1`, `check.sh`, `check.ps1`, `deps.sh`, `deps.ps1`, `dev.sh`, `dev.ps1`, `envi.sh`, `envi.ps1`, `flush_db.sh`, `flush_db.ps1`, `test.sh`, `test.ps1`, `uenvi.sh`, `uenvi.ps1`, `show-mobile-qr.mjs`).
-  - Completely purged all 20 scattered individual script files from the repository root.
-  - Implemented a **single, robust root entrypoint** ([`run.sh`](file:///home/yogesh/Projects/NovWrite/run.sh) for Bash and [`run.ps1`](file:///home/yogesh/Projects/NovWrite/run.ps1) for PowerShell) orchestrating all subcommands (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`, `help`) with seamless argument and flag forwarding.
-  - Added repository-wide shorthand aliases (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush_db`, `flush-db`, `qr` and companion `*.ps1` PowerShell scripts) ensuring commands like `./dev`, `./test`, `./check`, `./build`, `./deps`, `./envi`, `./uenvi`, `./flush_db`, `./qr` execute transparently from the repository root.
-  - Updated `package.json` scripts (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `mobile:qr`) to invoke `./run.sh <command>`.
+  - Completely purged all scattered individual wrapper and alias script files from the repository root, keeping the root pristine.
+  - Implemented a **single, robust root entrypoint** ([`script.sh`](file:///home/yogesh/Projects/NovWrite/script.sh) for Bash and [`script.ps1`](file:///home/yogesh/Projects/NovWrite/script.ps1) for PowerShell) orchestrating all subcommands (`dev`, `build`, `check`, `test`, `deps`, `envi`, `uenvi`, `flush-db`, `qr`, `help`) with seamless argument and flag forwarding to `scripts/`.
+  - Updated `package.json` scripts (`envi`, `uenvi`, `deps`, `flush-db`) to invoke `./script.sh <command>`.
 - **Verification:**
-  - 100% verification across all 6 test phases via `./check` / `./run.sh check` and `./test` / `./run.sh test` runners.
+  - 100% verification across all 6 test phases via `./script.sh check` and `./script.sh test` runners.
 
 ---
 
