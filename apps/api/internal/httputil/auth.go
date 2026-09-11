@@ -25,8 +25,11 @@ const (
 
 // UserClaims captures the authenticated user's identity and permissions.
 type UserClaims struct {
+	TokenID    string   `json:"jti,omitempty"`
+	FamilyID   string   `json:"fid,omitempty"`
 	UserID     string   `json:"sub,omitempty"`
 	Email      string   `json:"email,omitempty"`
+	Username   string   `json:"username,omitempty"`
 	Role       string   `json:"role,omitempty"`
 	ProjectIDs []string `json:"projectIds,omitempty"`
 	ExpiresAt  int64    `json:"exp,omitempty"`
@@ -148,6 +151,63 @@ func ParseAndVerifyJWT(tokenStr string, secret string) (*UserClaims, error) {
 	return &claims, nil
 }
 
+// SetAuthCookies writes HttpOnly, SameSite=Lax access and refresh token cookies.
+func SetAuthCookies(w http.ResponseWriter, accessToken, refreshToken string, secure bool) {
+	sameSite := http.SameSiteLaxMode
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		MaxAge:   15 * 60, // 15 minutes
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: sameSite,
+	})
+	if refreshToken != "" {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			Path:     "/api/v1/auth",
+			MaxAge:   7 * 24 * 3600, // 7 days
+			HttpOnly: true,
+			Secure:   secure,
+			SameSite: sameSite,
+		})
+	}
+}
+
+// ClearAuthCookies expires the access and refresh token cookies.
+func ClearAuthCookies(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/api/v1/auth",
+		MaxAge:   -1,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+// ExtractTokenFromRequest resolves JWT token string from Authorization header or access_token cookie.
+func ExtractTokenFromRequest(r *http.Request) string {
+	authHeader := r.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		return strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	}
+	if cookie, err := r.Cookie("access_token"); err == nil && cookie.Value != "" {
+		return strings.TrimSpace(cookie.Value)
+	}
+	return ""
+}
+
 // JWTAuthMiddleware provides token authentication and context population.
 // If requireAuth is false, unauthenticated requests pass through without error,
 // but valid tokens or development X-User-ID headers still populate user context.
@@ -156,10 +216,9 @@ func JWTAuthMiddleware(jwtSecret string, requireAuth bool) func(http.Handler) ht
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var claims *UserClaims
 
-			// 1. Check Authorization: Bearer <token>
-			authHeader := r.Header.Get("Authorization")
-			if strings.HasPrefix(authHeader, "Bearer ") {
-				tokenStr := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+			// 1. Check Authorization: Bearer <token> or access_token cookie
+			tokenStr := ExtractTokenFromRequest(r)
+			if tokenStr != "" {
 				if parsed, err := ParseAndVerifyJWT(tokenStr, jwtSecret); err == nil {
 					claims = parsed
 				} else if requireAuth {
@@ -190,7 +249,7 @@ func JWTAuthMiddleware(jwtSecret string, requireAuth bool) func(http.Handler) ht
 					Type:   "https://novwrite.com/errors/unauthorized",
 					Title:  "Authentication Required",
 					Status: http.StatusUnauthorized,
-					Detail: "A valid Bearer token is required to access this resource.",
+					Detail: "A valid Bearer token or session cookie is required to access this resource.",
 					Code:   "UNAUTHORIZED",
 				})
 				return
@@ -205,6 +264,37 @@ func JWTAuthMiddleware(jwtSecret string, requireAuth bool) func(http.Handler) ht
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// CSRFProtectionMiddleware provides double-submit CSRF protection for cookie-authenticated browser requests.
+func CSRFProtectionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Safe idempotent methods do not mutate state
+		if r.Method == "GET" || r.Method == "HEAD" || r.Method == "OPTIONS" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Only enforce CSRF if request uses cookie authentication without an explicit Authorization Bearer header
+		if r.Header.Get("Authorization") == "" {
+			if _, err := r.Cookie("access_token"); err == nil {
+				csrfHeader := r.Header.Get("X-CSRF-Token")
+				csrfCookie, cookieErr := r.Cookie("csrf_token")
+				if csrfHeader == "" || (cookieErr == nil && csrfHeader != csrfCookie.Value) {
+					RespondProblem(w, r, ProblemDetail{
+						Type:   "https://novwrite.com/errors/forbidden",
+						Title:  "CSRF Verification Failed",
+						Status: http.StatusForbidden,
+						Detail: "Missing or invalid CSRF token header for session request.",
+						Code:   "CSRF_TOKEN_INVALID",
+					})
+					return
+				}
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // RequireRole returns an HTTP middleware enforcing that the authenticated user has at least one of the specified roles.
@@ -256,4 +346,5 @@ func RequireAdmin() func(http.Handler) http.Handler {
 func RequireSuperAdmin() func(http.Handler) http.Handler {
 	return RequireRole(RoleSuperAdmin)
 }
+
 

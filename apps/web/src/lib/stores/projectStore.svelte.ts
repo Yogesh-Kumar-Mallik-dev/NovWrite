@@ -359,3 +359,188 @@ export class ProjectStateStore {
 }
 
 export const projectStore = new ProjectStateStore();
+
+// ============================================================================
+// Multi-User Authentication & Session Store (Svelte 5 Runes)
+// ============================================================================
+
+import type { UserAccount, UserRole, AuthLoginRequest, CreateUserRequest } from "@novwrite/bridge";
+
+const AUTH_USER_KEY = "novwrite_auth_user_v1";
+const AUTH_TOKEN_KEY = "novwrite_auth_token_v1";
+
+export class AuthStore {
+  user = $state<UserAccount | null>(null);
+  token = $state<string | null>(null);
+  isLoading = $state<boolean>(false);
+  isInitialized = $state<boolean>(false);
+
+  // Pure derived getters
+  isAuthenticated = $derived(this.user !== null);
+  isAdmin = $derived(this.user?.role === "ADMIN" || this.user?.role === "SUPER_ADMIN");
+  isSuperAdmin = $derived(this.user?.role === "SUPER_ADMIN");
+  role = $derived<UserRole | null>(this.user?.role || null);
+  username = $derived<string>(this.user?.username || "Guest");
+  email = $derived<string>(this.user?.email || "");
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      this.loadFromStorage();
+      this.hydrateMe();
+    } else {
+      this.isInitialized = true;
+    }
+  }
+
+  loadFromStorage(): void {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return;
+    try {
+      const savedUser = localStorage.getItem(AUTH_USER_KEY);
+      const savedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (savedUser) {
+        this.user = JSON.parse(savedUser);
+      }
+      if (savedToken) {
+        this.token = savedToken;
+        apiClient.setAuthToken(savedToken);
+      }
+    } catch {
+      // Ignore corrupt local storage
+    } finally {
+      this.isInitialized = true;
+    }
+  }
+
+  private saveToStorage(): void {
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return;
+    try {
+      if (this.user) {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(this.user));
+      } else {
+        localStorage.removeItem(AUTH_USER_KEY);
+      }
+
+      if (this.token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, this.token);
+      } else {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    } catch {
+      // Storage quota or sandboxed
+    }
+  }
+
+  async hydrateMe(): Promise<void> {
+    if (!this.token && typeof document !== "undefined" && !document.cookie.includes("access_token")) {
+      return;
+    }
+    try {
+      const resp = await apiClient.me();
+      if (resp && resp.data) {
+        this.user = resp.data;
+        this.saveToStorage();
+      }
+    } catch {
+      // If unauthorized on me, clean state
+      if (!this.token) {
+        this.user = null;
+        this.saveToStorage();
+      }
+    }
+  }
+
+  async login(credentials: AuthLoginRequest): Promise<boolean> {
+    this.isLoading = true;
+    try {
+      const resp = await apiClient.login(credentials);
+      if (resp && resp.data) {
+        this.user = resp.data.user;
+        this.token = resp.data.token;
+        apiClient.setAuthToken(this.token);
+        this.saveToStorage();
+        toastStore.success(`Welcome back, ${resp.data.user.username}!`);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      toastStore.error(err?.problem?.detail || err.message || "Failed to log in.");
+      return false;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async register(data: CreateUserRequest): Promise<boolean> {
+    this.isLoading = true;
+    try {
+      const resp = await apiClient.register(data);
+      if (resp && resp.data) {
+        this.user = resp.data.user;
+        this.token = resp.data.token;
+        apiClient.setAuthToken(this.token);
+        this.saveToStorage();
+        toastStore.success(`Account created! Welcome, ${resp.data.user.username}.`);
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      toastStore.error(err?.problem?.detail || err.message || "Failed to register account.");
+      return false;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async superAdminLogin(credentials: AuthLoginRequest): Promise<boolean> {
+    this.isLoading = true;
+    try {
+      const resp = await apiClient.superAdminLogin(credentials);
+      if (resp && resp.data) {
+        this.user = resp.data.user;
+        this.token = resp.data.token;
+        apiClient.setAuthToken(this.token);
+        this.saveToStorage();
+        toastStore.success("Super Admin console unlocked.");
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      toastStore.error(err?.problem?.detail || err.message || "Invalid super admin credentials.");
+      return false;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await apiClient.logout();
+    } catch {
+      // Proceed with local logout regardless
+    } finally {
+      this.user = null;
+      this.token = null;
+      apiClient.setAuthToken(null);
+      this.saveToStorage();
+      toastStore.info("You have been signed out.");
+    }
+  }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+    this.isLoading = true;
+    try {
+      await apiClient.changePassword({ oldPassword, newPassword });
+      toastStore.success("Password updated successfully. Please sign in again.");
+      await this.logout();
+      return true;
+    } catch (err: any) {
+      toastStore.error(err?.problem?.detail || err.message || "Failed to change password.");
+      return false;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+}
+
+export const authStore = new AuthStore();
+

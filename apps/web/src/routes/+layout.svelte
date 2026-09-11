@@ -16,8 +16,13 @@
     Edit3,
     ListTree,
     BarChart3,
+    User,
+    LogOut,
+    LogIn,
+    Shield,
   } from "lucide-svelte";
   import { page } from "$app/state";
+  import { authStore } from "$lib/stores/projectStore.svelte";
   import ThemeToggle from "$lib/components/ui/theme-toggle.svelte";
   import ProjectSwitcher from "$lib/components/ui/project-switcher.svelte";
   import CreateProjectDialog from "$lib/components/ui/create-project-dialog.svelte";
@@ -28,6 +33,7 @@
   let { children } = $props();
 
   let mobileDrawerOpen = $state(false);
+  let userMenuOpen = $state(false);
 
   const isErrorPage = $derived(
     page.status >= 400 ||
@@ -40,6 +46,7 @@
   $effect(() => {
     page.url.pathname;
     mobileDrawerOpen = false;
+    userMenuOpen = false;
   });
 
   const novelNavItems = [
@@ -59,7 +66,12 @@
   ];
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === 'Escape' && mobileDrawerOpen) mobileDrawerOpen = false; }} />
+<svelte:window onkeydown={(e) => { 
+  if (e.key === 'Escape') {
+    if (mobileDrawerOpen) mobileDrawerOpen = false;
+    if (userMenuOpen) userMenuOpen = false;
+  }
+}} />
 
 <div class="min-h-screen w-full max-w-full flex flex-col bg-background text-foreground font-sans relative overflow-x-clip">
   {#if !isErrorPage}
@@ -121,10 +133,76 @@
         </div>
       </div>
 
-      <!-- Right: Project Switcher & Theme Toggle -->
+      <!-- Right: User Account, Project Switcher & Theme Toggle -->
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
         <ProjectSwitcher />
         <ThemeToggle size="sm" />
+
+        <!-- User Profile Pill / Menu -->
+        <div class="relative">
+          {#if authStore.isAuthenticated}
+            <button
+              type="button"
+              onclick={() => (userMenuOpen = !userMenuOpen)}
+              class="flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-border bg-card/80 hover:bg-muted/80 text-xs font-medium transition-colors cursor-pointer"
+              aria-label="User Account Menu"
+            >
+              <div class="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px]">
+                {authStore.username.charAt(0).toUpperCase()}
+              </div>
+              <span class="hidden sm:inline max-w-[100px] truncate">{authStore.username}</span>
+              {#if authStore.isSuperAdmin}
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                  ROOT
+                </span>
+              {/if}
+            </button>
+
+            {#if userMenuOpen}
+              <div
+                transition:fade={{ duration: 120 }}
+                class="absolute right-0 mt-1.5 w-48 rounded-xl border border-border bg-card shadow-xl py-1.5 z-50 text-xs"
+              >
+                <div class="px-3 py-2 border-b border-border/60">
+                  <div class="font-semibold text-foreground truncate">{authStore.username}</div>
+                  <div class="text-[11px] text-muted-foreground truncate">{authStore.email || "author@novwrite.dev"}</div>
+                  <div class="mt-1 text-[10px] uppercase font-bold text-primary">{authStore.role || "USER"}</div>
+                </div>
+
+                {#if authStore.isSuperAdmin}
+                  <a
+                    href="/superadmin"
+                    onclick={() => (userMenuOpen = false)}
+                    class="flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground transition-colors"
+                  >
+                    <Shield class="w-3.5 h-3.5 text-purple-500" />
+                    <span>Super Admin Console</span>
+                  </a>
+                {/if}
+
+                <button
+                  type="button"
+                  onclick={() => {
+                    userMenuOpen = false;
+                    authStore.logout();
+                  }}
+                  class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors"
+                >
+                  <LogOut class="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            {/if}
+          {:else}
+            <a
+              href="/superadmin"
+              class="flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg border border-border bg-card/80 hover:bg-muted text-xs font-medium transition-colors"
+            >
+              <LogIn class="w-3.5 h-3.5 text-primary" />
+              <span class="hidden sm:inline">Sign In</span>
+            </a>
+          {/if}
+        </div>
       </div>
     </nav>
 
@@ -264,6 +342,45 @@
                 </div>
               </div>
             {/if}
+            <!-- User Account / Auth Mobile Section -->
+            <div class="space-y-1.5 pt-2 border-t border-border">
+              <span class="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 px-1 block">
+                Account & Identity
+              </span>
+              {#if authStore.isAuthenticated}
+                <div class="p-2.5 rounded-lg border border-border bg-card/60 space-y-2">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                      {authStore.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="font-semibold text-xs text-foreground truncate">{authStore.username}</div>
+                      <div class="text-[10px] text-muted-foreground truncate">{authStore.email || "author@novwrite.dev"}</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onclick={() => {
+                      mobileDrawerOpen = false;
+                      authStore.logout();
+                    }}
+                    class="w-full h-8 flex items-center justify-center gap-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium transition-colors"
+                  >
+                    <LogOut class="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              {:else}
+                <a
+                  href="/superadmin"
+                  onclick={() => (mobileDrawerOpen = false)}
+                  class="flex items-center justify-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium transition-opacity hover:opacity-90"
+                >
+                  <LogIn class="w-4 h-4" />
+                  <span>Sign In to NovWrite</span>
+                </a>
+              {/if}
+            </div>
           </div>
 
           <!-- Drawer Footer -->

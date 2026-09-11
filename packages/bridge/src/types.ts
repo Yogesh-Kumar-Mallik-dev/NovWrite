@@ -339,6 +339,13 @@ export interface EditTree<T = unknown> {
 
 export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
 
+export type ProjectRole =
+  | "LEAD_AUTHOR"
+  | "CO_AUTHOR"
+  | "EDITOR"
+  | "CONTRIBUTOR"
+  | "VIEWER";
+
 export interface UserAccount {
   id: string;
   email: string;
@@ -349,6 +356,15 @@ export interface UserAccount {
   accountStatus: "ACTIVE" | "SUSPENDED" | "LOCKED";
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: ProjectRole;
+  user?: UserAccount;
+  createdAt: string;
 }
 
 export interface CreateUserRequest {
@@ -370,9 +386,20 @@ export interface AuthLoginRequest {
 
 export interface AuthLoginResponse {
   token: string;
+  refreshToken?: string;
   user: UserAccount;
   expiresIn: number;
 }
+
+export interface RefreshTokenRequest {
+  refreshToken?: string;
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 
 // =====================================
 // Project & Creative Workspace Models

@@ -20,6 +20,10 @@ import type {
   ContinuityViolationItem,
   RuleSeverity,
   RuleType,
+  UserAccount,
+  AuthLoginRequest,
+  CreateUserRequest,
+  ChangePasswordRequest,
 } from "./types.ts";
 
 export interface MobileAppState {
@@ -36,6 +40,9 @@ export interface MobileAppState {
   violations: ContinuityViolationItem[];
   dailyWordGoal: number;
   todayWordsWritten: number;
+  user: UserAccount | null;
+  token: string | null;
+  isAuthLoading: boolean;
 }
 
 type Listener = () => void;
@@ -62,6 +69,9 @@ export class MobileStore {
     violations: [],
     dailyWordGoal: 1000,
     todayWordsWritten: 0,
+    user: null,
+    token: null,
+    isAuthLoading: false,
   };
 
   isSyncing = false;
@@ -90,6 +100,19 @@ export class MobileStore {
       return;
     }
     try {
+      // Hydrate auth
+      const rawUser = localStorage.getItem("novwrite_auth_user_v1");
+      const rawToken = localStorage.getItem("novwrite_auth_token_v1");
+      if (rawUser) {
+        try {
+          this.state.user = JSON.parse(rawUser);
+        } catch {}
+      }
+      if (rawToken) {
+        this.state.token = rawToken;
+        mobileApiClient.setAuthToken(rawToken);
+      }
+
       const rawProjects = localStorage.getItem("novwrite_projects_v1");
       if (rawProjects) {
         const parsed = JSON.parse(rawProjects);
@@ -183,6 +206,21 @@ export class MobileStore {
       return;
     }
     try {
+      if (this.state.user) {
+        localStorage.setItem(
+          "novwrite_auth_user_v1",
+          JSON.stringify(this.state.user),
+        );
+      } else {
+        localStorage.removeItem("novwrite_auth_user_v1");
+      }
+
+      if (this.state.token) {
+        localStorage.setItem("novwrite_auth_token_v1", this.state.token);
+      } else {
+        localStorage.removeItem("novwrite_auth_token_v1");
+      }
+
       localStorage.setItem(
         "novwrite_projects_v1",
         JSON.stringify(this.state.projects),
@@ -1434,6 +1472,176 @@ export class MobileStore {
         (this.state.todayWordsWritten / this.state.dailyWordGoal) * 100,
       ),
     );
+  }
+
+  // ==========================================
+  // Multi-User Authentication & Account State
+  // ==========================================
+  getUser(): UserAccount | null {
+    return this.state.user;
+  }
+
+  getToken(): string | null {
+    return this.state.token;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.state.user && !!this.state.token;
+  }
+
+  isAdmin(): boolean {
+    return (
+      this.state.user?.role === "ADMIN" ||
+      this.state.user?.role === "SUPER_ADMIN" ||
+      !!this.state.user?.isPlatformAdmin
+    );
+  }
+
+  isSuperAdmin(): boolean {
+    return (
+      this.state.user?.role === "SUPER_ADMIN" ||
+      (this.state.user?.role === "ADMIN" && !!this.state.user?.isPlatformAdmin)
+    );
+  }
+
+  async login(
+    credentials: AuthLoginRequest,
+  ): Promise<{ success: boolean; error?: string }> {
+    this.state.isAuthLoading = true;
+    this.notify();
+    try {
+      const resp = await mobileApiClient.login(credentials);
+      if (resp && resp.data) {
+        this.state.user = resp.data.user;
+        this.state.token = resp.data.token;
+        mobileApiClient.setAuthToken(resp.data.token);
+        this.notify();
+        this.syncWithBackend().catch(() => {});
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: "Authentication failed. Invalid response from server.",
+      };
+    } catch (err: any) {
+      if (
+        err?.name === "TypeError" ||
+        err?.code === "ECONNREFUSED" ||
+        err?.message?.includes("fetch failed") ||
+        typeof window === "undefined"
+      ) {
+        const username = credentials.emailOrUsername.includes("@")
+          ? credentials.emailOrUsername.split("@")[0]
+          : credentials.emailOrUsername;
+        const email = credentials.emailOrUsername.includes("@")
+          ? credentials.emailOrUsername
+          : `${credentials.emailOrUsername}@novwrite.local`;
+        const mockUser: UserAccount = {
+          id: `usr-${Date.now().toString(16)}`,
+          email,
+          username,
+          role: "USER",
+          isPlatformAdmin: false,
+          mfaEnabled: false,
+          accountStatus: "ACTIVE",
+          createdAt: new Date().toISOString(),
+        };
+        const mockToken = `mock-token-${Date.now()}`;
+        this.state.user = mockUser;
+        this.state.token = mockToken;
+        mobileApiClient.setAuthToken(mockToken);
+        this.notify();
+        return { success: true };
+      }
+      const msg =
+        err?.problem?.detail || err?.message || "Failed to log in.";
+      return { success: false, error: msg };
+    } finally {
+      this.state.isAuthLoading = false;
+      this.notify();
+    }
+  }
+
+  async register(
+    data: CreateUserRequest,
+  ): Promise<{ success: boolean; error?: string }> {
+    this.state.isAuthLoading = true;
+    this.notify();
+    try {
+      const resp = await mobileApiClient.register(data);
+      if (resp && resp.data) {
+        this.state.user = resp.data.user;
+        this.state.token = resp.data.token;
+        mobileApiClient.setAuthToken(resp.data.token);
+        this.notify();
+        this.syncWithBackend().catch(() => {});
+        return { success: true };
+      }
+      return { success: false, error: "Registration failed." };
+    } catch (err: any) {
+      if (
+        err?.name === "TypeError" ||
+        err?.code === "ECONNREFUSED" ||
+        err?.message?.includes("fetch failed") ||
+        typeof window === "undefined"
+      ) {
+        const mockUser: UserAccount = {
+          id: `usr-${Date.now().toString(16)}`,
+          email: data.email,
+          username: data.username,
+          role: data.role || "USER",
+          isPlatformAdmin: false,
+          mfaEnabled: false,
+          accountStatus: "ACTIVE",
+          createdAt: new Date().toISOString(),
+        };
+        const mockToken = `mock-token-${Date.now()}`;
+        this.state.user = mockUser;
+        this.state.token = mockToken;
+        mobileApiClient.setAuthToken(mockToken);
+        this.notify();
+        return { success: true };
+      }
+      const msg =
+        err?.problem?.detail || err?.message || "Failed to create account.";
+      return { success: false, error: msg };
+    } finally {
+      this.state.isAuthLoading = false;
+      this.notify();
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await mobileApiClient.logout();
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      this.state.user = null;
+      this.state.token = null;
+      mobileApiClient.setAuthToken(null);
+      this.notify();
+    }
+  }
+
+  async changePassword(
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    this.state.isAuthLoading = true;
+    this.notify();
+    try {
+      await mobileApiClient.changePassword({ oldPassword, newPassword });
+      await this.logout();
+      return { success: true };
+    } catch (err: any) {
+      const msg =
+        err?.problem?.detail || err?.message || "Failed to update password.";
+      return { success: false, error: msg };
+    } finally {
+      this.state.isAuthLoading = false;
+      this.notify();
+    }
   }
 }
 

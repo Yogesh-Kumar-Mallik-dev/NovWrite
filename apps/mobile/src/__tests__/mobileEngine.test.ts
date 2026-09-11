@@ -333,4 +333,39 @@ describe("BLOCK_TEST_MOBILE_ENGINE_001: Mobile Client Store and Telemetry Engine
     assert.equal(store.getState().projects.length, 0);
     assert.equal(store.getState().activeProjectId, null);
   });
+
+  it("should manage user accounts and authentication state", async () => {
+    assert.equal(store.isAuthenticated(), false);
+    assert.equal(store.getUser(), null);
+    assert.equal(store.getToken(), null);
+    assert.equal(store.isAdmin(), false);
+    assert.equal(store.isSuperAdmin(), false);
+
+    // Register new user
+    const regRes = await store.register({
+      username: "master_scribe",
+      email: "scribe@novwrite.dev",
+      password: "authorPassword999",
+    });
+    assert.equal(regRes.success, true);
+    assert.equal(store.isAuthenticated(), true);
+    assert.equal(store.getUser()?.username, "master_scribe");
+    assert.equal(store.getUser()?.role, "USER");
+    assert.ok(store.getToken());
+
+    // Logout
+    await store.logout();
+    assert.equal(store.isAuthenticated(), false);
+    assert.equal(store.getUser(), null);
+    assert.equal(store.getToken(), null);
+
+    // Login back in
+    const loginRes = await store.login({
+      emailOrUsername: "scribe@novwrite.dev",
+      password: "authorPassword999",
+    });
+    assert.equal(loginRes.success, true);
+    assert.equal(store.isAuthenticated(), true);
+    assert.equal(store.getUser()?.email, "scribe@novwrite.dev");
+  });
 });

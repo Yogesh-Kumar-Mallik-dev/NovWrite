@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/cache"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
 	"github.com/go-chi/chi/v5"
 )
@@ -16,7 +18,8 @@ import (
 
 func TestUserHandler_RegisterAndLogin(t *testing.T) {
 	store := NewInMemoryUserStore()
-	handler := NewUserHandler(store, "test-secret-key-32b")
+	sessionMgr := cache.NewMemorySessionManager()
+	handler := NewUserHandler(store, sessionMgr, "test-secret-key-32b")
 
 	// 1. Register new Standard User
 	regPayload := `{"email":"new_author@novwrite.dev","username":"new_author","password":"securePassword123"}`
@@ -33,8 +36,12 @@ func TestUserHandler_RegisterAndLogin(t *testing.T) {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: failed to parse response: %v", err)
 	}
 
-	userData, ok := regResp.Data.(map[string]interface{})
-	if !ok || userData["role"] != "USER" {
+	regData, ok := regResp.Data.(map[string]interface{})
+	if !ok {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected valid map response")
+	}
+	userData := regData["user"].(map[string]interface{})
+	if userData["role"] != "USER" {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected role USER, got %v", userData["role"])
 	}
 
@@ -55,8 +62,9 @@ func TestUserHandler_RegisterAndLogin(t *testing.T) {
 
 	loginData := loginResp.Data.(map[string]interface{})
 	token, ok := loginData["token"].(string)
-	if !ok || token == "" {
-		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected non-empty token")
+	refreshToken, okRef := loginData["refreshToken"].(string)
+	if !ok || token == "" || !okRef || refreshToken == "" {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected non-empty token and refreshToken")
 	}
 
 	// 3. Call Me endpoint with claims context
@@ -72,11 +80,60 @@ func TestUserHandler_RegisterAndLogin(t *testing.T) {
 	if recMe.Code != http.StatusOK {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for Me, got %d: %s", recMe.Code, recMe.Body.String())
 	}
+
+	// 4. Refresh Token endpoint
+	refreshPayload := fmt.Sprintf(`{"refreshToken":"%s"}`, refreshToken)
+	reqRef := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", bytes.NewBufferString(refreshPayload))
+	recRef := httptest.NewRecorder()
+
+	handler.RefreshToken(recRef, reqRef)
+	if recRef.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for refresh, got %d: %s", recRef.Code, recRef.Body.String())
+	}
+
+	var refreshedResp httputil.SingleResponse
+	_ = json.Unmarshal(recRef.Body.Bytes(), &refreshedResp)
+	refreshedData := refreshedResp.Data.(map[string]interface{})
+	newToken := refreshedData["token"].(string)
+	newRefreshToken := refreshedData["refreshToken"].(string)
+	if newToken == "" || newRefreshToken == "" || newRefreshToken == refreshToken {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected rotated refresh token")
+	}
+
+	// 5. Change Password
+	changePwdPayload := `{"oldPassword":"securePassword123","newPassword":"newSecurePassword456"}`
+	reqChange := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password", bytes.NewBufferString(changePwdPayload))
+	recChange := httptest.NewRecorder()
+
+	handler.ChangePassword(recChange, reqChange.WithContext(ctx))
+	if recChange.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for change password, got %d: %s", recChange.Code, recChange.Body.String())
+	}
+
+	// 6. Login with new password
+	loginNewPayload := `{"emailOrUsername":"new_author","password":"newSecurePassword456"}`
+	reqLoginNew := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(loginNewPayload))
+	recLoginNew := httptest.NewRecorder()
+
+	handler.Login(recLoginNew, reqLoginNew)
+	if recLoginNew.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for login with new password, got %d", recLoginNew.Code)
+	}
+
+	// 7. Logout
+	reqLogout := httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", bytes.NewBufferString(fmt.Sprintf(`{"refreshToken":"%s"}`, newRefreshToken)))
+	recLogout := httptest.NewRecorder()
+
+	handler.Logout(recLogout, reqLogout.WithContext(ctx))
+	if recLogout.Code != http.StatusOK {
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 200 OK for logout, got %d", recLogout.Code)
+	}
 }
 
 func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 	store := NewInMemoryUserStore()
-	handler := NewUserHandler(store, "test-secret-key-32b")
+	sessionMgr := cache.NewMemorySessionManager()
+	handler := NewUserHandler(store, sessionMgr, "test-secret-key-32b")
 
 	targetUser := &User{
 		ID:            "test-user-1",
@@ -133,7 +190,8 @@ func TestUserHandler_RoleHierarchyAndGuards(t *testing.T) {
 
 func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
 	store := NewInMemoryUserStore()
-	handler := NewUserHandler(store, "test-secret-key-32b")
+	sessionMgr := cache.NewMemorySessionManager()
+	handler := NewUserHandler(store, sessionMgr, "test-secret-key-32b")
 
 	standardUser := &User{
 		ID:            "test-user-1",
@@ -188,7 +246,8 @@ func TestUserHandler_SingletonSuperAdmin_Enforcement(t *testing.T) {
 
 func TestUserHandler_SuperAdminDashboard(t *testing.T) {
 	store := NewInMemoryUserStore()
-	handler := NewUserHandler(store, "test-secret-key-32b")
+	sessionMgr := cache.NewMemorySessionManager()
+	handler := NewUserHandler(store, sessionMgr, "test-secret-key-32b")
 
 	superUser := &User{
 		ID:            "test-super-1",
@@ -214,7 +273,7 @@ func TestUserHandler_SuperAdminDashboard(t *testing.T) {
 
 	var resp httputil.SingleResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: failed to unmarshal dashboard response: %v", err)
+		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: failed to parse dashboard response: %v", err)
 	}
 
 	dataMap, ok := resp.Data.(map[string]interface{})
@@ -294,7 +353,8 @@ func TestUserHandler_RequireRoleMiddlewares(t *testing.T) {
 
 func TestUserHandler_SuperAdminLogin(t *testing.T) {
 	store := NewInMemoryUserStore()
-	handler := NewUserHandler(store, "test-secret-key-32b")
+	sessionMgr := cache.NewMemorySessionManager()
+	handler := NewUserHandler(store, sessionMgr, "test-secret-key-32b")
 
 	standardUser := &User{
 		ID:            "test-user-1",
@@ -362,3 +422,4 @@ func TestUserHandler_SuperAdminLogin(t *testing.T) {
 		t.Fatalf("BLOCK_TEST_USER_HANDLER_001: expected 401 Unauthorized for non-existent user, got %d", recNonExistent.Code)
 	}
 }
+

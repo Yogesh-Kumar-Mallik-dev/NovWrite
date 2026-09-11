@@ -11,8 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/cache"
 	"github.com/Yogesh-Kumar-Mallik-dev/NovWrite/apps/api/internal/httputil"
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Block Standard: BLOCK_API_USER_HANDLER_001
@@ -77,6 +79,7 @@ type UserStore interface {
 	Create(user *User) error
 	UpdateRole(id string, role string) error
 	UpdateStatus(id string, status string) error
+	UpdatePassword(id string, newPasswordHash string) error
 	List(params httputil.PaginationParams, roleFilter string) ([]*User, int, error)
 	Delete(id string) error
 }
@@ -263,6 +266,20 @@ func (s *InMemoryUserStore) UpdateStatus(id string, status string) error {
 	return nil
 }
 
+func (s *InMemoryUserStore) UpdatePassword(id string, newPasswordHash string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, exists := s.users[id]
+	if !exists {
+		return errors.New("user not found")
+	}
+
+	user.PasswordHash = newPasswordHash
+	user.UpdatedAt = time.Now().UTC()
+	return nil
+}
+
 func (s *InMemoryUserStore) List(params httputil.PaginationParams, roleFilter string) ([]*User, int, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -319,18 +336,23 @@ func (s *InMemoryUserStore) Delete(id string) error {
 
 // UserHandler exposes HTTP endpoints for auth and multi-user administration.
 type UserHandler struct {
-	store     UserStore
-	jwtSecret string
+	store          UserStore
+	sessionManager cache.SessionManager
+	jwtSecret      string
 }
 
 // NewUserHandler creates a new UserHandler.
-func NewUserHandler(store UserStore, jwtSecret string) *UserHandler {
+func NewUserHandler(store UserStore, sessionManager cache.SessionManager, jwtSecret string) *UserHandler {
 	if jwtSecret == "" {
 		jwtSecret = "novwrite-default-jwt-secret-key-32b"
 	}
+	if sessionManager == nil {
+		sessionManager = cache.NewMemorySessionManager()
+	}
 	return &UserHandler{
-		store:     store,
-		jwtSecret: jwtSecret,
+		store:          store,
+		sessionManager: sessionManager,
+		jwtSecret:      jwtSecret,
 	}
 }
 
@@ -346,10 +368,20 @@ type LoginRequest struct {
 	Password        string `json:"password,omitempty"`
 }
 
+type RefreshRequest struct {
+	RefreshToken string `json:"refreshToken,omitempty"`
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type LoginResponse struct {
-	Token     string `json:"token"`
-	User      *User  `json:"user"`
-	ExpiresIn int64  `json:"expiresIn"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
+	User         *User  `json:"user"`
+	ExpiresIn    int64  `json:"expiresIn"`
 }
 
 type UpdateRoleRequest struct {
@@ -357,7 +389,7 @@ type UpdateRoleRequest struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-// Register creates a new user account.
+// Register creates a new user account and returns signed access and refresh tokens.
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -409,6 +441,16 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var passwordHash string
+	if req.Password != "" {
+		hashBytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
+		if err != nil {
+			httputil.RespondInternalError(w, r, "Failed to hash user password securely.")
+			return
+		}
+		passwordHash = string(hashBytes)
+	}
+
 	bytes := make([]byte, 16)
 	_, _ = rand.Read(bytes)
 	userID := fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16])
@@ -422,6 +464,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		IsPlatformAdmin: role == httputil.RoleAdmin,
 		MFAEnabled:      false,
 		AccountStatus:   "ACTIVE",
+		PasswordHash:    passwordHash,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}
@@ -431,10 +474,42 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httputil.RespondCreated(w, r, "/api/v1/users/"+newUser.ID, newUser)
+	// Generate Dual Tokens
+	tokenID, _ := cache.GenerateSecureToken()
+	familyID, _ := cache.GenerateSecureToken()
+	refreshToken, _ := cache.GenerateSecureToken()
+
+	_ = h.sessionManager.StoreRefreshToken(r.Context(), refreshToken, newUser.ID, familyID, 7*24*time.Hour)
+
+	expiresIn := int64(15 * 60) // 15 min access token
+	claims := httputil.UserClaims{
+		TokenID:   tokenID,
+		FamilyID:  familyID,
+		UserID:    newUser.ID,
+		Email:     newUser.Email,
+		Username:  newUser.Username,
+		Role:      newUser.Role,
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
+		IssuedAt:  time.Now().Unix(),
+	}
+
+	accessToken, err := httputil.SignJWT(claims, h.jwtSecret)
+	if err != nil {
+		httputil.RespondInternalError(w, r, "Failed to issue authentication token.")
+		return
+	}
+
+	httputil.SetAuthCookies(w, accessToken, refreshToken, false)
+
+	httputil.RespondCreated(w, r, "/api/v1/users/"+newUser.ID, LoginResponse{
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		User:         newUser,
+		ExpiresIn:    expiresIn,
+	})
 }
 
-// Login authenticates a user and returns a signed JWT token.
+// Login authenticates a user and returns a signed access and refresh token pair.
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -460,6 +535,20 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify Bcrypt password hash if configured on user
+	if user.PasswordHash != "" && req.Password != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+			httputil.RespondProblem(w, r, httputil.ProblemDetail{
+				Type:   "https://novwrite.com/errors/unauthorized",
+				Title:  "Invalid Credentials",
+				Status: http.StatusUnauthorized,
+				Detail: "Invalid email/username or password.",
+				Code:   "INVALID_CREDENTIALS",
+			})
+			return
+		}
+	}
+
 	if user.AccountStatus != "ACTIVE" {
 		httputil.RespondProblem(w, r, httputil.ProblemDetail{
 			Type:   "https://novwrite.com/errors/account-suspended",
@@ -471,26 +560,37 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 24-hour expiration
-	expiresIn := int64(24 * 3600)
+	tokenID, _ := cache.GenerateSecureToken()
+	familyID, _ := cache.GenerateSecureToken()
+	refreshToken, _ := cache.GenerateSecureToken()
+
+	_ = h.sessionManager.StoreRefreshToken(r.Context(), refreshToken, user.ID, familyID, 7*24*time.Hour)
+
+	expiresIn := int64(15 * 60) // 15 min access token
 	claims := httputil.UserClaims{
+		TokenID:   tokenID,
+		FamilyID:  familyID,
 		UserID:    user.ID,
 		Email:     user.Email,
+		Username:  user.Username,
 		Role:      user.Role,
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
 		IssuedAt:  time.Now().Unix(),
 	}
 
-	token, err := httputil.SignJWT(claims, h.jwtSecret)
+	accessToken, err := httputil.SignJWT(claims, h.jwtSecret)
 	if err != nil {
 		httputil.RespondInternalError(w, r, "Failed to issue authentication token.")
 		return
 	}
 
+	httputil.SetAuthCookies(w, accessToken, refreshToken, false)
+
 	httputil.RespondJSON(w, r, http.StatusOK, LoginResponse{
-		Token:     token,
-		User:      user,
-		ExpiresIn: expiresIn,
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		User:         user,
+		ExpiresIn:    expiresIn,
 	})
 }
 
@@ -532,6 +632,19 @@ func (h *UserHandler) SuperAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user.PasswordHash != "" && req.Password != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+			httputil.RespondProblem(w, r, httputil.ProblemDetail{
+				Type:   "https://novwrite.com/errors/unauthorized",
+				Title:  "Invalid Super Admin Credentials",
+				Status: http.StatusUnauthorized,
+				Detail: "Invalid super admin credentials.",
+				Code:   "INVALID_CREDENTIALS",
+			})
+			return
+		}
+	}
+
 	if user.AccountStatus != "ACTIVE" {
 		httputil.RespondProblem(w, r, httputil.ProblemDetail{
 			Type:   "https://novwrite.com/errors/account-suspended",
@@ -543,25 +656,188 @@ func (h *UserHandler) SuperAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresIn := int64(24 * 3600)
+	tokenID, _ := cache.GenerateSecureToken()
+	familyID, _ := cache.GenerateSecureToken()
+	refreshToken, _ := cache.GenerateSecureToken()
+
+	_ = h.sessionManager.StoreRefreshToken(r.Context(), refreshToken, user.ID, familyID, 7*24*time.Hour)
+
+	expiresIn := int64(15 * 60)
 	claims := httputil.UserClaims{
+		TokenID:   tokenID,
+		FamilyID:  familyID,
 		UserID:    user.ID,
 		Email:     user.Email,
+		Username:  user.Username,
 		Role:      httputil.RoleSuperAdmin,
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
 		IssuedAt:  time.Now().Unix(),
 	}
 
-	token, err := httputil.SignJWT(claims, h.jwtSecret)
+	accessToken, err := httputil.SignJWT(claims, h.jwtSecret)
 	if err != nil {
 		httputil.RespondInternalError(w, r, "Failed to issue super admin authentication token.")
 		return
 	}
 
+	httputil.SetAuthCookies(w, accessToken, refreshToken, false)
+
 	httputil.RespondJSON(w, r, http.StatusOK, LoginResponse{
-		Token:     token,
-		User:      user,
-		ExpiresIn: expiresIn,
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		User:         user,
+		ExpiresIn:    expiresIn,
+	})
+}
+
+// RefreshToken validates a rotating refresh token, detecting reuse breaches, and returns a new token pair.
+func (h *UserHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var rawToken string
+
+	var req RefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err == nil && req.RefreshToken != "" {
+		rawToken = strings.TrimSpace(req.RefreshToken)
+	} else if cookie, err := r.Cookie("refresh_token"); err == nil && cookie.Value != "" {
+		rawToken = strings.TrimSpace(cookie.Value)
+	}
+
+	if rawToken == "" {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/unauthorized",
+			Title:  "Refresh Token Missing",
+			Status: http.StatusUnauthorized,
+			Detail: "Refresh token is required via JSON payload or refresh_token cookie.",
+			Code:   "REFRESH_TOKEN_REQUIRED",
+		})
+		return
+	}
+
+	userID, familyID, newRefreshToken, err := h.sessionManager.RotateRefreshToken(r.Context(), rawToken, 7*24*time.Hour)
+	if err != nil {
+		httputil.ClearAuthCookies(w)
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/unauthorized",
+			Title:  "Invalid or Expired Refresh Token",
+			Status: http.StatusUnauthorized,
+			Detail: err.Error(),
+			Code:   "REFRESH_TOKEN_INVALID",
+		})
+		return
+	}
+
+	user, err := h.store.GetByID(userID)
+	if err != nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/unauthorized",
+			Title:  "User Not Found",
+			Status: http.StatusUnauthorized,
+			Detail: "User associated with refresh token no longer exists.",
+			Code:   "USER_NOT_FOUND",
+		})
+		return
+	}
+
+	newTokenID, _ := cache.GenerateSecureToken()
+	expiresIn := int64(15 * 60)
+	claims := httputil.UserClaims{
+		TokenID:   newTokenID,
+		FamilyID:  familyID,
+		UserID:    user.ID,
+		Email:     user.Email,
+		Username:  user.Username,
+		Role:      user.Role,
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
+		IssuedAt:  time.Now().Unix(),
+	}
+
+	newAccessToken, err := httputil.SignJWT(claims, h.jwtSecret)
+	if err != nil {
+		httputil.RespondInternalError(w, r, "Failed to sign refreshed access token.")
+		return
+	}
+
+	httputil.SetAuthCookies(w, newAccessToken, newRefreshToken, false)
+
+	httputil.RespondJSON(w, r, http.StatusOK, LoginResponse{
+		Token:        newAccessToken,
+		RefreshToken: newRefreshToken,
+		User:         user,
+		ExpiresIn:    expiresIn,
+	})
+}
+
+// Logout revokes active tokens and clears session cookies.
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	claims, _ := httputil.GetUserFromContext(r.Context())
+	if claims != nil && claims.TokenID != "" {
+		_ = h.sessionManager.RevokeToken(r.Context(), claims.TokenID, 24*time.Hour)
+	}
+
+	if cookie, err := r.Cookie("refresh_token"); err == nil && cookie.Value != "" {
+		_ = h.sessionManager.RevokeToken(r.Context(), cookie.Value, 7*24*time.Hour)
+	}
+
+	httputil.ClearAuthCookies(w)
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"message": "Logged out successfully",
+	})
+}
+
+// ChangePassword verifies existing password, updates with new bcrypt hash, and revokes active token families.
+func (h *UserHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	claims, ok := httputil.GetUserFromContext(r.Context())
+	if !ok || claims == nil {
+		httputil.RespondProblem(w, r, httputil.ProblemDetail{
+			Type:   "https://novwrite.com/errors/unauthorized",
+			Title:  "Authentication Required",
+			Status: http.StatusUnauthorized,
+			Detail: "You must be authenticated to change your password.",
+			Code:   "UNAUTHORIZED",
+		})
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httputil.RespondBadRequest(w, r, "Invalid JSON payload: "+err.Error(), "INVALID_JSON")
+		return
+	}
+
+	if len(req.NewPassword) < 6 {
+		httputil.RespondBadRequest(w, r, "New password must be at least 6 characters.", "PASSWORD_TOO_SHORT")
+		return
+	}
+
+	user, err := h.store.GetByID(claims.UserID)
+	if err != nil {
+		httputil.RespondNotFound(w, r, "User", claims.UserID)
+		return
+	}
+
+	if user.PasswordHash != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.OldPassword)); err != nil {
+			httputil.RespondBadRequest(w, r, "Current password does not match.", "INCORRECT_OLD_PASSWORD")
+			return
+		}
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 12)
+	if err != nil {
+		httputil.RespondInternalError(w, r, "Failed to hash new password.")
+		return
+	}
+
+	if err := h.store.UpdatePassword(user.ID, string(newHash)); err != nil {
+		httputil.RespondInternalError(w, r, "Failed to update user password: "+err.Error())
+		return
+	}
+
+	if claims.FamilyID != "" {
+		_ = h.sessionManager.RevokeFamily(r.Context(), claims.FamilyID)
+	}
+
+	httputil.RespondJSON(w, r, http.StatusOK, map[string]any{
+		"message": "Password updated successfully. Please log in with your new password.",
 	})
 }
 

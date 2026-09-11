@@ -132,9 +132,17 @@ func ValidateProjectAccess(w http.ResponseWriter, r *http.Request, projectStore 
 		return nil, false
 	}
 
-	// Verify User Ownership if X-User-ID or Auth User is supplied
-	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
-	if userID != "" && proj.OwnerID != "" && proj.OwnerID != userID {
+	// Verify User Ownership if Claims or X-User-ID is supplied
+	var userID string
+	var isSuperAdmin bool
+	if claims, ok := httputil.GetUserFromContext(r.Context()); ok && claims != nil {
+		userID = claims.UserID
+		isSuperAdmin = claims.IsSuperAdmin()
+	} else if devUserID := r.Header.Get("X-User-ID"); devUserID != "" {
+		userID = strings.TrimSpace(devUserID)
+	}
+
+	if !isSuperAdmin && userID != "" && proj.OwnerID != "" && proj.OwnerID != userID {
 		httputil.RespondProblem(w, r, httputil.ProblemDetail{
 			Type:   "https://novwrite.com/errors/forbidden-project-access",
 			Title:  "Forbidden Project Access",
@@ -169,14 +177,22 @@ func NewProjectHandler(store ProjectStore, cacheManagers ...cache.CacheManager) 
 func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
 	params := httputil.ParsePaginationParams(r)
 	search := strings.ToLower(params.Search)
-	userID := strings.TrimSpace(r.Header.Get("X-User-ID"))
+
+	var userID string
+	var isSuperAdmin bool
+	if claims, ok := httputil.GetUserFromContext(r.Context()); ok && claims != nil {
+		userID = claims.UserID
+		isSuperAdmin = claims.IsSuperAdmin()
+	} else if devUserID := r.Header.Get("X-User-ID"); devUserID != "" {
+		userID = strings.TrimSpace(devUserID)
+	}
 
 	allProjects := h.store.List()
 
 	// Apply search and user ownership filter
 	filtered := make([]Project, 0, len(allProjects))
 	for _, p := range allProjects {
-		if userID != "" && p.OwnerID != "" && p.OwnerID != userID {
+		if !isSuperAdmin && userID != "" && p.OwnerID != "" && p.OwnerID != userID {
 			continue
 		}
 		if search == "" || strings.Contains(strings.ToLower(p.Name), search) || strings.Contains(strings.ToLower(p.Description), search) || strings.Contains(strings.ToLower(p.Genre), search) {
@@ -235,7 +251,11 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	ownerID := strings.TrimSpace(input.OwnerID)
 	if ownerID == "" {
-		ownerID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+		if claims, ok := httputil.GetUserFromContext(r.Context()); ok && claims != nil {
+			ownerID = claims.UserID
+		} else {
+			ownerID = strings.TrimSpace(r.Header.Get("X-User-ID"))
+		}
 	}
 	if ownerID == "" {
 		ownerID = "default_user"

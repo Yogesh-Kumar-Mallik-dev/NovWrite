@@ -70,8 +70,9 @@ func BuildRouter() *chi.Mux {
 		MaxAge:           300,
 	}))
 
-	// Cache & State Manager
+	// Cache & Session Manager
 	cacheManager := cache.NewDefaultCacheManager(os.Getenv("REDIS_URL"))
+	sessionManager := cache.NewDefaultSessionManager(os.Getenv("REDIS_URL"))
 
 	// Initial Stores & Handlers
 	projectStore := handlers.NewInMemoryProjectStore()
@@ -85,7 +86,7 @@ func BuildRouter() *chi.Mux {
 	eventHub := handlers.NewEventHub()
 
 	healthHandler := handlers.NewHealthHandler()
-	userHandler := handlers.NewUserHandler(userStore, os.Getenv("JWT_SECRET"))
+	userHandler := handlers.NewUserHandler(userStore, sessionManager, os.Getenv("JWT_SECRET"))
 	projectHandler := handlers.NewProjectHandler(projectStore, cacheManager)
 	blueprintHandler := handlers.NewBlueprintHandler(blueprintStore, projectStore)
 	entityHandler := handlers.NewEntityHandler(entityStore, blueprintStore, projectStore, timelineStore)
@@ -115,7 +116,10 @@ func BuildRouter() *chi.Mux {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", userHandler.Register)
 			r.Post("/login", userHandler.Login)
+			r.Post("/refresh", userHandler.RefreshToken)
+			r.Post("/logout", userHandler.Logout)
 			r.Get("/me", userHandler.Me)
+			r.Post("/password", userHandler.ChangePassword)
 		})
 
 		// Platform Administration (Admin / Super Admin)

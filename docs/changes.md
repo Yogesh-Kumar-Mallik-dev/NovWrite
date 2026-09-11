@@ -150,11 +150,45 @@ timeline
                : Relocation of Monorepo Architecture, Academic Reports & changes.md to docs/
                : Dedicated scripts/ Directory Housing Universal Core Implementations
                : Single Unified Root Entrypoint (script.sh / script.ps1) and Elimination of Root Wrapper Clutter
+    2026-09-11 : Version 2.13 (Multi-User Account & Dual-Token Session Architecture)
+               : Go Backend Dual-Token Architecture (15m Access Token + 7d Rotating Refresh Token in Redis)
+               : Session Token Family Rotation & Instant Reuse Breach Revocation
+               : SvelteKit 2 Svelte 5 Runes AuthStore & React Native Account/Security Modals
+               : Constant-Time Bcrypt Hashing, Multi-Tenant Project Scoping & Contract Parity
 ```
 
 ---
 
 ## Release Details
+
+### [Version 2.13] — 2026-09-11
+
+**Scope:** Multi-User Account, Dual-Token Session Management & Mobile/Web Client Tenancy Integration  
+**Target Documents:** [`docs/API_GUIDE.md`](file:///home/yogesh/Projects/NovWrite/docs/API_GUIDE.md), [`docs/BACKEND_ARCHITECTURE.md`](file:///home/yogesh/Projects/NovWrite/docs/BACKEND_ARCHITECTURE.md), [`packages/bridge/src/types.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/types.ts), [`packages/bridge/src/client/apiClient.ts`](file:///home/yogesh/Projects/NovWrite/packages/bridge/src/client/apiClient.ts), [`apps/api/`](file:///home/yogesh/Projects/NovWrite/apps/api/), [`apps/web/`](file:///home/yogesh/Projects/NovWrite/apps/web/), [`apps/mobile/`](file:///home/yogesh/Projects/NovWrite/apps/mobile/), [`docs/changes.md`](file:///home/yogesh/Projects/NovWrite/docs/changes.md)
+
+#### Added & Enhanced
+
+- **Go 1.23 API Backend Session & Auth Engine (`apps/api`):**
+  - Integrated `golang.org/x/crypto/bcrypt` (cost: 12) for secure password hashing and constant-time authentication.
+  - Implemented `SessionManager` interface in [`apps/api/internal/cache/session_manager.go`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/cache/session_manager.go) with Redis and in-memory backing for dual-token lifetime management.
+  - **Token Family Rotation & Reuse Detection:** 15-minute HS256 JWT access tokens paired with 7-day cryptographically random 256-bit refresh tokens with parent-child family tracking. Upon replaying an expired/superseded token, the entire session family is instantly revoked.
+  - Added REST authentication endpoints: `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `POST /api/v1/auth/password`.
+  - Added cookie management (`SetAuthCookies`, `ClearAuthCookies`) with `HttpOnly`, `SameSite=Strict`, `Secure` flags.
+  - Updated [`ProjectHandler`](file:///home/yogesh/Projects/NovWrite/apps/api/internal/handlers/project_handler.go) with multi-tenant author scoping based on authenticated context caller.
+- **Contracts & Universal API Client (`@novwrite/bridge`):**
+  - Defined TypeScript models: `UserAccount`, `ProjectRole`, `ProjectMember`, `AuthLoginRequest`, `AuthLoginResponse`, `RefreshTokenRequest`, `ChangePasswordRequest`.
+  - Enhanced `apiClient` with token injection (`setAuthToken`), automatic `Authorization: Bearer <token>` header injection, and complete auth methods.
+- **SvelteKit 2 Web Application (`apps/web`):**
+  - Configured `App.Locals` and `hooks.server.ts` to hydrate session cookies on SSR.
+  - Built `AuthStore` in `projectStore.svelte.ts` powered by Svelte 5 `$state` and `$derived` runes with local storage synchronization.
+  - Integrated top navbar account profile pill and mobile drawer account controls in `+layout.svelte`.
+- **React Native / Expo Mobile Application (`apps/mobile`):**
+  - Extended `MobileStore` in `mobileStore.ts` with reactive auth state, login/register/logout/changePassword handlers, and offline-first fallback.
+  - Implemented user account header bar, modal dialogs for author sign in/registration with min 44px touch targets, and security sheet with password change drawer in `app/(tabs)/index.tsx`.
+- **Verification:**
+  - 100% test pass rate with 0 errors and 0 warnings across all 4 packages (`./script.sh check` and `./script.sh test`).
+
+---
 
 ### [Version 2.12.2] — 2026-09-11
 

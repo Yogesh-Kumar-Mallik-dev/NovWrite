@@ -464,7 +464,10 @@ NovWrite implements an explicit 3-tier system identity hierarchy:
 ### 10.1. Authentication & Identity Endpoints (`/api/v1/auth`)
 
 - `POST /api/v1/auth/register` — Register a new author account (`USER`). Elevated role assignment (`ADMIN`, `SUPER_ADMIN`) during registration is strictly restricted to `SUPER_ADMIN`.
-- `POST /api/v1/auth/login` — Authenticate via email or username and password, returning an HMAC-SHA256 signed JWT token (`LoginResponse`) containing user claims.
+- `POST /api/v1/auth/login` — Authenticate via email or username and password, returning a 15-minute access token, 7-day rotating refresh token, and user claims.
+- `POST /api/v1/auth/refresh` — Token family rotation: generates a new access token and rotating refresh token; revokes the entire family upon reuse breach.
+- `POST /api/v1/auth/logout` — Revokes active session family in Redis and clears HTTP-only authentication cookies.
+- `POST /api/v1/auth/password` — Authenticated password change with bcrypt verification and session invalidation.
 - `GET /api/v1/auth/me` — Retrieve the profile and active role of the authenticated caller.
 
 ### 10.2. Administration & Role Management Endpoints (`/api/v1/admin`)

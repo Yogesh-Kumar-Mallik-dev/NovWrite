@@ -223,10 +223,18 @@ When rate limits are exceeded, the API returns HTTP 429:
 
 - `POST /api/v1/auth/register` — Register a new author account (`USER`). Elevated role self-assignment (`ADMIN`, `SUPER_ADMIN`) is strictly prohibited and returns `403 Forbidden`.
   - Body: `{ "email": "author@novwrite.dev", "username": "author_pen", "password": "SecurePassword123" }`
-  - Returns: `201 Created` with User object envelope.
+  - Returns: `201 Created` with JWT Access Token (15m), Refresh Token (7d in HTTP-only cookie + payload), and User envelope.
 - `POST /api/v1/auth/login` — Authenticate via email or username and password.
   - Body: `{ "emailOrUsername": "author@novwrite.dev", "password": "SecurePassword123" }`
-  - Returns: `200 OK` with JWT bearer token and user profile.
+  - Returns: `200 OK` with 15-minute JWT Access Token, 7-day Rotating Refresh Token, and user profile.
+- `POST /api/v1/auth/refresh` — Rotate refresh token within token family and issue fresh 15-minute access token. Revokes entire session family if token reuse is detected.
+  - Body: `{ "refreshToken": "<optional-token-string>" }` (falls back to `refresh_token` HTTP-only cookie).
+  - Returns: `200 OK` with refreshed access token and rotated refresh token.
+- `POST /api/v1/auth/logout` — Revoke active token family in Redis session store and clear secure auth cookies (`access_token`, `refresh_token`).
+  - Returns: `200 OK` with confirmation message.
+- `POST /api/v1/auth/password` — Update user account password with constant-time bcrypt verification. Guarded by `JWTAuthMiddleware`.
+  - Body: `{ "oldPassword": "CurrentPassword123", "newPassword": "NewSecurePassword456" }`
+  - Returns: `200 OK` and prompts re-authentication across active devices.
 - `GET /api/v1/auth/me` — Retrieve active profile and system role of authenticated caller. Guarded by `JWTAuthMiddleware`.
 
 ### 3.9 Platform Administration (`/api/v1/admin`)

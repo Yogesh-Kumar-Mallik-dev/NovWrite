@@ -111,3 +111,67 @@ func TestNewDefaultCacheManager_Fallback(t *testing.T) {
 		t.Fatalf("expected non-nil fallback cache manager")
 	}
 }
+
+func TestMemorySessionManager_RotationAndReuse(t *testing.T) {
+	ctx := context.Background()
+	mgr := NewMemorySessionManager()
+
+	token1, err := GenerateSecureToken()
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+	userID := "user-123"
+	familyID := "family-abc"
+
+	// 1. Store Refresh Token
+	err = mgr.StoreRefreshToken(ctx, token1, userID, familyID, 1*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to store token: %v", err)
+	}
+
+	// 2. Rotate Token (Valid)
+	resUser, resFamily, token2, err := mgr.RotateRefreshToken(ctx, token1, 1*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to rotate token: %v", err)
+	}
+	if resUser != userID || resFamily != familyID || token2 == "" {
+		t.Errorf("unexpected rotate result: user=%s, fam=%s, tok2=%s", resUser, resFamily, token2)
+	}
+
+	// 3. Reuse old token (token1) -> Should trigger reuse breach detection and revoke family
+	_, _, _, err = mgr.RotateRefreshToken(ctx, token1, 1*time.Hour)
+	if err != ErrTokenReused {
+		t.Fatalf("expected ErrTokenReused, got: %v", err)
+	}
+
+	// 4. Token2 in same family should now be revoked / invalid
+	_, _, _, err = mgr.RotateRefreshToken(ctx, token2, 1*time.Hour)
+	if err != ErrTokenNotFound {
+		t.Fatalf("expected ErrTokenNotFound after family revocation, got: %v", err)
+	}
+}
+
+func TestMemorySessionManager_Revocation(t *testing.T) {
+	ctx := context.Background()
+	mgr := NewMemorySessionManager()
+
+	token1, _ := GenerateSecureToken()
+	err := mgr.StoreRefreshToken(ctx, token1, "user-1", "fam-1", 1*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to store token: %v", err)
+	}
+
+	if mgr.IsTokenRevoked(ctx, token1) {
+		t.Errorf("token should not be revoked yet")
+	}
+
+	err = mgr.RevokeToken(ctx, token1, 1*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to revoke token: %v", err)
+	}
+
+	if !mgr.IsTokenRevoked(ctx, token1) {
+		t.Errorf("token should be marked as revoked")
+	}
+}
+

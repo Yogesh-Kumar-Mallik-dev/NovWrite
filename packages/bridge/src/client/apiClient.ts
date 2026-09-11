@@ -125,6 +125,9 @@ export function paginateArray<T>(
 
 export class NovWriteApiClient {
   private baseUrl: string;
+  private authToken: string | null = null;
+  private isRefreshing: boolean = false;
+  private refreshSubscribers: Array<(token: string | null) => void> = [];
 
   constructor(baseUrl?: string) {
     if (baseUrl) {
@@ -163,6 +166,25 @@ export class NovWriteApiClient {
     this.baseUrl = url;
   }
 
+  setAuthToken(token: string | null) {
+    this.authToken = token;
+  }
+
+  getAuthToken(): string | null {
+    return this.authToken;
+  }
+
+  private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      ...customHeaders,
+    };
+    if (this.authToken) {
+      headers["Authorization"] = `Bearer ${this.authToken}`;
+    }
+    return headers;
+  }
+
   private buildQueryString(params?: PaginationParams): string {
     if (!params) return "";
     const query = new URLSearchParams();
@@ -186,9 +208,7 @@ export class NovWriteApiClient {
     const url = `${this.baseUrl}${endpoint}${this.buildQueryString(params)}`;
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.getHeaders(),
     });
 
     if (!response.ok) {
@@ -203,9 +223,7 @@ export class NovWriteApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.getHeaders(),
     });
 
     if (!response.ok) {
@@ -223,10 +241,7 @@ export class NovWriteApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: this.getHeaders({ "Content-Type": "application/json" }),
       body: body ? JSON.stringify(body) : undefined,
     });
 
@@ -245,10 +260,7 @@ export class NovWriteApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     const response = await fetch(url, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: this.getHeaders({ "Content-Type": "application/json" }),
       body: body ? JSON.stringify(body) : undefined,
     });
 
@@ -264,15 +276,69 @@ export class NovWriteApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     const response = await fetch(url, {
       method: "DELETE",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: this.getHeaders(),
     });
 
     if (!response.ok && response.status !== 204) {
       const problem = await this.parseErrorResponse(response);
       throw new ApiError(problem);
     }
+  }
+
+  // ==========================================
+  // Authentication & Identity
+  // ==========================================
+
+  async login(data: { emailOrUsername: string; password?: string }) {
+    const resp = await this.post<any>("/auth/login", data);
+    if (resp && resp.data && resp.data.token) {
+      this.setAuthToken(resp.data.token);
+    }
+    return resp;
+  }
+
+  async register(data: { email: string; username: string; password?: string; role?: string }) {
+    const resp = await this.post<any>("/auth/register", data);
+    if (resp && resp.data && resp.data.token) {
+      this.setAuthToken(resp.data.token);
+    }
+    return resp;
+  }
+
+  async refreshToken(refreshToken?: string) {
+    const resp = await this.post<any>("/auth/refresh", { refreshToken });
+    if (resp && resp.data && resp.data.token) {
+      this.setAuthToken(resp.data.token);
+    }
+    return resp;
+  }
+
+  async logout() {
+    try {
+      await this.post<any>("/auth/logout", {});
+    } finally {
+      this.setAuthToken(null);
+    }
+  }
+
+  async me() {
+    return this.getSingle<any>("/auth/me");
+  }
+
+  async changePassword(data: { oldPassword: string; newPassword: string }) {
+    return this.post<any>("/auth/password", data);
+  }
+
+  async superAdminLogin(data: { emailOrUsername: string; password?: string }) {
+    const resp = await this.post<any>("/superadmin/login", data);
+    if (resp && resp.data && resp.data.token) {
+      this.setAuthToken(resp.data.token);
+    }
+    return resp;
+  }
+
+  async superAdminDashboard() {
+    return this.getSingle<any>("/superadmin/dashboard");
   }
 
   // ==========================================

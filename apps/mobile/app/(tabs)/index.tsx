@@ -25,6 +25,17 @@ import {
   Clock,
   Layers,
   ArrowRight,
+  User,
+  LogOut,
+  Key,
+  Lock,
+  Mail,
+  Shield,
+  ShieldCheck,
+  AlertCircle,
+  X,
+  ChevronDown,
+  Check,
 } from "lucide-react-native";
 
 export default function ProjectsScreen() {
@@ -40,6 +51,27 @@ export default function ProjectsScreen() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Auth & Account State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authIdentifier, setAuthIdentifier] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Change Password Modal State
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(
+    null,
+  );
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<
+    string | null
+  >(null);
 
   const [nameInput, setNameInput] = useState("");
   const [genreInput, setGenreInput] = useState("");
@@ -95,11 +127,215 @@ export default function ProjectsScreen() {
     setDeleteConfirmTitle("");
   }
 
+  async function handleAuthSubmit() {
+    setAuthError(null);
+    if (authMode === "login") {
+      if (!authIdentifier.trim()) {
+        setAuthError("Please enter your email or username.");
+        return;
+      }
+      const res = await mobileStore.login({
+        emailOrUsername: authIdentifier.trim(),
+        password: authPassword.trim() || undefined,
+      });
+      if (res.success) {
+        setIsAuthModalOpen(false);
+        setAuthPassword("");
+      } else {
+        setAuthError(res.error || "Login failed.");
+      }
+    } else {
+      if (!authUsername.trim() || !authEmail.trim()) {
+        setAuthError("Username and email are required.");
+        return;
+      }
+      const res = await mobileStore.register({
+        username: authUsername.trim(),
+        email: authEmail.trim(),
+        password: authPassword.trim() || undefined,
+      });
+      if (res.success) {
+        setIsAuthModalOpen(false);
+        setAuthPassword("");
+      } else {
+        setAuthError(res.error || "Registration failed.");
+      }
+    }
+  }
+
+  async function handleLogout() {
+    await mobileStore.logout();
+    setIsAccountModalOpen(false);
+  }
+
+  async function handleChangePassword() {
+    setPasswordChangeError(null);
+    setPasswordChangeSuccess(null);
+    if (!oldPassword.trim() || !newPassword.trim()) {
+      setPasswordChangeError("Both current and new password are required.");
+      return;
+    }
+    const res = await mobileStore.changePassword(
+      oldPassword.trim(),
+      newPassword.trim(),
+    );
+    if (res.success) {
+      setPasswordChangeSuccess("Password updated. Please sign in again.");
+      setIsChangePasswordOpen(false);
+      setOldPassword("");
+      setNewPassword("");
+      setIsAccountModalOpen(false);
+    } else {
+      setPasswordChangeError(res.error || "Failed to update password.");
+    }
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: "#09090b" }}
       contentContainerStyle={{ padding: isTabletOrWide ? 24 : 16, gap: 16 }}
     >
+      {/* User Account Bar */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          backgroundColor: "#121215",
+          borderColor: "#27272a",
+          borderWidth: 1,
+          borderRadius: 12,
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+        }}
+      >
+        {state.user ? (
+          <TouchableOpacity
+            onPress={() => setIsAccountModalOpen(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              flex: 1,
+            }}
+          >
+            <View
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                backgroundColor: "rgba(124, 58, 237, 0.15)",
+                borderColor: "rgba(124, 58, 237, 0.3)",
+                borderWidth: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <User size={16} color="#7c3aed" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+              >
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 13,
+                    fontWeight: "bold",
+                  }}
+                >
+                  {state.user.username}
+                </Text>
+                <View
+                  style={{
+                    backgroundColor:
+                      state.user.role === "SUPER_ADMIN"
+                        ? "rgba(220, 38, 38, 0.15)"
+                        : state.user.role === "ADMIN"
+                          ? "rgba(124, 58, 237, 0.15)"
+                          : "rgba(39, 39, 42, 0.6)",
+                    borderColor:
+                      state.user.role === "SUPER_ADMIN"
+                        ? "rgba(220, 38, 38, 0.3)"
+                        : state.user.role === "ADMIN"
+                          ? "rgba(124, 58, 237, 0.3)"
+                          : "#27272a",
+                    borderWidth: 1,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    borderRadius: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color:
+                        state.user.role === "SUPER_ADMIN"
+                          ? "#ef4444"
+                          : state.user.role === "ADMIN"
+                            ? "#7c3aed"
+                            : "#a1a1aa",
+                      fontSize: 10,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {state.user.role}
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={{ color: "#71717a", fontSize: 11 }}
+                numberOfLines={1}
+              >
+                {state.user.email}
+              </Text>
+            </View>
+            <ChevronDown size={16} color="#71717a" />
+          </TouchableOpacity>
+        ) : (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <User size={16} color="#71717a" />
+              <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                Offline Guest Author
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setAuthError(null);
+                setIsAuthModalOpen(true);
+              }}
+              style={{
+                backgroundColor: "#7c3aed",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 8,
+                minHeight: 34,
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                }}
+              >
+                Sign In / Register
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
       {/* Top Hero Section (Faithfully Recreated from web +page.svelte) */}
       <View style={{ alignItems: "center", paddingVertical: 12, gap: 8 }}>
         <View
@@ -1028,6 +1264,663 @@ export default function ProjectsScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Multi-User Authentication Modal (Sign In / Register) */}
+      <Modal visible={isAuthModalOpen} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "#27272a",
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 20,
+              width: "100%",
+              maxWidth: 420,
+              maxHeight: "90%",
+              gap: 16,
+            }}
+          >
+            {/* Modal Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: "rgba(124, 58, 237, 0.15)",
+                    borderWidth: 1,
+                    borderColor: "rgba(124, 58, 237, 0.3)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Lock size={18} color="#7c3aed" />
+                </View>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                  }}
+                >
+                  {authMode === "login" ? "Author Sign In" : "Create Account"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsAuthModalOpen(false)}
+                style={{
+                  padding: 6,
+                  borderRadius: 8,
+                  backgroundColor: "#1e1e24",
+                }}
+              >
+                <X size={16} color="#a1a1aa" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Mode Switcher Tabs */}
+            <View
+              style={{
+                flexDirection: "row",
+                backgroundColor: "#18181b",
+                borderRadius: 8,
+                padding: 3,
+                borderWidth: 1,
+                borderColor: "#27272a",
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setAuthMode("login");
+                  setAuthError(null);
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  alignItems: "center",
+                  borderRadius: 6,
+                  backgroundColor:
+                    authMode === "login" ? "#7c3aed" : "transparent",
+                }}
+              >
+                <Text
+                  style={{
+                    color: authMode === "login" ? "#ffffff" : "#a1a1aa",
+                    fontSize: 12,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Sign In
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setAuthMode("register");
+                  setAuthError(null);
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  alignItems: "center",
+                  borderRadius: 6,
+                  backgroundColor:
+                    authMode === "register" ? "#7c3aed" : "transparent",
+                }}
+              >
+                <Text
+                  style={{
+                    color: authMode === "register" ? "#ffffff" : "#a1a1aa",
+                    fontSize: 12,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Register
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Error Message */}
+            {authError && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  borderColor: "rgba(239, 68, 68, 0.3)",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 10,
+                }}
+              >
+                <AlertCircle size={16} color="#ef4444" />
+                <Text
+                  style={{ color: "#ef4444", fontSize: 12, flex: 1 }}
+                >
+                  {authError}
+                </Text>
+              </View>
+            )}
+
+            {/* Form Fields */}
+            <ScrollView
+              style={{ maxHeight: 320 }}
+              contentContainerStyle={{ gap: 12 }}
+            >
+              {authMode === "login" ? (
+                <>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        color: "#fafafa",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Username or Email
+                    </Text>
+                    <TextInput
+                      value={authIdentifier}
+                      onChangeText={setAuthIdentifier}
+                      placeholder="e.g. author@novwrite.io"
+                      placeholderTextColor="#52525b"
+                      autoCapitalize="none"
+                      style={{
+                        backgroundColor: "#09090b",
+                        borderColor: "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        color: "#fafafa",
+                        fontSize: 14,
+                        minHeight: 44,
+                      }}
+                    />
+                  </View>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        color: "#fafafa",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Password
+                    </Text>
+                    <TextInput
+                      value={authPassword}
+                      onChangeText={setAuthPassword}
+                      placeholder="Enter account password"
+                      placeholderTextColor="#52525b"
+                      secureTextEntry
+                      autoCapitalize="none"
+                      style={{
+                        backgroundColor: "#09090b",
+                        borderColor: "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        color: "#fafafa",
+                        fontSize: 14,
+                        minHeight: 44,
+                      }}
+                    />
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        color: "#fafafa",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Author Username *
+                    </Text>
+                    <TextInput
+                      value={authUsername}
+                      onChangeText={setAuthUsername}
+                      placeholder="e.g. brandon_sanderson"
+                      placeholderTextColor="#52525b"
+                      autoCapitalize="none"
+                      style={{
+                        backgroundColor: "#09090b",
+                        borderColor: "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        color: "#fafafa",
+                        fontSize: 14,
+                        minHeight: 44,
+                      }}
+                    />
+                  </View>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        color: "#fafafa",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Email Address *
+                    </Text>
+                    <TextInput
+                      value={authEmail}
+                      onChangeText={setAuthEmail}
+                      placeholder="e.g. author@universe.io"
+                      placeholderTextColor="#52525b"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      style={{
+                        backgroundColor: "#09090b",
+                        borderColor: "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        color: "#fafafa",
+                        fontSize: 14,
+                        minHeight: 44,
+                      }}
+                    />
+                  </View>
+                  <View style={{ gap: 4 }}>
+                    <Text
+                      style={{
+                        color: "#fafafa",
+                        fontSize: 12,
+                        fontWeight: "600",
+                      }}
+                    >
+                      Password
+                    </Text>
+                    <TextInput
+                      value={authPassword}
+                      onChangeText={setAuthPassword}
+                      placeholder="Min 8 characters (recommended)"
+                      placeholderTextColor="#52525b"
+                      secureTextEntry
+                      autoCapitalize="none"
+                      style={{
+                        backgroundColor: "#09090b",
+                        borderColor: "#27272a",
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        padding: 12,
+                        color: "#fafafa",
+                        fontSize: 14,
+                        minHeight: 44,
+                      }}
+                    />
+                  </View>
+                </>
+              )}
+            </ScrollView>
+
+            {/* Actions */}
+            <TouchableOpacity
+              onPress={handleAuthSubmit}
+              disabled={state.isAuthLoading}
+              style={{
+                backgroundColor: "#7c3aed",
+                borderRadius: 8,
+                paddingVertical: 12,
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 44,
+                opacity: state.isAuthLoading ? 0.6 : 1,
+              }}
+            >
+              <Text
+                style={{ color: "#ffffff", fontSize: 14, fontWeight: "bold" }}
+              >
+                {state.isAuthLoading
+                  ? "Authenticating..."
+                  : authMode === "login"
+                    ? "Sign In to Workspace"
+                    : "Create Author Account"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* User Account Details & Security Modal */}
+      <Modal visible={isAccountModalOpen} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#121215",
+              borderColor: "#27272a",
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 20,
+              width: "100%",
+              maxWidth: 420,
+              maxHeight: "90%",
+              gap: 14,
+            }}
+          >
+            {/* Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: "rgba(124, 58, 237, 0.15)",
+                    borderWidth: 1,
+                    borderColor: "rgba(124, 58, 237, 0.3)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <User size={18} color="#7c3aed" />
+                </View>
+                <Text
+                  style={{
+                    color: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Author Account
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsAccountModalOpen(false)}
+                style={{
+                  padding: 6,
+                  borderRadius: 8,
+                  backgroundColor: "#1e1e24",
+                }}
+              >
+                <X size={16} color="#a1a1aa" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Profile Info Cards */}
+            {state.user && (
+              <View
+                style={{
+                  backgroundColor: "#18181b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  padding: 14,
+                  gap: 10,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                    Username
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#fafafa",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {state.user.username}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                    Email
+                  </Text>
+                  <Text style={{ color: "#fafafa", fontSize: 12 }}>
+                    {state.user.email}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                    System Role
+                  </Text>
+                  <Text
+                    style={{
+                      color:
+                        state.user.role === "SUPER_ADMIN"
+                          ? "#ef4444"
+                          : state.user.role === "ADMIN"
+                            ? "#7c3aed"
+                            : "#a1a1aa",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {state.user.role}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: "#a1a1aa", fontSize: 12 }}>
+                    Status
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#10b981",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {state.user.accountStatus}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Change Password Drawer */}
+            <View style={{ gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => setIsChangePasswordOpen(!isChangePasswordOpen)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: "#18181b",
+                  borderColor: "#27272a",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  minHeight: 44,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Key size={16} color="#7c3aed" />
+                  <Text
+                    style={{
+                      color: "#fafafa",
+                      fontSize: 13,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Change Password
+                  </Text>
+                </View>
+                <ChevronDown
+                  size={16}
+                  color="#a1a1aa"
+                  style={{
+                    transform: [
+                      { rotate: isChangePasswordOpen ? "180deg" : "0deg" },
+                    ],
+                  }}
+                />
+              </TouchableOpacity>
+
+              {isChangePasswordOpen && (
+                <View
+                  style={{
+                    backgroundColor: "#18181b",
+                    borderColor: "#27272a",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    padding: 12,
+                    gap: 10,
+                  }}
+                >
+                  {passwordChangeError && (
+                    <Text style={{ color: "#ef4444", fontSize: 11 }}>
+                      {passwordChangeError}
+                    </Text>
+                  )}
+                  {passwordChangeSuccess && (
+                    <Text style={{ color: "#10b981", fontSize: 11 }}>
+                      {passwordChangeSuccess}
+                    </Text>
+                  )}
+                  <TextInput
+                    value={oldPassword}
+                    onChangeText={setOldPassword}
+                    placeholder="Current password"
+                    placeholderTextColor="#52525b"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    style={{
+                      backgroundColor: "#09090b",
+                      borderColor: "#27272a",
+                      borderWidth: 1,
+                      borderRadius: 6,
+                      padding: 10,
+                      color: "#fafafa",
+                      fontSize: 13,
+                    }}
+                  />
+                  <TextInput
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="New password"
+                    placeholderTextColor="#52525b"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    style={{
+                      backgroundColor: "#09090b",
+                      borderColor: "#27272a",
+                      borderWidth: 1,
+                      borderRadius: 6,
+                      padding: 10,
+                      color: "#fafafa",
+                      fontSize: 13,
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={handleChangePassword}
+                    disabled={state.isAuthLoading}
+                    style={{
+                      backgroundColor: "#7c3aed",
+                      borderRadius: 6,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#ffffff",
+                        fontSize: 12,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Update Password
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Logout Button */}
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                borderColor: "rgba(239, 68, 68, 0.3)",
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingVertical: 12,
+                minHeight: 44,
+              }}
+            >
+              <LogOut size={16} color="#ef4444" />
+              <Text
+                style={{
+                  color: "#ef4444",
+                  fontSize: 13,
+                  fontWeight: "bold",
+                }}
+              >
+                Sign Out
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
